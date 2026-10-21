@@ -1,8 +1,10 @@
 name: Moodle plugin deploy
 
+# HOZIRCHA O'CHIRILGAN: push'da avtomatik ishlamaydi, faqat qo'lda ishga tushiriladi.
+# Tayyor bo'lganda quyidagi 2 qatorni izohdan chiqarib qo'yish kifoya:
+#   push:
+#     branches: [main]
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
