@@ -1,0 +1,68 @@
+name: Moodle plugin deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: moodle-plugin-deploy
+  cancel-in-progress: false     # ketayotgan deploy o'ldirilmaydi, navbatda kutadi
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP sintaksis tekshiruvi (qattiq to'siq)
+        run: |
+          err=0
+          while IFS= read -r -d '' f; do
+            php -l "$f" || err=1
+          done < <(find . -name '*.php' -not -path './.git/*' -print0)
+          exit $err
+
+      - name: Deploy skript sintaksisi
+        run: bash -n scripts/deploy.sh
+
+      - name: version.php tekshiruvi
+        run: |
+          grep -q "component = 'local_targetzenit'" version.php || { echo "::error::component nomi noto'g'ri"; exit 1; }
+          grep -qE '\$plugin->version\s*=\s*[0-9]{10}' version.php || { echo "::error::version raqami YYYYMMDDXX formatida emas"; exit 1; }
+
+  deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secretlarni tekshirish
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          err=0
+          for v in SSH_HOST SSH_USER SSH_PRIVATE_KEY SSH_KNOWN_HOSTS; do
+            if [ -z "${!v}" ]; then echo "::error::$v secret o'rnatilmagan"; err=1; fi
+          done
+          exit $err
+
+      - name: SSH sozlash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            'bash -s' < scripts/deploy.sh

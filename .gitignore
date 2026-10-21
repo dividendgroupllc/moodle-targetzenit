@@ -1,0 +1,6 @@
+# Moodle plagin uchun keraksiz fayllar
+*.log
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
