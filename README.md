@@ -49,18 +49,25 @@ sudo -u www-data php8.3 /opt/moodle/admin/cli/purge_caches.php
 Tekshirish: `Site administration → Plugins → Plugins overview` da
 **Target Zenit integration** ko'rinadi.
 
-## Keyingi deploylar
+## Keyingi deploylar (hozircha QO'LDA)
 
-`main` ga push qilinganda GitHub Actions o'zi bajaradi:
-`lint` (php -l + bash -n + version.php tekshiruvi) → `deploy` (SSH →
-`scripts/deploy.sh`).
+Serverda bitta buyruq — shu repo ichidagi skript hamma ishni qiladi:
+
+```bash
+bash /opt/moodle/public/local/targetzenit/scripts/deploy.sh
+```
 
 Skript: qulf oladi → `git reset --hard origin/main` → ruxsatlarni tiklaydi →
 maintenance rejimi → `upgrade.php` → `purge_caches.php` → maintenance off →
-health check. Xato bo'lsa avtomatik **rollback**.
+health check. Xato bo'lsa avtomatik **rollback** (eski commitga qaytadi).
 
-**GitHub secrets** (repo → Settings → Environments → production):
-`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS`.
+### Avtomatik deploy (keyinroq)
+
+`.github/workflows/deploy.yml` tayyor turibdi, lekin **o'chirilgan** — faqat
+`workflow_dispatch` bilan qo'lda ishga tushadi. Yoqish uchun fayldagi izohga
+olingan `push:` qatorlarini ochish va secretlarni qo'yish kerak:
+`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS`
+(repo → Settings → Environments → production).
 
 > `SSH_USER` — **root** (yoki sudo'li user). `/opt/moodle` root'niki, Frappe'ning
 > `frappe` useri unga tegmaydi: ikki tizim alohida OS userda yuradi, bu ataylab
@@ -74,12 +81,29 @@ va eski kod keshda qolib ketadi.
 
 ## Lokal ishlash
 
-Lokal Moodle ham `/opt/moodle` da. Repoyni Moodle ichiga ulash:
+Lokal Moodle ham `/opt/moodle` da, ya'ni ish nusxasi **xuddi serverdagi joyda**
+turadi — bitta farq bilan: lokalda papka `user` ga tegishli, shunda `sudo`siz
+tahrir qilinadi.
 
 ```bash
-sudo ln -s /home/user/moodle-plugins/targetzenit /opt/moodle/public/local/targetzenit
-sudo -u www-data php8.3 /opt/moodle/admin/cli/upgrade.php --non-interactive
+# bir marta: repoyni Moodle ichiga ko'chirish
+sudo mv /home/user/moodle-plugins/targetzenit /opt/moodle/public/local/targetzenit
+sudo chown -R "$USER":www-data /opt/moodle/public/local/targetzenit
+sudo chmod -R u=rwX,g=rX,o= /opt/moodle/public/local/targetzenit
+
+sudo -u www-data php /opt/moodle/admin/cli/upgrade.php --non-interactive
 ```
 
-Symlink bo'lgani uchun tahrir qilganing darhol ko'rinadi; `version.php` ni
-oshirganda `upgrade.php` ni qayta ishga tushirasan.
+**Nega symlink emas:** `/home/user` ruxsati `750`, ya'ni `www-data` uning ichiga
+kira olmaydi — `local/targetzenit -> /home/user/...` symlinki ishlamaydi.
+(`chmod o+x /home/user` bilan tuzatsa bo'lardi, lekin uy papkasini hammaga
+ochishdan ko'ra ish nusxasini Moodle ichida tutish toza.)
+
+Shundan keyin lokal oqim:
+
+```bash
+cd /opt/moodle/public/local/targetzenit
+# ... tahrir ... + version.php dagi $plugin->version ni oshirish
+sudo -u www-data php /opt/moodle/admin/cli/upgrade.php --non-interactive
+git add -A && git commit -m "..." && git push
+```
