@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/targetzenit/db" VERSION="20261022" COMMENT="Target Zenit integration tables"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_targetzenit_timetable" COMMENT="Frappe'dan kelgan dars jadvali. Har push'da butunlay almashtiriladi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="2026-2027"/>
+        <FIELD NAME="groupkey" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Frappe Student Group docname"/>
+        <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="subjectkey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="subjectname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="teacherkey" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Employee ID yoki INSTR-&lt;ism&gt;"/>
+        <FIELD NAME="teachername" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="dayno" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1=Dushanba ... 5=Juma"/>
+        <FIELD NAME="dayname" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="lessonno" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="endtime" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="room" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="courseidnumber" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Moodle kursining idnumber'i"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="year_group" UNIQUE="false" FIELDS="academicyear, groupkey"/>
+        <INDEX NAME="year_teacher" UNIQUE="false" FIELDS="academicyear, teacherkey"/>
+        <INDEX NAME="dayno" UNIQUE="false" FIELDS="dayno"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_calendar" COMMENT="O'quv kalendari: chorak oraliqlari va bayramlar (Frappe'dan).">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="entrytype" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="term | holiday"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="startdate" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="YYYY-MM-DD"/>
+        <FIELD NAME="enddate" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="year_type" UNIQUE="false" FIELDS="academicyear, entrytype"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
