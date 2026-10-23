@@ -65,20 +65,26 @@
     .tz-jurnal-mavzu { max-width: none; width: 100%; }
 }
 
-.tz-jgrid { margin: 0; }
-.tz-jgrid th, .tz-jgrid td { padding: 3px 5px; text-align: center; vertical-align: middle; }
+:root { --tz-cell-w: 46px; --tz-font: 1rem; --tz-name-w: 190px; }
+
+.tz-jgrid { margin: 0; font-size: var(--tz-font); }
+.tz-jgrid th, .tz-jgrid td { padding: 2px 4px; text-align: center; vertical-align: middle; }
 
 /* Chapdagi ikki ustun joyida qotib turadi — o'ngga surilganda ism ko'rinib tursin */
 .tz-jgrid .tz-col-n,
 .tz-jgrid .tz-col-ism { position: sticky; background: #fff; z-index: 2; text-align: left; }
-.tz-jgrid .tz-col-n   { left: 0; width: 34px; color: #6a737d; }
-.tz-jgrid .tz-col-ism { left: 34px; min-width: 190px; white-space: nowrap; }
+.tz-jgrid .tz-col-n   { left: 0; width: 30px; color: #6a737d; }
+.tz-jgrid .tz-col-ism {
+    left: 30px; width: var(--tz-name-w); max-width: var(--tz-name-w);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .tz-jgrid thead .tz-col-n, .tz-jgrid thead .tz-col-ism { z-index: 3; }
 
-.tz-col-kun { min-width: 50px; }
+.tz-col-kun { min-width: calc(var(--tz-cell-w) + 6px); }
 
 .tz-cell {
-    width: 46px; text-align: center; padding: 2px; font-weight: 600;
+    width: var(--tz-cell-w); font-size: var(--tz-font);
+    text-align: center; padding: 1px; font-weight: 600;
     border: 1px solid #dee2e6; border-radius: 3px;
 }
 .tz-cell:focus { outline: 2px solid #0d6efd; outline-offset: 0; }
@@ -104,3 +110,34 @@
 .hidden { display: none !important; }
 .tz-audio-card { border-left: 4px solid #dc3545; }
 .tz-audio-holat { font-weight: 600; min-height: 1.4em; }
+
+
+/* ---------------- O'lcham boshqaruvi ---------------- */
+.tz-zoom { display: inline-flex; align-items: center; gap: 4px; }
+.tz-zoom .btn { padding: 2px 10px; font-size: .85rem; }
+.tz-zoom-label { font-size: .85rem; color: #6a737d; margin-right: 4px; }
+
+/* ---------------- Umumiy jadval (butun maktab) ---------------- */
+.tz-all { font-size: var(--tz-font); margin: 0; }
+.tz-all th, .tz-all td { padding: 2px 4px; }
+.tz-all thead th { position: sticky; top: 0; background: #fff; z-index: 3; }
+.tz-all td:first-child, .tz-all th:first-child {
+    position: sticky; left: 0; background: #fff; z-index: 2;
+    width: var(--tz-name-w); max-width: var(--tz-name-w);
+    text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tz-all thead th:first-child { z-index: 4; }
+.tz-all .tz-subj { font-size: var(--tz-font); line-height: 1.15; }
+.tz-all .tz-meta { font-size: calc(var(--tz-font) * 0.78); }
+.tz-all-scroll { max-height: 78vh; overflow: auto; border: 1px solid #dee2e6; border-radius: 4px; }
+
+/* Guruhni qidirish maydoni */
+.tz-filter { max-width: 280px; }
+.tz-row-hidden { display: none; }
+
+/* ---------------- O'quvchining baholari ---------------- */
+.tz-baho-qator { display: flex; flex-wrap: wrap; gap: 4px; }
+.tz-baho-qator .tz-g { min-width: 26px; text-align: center; cursor: help; }
+.tz-g-yoq { background: #e9ecef; color: #6c757d; font-size: .8em; }
+.tz-ortacha { font-size: 1.1rem; }
+.tz-baholarim td { vertical-align: middle; }

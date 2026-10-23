@@ -200,7 +200,36 @@ if ($view === 'today') {
         'dayno', $options, $dayno
     );
     $select->set_label(get_string('day') . ': ');
-    echo html_writer::div($OUTPUT->render($select), 'mb-3');
+
+    // Kun tanlash + qidiruv + o'lcham — bitta qatorda
+    echo html_writer::start_div('d-flex flex-wrap align-items-center mb-3', ['style' => 'gap:16px']);
+    echo $OUTPUT->render($select);
+    echo html_writer::empty_tag('input', [
+        'type' => 'search', 'id' => 'tz-all-filter', 'class' => 'form-control form-control-sm tz-filter',
+        'placeholder' => "Sinf yoki o'qituvchi bo'yicha qidirish...",
+        'autocomplete' => 'off',
+    ]);
+    echo local_targetzenit_zoom_panel('umumiy');
+    echo html_writer::end_div();
+
+    $PAGE->requires->js_amd_inline("
+        require([], function() {
+            var inp = document.getElementById('tz-all-filter');
+            if (!inp) { return; }
+            inp.addEventListener('input', function() {
+                var q = inp.value.trim().toLowerCase();
+                var qatorlar = document.querySelectorAll('.tz-all tbody tr');
+                var korindi = 0;
+                Array.prototype.forEach.call(qatorlar, function(tr) {
+                    var mos = !q || tr.textContent.toLowerCase().indexOf(q) !== -1;
+                    tr.classList.toggle('tz-row-hidden', !mos);
+                    if (mos) { korindi++; }
+                });
+                var hisob = document.getElementById('tz-all-hisob');
+                if (hisob) { hisob.textContent = korindi + ' sinf'; }
+            });
+        });
+    ");
 
     if (!$rows) {
         echo $OUTPUT->notification(get_string('timetable_empty', 'local_targetzenit'), 'info');
@@ -221,16 +250,23 @@ if ($view === 'today') {
             for ($i = 1; $i <= $maxles; $i++) {
                 if (isset($darslar[$i])) {
                     $r = $darslar[$i];
-                    $qator[] = html_writer::div(format_string($r->subjectname), 'tz-subj') .
+                    $toliq = format_string($r->subjectname) . ' — ' . format_string($r->teachername) .
+                        ($r->room ? ' · ' . s($r->room) : '');
+                    $qator[] = html_writer::div(
+                        html_writer::div(format_string($r->subjectname), 'tz-subj') .
                         html_writer::div(format_string($r->teachername), 'tz-meta') .
-                        ($r->room ? html_writer::div(s($r->room), 'tz-meta') : '');
+                        ($r->room ? html_writer::div(s($r->room), 'tz-meta') : ''),
+                        '', ['title' => $toliq]);
                 } else {
                     $qator[] = '';
                 }
             }
             $t->data[] = $qator;
         }
-        echo html_writer::div(html_writer::table($t), 'tz-scroll');
+        echo html_writer::div(
+            html_writer::tag('span', count($perguruh) . ' sinf', ['id' => 'tz-all-hisob']),
+            'text-muted small mb-1');
+        echo html_writer::div(html_writer::table($t), 'tz-all-scroll');
     }
 
 } else {

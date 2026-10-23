@@ -16,12 +16,20 @@ class hook_callbacks {
         if (!isloggedin() || isguestuser()) {
             return;
         }
-        $hook->get_primaryview()->add(
+        $nav = $hook->get_primaryview();
+        $nav->add(
             get_string('timetable', 'local_targetzenit'),
             '/local/targetzenit/index.php',
             \navigation_node::TYPE_CUSTOM,
             null,
             'tztimetable'
+        );
+        $nav->add(
+            get_string('mygrades', 'local_targetzenit'),
+            '/local/targetzenit/baholarim.php',
+            \navigation_node::TYPE_CUSTOM,
+            null,
+            'tzgrades'
         );
     }
 }

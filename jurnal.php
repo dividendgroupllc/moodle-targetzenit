@@ -131,6 +131,8 @@ $select = new single_select(
 $select->set_label('Chorak: ');
 echo html_writer::div($OUTPUT->render($select), 'mb-2');
 
+echo html_writer::div(local_targetzenit_zoom_panel('jurnal'), 'mb-2');
+
 echo html_writer::div(
     html_writer::tag('span', 'Katak: <b>bo\'sh</b> = keldi · <b>raqam</b> = baho (1–' . lesson::MAX_GRADE .
         ') · <b>k</b> = kelmadi · <b>s</b> = sababli · <b>kech</b> = kechikdi',
@@ -195,7 +197,11 @@ foreach ($students as $s) {
     $n++;
     echo html_writer::start_tag('tr');
     echo html_writer::tag('td', $n, ['class' => 'tz-col-n']);
-    echo html_writer::tag('td', fullname($s), ['class' => 'tz-col-ism']);
+    echo html_writer::tag('td',
+        html_writer::link(
+            new moodle_url('/local/targetzenit/baholarim.php', ['userid' => $s->id]),
+            fullname($s), ['title' => fullname($s) . " — baholari"]),
+        ['class' => 'tz-col-ism']);
     foreach ($darslar as $l) {
         $dars = $darsyozuv[$l['key']] ?? null;
         $rec = ($dars && isset($kataklar[$s->id][$dars->id])) ? $kataklar[$s->id][$dars->id] : null;

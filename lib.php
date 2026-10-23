@@ -51,3 +51,32 @@ function local_targetzenit_pluginfile($course, $cm, $context, $filearea, $args,
     }
     send_stored_file($file, 0, 0, $forcedownload, $options);
 }
+
+/**
+ * Jadval o'lchamini moslash tugmalari (50% – 150%).
+ * Tanlov brauzerda eslab qolinadi; $kalit har sahifa uchun alohida.
+ */
+function local_targetzenit_zoom_panel(string $kalit): string {
+    global $PAGE;
+
+    $PAGE->requires->js(new moodle_url('/local/targetzenit/js/zoom.js'));
+    $PAGE->requires->js_amd_inline("
+        require([], function() {
+            var boshla = function() {
+                if (window.tzZoomInit) { window.tzZoomInit('" . addslashes($kalit) . "'); }
+                else { setTimeout(boshla, 150); }
+            };
+            boshla();
+        });
+    ");
+
+    $html = html_writer::tag('span', "O'lcham:", ['class' => 'tz-zoom-label']);
+    foreach ([50, 75, 100, 125, 150] as $d) {
+        $html .= html_writer::tag('button', $d . '%', [
+            'type' => 'button',
+            'class' => 'btn btn-sm btn-outline-secondary',
+            'data-zoom' => $d,
+        ]);
+    }
+    return html_writer::div($html, 'tz-zoom', ['id' => 'tz-zoom']);
+}

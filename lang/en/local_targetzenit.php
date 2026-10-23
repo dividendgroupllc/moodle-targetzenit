@@ -50,3 +50,6 @@ $string['audio_stop'] = "To'xtatish va saqlash";
 $string['audio_recording'] = 'Yozilmoqda';
 $string['audio_ready'] = 'Yozuv saqlandi';
 $string['audio_cleanup'] = "Muddati o'tgan dars audiolarini o'chirish";
+
+// O'quvchi ko'rinishi
+$string['mygrades'] = 'Baholarim';
