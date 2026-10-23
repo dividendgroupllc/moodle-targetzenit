@@ -141,3 +141,13 @@
 .tz-g-yoq { background: #e9ecef; color: #6c757d; font-size: .8em; }
 .tz-ortacha { font-size: 1.1rem; }
 .tz-baholarim td { vertical-align: middle; }
+
+/* ---------------- AI dars tahlili ---------------- */
+.tz-ai-card { border-left: 4px solid #6f42c1; }
+.tz-ai-struct td, .tz-ai-struct th { padding: 3px 8px; }
+.tz-ai-speech { background: #f6f3fb; border-radius: 4px; padding: 6px 10px; display: inline-block; }
+.tz-ai-summary { cursor: pointer; font-weight: 600; }
+.tz-transcript {
+    white-space: pre-wrap; max-height: 420px; overflow-y: auto;
+    background: #fafafa; padding: 10px; border-radius: 4px; font-size: .9em;
+}

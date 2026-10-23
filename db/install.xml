@@ -98,6 +98,10 @@
         <FIELD NAME="duration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="soniya"/>
         <FIELD NAME="mimetype" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="transcript" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI transkripti — audio o'chgandan keyin ham qoladi"/>
+        <FIELD NAME="analysis" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI tahlili (JSON): xulosa, mavzuga muvofiqlik, tuzilish, nutq ulushi"/>
+        <FIELD NAME="aimodel" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="aierror" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="analysedat" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="teacherid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>

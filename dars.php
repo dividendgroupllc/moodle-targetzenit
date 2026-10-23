@@ -145,6 +145,111 @@ if (get_config('local_targetzenit', 'audioenabled')) {
     ");
 }
 
+// ---------------------------------------------------------- AI DARS TAHLILI
+$tahlil = \local_targetzenit\ai::for_lesson((int) $dars->id);
+if ($tahlil) {
+    $d = $tahlil['data'];
+    echo html_writer::start_div('card mb-3 tz-ai-card');
+    echo html_writer::start_div('card-body');
+    echo html_writer::tag('h5', '🤖 ' . get_string('ai_analyse', 'local_targetzenit'));
+
+    // --- Xulosa
+    if (!empty($d['summary'])) {
+        echo html_writer::tag('p', s($d['summary']), ['class' => 'mb-3']);
+    }
+
+    // --- Mavzuga muvofiqlik
+    if (!empty($d['topic_match'])) {
+        $tm = $d['topic_match'];
+        $ok = !empty($tm['covered']);
+        echo html_writer::div(
+            html_writer::tag('span', $ok ? '✔ Mavzu o\'tildi' : '✖ Mavzu o\'tilmadi',
+                ['class' => 'badge ' . ($ok ? 'badge-success' : 'badge-danger')]) . ' ' .
+            (!empty($tm['actual_topic'])
+                ? html_writer::tag('span', 'Darsda: ' . s($tm['actual_topic']), ['class' => 'ml-2'])
+                : '') .
+            (!empty($tm['note']) ? html_writer::div(s($tm['note']), 'text-muted small mt-1') : ''),
+            'mb-3'
+        );
+    }
+
+    // --- Dars tuzilishi
+    if (!empty($d['structure']) && is_array($d['structure'])) {
+        $t = new html_table();
+        $t->head = ['Bosqich', 'Bo\'ldimi', 'Daqiqa', 'Izoh'];
+        $t->attributes['class'] = 'generaltable tz-ai-struct';
+        foreach ($d['structure'] as $b) {
+            $bor = !empty($b['present']);
+            $t->data[] = [
+                s($b['stage'] ?? ''),
+                html_writer::tag('span', $bor ? 'ha' : 'yo\'q',
+                    ['class' => $bor ? 'text-success' : 'text-danger']),
+                (int) ($b['minutes'] ?? 0),
+                html_writer::tag('span', s($b['note'] ?? ''), ['class' => 'small text-muted']),
+            ];
+        }
+        echo html_writer::table($t);
+    }
+
+    // --- Nutq ulushi va til
+    if (!empty($d['speech'])) {
+        $sp = $d['speech'];
+        $qator = [];
+        if (isset($sp['teacher_pct'])) {
+            $qator[] = "O'qituvchi " . (int) $sp['teacher_pct'] . '% · o'
+                . "'quvchilar " . (int) ($sp['student_pct'] ?? 0) . '%';
+        }
+        if (isset($sp['questions_asked'])) {
+            $qator[] = 'Savollar: ' . (int) $sp['questions_asked'] .
+                ', javob olingan: ' . (int) ($sp['answers_received'] ?? 0);
+        }
+        if (!empty($sp['language']) && is_array($sp['language'])) {
+            $til = [];
+            foreach ($sp['language'] as $k => $v) {
+                $til[] = strtoupper(s($k)) . ' ' . (int) $v . '%';
+            }
+            $qator[] = 'Til: ' . implode(' · ', $til);
+        }
+        if ($qator) {
+            echo html_writer::div(implode('  |  ', $qator), 'tz-ai-speech mb-2');
+        }
+    }
+
+    // --- Tavsiyalar
+    if (!empty($d['recommendations']) && is_array($d['recommendations'])) {
+        $li = '';
+        foreach ($d['recommendations'] as $r) {
+            $li .= html_writer::tag('li', s($r));
+        }
+        echo html_writer::tag('div',
+            html_writer::tag('b', 'Tavsiyalar:') . html_writer::tag('ul', $li),
+            ['class' => 'mt-2']);
+    }
+
+    // --- Transkript (yig'iladigan)
+    if (!empty($tahlil['audio']->transcript)) {
+        echo html_writer::start_tag('details', ['class' => 'mt-3']);
+        echo html_writer::tag('summary', 'To\'liq matn (transkript)', ['class' => 'tz-ai-summary']);
+        echo html_writer::tag('pre', s($tahlil['audio']->transcript), ['class' => 'tz-transcript']);
+        echo html_writer::end_tag('details');
+    }
+
+    echo html_writer::div('Model: ' . s($tahlil['audio']->aimodel ?? '') . ' · ' .
+        userdate($tahlil['audio']->analysedat), 'text-muted small mt-2');
+
+    echo html_writer::end_div();
+    echo html_writer::end_div();
+} else if (\local_targetzenit\ai::enabled()) {
+    $a = \local_targetzenit\audio::get((int) $dars->id);
+    if ($a && $a->status === 'ready') {
+        echo $OUTPUT->notification(
+            !empty($a->aierror)
+                ? 'Tahlil qilinmadi: ' . s($a->aierror) . ' — keyingi yurishda qayta urinadi.'
+                : get_string('ai_pending', 'local_targetzenit') . ' — tahlil har 15 daqiqada ishlaydi.',
+            !empty($a->aierror) ? 'warn' : 'info');
+    }
+}
+
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'saqla', 'value' => 1]);

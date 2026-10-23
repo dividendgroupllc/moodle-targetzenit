@@ -137,5 +137,27 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102500, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026102600) {
+
+        // AI tahlili natijalari
+        $table = new xmldb_table('local_targetzenit_audio');
+        foreach ([
+            ['analysis', XMLDB_TYPE_TEXT, null, 'transcript'],
+            ['aimodel', XMLDB_TYPE_CHAR, '64', 'analysis'],
+            ['aierror', XMLDB_TYPE_CHAR, '255', 'aimodel'],
+        ] as [$nom, $turi, $uz, $oldin]) {
+            $field = new xmldb_field($nom, $turi, $uz, null, null, null, null, $oldin);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        $field = new xmldb_field('analysedat', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'aierror');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026102600, 'local', 'targetzenit');
+    }
+
     return true;
 }

@@ -14,4 +14,14 @@ $tasks = [
         'month' => '*',
         'dayofweek' => '*',
     ],
+    [
+        // Har 15 daqiqada — yozib olingan darslarni AI bilan tahlil qilish
+        'classname' => 'local_targetzenit\task\analyse_audio',
+        'blocking' => 0,
+        'minute' => '*/15',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
 ];

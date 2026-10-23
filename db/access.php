@@ -25,6 +25,14 @@ $capabilities = [
         ],
     ],
 
+    // Dars tahlilini KO'RISH — zavuch/direktor uchun (butun maktab bo'ylab).
+    // O'qituvchi o'z darsining tahlilini `teach` ruxsati bilan ko'radi.
+    'local/targetzenit:viewanalysis' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['manager' => CAP_ALLOW],
+    ],
+
     // Umumiy (butun maktab) dars jadvalini ko'rish — o'qituvchilar uchun.
     // O'quvchi faqat o'z sinfinikini ko'radi, bu ruxsat unga berilmaydi.
     'local/targetzenit:viewalltimetable' => [

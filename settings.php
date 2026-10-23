@@ -24,5 +24,29 @@ if ($hassiteconfig) {
         get_string('audio_maxmb', 'local_targetzenit'),
         get_string('audio_maxmb_desc', 'local_targetzenit'), 120, PARAM_INT));
 
+    // ---------------- AI tahlili ----------------
+    $settings->add(new admin_setting_heading('local_targetzenit/aiheading',
+        get_string('ai_settings', 'local_targetzenit'), ''));
+
+    $settings->add(new admin_setting_configcheckbox('local_targetzenit/aienabled',
+        get_string('ai_enabled', 'local_targetzenit'),
+        get_string('ai_enabled_desc', 'local_targetzenit'), 0));
+
+    $settings->add(new admin_setting_configpasswordunmask('local_targetzenit/geminikey',
+        get_string('ai_key', 'local_targetzenit'),
+        get_string('ai_key_desc', 'local_targetzenit'), ''));
+
+    $settings->add(new admin_setting_configtext('local_targetzenit/geminimodel',
+        get_string('ai_model', 'local_targetzenit'),
+        get_string('ai_model_desc', 'local_targetzenit'), 'gemini-3.8-flash', PARAM_TEXT));
+
+    $settings->add(new admin_setting_configtext('local_targetzenit/geminifallback',
+        get_string('ai_fallback', 'local_targetzenit'),
+        get_string('ai_fallback_desc', 'local_targetzenit'), '', PARAM_TEXT));
+
+    $settings->add(new admin_setting_configtext('local_targetzenit/aiperrun',
+        get_string('ai_perrun', 'local_targetzenit'),
+        get_string('ai_perrun_desc', 'local_targetzenit'), 3, PARAM_INT));
+
     $ADMIN->add('localplugins', $settings);
 }

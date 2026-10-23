@@ -53,3 +53,21 @@ $string['audio_cleanup'] = "Muddati o'tgan dars audiolarini o'chirish";
 
 // O'quvchi ko'rinishi
 $string['mygrades'] = 'Baholarim';
+
+// AI tahlili
+$string['targetzenit:viewanalysis'] = 'View AI analysis of any lesson recording';
+$string['ai_settings'] = 'AI dars tahlili';
+$string['ai_enabled'] = 'AI tahlilni yoqish';
+$string['ai_enabled_desc'] = "Yozib olingan dars avtomatik transkript qilinadi va tahlil qilinadi.";
+$string['ai_key'] = 'Gemini API kalit';
+$string['ai_key_desc'] = 'Google AI Studio dan olingan kalit.';
+$string['ai_model'] = 'Model';
+$string['ai_model_desc'] = "Masalan: gemini-3.8-flash";
+$string['ai_fallback'] = 'Zaxira model';
+$string['ai_fallback_desc'] = "Asosiy modelning kvotasi tugasa shunga o'tiladi. Bo'sh qoldirilsa zaxira ishlatilmaydi.";
+$string['ai_perrun'] = 'Bir yurishda nechta dars';
+$string['ai_perrun_desc'] = "Har 15 daqiqada shuncha yozuv tahlil qilinadi. Ko'p qo'yilsa kvota tez tugaydi.";
+$string['ai_analyse'] = 'Dars tahlili';
+$string['ai_pending'] = 'Tahlil navbatda';
+$string['ai_running'] = 'Tahlil qilinmoqda';
+$string['ai_task'] = 'Dars yozuvlarini AI bilan tahlil qilish';
