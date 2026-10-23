@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# local_targetzenit production deploy — idempotent, qulflangan, rollback'li.
+# local_targetzenit production deploy — idempotent va qulflangan (rollback YO'Q: plagin baza yangilanishi qaytmaydi).
 #
 # DIQQAT: bu skript "bash -s < deploy.sh" orqali yuboriladi — bash uni stdin'dan
 # o'qiydi. Shuning uchun butun mantiq main() ichida: bash avval hammasini o'qib
@@ -51,17 +51,30 @@ apply() {  # kodni joyiga qo'yib, Moodle'ni yangilash
     sudo -u www-data "$PHP" "$MOODLE_DIR/admin/cli/purge_caches.php"
 }
 
-rollback() {
+# DIQQAT: kod ORQAGA QAYTARILMAYDI.
+# Sabab (2026-10-23 da qoqildik): Moodle plaginining baza yangilanishi
+# qaytarilmaydi. Kodni eski commitga tushirsak, bazada versiya yuqori bo'lib
+# qoladi va Moodle "Cannot downgrade" deb butunlay ishlamay qoladi.
+# Shuning uchun xatoda faqat ogohlantiramiz — tuzatish OLDINGA qarab qilinadi.
+fail() {
     trap - ERR
-    echo "!!! XATO — kod eski holatga qaytarilmoqda: $PREV_COMMIT"
-    cd "$PLUGIN_DIR"
-    git reset --hard "$PREV_COMMIT"
-    apply || true
+    echo
+    echo "!!! DEPLOY XATO BERDI."
+    echo "!!! Kod ATAYLAB orqaga qaytarilmadi: plagin baza yangilanishi qaytmaydi,"
+    echo "!!! qaytarsak 'Cannot downgrade' bo'lib sayt ishlamay qoladi."
+    echo "!!! Joriy commit: $(git -C "$PLUGIN_DIR" rev-parse --short HEAD)"
+    echo "!!! Oldingi commit: ${PREV_COMMIT:0:7}"
+    echo "!!!"
+    echo "!!! Nima qilish kerak:"
+    echo "!!!   1) Sayt ochilyaptimi tekshir: $HEALTH_URL"
+    echo "!!!   2) nginx/php holati: nginx -t ; systemctl status php8.3-fpm"
+    echo "!!!   3) Moodle xatosi: sudo -u www-data $PHP $MOODLE_DIR/admin/cli/upgrade.php --non-interactive"
+    echo "!!!   4) Kod aybdor bo'lsa — TUZATIB, versiyani OSHIRIB, qaytadan deploy qil."
     maintenance disable
     echo "=== Deploy MUVAFFAQIYATSIZ: $(date -Is) ==="
     exit 1
 }
-trap rollback ERR
+trap fail ERR
 
 # --- Yangilash (pull EMAS — serverdagi tasodifiy o'zgarish konflikt bermasin) ---
 git reset --hard "$REMOTE/$BRANCH"
@@ -70,7 +83,7 @@ maintenance enable
 apply
 maintenance disable
 
-# --- Health check: o'tmasa — bu ham xato, rollback ---
+# --- Health check: o'tmasa xato beramiz, lekin kodni qaytarmaymiz ---
 trap - ERR
 sleep 3
 for i in 1 2 3; do
@@ -83,8 +96,8 @@ for i in 1 2 3; do
     echo "Health check $i-urinish: HTTP $code, 10s kutilmoqda..."
     sleep 10
 done
-echo "!!! Moodle javob bermayapti"
-rollback
+echo "!!! Moodle javob bermayapti (kod yangi holatda qoldirildi)"
+fail
 
 }
 
