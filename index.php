@@ -68,14 +68,27 @@ if ($view === 'all') {
 
 $courseids = timetable::course_ids(array_map(fn($r) => $r->courseidnumber, $rows));
 
-/** Kurs havolasi bilan fan nomi. */
-$fan = function($r) use ($courseids) {
+/**
+ * Fan nomi havola bilan.
+ * O'qituvchi o'z jadvalini ko'rayotganda havola to'g'ridan-to'g'ri DARS
+ * KOKPITIGA olib boradi (mavzu + yo'qlama + baho), kursning o'ziga emas —
+ * kunlik ish aynan shu yerda bajariladi.
+ */
+$fan = function($r, $sana = null) use ($courseids, $isteacherview) {
     $nom = format_string($r->subjectname);
-    if (!empty($courseids[$r->courseidnumber])) {
-        $url = new moodle_url('/course/view.php', ['id' => $courseids[$r->courseidnumber]]);
-        return html_writer::link($url, $nom);
+    $cid = $courseids[$r->courseidnumber] ?? 0;
+    if (!$cid) {
+        return $nom;
     }
-    return $nom;
+    if ($isteacherview && $sana) {
+        $url = new moodle_url('/local/targetzenit/dars.php', [
+            'courseid' => $cid,
+            'date' => $sana,
+            'lessonno' => (int) $r->lessonno,
+        ]);
+        return html_writer::link($url, $nom, ['title' => get_string('openlesson', 'local_targetzenit')]);
+    }
+    return html_writer::link(new moodle_url('/course/view.php', ['id' => $cid]), $nom);
 };
 
 echo $OUTPUT->header();
@@ -156,7 +169,7 @@ if ($view === 'today') {
                 $t->data[] = [
                     $r->lessonno,
                     s($r->starttime) . ($r->endtime ? ' – ' . s($r->endtime) : ''),
-                    $fan($r),
+                    $fan($r, $date),
                     $ikkinchi_qator($r),
                     s($r->room),
                 ];
@@ -282,7 +295,7 @@ if ($view === 'today') {
             }
             $ichi = '';
             foreach ($katak[$d][$i] ?? [] as $r) {
-                $ichi .= html_writer::div($fan($r), 'tz-subj') .
+                $ichi .= html_writer::div($fan($r, $sana), 'tz-subj') .
                     html_writer::div($ikkinchi_qator($r), 'tz-meta') .
                     (($r->starttime) ? html_writer::div(s($r->starttime) .
                         ($r->endtime ? '–' . s($r->endtime) : ''), 'tz-meta') : '') .

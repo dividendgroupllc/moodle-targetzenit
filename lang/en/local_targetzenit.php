@@ -24,3 +24,15 @@ $string['room'] = 'Xona';
 $string['teacher'] = 'O\'qituvchi';
 $string['group'] = 'Guruh';
 $string['subject'] = 'Fan';
+
+// Dars kokpiti
+$string['targetzenit:teach'] = 'Record topic, attendance and grades for a lesson';
+$string['topic'] = 'Dars mavzusi';
+$string['homework'] = 'Uy vazifa';
+$string['student'] = "O'quvchi";
+$string['attendance'] = "Yo'qlama";
+$string['grade'] = 'Baho';
+$string['comment'] = 'Izoh';
+$string['journal'] = 'Jurnal — oldingi darslar';
+$string['average'] = "O'rtacha";
+$string['openlesson'] = 'Darsni ochish';

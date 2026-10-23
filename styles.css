@@ -20,3 +20,36 @@
     45deg, #fafafa, #fafafa 6px, #f0f0f0 6px, #f0f0f0 12px); }
 
 .tz-today td { vertical-align: middle; }
+
+/* ---------------- Dars kokpiti ---------------- */
+
+.tz-dars-bosh { font-size: 1.15rem; }
+.tz-dars-raqam { color: #6a737d; }
+
+.tz-dars td { vertical-align: middle; }
+.tz-dars .tz-ism { min-width: 220px; }
+.tz-dars .tz-baho { width: 110px; }
+.tz-grade-input { width: 90px; text-align: center; font-weight: 600; }
+
+/* Yo'qlama: radio tugmalar o'rniga bosiladigan yorliqlar */
+.tz-att-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.tz-radio { position: absolute; opacity: 0; width: 0; height: 0; }
+.tz-att-label {
+    cursor: pointer; margin: 0; padding: 4px 10px; border-radius: 14px;
+    border: 1px solid #ced4da; font-size: .85em; line-height: 1.2;
+    background: #fff; color: #495057; user-select: none;
+}
+.tz-radio:checked + .tz-att-present { background: #d4edda; border-color: #28a745; color: #155724; font-weight: 600; }
+.tz-radio:checked + .tz-att-absent  { background: #f8d7da; border-color: #dc3545; color: #721c24; font-weight: 600; }
+.tz-radio:checked + .tz-att-late    { background: #fff3cd; border-color: #ffc107; color: #856404; font-weight: 600; }
+.tz-radio:checked + .tz-att-excused { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; font-weight: 600; }
+.tz-radio:focus + .tz-att-label { outline: 2px solid #0d6efd; outline-offset: 1px; }
+
+/* Jurnal setkasi */
+.tz-journal td, .tz-journal th { text-align: center; padding: 4px 6px; }
+.tz-journal td:first-child, .tz-journal th:first-child { text-align: left; min-width: 200px; }
+.tz-j-date { font-weight: 600; font-size: .9em; }
+.tz-g { display: inline-block; min-width: 24px; padding: 1px 5px; border-radius: 4px; }
+.tz-g-ok  { background: #d4edda; color: #155724; }
+.tz-g-mid { background: #fff3cd; color: #856404; }
+.tz-g-low { background: #f8d7da; color: #721c24; }
