@@ -150,9 +150,17 @@ if ($tahlil) {
     $d = $tahlil['data'];
     echo html_writer::start_div('card mb-3 tz-ai-card');
     echo html_writer::start_div('card-body');
-    echo html_writer::tag('h5', '🤖 ' . get_string('ai_analyse', 'local_targetzenit'));
 
-    // --- Xulosa
+    // --- Umumiy foiz
+    $um = $d['overall']['score'] ?? null;
+    $sarlavha = '🤖 ' . get_string('ai_analyse', 'local_targetzenit');
+    if ($um !== null) {
+        $rang = $um >= 75 ? 'success' : ($um >= 55 ? 'warning' : 'danger');
+        $sarlavha .= ' ' . html_writer::tag('span', $um . '%',
+            ['class' => 'badge badge-' . $rang . ' tz-ai-umumiy']);
+    }
+    echo html_writer::tag('h5', $sarlavha);
+
     if (!empty($d['summary'])) {
         echo html_writer::tag('p', s($d['summary']), ['class' => 'mb-3']);
     }
@@ -162,7 +170,7 @@ if ($tahlil) {
         $tm = $d['topic_match'];
         $ok = !empty($tm['covered']);
         echo html_writer::div(
-            html_writer::tag('span', $ok ? '✔ Mavzu o\'tildi' : '✖ Mavzu o\'tilmadi',
+            html_writer::tag('span', $ok ? "✔ Mavzu o'tildi" : "✖ Mavzu o'tilmadi",
                 ['class' => 'badge ' . ($ok ? 'badge-success' : 'badge-danger')]) . ' ' .
             (!empty($tm['actual_topic'])
                 ? html_writer::tag('span', 'Darsda: ' . s($tm['actual_topic']), ['class' => 'ml-2'])
@@ -172,16 +180,58 @@ if ($tahlil) {
         );
     }
 
-    // --- Dars tuzilishi
-    if (!empty($d['structure']) && is_array($d['structure'])) {
+    // --- Kategoriyalar (ICALT) — foizli chiziqlar
+    if (!empty($d['categories']) && is_array($d['categories'])) {
+        echo html_writer::tag('div',
+            "Baholash ramkasi: <b>ICALT</b> (xalqaro dars kuzatuvi) + Jahon banki <b>TEACH</b>",
+            ['class' => 'text-muted small mb-2']);
+
+        foreach ($d['categories'] as $c) {
+            $ball = (int) ($c['score'] ?? 0);
+            $ishonch = $c['confidence'] ?? 'medium';
+            $past = ($ishonch === 'low');
+            $rang = $past ? 'secondary' : ($ball >= 75 ? 'success' : ($ball >= 55 ? 'warning' : 'danger'));
+
+            echo html_writer::start_div('tz-cat');
+            echo html_writer::div(
+                html_writer::tag('span', s($c['name'] ?? $c['code'] ?? ''), ['class' => 'tz-cat-nom']) .
+                html_writer::tag('span', ($c['weight'] ?? 0) . '%', ['class' => 'tz-cat-vazn']) .
+                html_writer::tag('span', $past ? 'audio orqali baholanmadi' : $ball . '%',
+                    ['class' => 'tz-cat-ball text-' . $rang]),
+                'tz-cat-bosh');
+            echo html_writer::div(
+                html_writer::div('', 'tz-bar-ichi bg-' . $rang,
+                    ['style' => 'width:' . ($past ? 0 : $ball) . '%']),
+                'tz-bar');
+            if (!empty($c['actual_topic'])) {
+                echo html_writer::div('Darsda: ' . s($c['actual_topic']), 'tz-cat-dalil');
+            }
+            if (!empty($c['evidence'])) {
+                echo html_writer::div(s($c['evidence']), 'tz-cat-dalil');
+            }
+            if (!empty($c['advice'])) {
+                echo html_writer::div('→ ' . s($c['advice']), 'tz-cat-tavsiya');
+            }
+            echo html_writer::end_div();
+        }
+
+        if (!empty($d['overall']['chetda'])) {
+            echo html_writer::div(
+                "Hisobga olinmadi (audio orqali baholab bo'lmaydi): " .
+                s(implode(', ', $d['overall']['chetda'])) .
+                ". Umumiy foiz qolgan kategoriyalar bo'yicha hisoblangan.",
+                'text-muted small mt-2');
+        }
+    } else if (!empty($d['structure']) && is_array($d['structure'])) {
+        // Eski ko'rinishdagi tahlil (kategoriyalar joriy etilgunga qadar)
         $t = new html_table();
-        $t->head = ['Bosqich', 'Bo\'ldimi', 'Daqiqa', 'Izoh'];
+        $t->head = ['Bosqich', "Bo'ldimi", 'Daqiqa', 'Izoh'];
         $t->attributes['class'] = 'generaltable tz-ai-struct';
         foreach ($d['structure'] as $b) {
             $bor = !empty($b['present']);
             $t->data[] = [
                 s($b['stage'] ?? ''),
-                html_writer::tag('span', $bor ? 'ha' : 'yo\'q',
+                html_writer::tag('span', $bor ? 'ha' : "yo'q",
                     ['class' => $bor ? 'text-success' : 'text-danger']),
                 (int) ($b['minutes'] ?? 0),
                 html_writer::tag('span', s($b['note'] ?? ''), ['class' => 'small text-muted']),
@@ -190,27 +240,36 @@ if ($tahlil) {
         echo html_writer::table($t);
     }
 
-    // --- Nutq ulushi va til
-    if (!empty($d['speech'])) {
-        $sp = $d['speech'];
-        $qator = [];
-        if (isset($sp['teacher_pct'])) {
-            $qator[] = "O'qituvchi " . (int) $sp['teacher_pct'] . '% · o'
-                . "'quvchilar " . (int) ($sp['student_pct'] ?? 0) . '%';
+    // --- O'lchovlar (audio orqali ishonchli o'lchanadiganlar)
+    $m = $d['metrics'] ?? $d['speech'] ?? [];
+    if ($m) {
+        $q = [];
+        if (isset($m['teacher_talk_pct'])) {
+            $q[] = "O'qituvchi " . (int) $m['teacher_talk_pct'] . '% · o\'quvchilar '
+                . (int) ($m['student_talk_pct'] ?? 0) . '%';
         }
-        if (isset($sp['questions_asked'])) {
-            $qator[] = 'Savollar: ' . (int) $sp['questions_asked'] .
-                ', javob olingan: ' . (int) ($sp['answers_received'] ?? 0);
+        if (isset($m['questions_total'])) {
+            $q[] = 'Savollar: ' . (int) $m['questions_total'] .
+                (isset($m['open_questions']) ? ' (ochiq: ' . (int) $m['open_questions'] . ')' : '');
         }
-        if (!empty($sp['language']) && is_array($sp['language'])) {
+        if (isset($m['wait_time_avg_sec'])) {
+            $q[] = "Kutish vaqti: " . (int) $m['wait_time_avg_sec'] . ' s';
+        }
+        if (isset($m['students_addressed'])) {
+            $q[] = 'Murojaat qilingan o\'quvchi: ' . (int) $m['students_addressed'];
+        }
+        if (isset($m['on_task_pct'])) {
+            $q[] = "O'quv ishida: " . (int) $m['on_task_pct'] . '%';
+        }
+        if (!empty($m['language']) && is_array($m['language'])) {
             $til = [];
-            foreach ($sp['language'] as $k => $v) {
+            foreach ($m['language'] as $k => $v) {
                 $til[] = strtoupper(s($k)) . ' ' . (int) $v . '%';
             }
-            $qator[] = 'Til: ' . implode(' · ', $til);
+            $q[] = 'Til: ' . implode(' · ', $til);
         }
-        if ($qator) {
-            echo html_writer::div(implode('  |  ', $qator), 'tz-ai-speech mb-2');
+        if ($q) {
+            echo html_writer::div(implode('  |  ', $q), 'tz-ai-speech mt-3');
         }
     }
 
@@ -222,13 +281,13 @@ if ($tahlil) {
         }
         echo html_writer::tag('div',
             html_writer::tag('b', 'Tavsiyalar:') . html_writer::tag('ul', $li),
-            ['class' => 'mt-2']);
+            ['class' => 'mt-3']);
     }
 
-    // --- Transkript (yig'iladigan)
+    // --- Transkript
     if (!empty($tahlil['audio']->transcript)) {
         echo html_writer::start_tag('details', ['class' => 'mt-3']);
-        echo html_writer::tag('summary', 'To\'liq matn (transkript)', ['class' => 'tz-ai-summary']);
+        echo html_writer::tag('summary', "To'liq matn (transkript)", ['class' => 'tz-ai-summary']);
         echo html_writer::tag('pre', s($tahlil['audio']->transcript), ['class' => 'tz-transcript']);
         echo html_writer::end_tag('details');
     }
@@ -243,7 +302,7 @@ if ($tahlil) {
     if ($a && $a->status === 'ready') {
         echo $OUTPUT->notification(
             !empty($a->aierror)
-                ? 'Tahlil qilinmadi: ' . s($a->aierror) . ' — keyingi yurishda qayta urinadi.'
+                ? 'Tahlil qilinmadi: ' . s($a->aierror) . " — keyingi yurishda qayta urinadi."
                 : get_string('ai_pending', 'local_targetzenit') . ' — tahlil har 15 daqiqada ishlaydi.',
             !empty($a->aierror) ? 'warn' : 'info');
     }
