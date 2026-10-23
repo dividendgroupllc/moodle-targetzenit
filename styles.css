@@ -1,0 +1,22 @@
+/* Dars jadvali sahifasi */
+
+.tz-scroll { overflow-x: auto; }
+
+.tz-week td, .tz-all td { vertical-align: top; min-width: 130px; }
+.tz-week th { text-align: center; }
+
+.tz-subj { font-weight: 600; line-height: 1.25; }
+.tz-meta { font-size: .82em; color: #6a737d; line-height: 1.3; }
+
+.tz-day  { font-weight: 600; }
+.tz-date { font-size: .85em; color: #6a737d; }
+.tz-off  { font-size: .78em; color: #c0392b; }
+
+/* Bugungi ustun ajralib tursin */
+.tz-istoday { background: #fff6d9; border-radius: 4px; padding: 2px 4px; }
+
+/* Dars bo'lmaydigan kun kataklari */
+.tz-offcell { min-height: 1px; background: repeating-linear-gradient(
+    45deg, #fafafa, #fafafa 6px, #f0f0f0 6px, #f0f0f0 12px); }
+
+.tz-today td { vertical-align: middle; }
