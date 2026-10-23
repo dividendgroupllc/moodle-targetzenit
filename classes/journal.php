@@ -68,6 +68,18 @@ class journal {
     }
 
     /**
+     * HTML forma maydoni uchun kalit.
+     *
+     * DIQQAT: Moodle'ning `optional_param_array()` kalitlarda faqat
+     * [a-z0-9_-] ga ruxsat beradi va mos kelmaganini JIMGINA tashlab yuboradi
+     * (param.php). Shuning uchun ichki kalit "2026-10-27#3" bo'lsa ham,
+     * forma maydonida "20261027_3" ishlatiladi.
+     */
+    public static function pkey(array $l): string {
+        return str_replace('-', '', $l['date']) . '_' . (int) $l['lessonno'];
+    }
+
+    /**
      * Jadvaldagi rejalashtirilgan darslarga BAZADA bor, lekin jadvalga tushmagan
      * darslarni qo'shadi.
      *

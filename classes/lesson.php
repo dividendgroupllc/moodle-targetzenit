@@ -111,7 +111,14 @@ class lesson {
         if ($eski_baho === false || (string) $eski_baho !== (string) $grade) {
             $dars = $DB->get_record('local_targetzenit_lesson', ['id' => $lessonid]);
             if ($dars) {
-                gradebook::push($dars, $userid, $grade);
+                try {
+                    gradebook::push($dars, $userid, $grade);
+                } catch (\Throwable $e) {
+                    // Gradebook muammosi baho SAQLANISHINI to'smasligi kerak —
+                    // asosiy yozuv yuqorida allaqachon saqlangan.
+                    debugging('local_targetzenit: gradebook xatosi — ' . $e->getMessage(),
+                        DEBUG_DEVELOPER);
+                }
             }
         }
     }
@@ -135,15 +142,22 @@ class lesson {
             return;
         }
 
-        // Mavzu o'zgarsa — gradebook ustunining nomi ham yangilanadi
-        if (!$eski || $eski->topic !== $yangi->topic) {
-            gradebook::lesson_item($yangi);
-        }
+        try {
+            // Mavzu o'zgarsa — gradebook ustunining nomi ham yangilanadi
+            if (!$eski || $eski->topic !== $yangi->topic) {
+                gradebook::lesson_item($yangi);
+            }
 
-        // Uy vazifa yozilgan/o'zgargan bo'lsa — STANDART mod_assign yaratiladi
-        // yoki matni yangilanadi. Bo'sh bo'lsa hech narsa yaratilmaydi.
-        if (!$eski || $eski->homework !== $yangi->homework) {
-            homework::ensure($yangi);
+            // Uy vazifa yozilgan/o'zgargan bo'lsa — STANDART mod_assign yaratiladi
+            // yoki matni yangilanadi. Bo'sh bo'lsa hech narsa yaratilmaydi.
+            if (!$eski || $eski->homework !== $yangi->homework) {
+                homework::ensure($yangi);
+            }
+        } catch (\Throwable $e) {
+            // Mavzu va uy vazifa yuqorida saqlangan — qo'shimcha integratsiya
+            // yiqilsa ham o'qituvchining ishi yo'qolmasin.
+            debugging('local_targetzenit: gradebook/topshiriq xatosi — ' . $e->getMessage(),
+                DEBUG_DEVELOPER);
         }
     }
 

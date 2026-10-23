@@ -88,15 +88,15 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
 
     $xato = 0;
     foreach ($darslar as $l) {
-        $k = $l['key'];
+        $pk = journal::pkey($l);
         $dars = lesson::get_or_create($courseid, $l['date'], (int) $l['lessonno'], (int) $USER->id);
 
-        if (isset($mavzular[$k]) || isset($vazifalar[$k])) {
-            lesson::save_lesson((int) $dars->id, $mavzular[$k] ?? '', $vazifalar[$k] ?? '', (int) $USER->id);
+        if (isset($mavzular[$pk]) || isset($vazifalar[$pk])) {
+            lesson::save_lesson((int) $dars->id, $mavzular[$pk] ?? '', $vazifalar[$pk] ?? '', (int) $USER->id);
         }
 
         foreach ($students as $s) {
-            $nom = $k . ':' . $s->id;
+            $nom = $pk . '_' . $s->id;
             if (!isset($kataklar[$nom])) {
                 continue;
             }
@@ -218,7 +218,7 @@ foreach ($students as $s) {
         echo html_writer::tag('td',
             html_writer::empty_tag('input', [
                 'type' => 'text',
-                'name' => 'cell[' . $l['key'] . ':' . $s->id . ']',
+                'name' => 'cell[' . journal::pkey($l) . '_' . $s->id . ']',
                 'value' => journal::cell_text($rec),
                 'class' => 'tz-cell',
                 'maxlength' => 4,
@@ -251,12 +251,12 @@ foreach ($darslar as $i => $l) {
     echo html_writer::tag('td', html_writer::div(($i + 1) . '. ' . $sana, 'tz-meta'), ['class' => 'tz-m-sana']);
     echo html_writer::tag('td',
         html_writer::empty_tag('input', [
-            'type' => 'text', 'name' => 'topic[' . $l['key'] . ']',
+            'type' => 'text', 'name' => 'topic[' . journal::pkey($l) . ']',
             'value' => $dars->topic ?? '', 'class' => 'form-control form-control-sm mb-1',
             'placeholder' => 'Mavzu',
         ]) .
         html_writer::empty_tag('input', [
-            'type' => 'text', 'name' => 'homework[' . $l['key'] . ']',
+            'type' => 'text', 'name' => 'homework[' . journal::pkey($l) . ']',
             'value' => $dars->homework ?? '', 'class' => 'form-control form-control-sm tz-hw-input',
             'placeholder' => 'Uy vazifa',
         ]));
