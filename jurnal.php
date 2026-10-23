@@ -144,6 +144,26 @@ if (!$darslar) {
     exit;
 }
 
+// Bugungi kun shu chorakdami? Shunga qarab setka va mavzular ro'yxati
+// ochilganda o'zi bugungi joyga suriladi (eskisi skrol bilan ochiladi).
+$bugun = date('Y-m-d');
+$bugungi_kalit = null;
+foreach ($darslar as $l) {
+    if ($l['date'] === $bugun) {
+        $bugungi_kalit = $l['key'];
+        break;
+    }
+}
+// Bugun dars bo'lmasa (bayram/dam olish) — eng yaqin keyingi darsni olamiz
+if ($bugungi_kalit === null) {
+    foreach ($darslar as $l) {
+        if ($l['date'] >= $bugun) {
+            $bugungi_kalit = $l['key'];
+            break;
+        }
+    }
+}
+
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'term', 'value' => $termidx]);
@@ -161,9 +181,10 @@ echo html_writer::tag('th', '#', ['class' => 'tz-col-n']);
 echo html_writer::tag('th', "O'quvchi", ['class' => 'tz-col-ism']);
 foreach ($darslar as $l) {
     $sana = userdate(strtotime($l['date']), '%d.%m');
+    $bu = ($l['key'] === $bugungi_kalit);
     echo html_writer::tag('th',
         html_writer::div($sana, 'tz-j-date') . html_writer::div($l['lessonno'] . '-d', 'tz-meta'),
-        ['class' => 'tz-col-kun']);
+        ['class' => 'tz-col-kun' . ($bu ? ' tz-bugun-col' : '')] + ($bu ? ['id' => 'tz-bugun-ustun'] : []));
 }
 echo html_writer::end_tag('tr');
 echo html_writer::end_tag('thead');
@@ -187,7 +208,7 @@ foreach ($students as $s) {
                 'maxlength' => 4,
                 'autocomplete' => 'off',
             ]),
-            ['class' => 'tz-col-kun']);
+            ['class' => 'tz-col-kun' . ($l['key'] === $bugungi_kalit ? ' tz-bugun-col' : '')]);
     }
     echo html_writer::end_tag('tr');
 }
@@ -198,6 +219,7 @@ echo html_writer::end_div();
 // ---------------- O'NG: chorak mavzulari
 echo html_writer::start_div('tz-jurnal-mavzu');
 echo html_writer::tag('h5', 'Mavzular — ' . s($term->name));
+echo html_writer::start_div('tz-mavzu-scroll', ['id' => 'tz-mavzu-scroll']);
 echo html_writer::start_tag('table', ['class' => 'generaltable tz-mavzu']);
 echo html_writer::tag('thead',
     html_writer::tag('tr',
@@ -207,7 +229,9 @@ echo html_writer::start_tag('tbody');
 foreach ($darslar as $i => $l) {
     $dars = $darsyozuv[$l['key']] ?? null;
     $sana = userdate(strtotime($l['date']), '%d.%m') . ' · ' . $l['lessonno'] . '-d';
-    echo html_writer::start_tag('tr');
+    $bu = ($l['key'] === $bugungi_kalit);
+    echo html_writer::start_tag('tr',
+        ['class' => $bu ? 'tz-bugun-qator' : ''] + ($bu ? ['id' => 'tz-bugun-mavzu'] : []));
     echo html_writer::tag('td', html_writer::div(($i + 1) . '. ' . $sana, 'tz-meta'), ['class' => 'tz-m-sana']);
     echo html_writer::tag('td',
         html_writer::empty_tag('input', [
@@ -224,9 +248,37 @@ foreach ($darslar as $i => $l) {
 }
 echo html_writer::end_tag('tbody');
 echo html_writer::end_tag('table');
-echo html_writer::end_div();
+echo html_writer::end_div();   // tz-mavzu-scroll
+echo html_writer::end_div();   // tz-jurnal-mavzu
 
 echo html_writer::end_div();   // wrap
+
+// Ochilganda bugungi kunga surish. Sahifa umuman pastga sakramasligi uchun
+// scrollIntoView ishlatilmaydi — faqat ichki qutilar suriladi.
+if ($bugungi_kalit !== null) {
+    $PAGE->requires->js_amd_inline("
+        require([], function() {
+            var surish = function() {
+                var ustun = document.getElementById('tz-bugun-ustun');
+                var setka = document.querySelector('.tz-jurnal-grid');
+                if (ustun && setka) {
+                    var qotgan = 224;   // chapdagi sticky ustunlar kengligi
+                    setka.scrollLeft = Math.max(0, ustun.offsetLeft - qotgan - 40);
+                }
+                var qator = document.getElementById('tz-bugun-mavzu');
+                var quti = document.getElementById('tz-mavzu-scroll');
+                if (qator && quti) {
+                    quti.scrollTop = Math.max(0, qator.offsetTop - quti.offsetTop - 30);
+                }
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', surish);
+            } else {
+                surish();
+            }
+        });
+    ");
+}
 
 echo html_writer::div(
     html_writer::empty_tag('input', ['type' => 'submit', 'value' => get_string('savechanges'),
