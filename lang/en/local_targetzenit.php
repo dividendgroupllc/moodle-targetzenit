@@ -71,3 +71,5 @@ $string['ai_analyse'] = 'Dars tahlili';
 $string['ai_pending'] = 'Tahlil navbatda';
 $string['ai_running'] = 'Tahlil qilinmoqda';
 $string['ai_task'] = 'Dars yozuvlarini AI bilan tahlil qilish';
+
+$string['recordings'] = 'Dars yozuvlari';

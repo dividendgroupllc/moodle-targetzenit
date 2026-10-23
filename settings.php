@@ -49,4 +49,12 @@ if ($hassiteconfig) {
         get_string('ai_perrun_desc', 'local_targetzenit'), 3, PARAM_INT));
 
     $ADMIN->add('localplugins', $settings);
+
+    // Yozuvlar ro'yxati — admin panelidan ochiladigan alohida sahifa
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_targetzenit_yozuvlar',
+        get_string('recordings', 'local_targetzenit'),
+        new moodle_url('/local/targetzenit/yozuvlar.php'),
+        'local/targetzenit:viewanalysis'
+    ));
 }
