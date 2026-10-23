@@ -12,7 +12,7 @@ ichida bo'ladi — shunda Moodle'ni yangilash (git pull) xavfsiz qoladi.
 | Frankenstyle nomi | `local_targetzenit` |
 | Serverdagi joyi | `/opt/moodle/public/local/targetzenit` |
 | Moodle | 5.3+ (`$plugin->requires = 2026100500`) |
-| Sayt | https://moodle.erpcontrol.uz |
+| Sayt | https://lms.target.erpcontrol.uz |
 
 ## Nima uchun kerak
 
