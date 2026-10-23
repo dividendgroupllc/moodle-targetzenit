@@ -86,5 +86,27 @@
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_audio" COMMENT="Dars audio yozuvi. Audio VAQTINCHALIK — transkriptdan keyin yoki muddat o'tgach o'chadi, matn qoladi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="lessonid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="recording" SEQUENCE="false" COMMENT="recording|ready|transcribed|deleted|failed"/>
+        <FIELD NAME="filename" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="filesize" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="duration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="soniya"/>
+        <FIELD NAME="mimetype" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="transcript" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI transkripti — audio o'chgandan keyin ham qoladi"/>
+        <FIELD NAME="teacherid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="lessonid" UNIQUE="true" FIELDS="lessonid"/>
+        <INDEX NAME="status_time" UNIQUE="false" FIELDS="status, timecreated"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

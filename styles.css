@@ -99,3 +99,8 @@
 .tz-jgrid thead th.tz-bugun-col { box-shadow: inset 0 -3px 0 #e0a800; }
 .tz-bugun-qator > td { background: #fff6d9; }
 .tz-bugun-qator .tz-m-sana { font-weight: 700; }
+
+/* ---------------- Dars audio yozuvi ---------------- */
+.hidden { display: none !important; }
+.tz-audio-card { border-left: 4px solid #dc3545; }
+.tz-audio-holat { font-weight: 600; min-height: 1.4em; }

@@ -36,3 +36,17 @@ $string['comment'] = 'Izoh';
 $string['journal'] = 'Jurnal — oldingi darslar';
 $string['average'] = "O'rtacha";
 $string['openlesson'] = 'Darsni ochish';
+
+// Dars audiosi
+$string['audio_settings'] = 'Dars audio yozuvi';
+$string['audio_enabled'] = 'Audio yozuvni yoqish';
+$string['audio_enabled_desc'] = "O'qituvchi dars sahifasida yozishni boshlay oladi.";
+$string['audio_retention'] = 'Saqlash muddati (kun)';
+$string['audio_retention_desc'] = "Shu kundan oshgan audio AVTOMATIK o'chiriladi — transkript qilingan yoki qilinmaganidan qat'i nazar. Transkript matni o'chmaydi. Sabab: haftasiga ~7.5 GB audio to'planadi, disk to'lib qolmasligi kerak.";
+$string['audio_maxmb'] = 'Bitta yozuv uchun chegara (MB)';
+$string['audio_maxmb_desc'] = "Shu hajmdan oshsa yozish to'xtaydi. 24 kbps da 120 MB ~ 11 soat.";
+$string['audio_record'] = 'Darsni yozib olish';
+$string['audio_stop'] = "To'xtatish va saqlash";
+$string['audio_recording'] = 'Yozilmoqda';
+$string['audio_ready'] = 'Yozuv saqlandi';
+$string['audio_cleanup'] = "Muddati o'tgan dars audiolarini o'chirish";

@@ -93,5 +93,30 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102302, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026102400) {
+
+        // --- Dars audio yozuvi ---
+        $table = new xmldb_table('local_targetzenit_audio');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'recording');
+        $table->add_field('filename', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('filesize', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('duration', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('mimetype', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+        $table->add_field('transcript', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('teacherid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('lessonid', XMLDB_INDEX_UNIQUE, ['lessonid']);
+        $table->add_index('status_time', XMLDB_INDEX_NOTUNIQUE, ['status', 'timecreated']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026102400, 'local', 'targetzenit');
+    }
+
     return true;
 }

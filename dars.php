@@ -75,6 +75,76 @@ echo html_writer::div(
     'mb-3'
 );
 
+// ------------------------------------------------------- DARS AUDIO YOZUVI
+// Panel FORMADAN TASHQARIDA: tugmalar forma ichida bo'lsa uni yuborib yuborardi.
+if (get_config('local_targetzenit', 'audioenabled')) {
+    $yozuv = \local_targetzenit\audio::get((int) $dars->id);
+    $kun = (int) (get_config('local_targetzenit', 'audioretentiondays') ?: 15);
+
+    echo html_writer::start_div('card mb-3 tz-audio-card');
+    echo html_writer::start_div('card-body');
+
+    if ($yozuv && $yozuv->status === 'ready') {
+        $url = \local_targetzenit\audio::file_url((int) $dars->id, $context);
+        echo html_writer::tag('div',
+            '🎙 ' . get_string('audio_ready', 'local_targetzenit') . ' — ' .
+            gmdate('H:i:s', (int) $yozuv->duration) . ', ' .
+            number_format($yozuv->filesize / 1048576, 1) . ' MB',
+            ['class' => 'font-weight-bold mb-2']);
+        if ($url) {
+            echo html_writer::tag('audio', '', ['src' => $url->out(false), 'controls' => 'controls',
+                'preload' => 'none', 'class' => 'w-100 mb-2']);
+        }
+        echo html_writer::tag('div',
+            "Audio {$kun} kundan keyin avtomatik o'chadi (tahlil matni saqlanib qoladi).",
+            ['class' => 'text-muted small']);
+        echo html_writer::tag('button', get_string('audio_record', 'local_targetzenit') . ' (qaytadan)',
+            ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-outline-secondary btn-sm mt-2']);
+        echo html_writer::tag('button', get_string('audio_stop', 'local_targetzenit'),
+            ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-danger btn-sm mt-2 hidden']);
+    } else if ($yozuv && $yozuv->status === 'deleted') {
+        echo html_writer::tag('div', "🎙 Audio muddati o'tgani uchun o'chirilgan.",
+            ['class' => 'text-muted mb-2']);
+        echo html_writer::tag('button', get_string('audio_record', 'local_targetzenit'),
+            ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-outline-secondary btn-sm']);
+        echo html_writer::tag('button', get_string('audio_stop', 'local_targetzenit'),
+            ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-danger btn-sm hidden']);
+    } else {
+        echo html_writer::tag('button',
+            '🎙 ' . get_string('audio_record', 'local_targetzenit'),
+            ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-danger btn-lg']);
+        echo html_writer::tag('button',
+            '■ ' . get_string('audio_stop', 'local_targetzenit'),
+            ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-dark btn-lg hidden']);
+        echo html_writer::tag('div',
+            "Dars boshida bosing. Yozuv har 15 soniyada serverga yuboriladi — " .
+            "brauzer yopilsa ham yozilgani saqlanib qoladi. Audio {$kun} kundan keyin o'chadi.",
+            ['class' => 'text-muted small mt-2']);
+    }
+
+    echo html_writer::tag('div', '', ['id' => 'tz-audio-holat', 'class' => 'tz-audio-holat mt-2']);
+    echo html_writer::end_div();
+    echo html_writer::end_div();
+
+    $PAGE->requires->js(new moodle_url('/local/targetzenit/js/recorder.js'));
+    $PAGE->requires->js_amd_inline("
+        require([], function() {
+            var boshla = function() {
+                if (window.tzAudioInit) {
+                    window.tzAudioInit({
+                        ajaxurl: '" . (new moodle_url('/local/targetzenit/ajax.php'))->out(false) . "',
+                        lessonid: " . (int) $dars->id . ",
+                        sesskey: '" . sesskey() . "'
+                    });
+                } else {
+                    setTimeout(boshla, 200);
+                }
+            };
+            boshla();
+        });
+    ");
+}
+
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'saqla', 'value' => 1]);
