@@ -38,6 +38,12 @@ class push_timetable extends external_api {
                 ]),
                 'Dars jadvali qatorlari'
             ),
+            'mode' => new external_value(
+                PARAM_ALPHA,
+                "replace = shu o'quv yilini o'chirib yangidan yozish, append = ustiga qo'shish",
+                VALUE_DEFAULT,
+                'replace'
+            ),
             'calendar' => new external_multiple_structure(
                 new external_single_structure([
                     'entrytype' => new external_value(PARAM_ALPHA, 'term yoki holiday'),
@@ -52,12 +58,14 @@ class push_timetable extends external_api {
         ]);
     }
 
-    public static function execute(string $academicyear, array $lessons, array $calendar = []): array {
+    public static function execute(string $academicyear, array $lessons,
+                                   string $mode = 'replace', array $calendar = []): array {
         global $DB;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'academicyear' => $academicyear,
             'lessons' => $lessons,
+            'mode' => $mode,
             'calendar' => $calendar,
         ]);
 
@@ -70,8 +78,12 @@ class push_timetable extends external_api {
 
         $transaction = $DB->start_delegated_transaction();
 
-        // --- Dars jadvali: shu o'quv yilini butunlay almashtiramiz
-        $DB->delete_records('local_targetzenit_timetable', ['academicyear' => $year]);
+        // --- Dars jadvali
+        // PHP'ning max_input_vars chegarasi tufayli Frappe jadvalni bo'lib yuboradi:
+        // birinchi bo'lak 'replace' (eskisini o'chiradi), qolganlari 'append'.
+        if ($params['mode'] === 'replace') {
+            $DB->delete_records('local_targetzenit_timetable', ['academicyear' => $year]);
+        }
         $rows = [];
         foreach ($params['lessons'] as $l) {
             $rows[] = (object) [
