@@ -161,7 +161,16 @@
                         if (!j.ok) { throw new Error(j.error || 'saqlab bo\'lmadi'); }
                         var mb = (j.filesize / 1048576).toFixed(1);
                         self.holat('✔ Saqlandi — ' + fmtVaqt(davomiylik) + ', ' + mb + ' MB', 'text-success');
-                        setTimeout(function () { window.location.reload(); }, 1200);
+                        if (self.cfg.popup) {
+                            // Alohida oynada: sahifani yangilamaymiz, chunki
+                            // asosiy oynada o'qituvchi ishlayotgan bo'lishi mumkin
+                            var b = qs('tz-audio-start');
+                            if (b) { b.classList.remove('hidden'); b.textContent = '🎙 Qaytadan yozish'; }
+                            var b2 = qs('tz-audio-stop');
+                            if (b2) { b2.classList.add('hidden'); b2.disabled = false; }
+                        } else {
+                            setTimeout(function () { window.location.reload(); }, 1200);
+                        }
                     })
                     .catch(function (e) {
                         self.holat('Xato: ' + e.message, 'text-danger');

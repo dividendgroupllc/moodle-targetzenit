@@ -67,6 +67,38 @@ class journal {
         return $out;
     }
 
+    /**
+     * Jadvaldagi rejalashtirilgan darslarga BAZADA bor, lekin jadvalga tushmagan
+     * darslarni qo'shadi.
+     *
+     * NEGA KERAK: jurnal faqat jadval bo'yicha ustun chizsa, jadvaldan tashqarida
+     * yozilgan baho KO'RINMAY qoladi. Bunday hol oson yuzaga keladi — masalan
+     * dars sahifasiga jadvaldan emas, to'g'ridan-to'g'ri kirilsa dars raqami
+     * boshqacha bo'ladi, yoki jadval keyin o'zgaradi. Jurnal hech qachon mavjud
+     * ma'lumotni yashirmasligi kerak.
+     */
+    public static function merge_actual(array $darslar, array $darsyozuv): array {
+        $bor = [];
+        foreach ($darslar as $l) {
+            $bor[$l['key']] = true;
+        }
+        foreach ($darsyozuv as $kalit => $r) {
+            if (isset($bor[$kalit])) {
+                continue;
+            }
+            $darslar[] = [
+                'date' => $r->lessondate,
+                'lessonno' => (int) $r->lessonno,
+                'key' => $kalit,
+                'jadvaldan_tashqari' => true,
+            ];
+        }
+        usort($darslar, function($a, $b) {
+            return [$a['date'], $a['lessonno']] <=> [$b['date'], $b['lessonno']];
+        });
+        return $darslar;
+    }
+
     /** Shu kursning chorakdagi dars yozuvlari: ['YYYY-MM-DD#n' => record] */
     public static function lesson_records(int $courseid, string $start, string $end): array {
         global $DB;

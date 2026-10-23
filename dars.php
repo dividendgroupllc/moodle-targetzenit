@@ -9,7 +9,7 @@ use local_targetzenit\timetable;
 
 $courseid = required_param('courseid', PARAM_INT);
 $date = optional_param('date', date('Y-m-d'), PARAM_TEXT);
-$lessonno = optional_param('lessonno', 1, PARAM_INT);
+$lessonno = optional_param('lessonno', 0, PARAM_INT);
 
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
     $date = date('Y-m-d');
@@ -27,6 +27,18 @@ $PAGE->set_url(new moodle_url('/local/targetzenit/dars.php',
 $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(format_string($course->fullname));
 $PAGE->set_heading(format_string($course->fullname));
+
+// Dars raqami berilmagan bo'lsa (jadvaldan emas, to'g'ridan-to'g'ri kirilgan)
+// uni JADVALDAN aniqlaymiz. Aks holda hamma narsa "1-dars" ostiga yozilib,
+// chorak jurnalidagi to'g'ri ustunda ko'rinmay qolardi.
+if ($lessonno < 1) {
+    $dow = (int) date('N', strtotime($date));
+    $jadval = $DB->get_fieldset_select('local_targetzenit_timetable', 'lessonno',
+        'courseidnumber = :c AND dayno = :d',
+        ['c' => $course->idnumber, 'd' => $dow]);
+    sort($jadval);
+    $lessonno = $jadval ? (int) $jadval[0] : 1;
+}
 
 $dars = lesson::get_or_create($courseid, $date, $lessonno, (int) $USER->id);
 $students = lesson::students($context);
@@ -76,15 +88,20 @@ echo html_writer::div(
 );
 
 // ------------------------------------------------------- DARS AUDIO YOZUVI
-// Panel FORMADAN TASHQARIDA: tugmalar forma ichida bo'lsa uni yuborib yuborardi.
+// Yozuv ALOHIDA OYNADA ochiladi: shu sahifada baho saqlanganda yoki jurnalga
+// o'tilganda sahifa qayta yuklanadi va yozuv uzilib qolardi.
 if (get_config('local_targetzenit', 'audioenabled')) {
     $yozuv = \local_targetzenit\audio::get((int) $dars->id);
     $kun = (int) (get_config('local_targetzenit', 'audioretentiondays') ?: 15);
+    $recurl = new moodle_url('/local/targetzenit/rec.php', ['lessonid' => $dars->id]);
 
     echo html_writer::start_div('card mb-3 tz-audio-card');
     echo html_writer::start_div('card-body');
 
-    if ($yozuv && $yozuv->status === 'ready') {
+    if ($yozuv && $yozuv->status === 'recording') {
+        echo html_writer::tag('div', '● Yozuv ochiq — alohida oynada davom etmoqda.',
+            ['class' => 'text-danger font-weight-bold mb-2']);
+    } else if ($yozuv && $yozuv->status === 'ready') {
         $url = \local_targetzenit\audio::file_url((int) $dars->id, $context);
         echo html_writer::tag('div',
             '🎙 ' . get_string('audio_ready', 'local_targetzenit') . ' — ' .
@@ -95,52 +112,34 @@ if (get_config('local_targetzenit', 'audioenabled')) {
             echo html_writer::tag('audio', '', ['src' => $url->out(false), 'controls' => 'controls',
                 'preload' => 'none', 'class' => 'w-100 mb-2']);
         }
-        echo html_writer::tag('div',
-            "Audio {$kun} kundan keyin avtomatik o'chadi (tahlil matni saqlanib qoladi).",
-            ['class' => 'text-muted small']);
-        echo html_writer::tag('button', get_string('audio_record', 'local_targetzenit') . ' (qaytadan)',
-            ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-outline-secondary btn-sm mt-2']);
-        echo html_writer::tag('button', get_string('audio_stop', 'local_targetzenit'),
-            ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-danger btn-sm mt-2 hidden']);
     } else if ($yozuv && $yozuv->status === 'deleted') {
-        echo html_writer::tag('div', "🎙 Audio muddati o'tgani uchun o'chirilgan.",
+        echo html_writer::tag('div', "🎙 Audio muddati o'tgani uchun o'chirilgan (tahlil matni qoldi).",
             ['class' => 'text-muted mb-2']);
-        echo html_writer::tag('button', get_string('audio_record', 'local_targetzenit'),
-            ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-outline-secondary btn-sm']);
-        echo html_writer::tag('button', get_string('audio_stop', 'local_targetzenit'),
-            ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-danger btn-sm hidden']);
-    } else {
-        echo html_writer::tag('button',
-            '🎙 ' . get_string('audio_record', 'local_targetzenit'),
-            ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-danger btn-lg']);
-        echo html_writer::tag('button',
-            '■ ' . get_string('audio_stop', 'local_targetzenit'),
-            ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-dark btn-lg hidden']);
-        echo html_writer::tag('div',
-            "Dars boshida bosing. Yozuv har 15 soniyada serverga yuboriladi — " .
-            "brauzer yopilsa ham yozilgani saqlanib qoladi. Audio {$kun} kundan keyin o'chadi.",
-            ['class' => 'text-muted small mt-2']);
     }
 
-    echo html_writer::tag('div', '', ['id' => 'tz-audio-holat', 'class' => 'tz-audio-holat mt-2']);
+    echo html_writer::tag('button',
+        ($yozuv && $yozuv->status === 'ready') ? '🎙 Qaytadan yozish' : '🎙 Darsni yozib olish',
+        ['type' => 'button', 'id' => 'tz-rec-open',
+         'class' => ($yozuv && $yozuv->status === 'ready') ? 'btn btn-outline-secondary' : 'btn btn-danger btn-lg',
+         'data-url' => $recurl->out(false)]);
+
+    echo html_writer::tag('div',
+        "Yozuv <b>alohida oynada</b> ochiladi — u ochiq turganda bu sahifada " .
+        "yo'qlama qilish, baho qo'yish va jurnalga o'tish mumkin, yozuv uzilmaydi. " .
+        "Audio {$kun} kun saqlanadi.",
+        ['class' => 'text-muted small mt-2']);
+
     echo html_writer::end_div();
     echo html_writer::end_div();
 
-    $PAGE->requires->js(new moodle_url('/local/targetzenit/js/recorder.js'));
     $PAGE->requires->js_amd_inline("
         require([], function() {
-            var boshla = function() {
-                if (window.tzAudioInit) {
-                    window.tzAudioInit({
-                        ajaxurl: '" . (new moodle_url('/local/targetzenit/ajax.php'))->out(false) . "',
-                        lessonid: " . (int) $dars->id . ",
-                        sesskey: '" . sesskey() . "'
-                    });
-                } else {
-                    setTimeout(boshla, 200);
-                }
-            };
-            boshla();
+            var b = document.getElementById('tz-rec-open');
+            if (!b) { return; }
+            b.addEventListener('click', function() {
+                window.open(b.getAttribute('data-url'), 'tzrec',
+                    'width=420,height=460,menubar=no,toolbar=no,location=no');
+            });
         });
     ");
 }

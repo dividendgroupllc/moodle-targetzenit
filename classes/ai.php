@@ -27,12 +27,20 @@ class ai {
             && trim((string) get_config('local_targetzenit', 'geminikey')) !== '';
     }
 
-    /** Tahlil kutayotgan yozuvlar (audio bor, tahlil yo'q). */
+    /**
+     * Tahlil kutayotgan yozuvlar (audio bor, tahlil yo'q).
+     *
+     * Xato bergan yozuvga DARHOL qayta urinilmaydi — 1 soat kutiladi.
+     * Aks holda doimiy xato (masalan fayl buzuq) har 15 daqiqada kvotani
+     * behuda yeb ketardi.
+     */
     public static function pending(int $limit): array {
         global $DB;
         return $DB->get_records_select('local_targetzenit_audio',
-            "status = 'ready' AND (analysis IS NULL OR analysis = '') AND filesize > 0",
-            [], 'timecreated ASC', '*', 0, $limit);
+            "status = 'ready' AND (analysis IS NULL OR analysis = '') AND filesize > 0
+             AND (aierror IS NULL OR aierror = '' OR timemodified < :chegara)",
+            ['chegara' => time() - HOURSECS],
+            'timecreated ASC', '*', 0, $limit);
     }
 
     /** Bitta yozuvni tahlil qiladi. Qaytaradi: muvaffaqiyatlimi. */

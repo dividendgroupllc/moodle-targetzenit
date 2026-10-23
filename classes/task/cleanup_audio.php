@@ -16,6 +16,13 @@ class cleanup_audio extends \core\task\scheduled_task {
     }
 
     public function execute(): void {
+        // Avval tashlab ketilgan yozuvlarni yakunlaymiz — ular yo'qolmasin
+        $y = \local_targetzenit\audio::finalize_stale();
+        if ($y['yakunlandi'] || $y['tashlandi']) {
+            mtrace("local_targetzenit: tashlab ketilgan yozuv — {$y['yakunlandi']} yakunlandi, "
+                . "{$y['tashlandi']} bo'sh sessiya tozalandi");
+        }
+
         $n = \local_targetzenit\audio::cleanup();
         if ($n['soni']) {
             mtrace(sprintf("local_targetzenit: %d ta dars audiosi o'chirildi, %.1f MB bo'shadi",

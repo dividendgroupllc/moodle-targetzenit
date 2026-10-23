@@ -187,6 +187,65 @@ class audio {
         }
     }
 
+    /**
+     * Tashlab ketilgan yozuvlarni yakunlash.
+     *
+     * O'qituvchi "To'xtatish" ni bosmay brauzerni yopsa yoki sahifa qayta
+     * yuklansa, bo'laklar serverda qolib ketadi. Shu vazifa ularni fayl qilib
+     * yig'adi — aks holda yozilgan dars behuda yo'qolardi.
+     *
+     * @param int $jimlik_daqiqa oxirgi bo'lakdan keyin shuncha daqiqa o'tgan bo'lsa
+     */
+    public static function finalize_stale(int $jimlik_daqiqa = 20): array {
+        global $DB;
+
+        $ochiq = $DB->get_records('local_targetzenit_audio', ['status' => 'recording']);
+        $yakunlandi = 0;
+        $tashlandi = 0;
+
+        foreach ($ochiq as $a) {
+            $dir = self::tempdir((int) $a->lessonid);
+            $bolaklar = glob($dir . '/*.part') ?: [];
+
+            if (!$bolaklar) {
+                // Bo'lak umuman kelmagan — bo'sh sessiya, tozalaymiz
+                if ($a->timemodified < time() - ($jimlik_daqiqa * MINSECS)) {
+                    $DB->delete_records('local_targetzenit_audio', ['id' => $a->id]);
+                    $tashlandi++;
+                }
+                continue;
+            }
+
+            // Oxirgi bo'lak qachon kelgan?
+            $oxirgi = 0;
+            foreach ($bolaklar as $b) {
+                $oxirgi = max($oxirgi, (int) filemtime($b));
+            }
+            if ($oxirgi > time() - ($jimlik_daqiqa * MINSECS)) {
+                continue;   // hali yozilyapti — tegmaymiz
+            }
+
+            $dars = $DB->get_record('local_targetzenit_lesson', ['id' => $a->lessonid], 'id, courseid');
+            if (!$dars) {
+                continue;
+            }
+            $ctx = \context_course::instance($dars->courseid, IGNORE_MISSING);
+            if (!$ctx) {
+                continue;
+            }
+
+            try {
+                // Davomiylik: bo'laklar soni x 15 soniya (taxminiy)
+                self::finish((int) $a->lessonid, $ctx, count($bolaklar) * 15);
+                $yakunlandi++;
+            } catch (\Throwable $e) {
+                debugging('local_targetzenit: yakunlab bo\'lmadi — ' . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
+        return ['yakunlandi' => $yakunlandi, 'tashlandi' => $tashlandi];
+    }
+
     /** Faylga havola (faqat ruxsati borlarga). */
     public static function file_url(int $lessonid, \context $context): ?\moodle_url {
         $rec = self::get($lessonid);

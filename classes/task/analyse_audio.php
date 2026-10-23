@@ -15,6 +15,14 @@ class analyse_audio extends \core\task\scheduled_task {
     }
 
     public function execute(): void {
+        // 1) Tashlab ketilgan yozuvlarni yakunlaymiz (sahifa qayta yuklangan,
+        //    brauzer yopilgan hollar). Bu AI'dan QAT'I NAZAR bajariladi.
+        $y = \local_targetzenit\audio::finalize_stale();
+        if ($y['yakunlandi']) {
+            mtrace("local_targetzenit: {$y['yakunlandi']} ta tashlab ketilgan yozuv yakunlandi");
+        }
+
+        // 2) Tahlil
         if (!\local_targetzenit\ai::enabled()) {
             mtrace('local_targetzenit: AI tahlil o\'chirilgan yoki kalit yo\'q');
             return;

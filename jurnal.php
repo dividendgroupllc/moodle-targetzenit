@@ -46,6 +46,12 @@ $term = $terms[$termidx];
 
 $holidays = timetable::holidays($year);
 $darslar = journal::lessons_in_term($course->idnumber, $term->startdate, $term->enddate, $holidays);
+
+// Bazada bor, lekin jadvalga tushmagan darslar ham ko'rinsin — aks holda
+// ularga qo'yilgan baho jurnalda yo'qolib qoladi.
+$darslar = journal::merge_actual($darslar,
+    journal::lesson_records($courseid, $term->startdate, $term->enddate));
+
 $students = lesson::students($context);
 
 // ------------------------------------------------------------ EXCEL YUKLASH
@@ -184,9 +190,13 @@ echo html_writer::tag('th', "O'quvchi", ['class' => 'tz-col-ism']);
 foreach ($darslar as $l) {
     $sana = userdate(strtotime($l['date']), '%d.%m');
     $bu = ($l['key'] === $bugungi_kalit);
+    $tashqari = !empty($l['jadvaldan_tashqari']);
     echo html_writer::tag('th',
-        html_writer::div($sana, 'tz-j-date') . html_writer::div($l['lessonno'] . '-d', 'tz-meta'),
-        ['class' => 'tz-col-kun' . ($bu ? ' tz-bugun-col' : '')] + ($bu ? ['id' => 'tz-bugun-ustun'] : []));
+        html_writer::div($sana, 'tz-j-date') .
+        html_writer::div($l['lessonno'] . '-d' . ($tashqari ? ' *' : ''), 'tz-meta'),
+        ['class' => 'tz-col-kun' . ($bu ? ' tz-bugun-col' : '') . ($tashqari ? ' tz-tashqari' : ''),
+         'title' => $tashqari ? "Jadvalda yo'q, lekin yozuv bor" : ''] +
+        ($bu ? ['id' => 'tz-bugun-ustun'] : []));
 }
 echo html_writer::end_tag('tr');
 echo html_writer::end_tag('thead');

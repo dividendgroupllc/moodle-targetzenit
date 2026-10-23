@@ -151,3 +151,11 @@
     white-space: pre-wrap; max-height: 420px; overflow-y: auto;
     background: #fafafa; padding: 10px; border-radius: 4px; font-size: .9em;
 }
+
+/* Yozuv oynasi (popup) */
+.tz-rec-popup { padding: 16px; max-width: 380px; }
+.tz-rec-bosh { font-weight: 600; line-height: 1.3; }
+.tz-rec-popup .btn-block { width: 100%; }
+
+/* Jadvalda yo'q, lekin yozuvi bor dars ustuni */
+.tz-tashqari { background: #f3f0ff; }
