@@ -118,5 +118,24 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102400, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026102500) {
+
+        // Baholar endi Moodle gradebook'iga ham yoziladi, uy vazifa esa
+        // mod_assign bo'lib yaratiladi — ikkalasining havolasi shu yerda.
+        $table = new xmldb_table('local_targetzenit_lesson');
+
+        $field = new xmldb_field('gradeitemid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'teacherid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('assigncmid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'gradeitemid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026102500, 'local', 'targetzenit');
+    }
+
     return true;
 }

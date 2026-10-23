@@ -78,7 +78,22 @@ $select = new single_select(
     new moodle_url('/local/targetzenit/baholarim.php', ['userid' => $userid]),
     'term', $options, $termidx);
 $select->set_label('Chorak: ');
-echo html_writer::div($OUTPUT->render($select), 'mb-3');
+echo html_writer::div($OUTPUT->render($select), 'mb-2');
+
+// Asosiy manba — Moodle'ning STANDART baholar hisoboti. Bu sahifa esa
+// qulaylik: baholar, davomat va uy vazifa bir joyda, chorak kesimida.
+echo html_writer::div(
+    html_writer::link(
+        new moodle_url('/grade/report/overview/index.php', ['userid' => $userid]),
+        '📊 Moodle baholar hisoboti (barcha kurslar)',
+        ['class' => 'btn btn-sm btn-outline-primary mr-2']) .
+    html_writer::tag('span',
+        'Baholar Moodle gradebook\'ida saqlanadi — mobil ilovada va standart ' .
+        'hisobotlarda ham ko\'rinadi. Bu sahifa qulaylik uchun: baho, davomat ' .
+        'va uy vazifa bir joyda.',
+        ['class' => 'text-muted small']),
+    'mb-3'
+);
 
 $fanlar = student_view::grades((int) $userid, $term->startdate, $term->enddate);
 
@@ -139,6 +154,11 @@ echo html_writer::tag('h4', 'Uy vazifalar', ['class' => 'mt-4']);
 if (!$vazifalar) {
     echo $OUTPUT->notification('Yaqin kunlarda uy vazifa yozilmagan.', 'info');
 } else {
+    echo html_writer::tag('p',
+        'Har uy vazifa Moodle\'da <b>topshiriq</b> sifatida ham ochiladi — ' .
+        'kurs sahifasida, boshqaruv panelidagi "Timeline" da va kalendarda ' .
+        'ko\'rinadi, o\'sha yerdan topshiriladi.',
+        ['class' => 'text-muted small']);
     $t = new html_table();
     $t->head = ['Sana', 'Fan', 'Mavzu', 'Uy vazifa'];
     $t->attributes['class'] = 'generaltable';

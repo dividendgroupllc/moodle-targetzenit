@@ -58,6 +58,8 @@
         <FIELD NAME="topic" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Dars mavzusi"/>
         <FIELD NAME="homework" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Uy vazifa"/>
         <FIELD NAME="teacherid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Kim yozdi"/>
+        <FIELD NAME="gradeitemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Moodle gradebook'dagi baho ustuni"/>
+        <FIELD NAME="assigncmid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Uy vazifa uchun yaratilgan mod_assign (course module id)"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
