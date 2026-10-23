@@ -68,7 +68,10 @@ echo html_writer::div(
 // Jadvalga qaytish havolasi
 echo html_writer::div(
     html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'today', 'date' => $date]),
-        '← ' . get_string('timetable', 'local_targetzenit'), ['class' => 'btn btn-sm btn-outline-secondary']),
+        '← ' . get_string('timetable', 'local_targetzenit'),
+        ['class' => 'btn btn-sm btn-outline-secondary mr-2']) .
+    html_writer::link(new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
+        'Chorak jurnali', ['class' => 'btn btn-sm btn-outline-primary']),
     'mb-3'
 );
 
