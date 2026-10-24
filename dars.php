@@ -232,6 +232,9 @@ if ($tahlil) {
         }
     } else if (!empty($d['structure']) && is_array($d['structure'])) {
         // Eski ko'rinishdagi tahlil (kategoriyalar joriy etilgunga qadar)
+        echo $OUTPUT->notification(
+            "Bu tahlil ESKI ramkada qilingan (ha/yo'q). Foizli baholash uchun " .
+            "pastdagi \"Qayta tahlil qilish\" tugmasini bosing.", 'warn');
         $t = new html_table();
         $t->head = ['Bosqich', "Bo'ldimi", 'Daqiqa', 'Izoh'];
         $t->attributes['class'] = 'generaltable tz-ai-struct';
@@ -302,6 +305,40 @@ if ($tahlil) {
 
     echo html_writer::div('Model: ' . s($tahlil['audio']->aimodel ?? '') . ' · ' .
         userdate($tahlil['audio']->analysedat), 'text-muted small mt-2');
+
+    // Qayta tahlil — audio hali bor bo'lsa
+    if (in_array($tahlil['audio']->status, \local_targetzenit\audio::FAYLLI, true)
+            && \local_targetzenit\ai::enabled()) {
+        echo html_writer::tag('button', '🔄 Qayta tahlil qilish',
+            ['type' => 'button', 'id' => 'tz-ai-again', 'class' => 'btn btn-sm btn-outline-primary mt-2']);
+        echo html_writer::tag('span', '', ['id' => 'tz-ai-again-holat', 'class' => 'ml-2 small']);
+
+        $PAGE->requires->js_amd_inline("
+            require([], function() {
+                var b = document.getElementById('tz-ai-again');
+                var h = document.getElementById('tz-ai-again-holat');
+                if (!b) { return; }
+                var baza = '" . (new moodle_url('/local/targetzenit/ajax.php'))->out(false) . "' +
+                    '?lessonid=" . (int) $dars->id . "&sesskey=" . sesskey() . "';
+                b.addEventListener('click', function () {
+                    if (!confirm('Mavjud tahlil o\'chiriladi va yangi ramkada qaytadan qilinadi. Davom etamizmi?')) {
+                        return;
+                    }
+                    b.disabled = true;
+                    h.textContent = 'Tahlil qilinmoqda...';
+                    fetch(baza + '&action=reanalyse', {method: 'POST'})
+                        .then(function (r) { return r.json(); })
+                        .then(function (j) {
+                            if (j.ok) { window.location.reload(); }
+                            else { h.textContent = 'Xato: ' + (j.error || ''); b.disabled = false; }
+                        })
+                        .catch(function () {
+                            h.textContent = 'Fonda davom etmoqda — 1-2 daqiqadan keyin sahifani yangilang.';
+                        });
+                });
+            });
+        ");
+    }
 
     echo html_writer::end_div();
     echo html_writer::end_div();

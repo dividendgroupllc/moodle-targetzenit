@@ -70,6 +70,30 @@ try {
             ]);
             break;
 
+        case 'reanalyse':
+            // Eski ramkadagi tahlilni yangisi bilan almashtirish.
+            if (!\local_targetzenit\ai::enabled()) {
+                throw new moodle_exception('AI tahlil yoqilmagan yoki kalit yo\'q.');
+            }
+            $rec = audio::get($lessonid);
+            if (!$rec || !in_array($rec->status, audio::FAYLLI, true)) {
+                throw new moodle_exception('Audio yo\'q — qayta tahlil qilib bo\'lmaydi.');
+            }
+            $rec->analysis = null;
+            $rec->aierror = null;
+            $rec->status = 'ready';
+            $rec->timemodified = time();
+            $DB->update_record('local_targetzenit_audio', $rec);
+
+            \core_php_time_limit::raise(900);
+            $ok = \local_targetzenit\ai::analyse(audio::get($lessonid));
+            $yangi = audio::get($lessonid);
+            echo json_encode([
+                'ok' => $ok,
+                'error' => $ok ? null : ($yangi->aierror ?? 'noma\'lum xato'),
+            ]);
+            break;
+
         case 'analyse':
             // DEMO uchun: 15 daqiqalik jadvalni kutmasdan darhol tahlil.
             if (!\local_targetzenit\ai::enabled()) {
