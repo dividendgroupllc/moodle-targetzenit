@@ -171,3 +171,12 @@
 .tz-bar-ichi { height: 100%; border-radius: 4px; transition: width .3s; }
 .tz-cat-dalil { font-size: .84em; color: #6a737d; }
 .tz-cat-tavsiya { font-size: .84em; color: #0b5ed7; }
+
+/* Kategoriya guruhlari va kuzatuv izohlari */
+.tz-cat-guruh {
+    font-size: .8rem; font-weight: 700; text-transform: uppercase;
+    color: #6f42c1; letter-spacing: .4px; margin: 14px 0 6px;
+    border-bottom: 1px solid #e9ecef; padding-bottom: 3px;
+}
+.tz-wellbeing { background: #fffbf0; border-left: 3px solid #ffc107; padding: 10px 12px; border-radius: 4px; }
+.tz-wellbeing ul { margin-bottom: 6px; }

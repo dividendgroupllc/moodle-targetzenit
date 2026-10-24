@@ -37,14 +37,27 @@ class ai {
      * esa deyarli eshitilmaydi — shuning uchun uning vazni eng kichik.
      */
     const CATEGORIES = [
-        'clarity'       => ['nom' => "Tushuntirish aniqligi",             'vazn' => 20],
-        'activating'    => ['nom' => "O'quvchilar faolligi",              'vazn' => 20],
-        'topic_match'   => ['nom' => "Mavzuga muvofiqlik",                'vazn' => 15],
-        'climate'       => ['nom' => "Xavfsiz va rag'batlantiruvchi muhit", 'vazn' => 12],
-        'management'    => ['nom' => "Sinfni boshqarish va tartib",       'vazn' => 12],
-        'time_on_task'  => ['nom' => "Vaqtdan samarali foydalanish",      'vazn' => 9],
-        'strategies'    => ['nom' => "O'quv strategiyalarini o'rgatish",  'vazn' => 8],
-        'differentiation' => ['nom' => "Tabaqalashtirilgan yondashuv",    'vazn' => 4],
+        // --- Ta'lim sifati (ICALT) ---
+        'clarity' => ['nom' => "Tushuntirish aniqligi", 'vazn' => 12, 'guruh' => "Ta'lim sifati"],
+        'activating' => ['nom' => "O'quvchilar faolligi", 'vazn' => 12, 'guruh' => "Ta'lim sifati"],
+        'topic_match' => ['nom' => "Mavzuga muvofiqlik", 'vazn' => 11, 'guruh' => "Ta'lim sifati"],
+        'concept_development' => ['nom' => "Tushunchani chuqurlashtirish", 'vazn' => 5, 'guruh' => "Ta'lim sifati"],
+        'strategies' => ['nom' => "O'quv strategiyalarini o'rgatish", 'vazn' => 5, 'guruh' => "Ta'lim sifati"],
+        'differentiation' => ['nom' => "Tabaqalashtirilgan yondashuv", 'vazn' => 3, 'guruh' => "Ta'lim sifati"],
+
+        // --- Emotsional qo'llab-quvvatlash (CLASS) ---
+        'positive_climate' => ['nom' => "Ijobiy muhit", 'vazn' => 8, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'negative_climate' => ['nom' => "Salbiy holatlarning yo'qligi", 'vazn' => 8, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'teacher_sensitivity' => ['nom' => "O'qituvchining sezgirligi", 'vazn' => 6, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'student_perspective' => ['nom' => "O'quvchi fikriga e'tibor", 'vazn' => 4, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+
+        // --- Sinfni tashkil etish (CLASS) ---
+        'management' => ['nom' => "Xulq-atvorni boshqarish", 'vazn' => 8, 'guruh' => "Sinfni tashkil etish"],
+        'time_on_task' => ['nom' => "Vaqtdan samarali foydalanish", 'vazn' => 7, 'guruh' => "Sinfni tashkil etish"],
+
+        // --- Fikr-mulohaza va til (CLASS) ---
+        'feedback_quality' => ['nom' => "Fikr-mulohaza sifati", 'vazn' => 7, 'guruh' => "Fikr-mulohaza va til"],
+        'language_modeling' => ['nom' => "Nutq namunasi va til boyligi", 'vazn' => 4, 'guruh' => "Fikr-mulohaza va til"],
     ];
 
     public static function enabled(): bool {
@@ -123,69 +136,84 @@ class ai {
         $mavzu = trim((string) $dars->topic);
         $kurs = $course ? $course->fullname : '';
 
-        $kat = [];
-        foreach (self::CATEGORIES as $kod => $k) {
-            $kat[] = "{$kod} ({$k['nom']})";
-        }
+        $kodlar = implode(', ', array_keys(self::CATEGORIES));
 
         return "Sen dars kuzatuvi bo'yicha xalqaro metodist-ekspertsan. Senga O'ZBEKISTONdagi "
             . "xalqaro maktabda yozib olingan dars audiosi beriladi.\n"
             . "Dars: {$kurs}. Sana: {$dars->lessondate}, {$dars->lessonno}-dars. "
             . "O'qituvchi jurnalga yozgan mavzu: \"" . ($mavzu ?: '(yozilmagan)') . "\".\n\n"
 
-            . "BAHOLASH RAMKASI: ICALT (International Comparative Analysis of Learning and "
-            . "Teaching) ning 6 domeni va Jahon banki TEACH vositasidan vaqtdan foydalanish. "
-            . "Har kategoriya 0 dan 100 gacha FOIZDA baholanadi (ha/yo'q EMAS):\n"
-            . "- clarity: tushuntirish aniqligi — maqsad aytildimi, bosqichma-bosqich, misollar, "
+            . "BAHOLASH RAMKASI: ICALT (xalqaro dars kuzatuvi), CLASS (Pianta — sinfdagi "
+            . "o'zaro munosabatlar) va Jahon banki TEACH. Har kategoriya 0-100 FOIZDA "
+            . "baholanadi (ha/yo'q EMAS):\n\n"
+
+            . "TA'LIM SIFATI:\n"
+            . "- clarity: maqsad aytildimi, bosqichma-bosqich tushuntirish, misollar, "
             . "tushunganini tekshirish, sodda til\n"
-            . "- activating: o'quvchilar faolligi — nechta o'quvchi gapirdi, ochiq savollar, "
-            . "fikrlashga undash, mustaqil ish\n"
-            . "- topic_match: jurnalga yozilgan mavzu darsda qanchalik yoritildi\n"
-            . "- climate: xavfsiz va rag'batlantiruvchi muhit — hurmatli ohang, qo'llab-quvvatlash, "
-            . "xatoga munosabat, ism bilan murojaat\n"
-            . "- management: sinfni boshqarish — tartib, o'tishlar tezligi, chalg'ishga munosabat\n"
-            . "- time_on_task: vaqtdan samarali foydalanish — darsning necha foizi o'quv ishiga ketdi\n"
-            . "- strategies: o'quv strategiyalarini o'rgatish — qanday o'rganishni tushuntirish, "
-            . "mulohaza yuritishni modellashtirish, xulosa\n"
-            . "- differentiation: tabaqalashtirilgan yondashuv — turli darajadagi o'quvchiga moslash, "
-            . "alohida yordam\n\n"
+            . "- activating: nechta o'quvchi gapirdi, ochiq savollar, fikrlashga undash, mustaqil ish\n"
+            . "- topic_match: jurnaldagi mavzu darsda qanchalik yoritildi\n"
+            . "- concept_development: sabab-oqibat, \"nega\" savollari, tahlil va umumlashtirish "
+            . "(yodlash emas, tushunish)\n"
+            . "- strategies: qanday o'rganishni o'rgatish, mulohaza yuritishni ovoz chiqarib "
+            . "modellashtirish, xulosa chiqarish\n"
+            . "- differentiation: turli darajadagi o'quvchiga moslash, alohida yordam\n\n"
+
+            . "EMOTSIONAL QO'LLAB-QUVVATLASH:\n"
+            . "- positive_climate: iliqlik, hurmat, ism bilan murojaat, rag'bat, hazil, "
+            . "o'quvchilar o'rtasidagi do'stona ohang\n"
+            . "- negative_climate: BU TESKARI o'lchov — salbiy holat qancha KAM bo'lsa, ball "
+            . "shuncha YUQORI. 100 = baqirish, kinoya, kamsitish, qo'rqitish umuman yo'q. "
+            . "Past ball faqat ovozda ANIQ eshitilgan holatlar uchun\n"
+            . "- teacher_sensitivity: qiynalayotgan o'quvchini payqadimi, savolga javob berdimi, "
+            . "tushunmaganini sezib qayta tushuntirdimi\n"
+            . "- student_perspective: o'quvchi fikrini so'radimi, tanlov berdimi, mustaqillikka "
+            . "imkon berdimi, g'oyalarini jiddiy qabul qildimi\n\n"
+
+            . "SINFNI TASHKIL ETISH:\n"
+            . "- management: tartib, aniq ko'rsatmalar, chalg'ishga xotirjam munosabat, o'tishlar tezligi\n"
+            . "- time_on_task: darsning necha foizi haqiqiy o'quv ishiga ketdi\n\n"
+
+            . "FIKR-MULOHAZA VA TIL:\n"
+            . "- feedback_quality: shunchaki \"to'g'ri/noto'g'ri\" emas — NEGA to'g'ri, qayerda "
+            . "xato, qanday tuzatish kerakligini tushuntirish\n"
+            . "- language_modeling: o'qituvchining nutqi boy va aniqmi, yangi so'zlarni "
+            . "izohlaydimi, o'quvchi javobini kengaytiradimi\n\n"
 
             . "MUHIM — HALOLLIK QOIDASI: senda FAQAT audio bor. Imo-ishora, doskadagi ish, "
-            . "sinf joylashuvi va yozma ishlar ko'rinmaydi; tartibbuzarlik ovozda bilinmasligi "
-            . "mumkin. Shuning uchun har kategoriyaga `confidence` qo'y: "
-            . "\"high\" (ovozda aniq eshitildi), \"medium\" (qisman), "
-            . "\"low\" (audio orqali baholab bo'lmaydi). Taxmin qilib yuqori ball QO'YMA — "
-            . "dalil bo'lmasa `confidence` ni \"low\" qil.\n\n"
+            . "sinf joylashuvi va yozma ishlar ko'rinmaydi. Har kategoriyaga `confidence` qo'y: "
+            . "\"high\" (ovozda aniq eshitildi), \"medium\" (qisman), \"low\" (audio orqali "
+            . "baholab bo'lmaydi). Dalil bo'lmasa \"low\" qil — taxmin qilib ball QO'YMA.\n\n"
 
-            . "DALIL QOIDASI: har kategoriyaning `evidence` maydoni ANIQ va RAQAMLI bo'lsin — "
-            . "umumiy gap yozma. Namunalar:\n"
-            . "  yaxshi: \"Jurnaldagi mavzuning 3 qismidan 2 tasi yoritildi, uchinchisi "
-            . "(masalalar yechish) umuman o'tilmadi.\"\n"
-            . "  yaxshi: \"Darsda faqat 3 o'quvchi javob berdi; 14 savoldan 4 tasi ochiq savol edi.\"\n"
-            . "  yaxshi: \"45 daqiqadan 9 daqiqasi tashkiliy ishlarga va chalg'ishga ketdi.\"\n"
+            . "TAQIQ: o'qituvchining ichki hissiy holati, charchoqligi, stressi yoki "
+            . "shaxsiyati haqida XULOSA CHIQARMA. Faqat ovozda eshitilgan XATTI-HARAKATNI "
+            . "tasvirla. `wellbeing_notes` ga faqat kuzatilgan faktni yoz (masalan: "
+            . "\"uch marta ovoz ko'tarildi\") — tashxis yoki taxmin emas.\n\n"
+
+            . "DALIL QOIDASI: har kategoriyaning `evidence` maydoni ANIQ va RAQAMLI bo'lsin. "
+            . "Namunalar:\n"
+            . "  yaxshi: \"Faqat 3 o'quvchi javob berdi; 12 savoldan 3 tasi ochiq savol edi.\"\n"
+            . "  yaxshi: \"Mavzuning 3 qismidan 2 tasi yoritildi, masalalar yechish qismi o'tilmadi.\"\n"
+            . "  yaxshi: \"45 daqiqadan 9 daqiqasi tashkiliy ishlarga ketdi.\"\n"
             . "  yomon: \"O'qituvchi yaxshi tushuntirdi.\" (raqam ham, aniq fakt ham yo'q)\n\n"
 
             . "FAQAT JSON qaytar, boshqa hech qanday matn yo'q:\n"
             . '{'
-            . '"transcript":"darsning to\'liq matni, so\'zlovchilar ajratilgan: O\'qituvchi: ... O\'quvchi: ...",'
+            . '"transcript":"darsning to\'liq matni: O\'qituvchi: ... O\'quvchi: ...",'
             . '"summary":"3-5 jumlali xulosa",'
             . '"categories":['
             . '{"code":"topic_match","score":70,"confidence":"high",'
             . '"actual_topic":"darsda aslida nima o\'tildi",'
-            . '"evidence":"Jurnalda \'Kasrlarni qo\'shish\' yozilgan; o\'qituvchi mavzuni tushuntirdi, '
-            . 'lekin mustaqil yechish qismi o\'tilmadi.","advice":"bitta amaliy tavsiya"},'
-            . '{"code":"activating","score":50,"confidence":"high",'
-            . '"evidence":"Faqat 3 o\'quvchi faol qatnashdi; 12 savoldan 3 tasi ochiq savol edi.",'
-            . '"advice":"..."}'
+            . '"evidence":"aniq raqamli dalil","advice":"bitta amaliy tavsiya"}'
             . '],'
             . '"metrics":{"teacher_talk_pct":70,"student_talk_pct":30,"questions_total":14,'
             . '"open_questions":5,"wait_time_avg_sec":2,"students_addressed":9,'
             . '"on_task_pct":85,"language":{"uz":60,"en":40}},'
-            . '"recommendations":["qisqa amaliy tavsiya 1","tavsiya 2","tavsiya 3"]'
+            . '"wellbeing_notes":["kuzatilgan fakt, tashxis emas"],'
+            . '"recommendations":["tavsiya 1","tavsiya 2","tavsiya 3"]'
             . "}\n\n"
 
-            . "categories massivida YUQORIDAGI 7 kodning HAMMASI bo'lsin: " . implode(', ', $kat) . ". "
-            . "score butun son (0-100). Umumiy foizni O'ZING hisoblama — uni tizim hisoblaydi. "
+            . "categories massivida YUQORIDAGI 14 kodning HAMMASI bo'lsin: {$kodlar}. "
+            . "score butun son (0-100). Umumiy foizni O'ZING hisoblama — tizim hisoblaydi. "
             . "Transkriptni o'zbek tilida yoz, ingliz tilida gapirilgan joylarni o'z tilida qoldir.";
     }
 

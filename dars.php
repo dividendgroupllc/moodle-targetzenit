@@ -194,7 +194,19 @@ if ($tahlil) {
             "Baholash ramkasi: <b>ICALT</b> (xalqaro dars kuzatuvi) + Jahon banki <b>TEACH</b>",
             ['class' => 'text-muted small mb-2']);
 
+        // Guruhlar bo'yicha tartiblaymiz (CATEGORIES dagi tartib bo'yicha)
+        $tartib = array_keys(\local_targetzenit\ai::CATEGORIES);
+        usort($d['categories'], function($a, $b) use ($tartib) {
+            return array_search($a['code'] ?? '', $tartib) <=> array_search($b['code'] ?? '', $tartib);
+        });
+        $joriy_guruh = '';
+
         foreach ($d['categories'] as $c) {
+            $guruh = \local_targetzenit\ai::CATEGORIES[$c['code'] ?? '']['guruh'] ?? '';
+            if ($guruh && $guruh !== $joriy_guruh) {
+                echo html_writer::tag('div', s($guruh), ['class' => 'tz-cat-guruh']);
+                $joriy_guruh = $guruh;
+            }
             $ball = (int) ($c['score'] ?? 0);
             $ishonch = $c['confidence'] ?? 'medium';
             $past = ($ishonch === 'low');
@@ -282,6 +294,23 @@ if ($tahlil) {
         if ($q) {
             echo html_writer::div(implode('  |  ', $q), 'tz-ai-speech mt-3');
         }
+    }
+
+    // --- Kuzatuv izohlari (BALLGA TA'SIR QILMAYDI)
+    if (!empty($d['wellbeing_notes']) && is_array($d['wellbeing_notes'])) {
+        $li = '';
+        foreach ($d['wellbeing_notes'] as $w) {
+            $li .= html_writer::tag('li', s($w));
+        }
+        echo html_writer::start_div('tz-wellbeing mt-3');
+        echo html_writer::tag('b', "E'tibor uchun (ballga ta'sir qilmaydi)");
+        echo html_writer::tag('ul', $li);
+        echo html_writer::tag('div',
+            "Bu — ovozda eshitilgan faktlar, xulosa emas. AI o'qituvchining hissiy " .
+            "holati yoki charchog'i haqida hukm chiqarmaydi: ovozdan bunday xulosa " .
+            "chiqarish ishonchli emas va ta'lim muassasalarida qabul qilinmagan amaliyot.",
+            ['class' => 'text-muted small']);
+        echo html_writer::end_div();
     }
 
     // --- Tavsiyalar
