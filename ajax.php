@@ -17,7 +17,8 @@ $dars = $DB->get_record('local_targetzenit_lesson', ['id' => $lessonid], '*', MU
 $context = context_course::instance($dars->courseid);
 require_capability('local/targetzenit:teach', $context);
 
-if (!get_config('local_targetzenit', 'audioenabled')) {
+if (in_array($action, ['start', 'chunk', 'finish', 'cancel'], true)
+        && !get_config('local_targetzenit', 'audioenabled')) {
     throw new moodle_exception('Audio yozuv o\'chirilgan.');
 }
 
@@ -64,6 +65,26 @@ try {
                 'status' => $rec->status ?? 'none',
                 'staged' => audio::staged_size($lessonid),
                 'filesize' => (int) ($rec->filesize ?? 0),
+                'analysed' => !empty($rec->analysis),
+                'aierror' => $rec->aierror ?? null,
+            ]);
+            break;
+
+        case 'analyse':
+            // DEMO uchun: 15 daqiqalik jadvalni kutmasdan darhol tahlil.
+            if (!\local_targetzenit\ai::enabled()) {
+                throw new moodle_exception('AI tahlil yoqilmagan yoki kalit yo\'q.');
+            }
+            $rec = audio::get($lessonid);
+            if (!$rec || $rec->status !== 'ready') {
+                throw new moodle_exception('Tahlil qilinadigan audio yo\'q.');
+            }
+            \core_php_time_limit::raise(900);
+            $ok = \local_targetzenit\ai::analyse($rec);
+            $yangi = audio::get($lessonid);
+            echo json_encode([
+                'ok' => $ok,
+                'error' => $ok ? null : ($yangi->aierror ?? 'noma\'lum xato'),
             ]);
             break;
 

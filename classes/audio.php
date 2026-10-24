@@ -27,6 +27,14 @@ class audio {
     /** Bitta bo'lak uchun shift (odatda ~50 KB keladi). */
     const MAX_CHUNK = 8388608;      // 8 MB
 
+    /**
+     * Fayl HALI BOR deb hisoblanadigan holatlar.
+     * `transcribed` ham shu yerda: tahlil qilingani audioni o'chirmaydi —
+     * u 15 kun davomida matn bilan yonma-yon turadi (AI aniqligini
+     * tekshirish uchun asl ovoz kerak).
+     */
+    const FAYLLI = ['ready', 'transcribed'];
+
     const MIME_EXT = [
         'audio/webm' => 'webm',
         'audio/ogg' => 'ogg',
@@ -170,6 +178,12 @@ class audio {
         @unlink($birlashgan);
         @rmdir($dir);
 
+        // AI tahlilni DARHOL navbatga qo'yamiz — 15 daqiqalik jadvalni kutmaydi.
+        // Moodle croni har daqiqada ishlagani uchun tahlil ~1 daqiqada boshlanadi.
+        if (ai::enabled()) {
+            task\analyse_one::queue($lessonid);
+        }
+
         return $rec;
     }
 
@@ -249,7 +263,7 @@ class audio {
     /** Faylga havola (faqat ruxsati borlarga). */
     public static function file_url(int $lessonid, \context $context): ?\moodle_url {
         $rec = self::get($lessonid);
-        if (!$rec || $rec->status !== 'ready' || !$rec->filename) {
+        if (!$rec || !in_array($rec->status, self::FAYLLI, true) || !$rec->filename) {
             return null;
         }
         return \moodle_url::make_pluginfile_url($context->id, self::COMPONENT,

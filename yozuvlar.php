@@ -111,7 +111,7 @@ if (!$rows) {
 
     foreach ($rows as $r) {
         $ctx = context_course::instance($r->courseid, IGNORE_MISSING);
-        $url = ($r->status === 'ready' && $ctx)
+        $url = ($ctx && in_array($r->status, audio::FAYLLI, true))
             ? audio::file_url((int) $r->lessonid, $ctx) : null;
 
         $holat = [

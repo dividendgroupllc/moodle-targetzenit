@@ -50,7 +50,7 @@ echo html_writer::tag('div',
     "saqlanib qoladi va tizim uni o'zi yakunlaydi. Audio {$kun} kun saqlanadi.",
     ['class' => 'text-muted small']);
 
-if ($yozuv && $yozuv->status === 'ready') {
+if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {
     echo html_writer::tag('div',
         '✔ Bu darsda yozuv bor (' . number_format($yozuv->filesize / 1048576, 1) . ' MB). ' .
         'Qaytadan yozsangiz eskisi almashadi.',

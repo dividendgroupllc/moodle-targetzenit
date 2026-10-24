@@ -101,7 +101,7 @@ if (get_config('local_targetzenit', 'audioenabled')) {
     if ($yozuv && $yozuv->status === 'recording') {
         echo html_writer::tag('div', '● Yozuv ochiq — alohida oynada davom etmoqda.',
             ['class' => 'text-danger font-weight-bold mb-2']);
-    } else if ($yozuv && $yozuv->status === 'ready') {
+    } else if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {
         $url = \local_targetzenit\audio::file_url((int) $dars->id, $context);
         echo html_writer::tag('div',
             '🎙 ' . get_string('audio_ready', 'local_targetzenit') . ' — ' .
@@ -112,15 +112,23 @@ if (get_config('local_targetzenit', 'audioenabled')) {
             echo html_writer::tag('audio', '', ['src' => $url->out(false), 'controls' => 'controls',
                 'preload' => 'none', 'class' => 'w-100 mb-2']);
         }
+        if ($yozuv->status === 'transcribed') {
+            $qoldi = max(0, $kun - (int) floor((time() - $yozuv->timecreated) / DAYSECS));
+            echo html_writer::tag('div',
+                "Tahlil qilingan. Ovoz yana <b>{$qoldi} kun</b> saqlanadi — tahlil " .
+                "qanchalik to'g'ri chiqqanini asl yozuv bilan solishtirish uchun.",
+                ['class' => 'text-muted small mb-2']);
+        }
     } else if ($yozuv && $yozuv->status === 'deleted') {
         echo html_writer::tag('div', "🎙 Audio muddati o'tgani uchun o'chirilgan (tahlil matni qoldi).",
             ['class' => 'text-muted mb-2']);
     }
 
+    $fayl_bor = $yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true);
     echo html_writer::tag('button',
-        ($yozuv && $yozuv->status === 'ready') ? '🎙 Qaytadan yozish' : '🎙 Darsni yozib olish',
+        $fayl_bor ? '🎙 Qaytadan yozish' : '🎙 Darsni yozib olish',
         ['type' => 'button', 'id' => 'tz-rec-open',
-         'class' => ($yozuv && $yozuv->status === 'ready') ? 'btn btn-outline-secondary' : 'btn btn-danger btn-lg',
+         'class' => $fayl_bor ? 'btn btn-outline-secondary' : 'btn btn-danger btn-lg',
          'data-url' => $recurl->out(false)]);
 
     echo html_writer::tag('div',
@@ -300,11 +308,67 @@ if ($tahlil) {
 } else if (\local_targetzenit\ai::enabled()) {
     $a = \local_targetzenit\audio::get((int) $dars->id);
     if ($a && $a->status === 'ready') {
-        echo $OUTPUT->notification(
+        echo html_writer::start_div('card mb-3 tz-ai-card');
+        echo html_writer::start_div('card-body');
+        echo html_writer::tag('div',
             !empty($a->aierror)
-                ? 'Tahlil qilinmadi: ' . s($a->aierror) . " — keyingi yurishda qayta urinadi."
-                : get_string('ai_pending', 'local_targetzenit') . ' — tahlil har 15 daqiqada ishlaydi.',
-            !empty($a->aierror) ? 'warn' : 'info');
+                ? 'Tahlil qilinmadi: ' . s($a->aierror)
+                : get_string('ai_pending', 'local_targetzenit') .
+                  " — yozuv tugagach avtomatik boshlanadi (~1 daqiqa).",
+            ['class' => !empty($a->aierror) ? 'text-danger mb-2' : 'text-muted mb-2']);
+
+        echo html_writer::tag('button', '🤖 Hozir tahlil qilish',
+            ['type' => 'button', 'id' => 'tz-ai-now', 'class' => 'btn btn-primary']);
+        echo html_writer::tag('span', '', ['id' => 'tz-ai-holat', 'class' => 'ml-3 font-weight-bold']);
+        echo html_writer::end_div();
+        echo html_writer::end_div();
+
+        $PAGE->requires->js_amd_inline("
+            require([], function() {
+                var b = document.getElementById('tz-ai-now');
+                var h = document.getElementById('tz-ai-holat');
+                if (!b) { return; }
+                var baza = '" . (new moodle_url('/local/targetzenit/ajax.php'))->out(false) . "' +
+                    '?lessonid=" . (int) $dars->id . "&sesskey=" . sesskey() . "';
+
+                // Uzun so'rov nginx tomonidan uzilsa ham PHP tahlilni tugatadi —
+                // shuning uchun xatoda ham holatni so'rab turamiz.
+                var kuzat = function (qoldi) {
+                    if (qoldi <= 0) {
+                        h.textContent = 'Hali tugamadi — sahifani keyinroq yangilang.';
+                        b.disabled = false;
+                        return;
+                    }
+                    fetch(baza + '&action=status', {method: 'POST'})
+                        .then(function (r) { return r.json(); })
+                        .then(function (j) {
+                            if (j.analysed) { window.location.reload(); return; }
+                            if (j.aierror) {
+                                h.textContent = 'Xato: ' + j.aierror;
+                                b.disabled = false;
+                                return;
+                            }
+                            setTimeout(function () { kuzat(qoldi - 1); }, 5000);
+                        })
+                        .catch(function () { setTimeout(function () { kuzat(qoldi - 1); }, 5000); });
+                };
+
+                b.addEventListener('click', function () {
+                    b.disabled = true;
+                    h.textContent = 'Tahlil qilinmoqda, bu bir necha daqiqa olishi mumkin...';
+                    fetch(baza + '&action=analyse', {method: 'POST'})
+                        .then(function (r) { return r.json(); })
+                        .then(function (j) {
+                            if (j.ok) { window.location.reload(); }
+                            else { h.textContent = 'Xato: ' + (j.error || 'noma\'lum'); b.disabled = false; }
+                        })
+                        .catch(function () {
+                            h.textContent = 'Fonda davom etmoqda, kutilmoqda...';
+                            kuzat(36);     // 3 daqiqagacha kuzatamiz
+                        });
+                });
+            });
+        ");
     }
 }
 
