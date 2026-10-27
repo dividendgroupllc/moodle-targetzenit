@@ -45,16 +45,21 @@ echo html_writer::end_div();
 
 echo html_writer::tag('button', '🎙 Yozishni boshlash',
     ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-danger btn-lg btn-block']);
+echo html_writer::tag('button', '⏸ Pauza',
+    ['type' => 'button', 'id' => 'tz-audio-pause', 'class' => 'btn btn-warning btn-block hidden mt-2']);
 echo html_writer::tag('button', '■ To\'xtatish va saqlash',
-    ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-dark btn-lg btn-block hidden']);
+    ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-dark btn-lg btn-block hidden mt-2']);
 
 echo html_writer::tag('div', '', ['id' => 'tz-audio-holat', 'class' => 'tz-audio-holat my-3']);
 
 echo html_writer::tag('div',
     "<b>Bu oynani yopmang.</b> U ochiq turganda asosiy oynada yo'qlama qilish, " .
     "baho qo'yish va jurnalni ochish mumkin — yozuv davom etaveradi.<br><br>" .
-    "Yozuv har 15 soniyada serverga yuboriladi. Tasodifan yopilsa ham yozilgani " .
-    "saqlanib qoladi va tizim uni o'zi yakunlaydi. Audio {$kun} kun saqlanadi.",
+    "<b>Internet uzilsa yozuv TO'XTAMAYDI</b> — bo'laklar navbatda turadi va " .
+    "aloqa qaytishi bilan o'zi yuboriladi, ovoz yo'qolmaydi.<br><br>" .
+    "<b>Pauza</b> 30 soniyadan keyin o'zi davom etadi — unutib qo'yilsa ham " .
+    "dars yozilmay qolmaydi.<br><br>" .
+    "Audio {$kun} kun saqlanadi.",
     ['class' => 'text-muted small']);
 
 if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {

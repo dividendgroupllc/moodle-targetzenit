@@ -63,15 +63,16 @@
               if (!j.ok) { throw new Error(j.error || 'xato'); }
               self.navbat.shift();
               self.yuklanmoqda = false;
+              self.tarmoq = true;
               self.navbatniYur();
           })
           .catch(function () {
               ish.urinish = (ish.urinish || 0) + 1;
               self.yuklanmoqda = false;
-              if (ish.urinish >= RETRY) {
-                  // Tashlab ketmaymiz — navbatda qoldiramiz va keyin yana urinamiz
-                  self.holat("Tarmoq uzilgan — qayta urinilmoqda...", 'text-warning');
-              }
+              self.tarmoq = false;
+              // BO'LAK HECH QACHON TASHLANMAYDI — navbatda qoladi va internet
+              // qaytganda yuboriladi. Yozuvning o'zi esa davom etaveradi,
+              // shuning uchun uzilish paytidagi ovoz YO'QOLMAYDI.
               setTimeout(function () { self.navbatniYur(); }, 3000);
           });
     };
@@ -130,34 +131,153 @@
             }).then(function (r) { return r.json(); }).then(function (j) {
                 if (!j.ok) { throw new Error(j.error || 'boshlab bo\'lmadi'); }
 
-                self.rec = new MediaRecorder(stream,
-                    mime ? {mimeType: mime, audioBitsPerSecond: BPS} : undefined);
+                self.mime = mime;
+                self.tarmoq = true;
 
-                self.rec.ondataavailable = function (e) {
+                // Bo'lak kelganda — navbatga. `qayta()` ham shu ishlovchini
+                // ishlatadi, shuning uchun alohida saqlaymiz.
+                self.dataHandler = function (e) {
                     if (e.data && e.data.size > 0) {
                         self.seq++;
                         self.navbat.push({seq: self.seq, blob: e.data});
                         self.navbatniYur();
                     }
                 };
+
+                self.rec = new MediaRecorder(stream,
+                    mime ? {mimeType: mime, audioBitsPerSecond: BPS} : undefined);
+                self.rec.ondataavailable = self.dataHandler;
+                self.rec.onerror = function () { setTimeout(function () { self.qayta(); }, 2000); };
+                self.rec.onstop = function () {
+                    // Foydalanuvchi to'xtatmagan bo'lsa — o'zi qayta boshlaydi
+                    if (!self.yakunlanmoqda) { setTimeout(function () { self.qayta(); }, 2000); }
+                };
+
+                // Mikrofon uzilsa (USB sug'urildi, qurilma almashdi) — qayta ulanamiz
+                stream.getTracks().forEach(function (t) {
+                    t.onended = function () {
+                        if (!self.yakunlanmoqda) { self.qayta(); }
+                    };
+                });
+
                 self.rec.start(SLICE_MS);
                 self.boshlandi = Date.now();
 
                 qs('tz-audio-start').classList.add('hidden');
                 qs('tz-audio-stop').classList.remove('hidden');
+                var bp = qs('tz-audio-pause');
+                if (bp) { bp.classList.remove('hidden'); }
 
-                self.timer = setInterval(function () {
-                    var s = Math.floor((Date.now() - self.boshlandi) / 1000);
-                    self.holat('● Yozilmoqda — ' + fmtVaqt(s) +
-                        (self.navbat.length ? '  (yuklanmoqda: ' + self.navbat.length + ')' : ''),
-                        'text-danger');
-                }, 1000);
+                self.timer = setInterval(function () { self.yangila(); }, 1000);
+
+                // Internet qaytishi bilan navbatni darhol bo'shatamiz
+                self.onlineHandler = function () {
+                    self.tarmoq = true;
+                    self.navbatniYur();
+                };
+                window.addEventListener('online', self.onlineHandler);
 
                 window.addEventListener('beforeunload', self.ogohlantir);
             });
         }).catch(function (e) {
             self.holat('Mikrofonga ruxsat berilmadi: ' + e.message, 'text-danger');
         });
+    };
+
+    /**
+     * Qo'lda pauza. 30 soniyadan keyin O'ZI qayta yoqiladi —
+     * o'qituvchi pauzani unutib qo'ysa, dars yozilmay qolmasin.
+     */
+    TzRecorder.prototype.pauza = function () {
+        var self = this;
+        if (!this.rec || this.rec.state !== 'recording') { return; }
+
+        this.rec.pause();
+        this.pauzada = true;
+        this.yangila();
+
+        clearTimeout(this.pauzaTimer);
+        this.pauzaTimer = setTimeout(function () {
+            self.davom(true);
+        }, 30000);
+    };
+
+    TzRecorder.prototype.davom = function (avto) {
+        if (!this.rec || this.rec.state !== 'paused') { return; }
+        clearTimeout(this.pauzaTimer);
+        this.rec.pause ? this.rec.resume() : null;
+        this.pauzada = false;
+        this.avtoDavom = !!avto;
+        this.yangila();
+    };
+
+    /**
+     * Yozuv kutilmaganda to'xtab qolsa (qurilma uzildi, brauzer to'xtatdi) —
+     * O'ZI qayta boshlaydi. Sessiya o'sha-o'sha, bo'lak raqami davom etadi,
+     * shuning uchun serverda hamma narsa ketma-ket birikadi.
+     */
+    TzRecorder.prototype.qayta = function () {
+        var self = this;
+        if (self.yakunlanmoqda) { return; }
+
+        self.holat('Yozuv uzildi — qayta ulanmoqda...', 'text-warning');
+
+        var yangi = function (stream) {
+            self.stream = stream;
+            try {
+                self.rec = new MediaRecorder(stream,
+                    self.mime ? {mimeType: self.mime, audioBitsPerSecond: BPS} : undefined);
+            } catch (e) {
+                self.rec = new MediaRecorder(stream);
+            }
+            self.rec.ondataavailable = self.dataHandler;
+            self.rec.onerror = function () { setTimeout(function () { self.qayta(); }, 2000); };
+            self.rec.onstop = function () {
+                if (!self.yakunlanmoqda) { setTimeout(function () { self.qayta(); }, 2000); }
+            };
+            self.rec.start(SLICE_MS);
+            self.pauzada = false;
+            self.yangila();
+        };
+
+        // Oqim hali tirikmi? Tirik bo'lsa shuni ishlatamiz
+        var tirik = self.stream && self.stream.getTracks().some(function (t) {
+            return t.readyState === 'live';
+        });
+        if (tirik) {
+            yangi(self.stream);
+            return;
+        }
+        navigator.mediaDevices.getUserMedia({audio: true})
+            .then(yangi)
+            .catch(function () {
+                self.holat('Mikrofonga ulanib bo\'lmadi — 5 soniyadan keyin qayta urinamiz',
+                    'text-danger');
+                setTimeout(function () { self.qayta(); }, 5000);
+            });
+    };
+
+    /** Holat qatorini yangilash (taymer har soniyada chaqiradi). */
+    TzRecorder.prototype.yangila = function () {
+        var s = Math.floor((Date.now() - this.boshlandi) / 1000) - (this.pauzaJami || 0);
+        var matn, sinf;
+
+        if (this.pauzada) {
+            matn = '⏸ Pauza — 30 soniyada o\'zi davom etadi';
+            sinf = 'text-warning';
+        } else {
+            matn = '● Yozilmoqda — ' + fmtVaqt(s);
+            sinf = 'text-danger';
+        }
+        if (this.navbat.length) {
+            matn += this.tarmoq === false
+                ? '  ·  internet yo\'q, ' + this.navbat.length + ' bo\'lak navbatda (yo\'qolmaydi)'
+                : '  ·  yuklanmoqda: ' + this.navbat.length;
+        }
+        this.holat(matn, sinf);
+
+        var b = qs('tz-audio-pause');
+        if (b) { b.textContent = this.pauzada ? '▶ Davom ettirish' : '⏸ Pauza'; }
     };
 
     TzRecorder.prototype.ogohlantir = function (e) {
@@ -169,11 +289,19 @@
         var self = this;
         if (!this.rec) { return; }
 
+        // Bu bayroq avto-tiklanishni to'xtatadi: endi yozuv ATAYLAB tugatilyapti
+        this.yakunlanmoqda = true;
+        clearTimeout(this.pauzaTimer);
+
         window.removeEventListener('beforeunload', this.ogohlantir);
+        window.removeEventListener('online', this.onlineHandler);
         clearInterval(this.timer);
         qs('tz-audio-stop').disabled = true;
         this.holat('Saqlanmoqda, kutib turing...', 'text-info');
 
+        if (this.rec.state === 'paused') {
+            this.rec.resume();
+        }
         var davomiylik = Math.floor((Date.now() - this.boshlandi) / 1000);
 
         this.rec.onstop = function () {
@@ -217,8 +345,13 @@
     window.tzAudioInit = function (cfg) {
         var r = new TzRecorder(cfg);
         r.qurilmalar();
-        var b1 = qs('tz-audio-start'), b2 = qs('tz-audio-stop');
+        var b1 = qs('tz-audio-start'), b2 = qs('tz-audio-stop'), b3 = qs('tz-audio-pause');
         if (b1) { b1.addEventListener('click', function () { r.start(); }); }
         if (b2) { b2.addEventListener('click', function () { r.stop(); }); }
+        if (b3) {
+            b3.addEventListener('click', function () {
+                if (r.pauzada) { r.davom(false); } else { r.pauza(); }
+            });
+        }
     };
 }());
