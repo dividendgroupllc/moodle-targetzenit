@@ -44,6 +44,14 @@ if ($hassiteconfig) {
         get_string('ai_fallback', 'local_targetzenit'),
         get_string('ai_fallback_desc', 'local_targetzenit'), '', PARAM_TEXT));
 
+    $settings->add(new admin_setting_configtext('local_targetzenit/aisegmentminutes',
+        get_string('ai_segment', 'local_targetzenit'),
+        get_string('ai_segment_desc', 'local_targetzenit'), 5, PARAM_INT));
+
+    $settings->add(new admin_setting_configtext('local_targetzenit/ffmpegpath',
+        get_string('ai_ffmpeg', 'local_targetzenit'),
+        get_string('ai_ffmpeg_desc', 'local_targetzenit'), '/usr/bin/ffmpeg', PARAM_TEXT));
+
     $settings->add(new admin_setting_configtext('local_targetzenit/aiperrun',
         get_string('ai_perrun', 'local_targetzenit'),
         get_string('ai_perrun_desc', 'local_targetzenit'), 3, PARAM_INT));
