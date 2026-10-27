@@ -354,15 +354,41 @@ if ($tahlil) {
                         return;
                     }
                     b.disabled = true;
-                    h.textContent = 'Tahlil qilinmoqda...';
+                    h.textContent = 'Navbatga qo\'yildi...';
                     fetch(baza + '&action=reanalyse', {method: 'POST'})
                         .then(function (r) { return r.json(); })
                         .then(function (j) {
-                            if (j.ok) { window.location.reload(); }
-                            else { h.textContent = 'Xato: ' + (j.error || ''); b.disabled = false; }
+                            if (!j.ok) {
+                                h.textContent = 'Xato: ' + (j.error || '');
+                                b.disabled = false;
+                                return;
+                            }
+                            h.textContent = 'Tahlil qilinmoqda — uzun darsda 2-5 daqiqa...';
+                            // Tahlil tugaganini kutamiz (har 5 soniyada)
+                            var n = 90;
+                            var kut = function () {
+                                if (n-- <= 0) {
+                                    h.textContent = 'Hali tugamadi — sahifani keyinroq yangilang.';
+                                    b.disabled = false;
+                                    return;
+                                }
+                                fetch(baza + '&action=status', {method: 'POST'})
+                                    .then(function (r) { return r.json(); })
+                                    .then(function (j2) {
+                                        if (j2.analysed) { window.location.reload(); return; }
+                                        if (j2.aierror) {
+                                            h.textContent = 'Xato: ' + j2.aierror;
+                                            b.disabled = false;
+                                            return;
+                                        }
+                                        setTimeout(kut, 5000);
+                                    })
+                                    .catch(function () { setTimeout(kut, 5000); });
+                            };
+                            setTimeout(kut, 5000);
                         })
                         .catch(function () {
-                            h.textContent = 'Fonda davom etmoqda — 1-2 daqiqadan keyin sahifani yangilang.';
+                            h.textContent = 'Fonda davom etmoqda — 2-5 daqiqadan keyin sahifani yangilang.';
                         });
                 });
             });
@@ -421,16 +447,21 @@ if ($tahlil) {
 
                 b.addEventListener('click', function () {
                     b.disabled = true;
-                    h.textContent = 'Tahlil qilinmoqda, bu bir necha daqiqa olishi mumkin...';
+                    h.textContent = 'Navbatga qo\'yildi, tahlil fonda boshlanadi...';
                     fetch(baza + '&action=analyse', {method: 'POST'})
                         .then(function (r) { return r.json(); })
                         .then(function (j) {
-                            if (j.ok) { window.location.reload(); }
-                            else { h.textContent = 'Xato: ' + (j.error || 'noma\'lum'); b.disabled = false; }
+                            if (j.ok) {
+                                h.textContent = 'Tahlil qilinmoqda — uzun darsda 2-5 daqiqa.';
+                                kuzat(90);     // ~7 daqiqagacha kuzatamiz
+                            } else {
+                                h.textContent = 'Xato: ' + (j.error || 'noma\'lum');
+                                b.disabled = false;
+                            }
                         })
                         .catch(function () {
                             h.textContent = 'Fonda davom etmoqda, kutilmoqda...';
-                            kuzat(36);     // 3 daqiqagacha kuzatamiz
+                            kuzat(90);
                         });
                 });
             });

@@ -85,13 +85,12 @@ try {
             $rec->timemodified = time();
             $DB->update_record('local_targetzenit_audio', $rec);
 
-            \core_php_time_limit::raise(900);
-            $ok = \local_targetzenit\ai::analyse(audio::get($lessonid));
-            $yangi = audio::get($lessonid);
-            echo json_encode([
-                'ok' => $ok,
-                'error' => $ok ? null : ($yangi->aierror ?? 'noma\'lum xato'),
-            ]);
+            // FONGA qo'yamiz, bu yerda BAJARMAYMIZ.
+            // Sabab: tahlil endi bo'lak-bo'lak ishlaydi va bir necha daqiqa oladi.
+            // PHP-FPM da atigi 4 ta ishchi bor — uzun so'rov ularni band qilsa,
+            // butun Moodle javob bermay qoladi (2026-10-27 da shunday bo'ldi).
+            \local_targetzenit\task\analyse_one::queue($lessonid);
+            echo json_encode(['ok' => true, 'navbatda' => true]);
             break;
 
         case 'analyse':
@@ -103,13 +102,8 @@ try {
             if (!$rec || $rec->status !== 'ready') {
                 throw new moodle_exception('Tahlil qilinadigan audio yo\'q.');
             }
-            \core_php_time_limit::raise(900);
-            $ok = \local_targetzenit\ai::analyse($rec);
-            $yangi = audio::get($lessonid);
-            echo json_encode([
-                'ok' => $ok,
-                'error' => $ok ? null : ($yangi->aierror ?? 'noma\'lum xato'),
-            ]);
+            \local_targetzenit\task\analyse_one::queue($lessonid);
+            echo json_encode(['ok' => true, 'navbatda' => true]);
             break;
 
         default:
