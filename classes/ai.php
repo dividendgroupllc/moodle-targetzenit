@@ -478,8 +478,13 @@ class ai {
         }
 
         $natija = json_decode($matn, true);
-        if (!is_array($natija) || !isset($natija['transcript'])) {
-            throw new \RuntimeException('Javobni JSON sifatida o\'qib bo\'lmadi');
+
+        // DIQQAT: `transcript` TALAB QILINMAYDI — 0.13.0 dan beri transkript
+        // alohida bosqichda olinadi va modelga "qaytarma" deyilgan. Avval shu
+        // yerda `transcript` talab qilingani uchun TO'G'RI javob ham rad etilardi.
+        if (!is_array($natija) || (!isset($natija['categories']) && !isset($natija['summary']))) {
+            throw new \RuntimeException('Javobni JSON sifatida o\'qib bo\'lmadi. Model javobi: '
+                . \core_text::substr(trim($matn), 0, 300));
         }
         return $natija;
     }

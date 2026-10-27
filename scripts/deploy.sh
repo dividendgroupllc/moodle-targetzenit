@@ -84,17 +84,21 @@ apply
 maintenance disable
 
 # --- Health check: o'tmasa xato beramiz, lekin kodni qaytarmaymiz ---
+# DIQQAT: purge_caches dan keyin BIRINCHI so'rov butun keshni qaytadan quradi —
+# 2 vCPU li serverda bu 20-30 soniya olishi mumkin. Shuning uchun kutish uzun:
+# qisqa chegara qo'yilsa, aslida sog'lom sayt "o'lgan" deb hisoblanadi
+# (2026-10-27 da shunday bo'ldi).
 trap - ERR
-sleep 3
-for i in 1 2 3; do
-    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$HEALTH_URL" || echo 000)
+sleep 10
+for i in 1 2 3 4 5; do
+    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$HEALTH_URL" || echo 000)
     if [ "$code" = "200" ] || [ "$code" = "303" ] || [ "$code" = "302" ]; then
         echo "Health check OK (HTTP $code)"
         echo "=== Deploy MUVAFFAQIYATLI: $(date -Is) — $NEW_COMMIT ==="
         exit 0
     fi
-    echo "Health check $i-urinish: HTTP $code, 10s kutilmoqda..."
-    sleep 10
+    echo "Health check $i-urinish: HTTP $code, 15s kutilmoqda..."
+    sleep 15
 done
 echo "!!! Moodle javob bermayapti (kod yangi holatda qoldirildi)"
 fail
