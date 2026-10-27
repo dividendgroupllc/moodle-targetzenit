@@ -76,6 +76,32 @@
           });
     };
 
+    /** Mikrofonlar ro'yxatini chiqarish (tashqi mikrofon ulansa tanlash uchun). */
+    TzRecorder.prototype.qurilmalar = function () {
+        var sel = qs('tz-audio-device');
+        if (!sel || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            return;
+        }
+        // Nomlarni ko'rish uchun avval ruxsat kerak
+        navigator.mediaDevices.getUserMedia({audio: true})
+            .then(function (s) {
+                s.getTracks().forEach(function (t) { t.stop(); });
+                return navigator.mediaDevices.enumerateDevices();
+            })
+            .then(function (list) {
+                sel.innerHTML = '';
+                list.filter(function (d) { return d.kind === 'audioinput'; })
+                    .forEach(function (d, i) {
+                        var o = document.createElement('option');
+                        o.value = d.deviceId;
+                        o.textContent = d.label || ('Mikrofon ' + (i + 1));
+                        sel.appendChild(o);
+                    });
+                sel.parentNode.classList.remove('hidden');
+            })
+            .catch(function () { /* ruxsat berilmadi — standart mikrofon ishlatiladi */ });
+    };
+
     TzRecorder.prototype.start = function () {
         var self = this;
         if (!navigator.mediaDevices || !window.MediaRecorder) {
@@ -83,7 +109,13 @@
             return;
         }
 
-        navigator.mediaDevices.getUserMedia({audio: true}).then(function (stream) {
+        var sel = qs('tz-audio-device');
+        var cheklov = {audio: true};
+        if (sel && sel.value) {
+            cheklov = {audio: {deviceId: {exact: sel.value}}};
+        }
+
+        navigator.mediaDevices.getUserMedia(cheklov).then(function (stream) {
             self.stream = stream;
 
             var mime = '';
@@ -184,6 +216,7 @@
 
     window.tzAudioInit = function (cfg) {
         var r = new TzRecorder(cfg);
+        r.qurilmalar();
         var b1 = qs('tz-audio-start'), b2 = qs('tz-audio-stop');
         if (b1) { b1.addEventListener('click', function () { r.start(); }); }
         if (b2) { b2.addEventListener('click', function () { r.stop(); }); }

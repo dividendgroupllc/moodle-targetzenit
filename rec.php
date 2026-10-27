@@ -36,6 +36,13 @@ echo html_writer::tag('div',
     userdate(strtotime($dars->lessondate), '%d-%B') . ' · ' . $dars->lessonno . '-dars',
     ['class' => 'tz-rec-bosh mb-3']);
 
+// Mikrofon tanlash — tashqi mikrofon ulanganda kerak bo'ladi
+echo html_writer::start_div('form-group hidden mb-3');
+echo html_writer::label('Mikrofon:', 'tz-audio-device', true, ['class' => 'small font-weight-bold']);
+echo html_writer::tag('select', '',
+    ['id' => 'tz-audio-device', 'class' => 'form-control form-control-sm']);
+echo html_writer::end_div();
+
 echo html_writer::tag('button', '🎙 Yozishni boshlash',
     ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-danger btn-lg btn-block']);
 echo html_writer::tag('button', '■ To\'xtatish va saqlash',

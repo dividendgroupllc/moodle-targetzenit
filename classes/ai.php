@@ -108,7 +108,7 @@ class ai {
         }
 
         $b64 = base64_encode($file->get_content());
-        $mime = $file->get_mimetype() ?: 'audio/webm';
+        $mime = self::audio_mime($audio, $file);
 
         $course = $DB->get_record('course', ['id' => $dars->courseid], 'id, fullname');
         $prompt = self::prompt($dars, $course);
@@ -129,6 +129,41 @@ class ai {
             }
         }
         return self::fail($audio, $oxirgi ?: 'Model javob bermadi');
+    }
+
+    /**
+     * Audio MIME turi.
+     *
+     * DIQQAT: `$file->get_mimetype()` ISHLATILMAYDI — Moodle `.webm` ni
+     * **video/webm** deb belgilaydi (filetypes.php), biz esa uni `audio` turi
+     * sifatida yuboramiz va Gemini "invalid argument" (HTTP 400) qaytaradi.
+     * Shuning uchun brauzer bergan turni (audio::start da saqlangan) olamiz,
+     * u bo'lmasa kengaytmadan aniqlaymiz.
+     */
+    protected static function audio_mime(\stdClass $audio, \stored_file $file): string {
+        $ruxsat = [
+            'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp3', 'audio/wav',
+            'audio/aac', 'audio/flac', 'audio/m4a', 'audio/opus', 'audio/aiff',
+        ];
+
+        $m = strtolower(trim((string) ($audio->mimetype ?? '')));
+        if (in_array($m, $ruxsat, true)) {
+            return $m;
+        }
+
+        $ext = strtolower(pathinfo($file->get_filename(), PATHINFO_EXTENSION));
+        $xarita = [
+            'webm' => 'audio/webm',
+            'ogg' => 'audio/ogg',
+            'oga' => 'audio/ogg',
+            'm4a' => 'audio/m4a',
+            'mp4' => 'audio/m4a',
+            'mp3' => 'audio/mpeg',
+            'wav' => 'audio/wav',
+            'aac' => 'audio/aac',
+            'flac' => 'audio/flac',
+        ];
+        return $xarita[$ext] ?? 'audio/webm';
     }
 
     /** So'rov matni — natija QAT'IY JSON bo'lishi kerak. */
@@ -243,16 +278,20 @@ class ai {
             }
             if ($kod === 429) {
                 // Kvota tugagan — qayta urinish befoyda, zaxira modelga o'tiladi
-                throw new \moodle_exception('Kvota tugagan (' . $model . ')');
+                throw new \RuntimeException('Kvota tugagan (' . $model . ')');
             }
             if ($kod >= 500 || $kod === 0) {
                 sleep(5 * ($i + 1));     // band — kutib qayta urinamiz
                 continue;
             }
-            throw new \moodle_exception('Gemini HTTP ' . $kod . ': ' .
-                \core_text::substr((string) $javob, 0, 200));
+            // Sababni keyin qidirmaslik uchun kontekstni ham yozamiz
+            throw new \RuntimeException(sprintf(
+                'Gemini HTTP %d [model=%s, mime=%s, hajm=%.1fMB]: %s',
+                $kod, $model, $mime, strlen($b64) / 1048576,
+                \core_text::substr((string) $javob, 0, 250)
+            ));
         }
-        throw new \moodle_exception('Gemini javob bermadi (' . $model . ')');
+        throw new \RuntimeException('Gemini javob bermadi (' . $model . ')');
     }
 
     /** Javobdan JSON ajratib olish (model matn ichiga o'rab yuborishi mumkin). */
@@ -289,7 +328,7 @@ class ai {
 
         $natija = json_decode($matn, true);
         if (!is_array($natija) || !isset($natija['transcript'])) {
-            throw new \moodle_exception('Javobni JSON sifatida o\'qib bo\'lmadi');
+            throw new \RuntimeException('Javobni JSON sifatida o\'qib bo\'lmadi');
         }
         return $natija;
     }
