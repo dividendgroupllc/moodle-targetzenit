@@ -161,13 +161,26 @@ if ($tahlil) {
 
     // --- Umumiy foiz
     $um = $d['overall']['score'] ?? null;
+    $norma = \local_targetzenit\ai::norm_overall();
     $sarlavha = '🤖 ' . get_string('ai_analyse', 'local_targetzenit');
     if ($um !== null) {
-        $rang = $um >= 75 ? 'success' : ($um >= 55 ? 'warning' : 'danger');
+        // Rang XALQARO O'RTACHAGA nisbatan: 59% o'rtacha dars demakdir,
+        // uni "qizil" deb ko'rsatish noto'g'ri bo'lardi.
+        $rang = $um >= $norma + 10 ? 'success' : ($um >= $norma - 10 ? 'warning' : 'danger');
         $sarlavha .= ' ' . html_writer::tag('span', $um . '%',
             ['class' => 'badge badge-' . $rang . ' tz-ai-umumiy']);
     }
     echo html_writer::tag('h5', $sarlavha);
+
+    if ($um !== null) {
+        $farq = $um - $norma;
+        echo html_writer::div(
+            "Xalqaro o'rtacha: <b>{$norma}%</b> (CLASS va ICALT tadqiqotlari) · " .
+            "bu dars: <b>{$um}%</b> — o'rtachadan " .
+            ($farq >= 0 ? "<span class='text-success'>+{$farq}%</span>"
+                        : "<span class='text-danger'>{$farq}%</span>"),
+            'text-muted small mb-3');
+    }
 
     if (!empty($d['summary'])) {
         echo html_writer::tag('p', s($d['summary']), ['class' => 'mb-3']);
@@ -191,7 +204,9 @@ if ($tahlil) {
     // --- Kategoriyalar (ICALT) — foizli chiziqlar
     if (!empty($d['categories']) && is_array($d['categories'])) {
         echo html_writer::tag('div',
-            "Baholash ramkasi: <b>ICALT</b> (xalqaro dars kuzatuvi) + Jahon banki <b>TEACH</b>",
+            "Baholash ramkasi: <b>ICALT</b> + <b>CLASS</b> + Jahon banki <b>TEACH</b>. " .
+            "Chiziqdagi <span class='tz-norm-namuna'></span> belgisi — shu mezon bo'yicha " .
+            "<b>xalqaro o'rtacha</b>. Undan o'ngda bo'lsangiz — o'rtachadan yuqorisiz.",
             ['class' => 'text-muted small mb-2']);
 
         // Guruhlar bo'yicha tartiblaymiz (CATEGORIES dagi tartib bo'yicha)
@@ -213,16 +228,29 @@ if ($tahlil) {
             $rang = $past ? 'secondary' : ($ball >= 75 ? 'success' : ($ball >= 55 ? 'warning' : 'danger'));
 
             echo html_writer::start_div('tz-cat');
+            $kat_norma = \local_targetzenit\ai::CATEGORIES[$c['code'] ?? '']['norm'] ?? null;
+            // Rang normaga nisbatan — masalan 35% "Tushunchani chuqurlashtirish"
+            // xalqaro o'rtachadan (30%) YUQORI, uni qizil qilish noto'g'ri
+            if (!$past && $kat_norma !== null) {
+                $rang = $ball >= $kat_norma + 10 ? 'success'
+                    : ($ball >= $kat_norma - 10 ? 'warning' : 'danger');
+            }
+
             echo html_writer::div(
                 html_writer::tag('span', s($c['name'] ?? $c['code'] ?? ''), ['class' => 'tz-cat-nom']) .
                 html_writer::tag('span', ($c['weight'] ?? 0) . '%', ['class' => 'tz-cat-vazn']) .
                 html_writer::tag('span', $past ? 'audio orqali baholanmadi' : $ball . '%',
                     ['class' => 'tz-cat-ball text-' . $rang]),
                 'tz-cat-bosh');
-            echo html_writer::div(
-                html_writer::div('', 'tz-bar-ichi bg-' . $rang,
-                    ['style' => 'width:' . ($past ? 0 : $ball) . '%']),
-                'tz-bar');
+
+            $chiziq = html_writer::div('', 'tz-bar-ichi bg-' . $rang,
+                ['style' => 'width:' . ($past ? 0 : $ball) . '%']);
+            if ($kat_norma !== null) {
+                $chiziq .= html_writer::div('', 'tz-norm',
+                    ['style' => 'left:' . $kat_norma . '%',
+                     'title' => "Xalqaro o'rtacha: {$kat_norma}%"]);
+            }
+            echo html_writer::div($chiziq, 'tz-bar');
             if (!empty($c['actual_topic'])) {
                 echo html_writer::div('Darsda: ' . s($c['actual_topic']), 'tz-cat-dalil');
             }

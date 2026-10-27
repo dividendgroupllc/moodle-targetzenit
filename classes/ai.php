@@ -36,30 +36,51 @@ class ai {
      * tushuntirish va faollashtirish ovozda yaxshi eshitiladi, tabaqalashtirish
      * esa deyarli eshitilmaydi — shuning uchun uning vazni eng kichik.
      */
+    /**
+     * Kategoriyalar: nom, vazn va XALQARO O'RTACHA (`norm`).
+     *
+     * `norm` — CLASS (1-7 shkala, foizga o'tkazilgan: (ball-1)/6) va ICALT
+     * bo'yicha yirik tadqiqotlardagi o'rtacha qiymatlar. Bu juda muhim:
+     * instruksional chuqurlik (concept_development, feedback_quality,
+     * language_modeling) DUNYO BO'YLAB past — 24-41%. Normani ko'rsatmasak,
+     * o'qituvchi o'zini muvaffaqiyatsiz deb his qiladi, aslida esa u xalqaro
+     * o'rtacha darajada ishlayotgan bo'ladi.
+     */
     const CATEGORIES = [
         // --- Ta'lim sifati (ICALT) ---
-        'clarity' => ['nom' => "Tushuntirish aniqligi", 'vazn' => 11, 'guruh' => "Ta'lim sifati"],
-        'activating' => ['nom' => "O'quvchilar faolligi", 'vazn' => 11, 'guruh' => "Ta'lim sifati"],
-        'topic_match' => ['nom' => "Mavzuga muvofiqlik", 'vazn' => 10, 'guruh' => "Ta'lim sifati"],
-        'student_understanding' => ['nom' => "O'quvchilar o'zlashtirish darajasi", 'vazn' => 8, 'guruh' => "Ta'lim sifati"],
-        'concept_development' => ['nom' => "Tushunchani chuqurlashtirish", 'vazn' => 5, 'guruh' => "Ta'lim sifati"],
-        'strategies' => ['nom' => "O'quv strategiyalarini o'rgatish", 'vazn' => 5, 'guruh' => "Ta'lim sifati"],
-        'differentiation' => ['nom' => "Tabaqalashtirilgan yondashuv", 'vazn' => 3, 'guruh' => "Ta'lim sifati"],
+        'clarity' => ['nom' => "Tushuntirish aniqligi", 'vazn' => 11, 'norm' => 65, 'guruh' => "Ta'lim sifati"],
+        'activating' => ['nom' => "O'quvchilar faolligi", 'vazn' => 11, 'norm' => 50, 'guruh' => "Ta'lim sifati"],
+        'topic_match' => ['nom' => "Mavzuga muvofiqlik", 'vazn' => 10, 'norm' => 80, 'guruh' => "Ta'lim sifati"],
+        'student_understanding' => ['nom' => "O'quvchilar o'zlashtirish darajasi", 'vazn' => 8, 'norm' => 60, 'guruh' => "Ta'lim sifati"],
+        'concept_development' => ['nom' => "Tushunchani chuqurlashtirish", 'vazn' => 5, 'norm' => 30, 'guruh' => "Ta'lim sifati"],
+        'strategies' => ['nom' => "O'quv strategiyalarini o'rgatish", 'vazn' => 5, 'norm' => 40, 'guruh' => "Ta'lim sifati"],
+        'differentiation' => ['nom' => "Tabaqalashtirilgan yondashuv", 'vazn' => 3, 'norm' => 35, 'guruh' => "Ta'lim sifati"],
 
         // --- Emotsional qo'llab-quvvatlash (CLASS) ---
-        'positive_climate' => ['nom' => "Ijobiy muhit", 'vazn' => 7, 'guruh' => "Emotsional qo'llab-quvvatlash"],
-        'negative_climate' => ['nom' => "Salbiy holatlarning yo'qligi", 'vazn' => 7, 'guruh' => "Emotsional qo'llab-quvvatlash"],
-        'teacher_sensitivity' => ['nom' => "O'qituvchining sezgirligi", 'vazn' => 6, 'guruh' => "Emotsional qo'llab-quvvatlash"],
-        'student_perspective' => ['nom' => "O'quvchi fikriga e'tibor", 'vazn' => 4, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'positive_climate' => ['nom' => "Ijobiy muhit", 'vazn' => 7, 'norm' => 70, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'negative_climate' => ['nom' => "Salbiy holatlarning yo'qligi", 'vazn' => 7, 'norm' => 85, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'teacher_sensitivity' => ['nom' => "O'qituvchining sezgirligi", 'vazn' => 6, 'norm' => 65, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'student_perspective' => ['nom' => "O'quvchi fikriga e'tibor", 'vazn' => 4, 'norm' => 45, 'guruh' => "Emotsional qo'llab-quvvatlash"],
 
         // --- Sinfni tashkil etish (CLASS) ---
-        'management' => ['nom' => "Xulq-atvorni boshqarish", 'vazn' => 7, 'guruh' => "Sinfni tashkil etish"],
-        'time_on_task' => ['nom' => "Vaqtdan samarali foydalanish", 'vazn' => 6, 'guruh' => "Sinfni tashkil etish"],
+        'management' => ['nom' => "Xulq-atvorni boshqarish", 'vazn' => 7, 'norm' => 67, 'guruh' => "Sinfni tashkil etish"],
+        'time_on_task' => ['nom' => "Vaqtdan samarali foydalanish", 'vazn' => 6, 'norm' => 70, 'guruh' => "Sinfni tashkil etish"],
 
         // --- Fikr-mulohaza va til (CLASS) ---
-        'feedback_quality' => ['nom' => "Fikr-mulohaza sifati", 'vazn' => 7, 'guruh' => "Fikr-mulohaza va til"],
-        'language_modeling' => ['nom' => "Nutq namunasi va til boyligi", 'vazn' => 3, 'guruh' => "Fikr-mulohaza va til"],
+        'feedback_quality' => ['nom' => "Fikr-mulohaza sifati", 'vazn' => 7, 'norm' => 32, 'guruh' => "Fikr-mulohaza va til"],
+        'language_modeling' => ['nom' => "Nutq namunasi va til boyligi", 'vazn' => 3, 'norm' => 41, 'guruh' => "Fikr-mulohaza va til"],
     ];
+
+    /** Vaznli xalqaro o'rtacha — "odatdagi dars" necha foiz oladi. */
+    public static function norm_overall(): int {
+        $y = 0;
+        $v = 0;
+        foreach (self::CATEGORIES as $k) {
+            $y += $k['norm'] * $k['vazn'];
+            $v += $k['vazn'];
+        }
+        return (int) round($y / $v);
+    }
 
     public static function enabled(): bool {
         return (bool) get_config('local_targetzenit', 'aienabled')
@@ -139,7 +160,7 @@ class ai {
         }
 
         $mime = self::audio_mime($audio, $file);
-        $course = $DB->get_record('course', ['id' => $dars->courseid], 'id, fullname');
+        $course = $DB->get_record('course', ['id' => $dars->courseid], 'id, fullname, idnumber');
 
         // Faylni vaqtinchalik papkaga chiqaramiz (ffmpeg fayl bilan ishlaydi)
         $ish = make_temp_directory('local_targetzenit/ai/' . $audio->lessonid);
@@ -301,11 +322,32 @@ class ai {
 
         $kodlar = implode(', ', array_keys(self::CATEGORIES));
 
+        // Kurs idnumber: "<yil>::<guruh>::<fan>" — fan va sinfni shundan ajratamiz
+        $guruh = '';
+        $fan = '';
+        if ($course && !empty($course->idnumber)) {
+            $qism = explode('::', $course->idnumber);
+            $guruh = $qism[1] ?? '';
+            $fan = $qism[2] ?? '';
+        }
+
         return "Sen dars kuzatuvi bo'yicha xalqaro metodist-ekspertsan. Senga O'ZBEKISTONdagi "
             . "xalqaro maktabda o'tilgan darsning TO'LIQ TRANSKRIPTI beriladi "
             . "(audio bo'lak-bo'lak matnga o'girilgan, [MM:SS] belgilari vaqtni ko'rsatadi).\n"
-            . "Dars: {$kurs}. Sana: {$dars->lessondate}, {$dars->lessonno}-dars. "
+            . "Dars: {$kurs}. Sinf: " . ($guruh ?: "noma'lum") . ". Fan: " . ($fan ?: "noma'lum") . ". "
+            . "Sana: {$dars->lessondate}, {$dars->lessonno}-dars. "
             . "O'qituvchi jurnalga yozgan mavzu: \"" . ($mavzu ?: '(yozilmagan)') . "\".\n\n"
+
+            . "MAQSAD: o'qituvchini tanqid qilish EMAS — darsni umumiy tahlil qilish va "
+            . "rivojlanishga yordam berish. Ohang xolis va qo'llab-quvvatlovchi bo'lsin: "
+            . "nima yaxshi bo'lganini ham, nimani yaxshilash mumkinligini ham ayt. "
+            . "Ayblov so'zlarini ishlatma.\n\n"
+
+            . "FAN VA YOSHNI HISOBGA OL: har fanning o'z tabiati bor. Jismoniy tarbiya, "
+            . "san'at yoki musiqa darsida ko'p gapirish kutilmaydi; til darsida o'quvchi "
+            . "nutqi ko'p bo'lishi kerak; matematikada mulohaza yuritish ovoz chiqarib "
+            . "modellanadi. Boshlang'ich sinfda ko'rsatma qisqa va takroriy bo'lishi "
+            . "normal. Mezonlarni SHU fan va sinfga qarab talqin qil.\n\n"
 
             . "BAHOLASH RAMKASI: ICALT (xalqaro dars kuzatuvi), CLASS (Pianta — sinfdagi "
             . "o'zaro munosabatlar) va Jahon banki TEACH. Har kategoriya 0-100 FOIZDA "

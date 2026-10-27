@@ -180,3 +180,14 @@
 }
 .tz-wellbeing { background: #fffbf0; border-left: 3px solid #ffc107; padding: 10px 12px; border-radius: 4px; }
 .tz-wellbeing ul { margin-bottom: 6px; }
+
+/* Xalqaro o'rtacha belgisi chiziqda */
+.tz-bar { position: relative; }
+.tz-norm {
+    position: absolute; top: -2px; width: 2px; height: 11px;
+    background: #343a40; opacity: .55; border-radius: 1px;
+}
+.tz-norm-namuna {
+    display: inline-block; width: 2px; height: 11px; background: #343a40;
+    opacity: .55; vertical-align: -2px; margin: 0 2px;
+}
