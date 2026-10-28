@@ -49,29 +49,50 @@ sudo -u www-data php8.3 /opt/moodle/admin/cli/purge_caches.php
 Tekshirish: `Site administration → Plugins → Plugins overview` da
 **Target Zenit integration** ko'rinadi.
 
-## Keyingi deploylar (hozircha QO'LDA)
+## Deploy — avtomatik (CI/CD)
 
-Serverda bitta buyruq — shu repo ichidagi skript hamma ishni qiladi:
+`main` ga push qilinganda GitHub Actions o'zi bajaradi:
+
+1. **lint** — `php -l` hamma PHP faylga, `bash -n` deploy skriptiga,
+   `version.php` tuzilishi, va **versiya oshirilganmi** tekshiruvi
+2. **deploy** — SSH orqali serverda `scripts/deploy.sh`
+3. **tasdiq** — deploydan keyin sayt javob berayotganini tekshiradi
+
+Deploy skripti: qulf oladi → `git reset --hard origin/main` → ruxsatlarni
+tiklaydi → maintenance rejimi → `upgrade.php` → `purge_caches.php` →
+maintenance off → health check.
+
+**Xato bo'lsa kod ORQAGA QAYTARILMAYDI** — Moodle plaginining baza yangilanishi
+qaytmaydi, kodni tushirsak "Cannot downgrade" bo'lib sayt ishlamay qoladi.
+Skript to'xtaydi, holatni yozadi va tuzatish oldinga qarab qilinadi.
+
+### Versiya tekshiruvi — nega muhim
+
+Moodle plaginni **faqat `$plugin->version` oshganda** yangilaydi. Oshirilmasa
+kod serverga tushadi-yu, Moodle eski kodni keshda ushlab qolaveradi. CI buni
+to'xtatadi: PHP/JS/XML/CSS o'zgargan, lekin versiya oshmagan bo'lsa — deploy
+umuman boshlanmaydi.
+
+### Kerakli secretlar
+
+Repo → Settings → Environments → **production**:
+
+| Secret | Qiymat |
+|---|---|
+| `SSH_HOST` | server IP yoki domen |
+| `SSH_USER` | **root** |
+| `SSH_PRIVATE_KEY` | deploy kalitining yopiq qismi |
+| `SSH_KNOWN_HOSTS` | `ssh-keyscan` natijasi |
+
+> `SSH_USER` — **root**, `frappe` emas. `/opt/moodle` root'niki va Frappe'ning
+> `frappe` useri unga tegmaydi: ikki tizim alohida OS userda yuradi, bu ataylab
+> shunday (ikkita serverdek ishlash qoidasi).
+
+### Qo'lda deploy (zarur bo'lsa)
 
 ```bash
 bash /opt/moodle/public/local/targetzenit/scripts/deploy.sh
 ```
-
-Skript: qulf oladi → `git reset --hard origin/main` → ruxsatlarni tiklaydi →
-maintenance rejimi → `upgrade.php` → `purge_caches.php` → maintenance off →
-health check. Xato bo'lsa avtomatik **rollback** (eski commitga qaytadi).
-
-### Avtomatik deploy (keyinroq)
-
-`.github/workflows/deploy.yml` tayyor turibdi, lekin **o'chirilgan** — faqat
-`workflow_dispatch` bilan qo'lda ishga tushadi. Yoqish uchun fayldagi izohga
-olingan `push:` qatorlarini ochish va secretlarni qo'yish kerak:
-`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS`
-(repo → Settings → Environments → production).
-
-> `SSH_USER` — **root** (yoki sudo'li user). `/opt/moodle` root'niki, Frappe'ning
-> `frappe` useri unga tegmaydi: ikki tizim alohida OS userda yuradi, bu ataylab
-> shunday (ikkita serverdek ishlash qoidasi).
 
 ## Versiya raqami
 

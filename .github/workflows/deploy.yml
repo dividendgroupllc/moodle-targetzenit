@@ -1,10 +1,8 @@
 name: Moodle plugin deploy
 
-# HOZIRCHA O'CHIRILGAN: push'da avtomatik ishlamaydi, faqat qo'lda ishga tushiriladi.
-# Tayyor bo'lganda quyidagi 2 qatorni izohdan chiqarib qo'yish kifoya:
-#   push:
-#     branches: [main]
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -17,6 +15,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2      # oldingi commit bilan solishtirish uchun
 
       - name: PHP sintaksis tekshiruvi (qattiq to'siq)
         run: |
@@ -33,6 +33,28 @@ jobs:
         run: |
           grep -q "component = 'local_targetzenit'" version.php || { echo "::error::component nomi noto'g'ri"; exit 1; }
           grep -qE '\$plugin->version\s*=\s*[0-9]{10}' version.php || { echo "::error::version raqami YYYYMMDDXX formatida emas"; exit 1; }
+
+      - name: Versiya oshirilganmi (eng muhim tekshiruv)
+        # Moodle plaginni FAQAT version raqami oshganda yangilaydi. Oshirilmasa
+        # kod serverga tushadi-yu, Moodle eski kodni keshda ushlab qolaveradi —
+        # biz buni ikki marta boshdan kechirganmiz.
+        run: |
+          yangi=$(grep -oP '\$plugin->version\s*=\s*\K[0-9]+' version.php)
+          if ! git rev-parse HEAD~1 >/dev/null 2>&1; then
+            echo "Birinchi commit — solishtirish shart emas"; exit 0
+          fi
+          eski=$(git show HEAD~1:version.php 2>/dev/null | grep -oP '\$plugin->version\s*=\s*\K[0-9]+' || echo 0)
+
+          # Kod umuman o'zgarmagan bo'lsa (masalan faqat README) — talab qilmaymiz
+          if git diff --quiet HEAD~1 HEAD -- '*.php' '*.js' '*.xml' '*.css'; then
+            echo "Kod o'zgarmagan — versiya oshirish shart emas"; exit 0
+          fi
+
+          echo "eski=$eski yangi=$yangi"
+          if [ "$yangi" -le "$eski" ]; then
+            echo "::error::version.php dagi \$plugin->version OSHIRILMAGAN ($eski -> $yangi). Moodle o'zgarishni sezmaydi."
+            exit 1
+          fi
 
   deploy:
     needs: lint
@@ -68,3 +90,16 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             'bash -s' < scripts/deploy.sh
+
+      - name: Sayt ishlayaptimi (yakuniy tasdiq)
+        run: |
+          for i in 1 2 3; do
+            kod=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+              "https://lms.target.erpcontrol.uz/" || echo 000)
+            case "$kod" in
+              200|302|303) echo "Sayt javob berdi: HTTP $kod"; exit 0 ;;
+            esac
+            echo "urinish $i: HTTP $kod"; sleep 15
+          done
+          echo "::error::Deploydan keyin sayt javob bermayapti"
+          exit 1

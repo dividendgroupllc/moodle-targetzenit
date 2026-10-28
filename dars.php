@@ -363,9 +363,12 @@ if ($tahlil) {
     echo html_writer::div('Model: ' . s($tahlil['audio']->aimodel ?? '') . ' · ' .
         userdate($tahlil['audio']->analysedat), 'text-muted small mt-2');
 
-    // Qayta tahlil — audio hali bor bo'lsa
+    // Qayta tahlil — FAQAT MA'MUR uchun.
+    // O'qituvchi o'z darsining tahlilini qayta ishga tushira olmaydi: aks holda
+    // natija yoqmaganda uni qayta-qayta "aylantirish" mumkin bo'lib qolardi.
     if (in_array($tahlil['audio']->status, \local_targetzenit\audio::FAYLLI, true)
-            && \local_targetzenit\ai::enabled()) {
+            && \local_targetzenit\ai::enabled()
+            && has_capability('local/targetzenit:viewanalysis', context_system::instance())) {
         echo html_writer::tag('button', '🔄 Qayta tahlil qilish',
             ['type' => 'button', 'id' => 'tz-ai-again', 'class' => 'btn btn-sm btn-outline-primary mt-2']);
         echo html_writer::tag('span', '', ['id' => 'tz-ai-again-holat', 'class' => 'ml-2 small']);

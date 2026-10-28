@@ -71,6 +71,10 @@ try {
             break;
 
         case 'reanalyse':
+            // FAQAT MA'MUR. Tugmani yashirish yetarli emas — so'rovni to'g'ridan-to'g'ri
+            // yuborish mumkin, shuning uchun ruxsat SHU YERDA ham tekshiriladi.
+            require_capability('local/targetzenit:viewanalysis', context_system::instance());
+
             // Eski ramkadagi tahlilni yangisi bilan almashtirish.
             if (!\local_targetzenit\ai::enabled()) {
                 throw new moodle_exception('AI tahlil yoqilmagan yoki kalit yo\'q.');
