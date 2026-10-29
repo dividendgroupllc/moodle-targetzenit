@@ -115,6 +115,9 @@ if ($date !== date('Y-m-d')) {
     $nav .= html_writer::link($url(date('Y-m-d')), get_string('dir_today', 'local_targetzenit'),
         ['class' => 'btn btn-sm btn-outline-primary ml-2']);
 }
+$nav .= html_writer::link(new moodle_url('/local/targetzenit/yozuvlar.php'),
+    get_string('recordings', 'local_targetzenit'),
+    ['class' => 'btn btn-sm btn-outline-secondary ml-2']);
 $nav .= html_writer::tag('span',
     ($kunholat['ok'] ? s($kunholat['reason']) : '⚠ ' . s($kunholat['reason']))
     . ' · ' . get_string('dir_since', 'local_targetzenit', userdate(strtotime($boshi), '%d.%m.%Y')),

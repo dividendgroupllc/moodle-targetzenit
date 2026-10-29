@@ -3,14 +3,25 @@
 // Kim yozgan, qancha joy egallagan, tahlil qilinganmi — va o'chirish.
 
 require(__DIR__ . '/../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
 
 use local_targetzenit\audio;
 
-admin_externalpage_setup('local_targetzenit_yozuvlar');
+// ODDIY sahifa, admin sahifasi EMAS.
+//
+// NEGA O'ZGARTIRILDI: avval `admin_externalpage_setup()` ishlatilardi va u
+// sahifani ADMIN DARAXTIDAN qidiradi. Daraxtga qo'shish kodi esa
+// `settings.php` da `if ($hassiteconfig)` ichida — ya'ni sahifa faqat
+// `moodle/site:config` bor odam uchun RO'YXATGA OLINADI. Direktorda bu
+// ruxsat yo'q (va bo'lmasligi ham kerak), shuning uchun sahifa o'zi
+// `viewanalysis` ni talab qilsa ham "Access denied" berardi.
+require_login();
 
 $context = context_system::instance();
 require_capability('local/targetzenit:viewanalysis', $context);
+
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/local/targetzenit/yozuvlar.php'));
+$PAGE->set_pagelayout('standard');
 
 $ochir = optional_param('ochir', 0, PARAM_INT);
 $turi = optional_param('turi', 'audio', PARAM_ALPHA);   // audio | hammasi
@@ -18,8 +29,8 @@ $sahifa = optional_param('page', 0, PARAM_INT);
 $qidiruv = optional_param('q', '', PARAM_TEXT);
 const PER_PAGE = 50;
 
-$PAGE->set_title('Dars yozuvlari');
-$PAGE->set_heading('Dars yozuvlari');
+$PAGE->set_title(get_string('recordings', 'local_targetzenit'));
+$PAGE->set_heading(get_string('recordings', 'local_targetzenit'));
 
 // ------------------------------------------------------------------ O'CHIRISH
 if ($ochir && confirm_sesskey()) {

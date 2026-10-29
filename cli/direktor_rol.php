@@ -28,16 +28,18 @@ const TZ_RUXSATLAR = [
 ];
 
 [$opt, $un] = cli_get_params(
-    ['help' => false, 'yarat' => false, 'bergan' => false, 'ber' => '', 'qidir' => ''],
+    ['help' => false, 'yarat' => false, 'bergan' => false, 'ber' => '',
+     'qidir' => '', 'tekshir' => ''],
     ['h' => 'help']
 );
 
 if ($opt['help'] || (!$opt['yarat'] && !$opt['bergan'] && $opt['ber'] === ''
-        && $opt['qidir'] === '')) {
+        && $opt['qidir'] === '' && $opt['tekshir'] === '')) {
     cli_writeln("--yarat              `Direktor` rolini yaratadi (bor bo'lsa ruxsatlarini tiklaydi)");
     cli_writeln("--qidir=<matn>       xodimni topadi va Employee ID sini ko'rsatadi");
     cli_writeln("--ber=<idnumber>     rolni shu xodimga beradi (Employee ID bo'yicha)");
     cli_writeln("--bergan             rol kimga berilganini ko'rsatadi");
+    cli_writeln("--tekshir=<idnumber> shu odamda qaysi ruxsat BOR-YO'Qligini ko'rsatadi");
     exit(0);
 }
 
@@ -119,6 +121,33 @@ if ($opt['ber'] !== '') {
     }
     role_assign($rol->id, $user->id, $context->id);
     cli_writeln("Rol berildi: " . fullname($user) . " ({$user->idnumber})");
+}
+
+// ----------------------------------------------------------------- TEKSHIR
+// "Access denied" muammosi ruxsatdanmi yoki sahifa marshrutidanmi — shuni
+// aniqlash uchun. Ruxsatlar bor, lekin sahifa ochilmasa, muammo sahifada.
+if ($opt['tekshir'] !== '') {
+    $user = $DB->get_record('user', ['idnumber' => $opt['tekshir'], 'deleted' => 0]);
+    if (!$user) {
+        cli_error("Bunday idnumber bilan foydalanuvchi topilmadi: {$opt['tekshir']}");
+    }
+    cli_writeln(fullname($user) . " ({$user->idnumber})");
+    cli_writeln('');
+
+    $rollar = get_user_roles($context, $user->id, false);
+    cli_writeln('Tizim kontekstidagi rollar: '
+        . ($rollar ? implode(', ', array_map(fn($r) => $r->shortname, $rollar)) : "YO'Q"));
+    cli_writeln('');
+
+    foreach (array_merge(TZ_RUXSATLAR, ['moodle/site:config', 'moodle/course:view',
+                                        'local/targetzenit:teach']) as $cap) {
+        $bor = has_capability($cap, $context, $user);
+        cli_writeln('  ' . ($bor ? '[bor]    ' : "[yo'q]   ") . $cap);
+    }
+    cli_writeln('');
+    cli_writeln("`teach` va `site:config` YO'Q bo'lishi TO'G'RI: direktor baho");
+    cli_writeln("qo'ymaydi va saytni sozlamaydi. Tahlilni faqat-o'qish sahifasi");
+    cli_writeln("(dars_tahlil.php) `viewanalysis` bilan ko'rsatadi.");
 }
 
 // ------------------------------------------------------------------- BERGAN
