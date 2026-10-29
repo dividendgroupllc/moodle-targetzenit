@@ -78,3 +78,6 @@ $string['ai_segment'] = "Transkripsiya bo'lagi (daqiqa)";
 $string['ai_segment_desc'] = "Uzun dars shu uzunlikdagi bo'laklarga ajratilib, har biri alohida matnga o'giriladi. Bitta so'rovda 45 daqiqalik dars so'ralsa, model javob uzunligi chegarasiga urilib matnni o'rtasidan kesadi. 5 daqiqa — sinalgan qiymat. 0 qo'yilsa bo'linmaydi.";
 $string['ai_ffmpeg'] = 'ffmpeg yo\'li';
 $string['ai_ffmpeg_desc'] = "Audioni bo'laklarga ajratish uchun kerak (apt install ffmpeg). Topilmasa bo'linmaydi va uzun darslarning matni chala qolishi mumkin.";
+
+$string['mypayroll'] = 'Mening oyligim';
+$string['targetzenit:viewallpayroll'] = "Barcha xodimlarning oyligini ko'rish";

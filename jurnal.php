@@ -108,6 +108,14 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
             lesson::save_record((int) $dars->id, (int) $s->id, $q['attendance'], $q['grade'], '');
         }
     }
+    // Baholar Moodle gradebook'ida KO'RINISHI uchun kurs yakuniy baholarini
+    // bir marta qayta hisoblaymiz (har katakda qilish juda qimmat).
+    try {
+        \local_targetzenit\gradebook::regrade($courseid);
+    } catch (\Throwable $e) {
+        \local_targetzenit\gradebook::xato_yoz($e, "regrade kurs $courseid");
+    }
+
     $xabar = $xato ? "Saqlandi. {$xato} ta katak tushunarsiz bo'lgani uchun o'tkazib yuborildi." : 'Saqlandi';
     redirect(new moodle_url('/local/targetzenit/jurnal.php',
         ['courseid' => $courseid, 'term' => $termidx]), $xabar, null,

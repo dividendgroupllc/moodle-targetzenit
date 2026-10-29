@@ -31,5 +31,17 @@ class hook_callbacks {
             null,
             'tzgrades'
         );
+
+        // "Mening oyligim" — faqat oylik ma'lumoti BOR odamga. O'quvchi va
+        // ota-onada bunday qator bo'lmaydi, shuning uchun havola ham chiqmaydi.
+        if (payroll::has_any((int) $USER->id)) {
+            $nav->add(
+                get_string('mypayroll', 'local_targetzenit'),
+                '/local/targetzenit/oylik.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzpayroll'
+            );
+        }
     }
 }

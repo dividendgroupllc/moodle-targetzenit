@@ -114,5 +114,36 @@
         <INDEX NAME="status_time" UNIQUE="false" FIELDS="status, timecreated"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_payroll" COMMENT="Frappe oylik tabelidan kelgan xodim oyligi. Frappe YAGONA MANBA — bu yerda faqat ko'rsatish uchun nusxa, Moodle hech narsa hisoblamaydi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="useridnumber" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Frappe Employee.name — Moodle user.idnumber bilan bog'lanadi"/>
+        <FIELD NAME="employeename" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="yil" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="oy" TYPE="int" LENGTH="2" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="lavozim" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="tolovturi" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="kun" SEQUENCE="false" COMMENT="kun = kunbay, soat = soatbay"/>
+        <FIELD NAME="normakun" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Shu oydagi norma ish kuni"/>
+        <FIELD NAME="kelgankun" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="ishlagan" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Kunbayda koeffitsient yig'indisi, soatbayda ishlagan soat"/>
+        <FIELD NAME="kunliknarx" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="oylik" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Shartnoma oyligi (soatbayda — 1 soat narxi)"/>
+        <FIELD NAME="bonus" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Bonus musbat, jarima manfiy — Frappe'da allaqachon qo'shilgan"/>
+        <FIELD NAME="nalog" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="pitaniya" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="hisob" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Hisoblangan ish haqi (ushlovlardan oldin)"/>
+        <FIELD NAME="jami" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Qo'lga tegadigan summa"/>
+        <FIELD NAME="valyuta" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="holat" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="Ochiq" SEQUENCE="false" COMMENT="Ochiq = oy davom etmoqda, Yopiq = yakunlangan"/>
+        <FIELD NAME="kunlarjson" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Kunlar: [{kun, koef, kirish, chiqish}] — kirish/chiqish Face ID turniketdan"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ref_oy" UNIQUE="true" FIELDS="useridnumber, yil, oy"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

@@ -115,9 +115,9 @@ class lesson {
                     gradebook::push($dars, $userid, $grade);
                 } catch (\Throwable $e) {
                     // Gradebook muammosi baho SAQLANISHINI to'smasligi kerak —
-                    // asosiy yozuv yuqorida allaqachon saqlangan.
-                    debugging('local_targetzenit: gradebook xatosi — ' . $e->getMessage(),
-                        DEBUG_DEVELOPER);
+                    // asosiy yozuv yuqorida allaqachon saqlangan. Ammo xato
+                    // ko'rinmay qolmasligi kerak: admin sahifasida chiqadi.
+                    gradebook::xato_yoz($e, "dars {$lessonid}, user {$userid}");
                 }
             }
         }
@@ -156,8 +156,7 @@ class lesson {
         } catch (\Throwable $e) {
             // Mavzu va uy vazifa yuqorida saqlangan — qo'shimcha integratsiya
             // yiqilsa ham o'qituvchining ishi yo'qolmasin.
-            debugging('local_targetzenit: gradebook/topshiriq xatosi — ' . $e->getMessage(),
-                DEBUG_DEVELOPER);
+            gradebook::xato_yoz($e, "dars {$lessonid} (mavzu/uy vazifa)");
         }
     }
 

@@ -58,6 +58,15 @@ if ($hassiteconfig) {
 
     $ADMIN->add('localplugins', $settings);
 
+    // Gradebook integratsiyasi holati — baholar Moodle'ning o'z gradebook'iga
+    // tushayotganini tekshirish va yetishmaganlarini ko'chirish.
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_targetzenit_gradebook',
+        'Target Zenit: gradebook',
+        new moodle_url('/local/targetzenit/gradebook_admin.php'),
+        'moodle/site:config'
+    ));
+
     // Yozuvlar ro'yxati — admin panelidan ochiladigan alohida sahifa
     $ADMIN->add('localplugins', new admin_externalpage(
         'local_targetzenit_yozuvlar',

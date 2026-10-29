@@ -62,6 +62,12 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
             $comments[$s->id] ?? ''
         );
     }
+    // Gradebook'da ko'rinishi uchun kurs yakuniy baholarini qayta hisoblash.
+    try {
+        \local_targetzenit\gradebook::regrade((int) $courseid);
+    } catch (\Throwable $e) {
+        \local_targetzenit\gradebook::xato_yoz($e, "regrade kurs $courseid");
+    }
     redirect($PAGE->url, 'Saqlandi', null, \core\output\notification::NOTIFY_SUCCESS);
 }
 

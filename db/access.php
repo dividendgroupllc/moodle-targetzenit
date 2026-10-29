@@ -33,6 +33,14 @@ $capabilities = [
         'archetypes' => ['manager' => CAP_ALLOW],
     ],
 
+    // BOSHQALARNING oyligini ko'rish — direktor/moliya uchun. Maxfiy ma'lumot,
+    // shuning uchun faqat manager arxetipida.
+    'local/targetzenit:viewallpayroll' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['manager' => CAP_ALLOW],
+    ],
+
     // Umumiy (butun maktab) dars jadvalini ko'rish — o'qituvchilar uchun.
     // O'quvchi faqat o'z sinfinikini ko'radi, bu ruxsat unga berilmaydi.
     'local/targetzenit:viewalltimetable' => [

@@ -17,4 +17,12 @@ $functions = [
         'capabilities' => 'local/targetzenit:push',
         'ajax'        => false,
     ],
+    'local_targetzenit_push_payroll' => [
+        'classname'   => 'local_targetzenit\\external\\push_payroll',
+        'methodname'  => 'execute',
+        'description' => "Frappe'dan oylik tabel ma'lumotini qabul qiladi",
+        'type'        => 'write',
+        'capabilities' => 'local/targetzenit:push',
+        'ajax'        => false,
+    ],
 ];
