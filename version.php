@@ -8,8 +8,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_targetzenit';   // Frankenstyle nomi — o'zgarmaydi
-$plugin->version   = 2026102913;            // YYYYMMDDXX — har deployda oshiriladi
+$plugin->version   = 2026102914;            // YYYYMMDDXX — har deployda oshiriladi
 $plugin->requires  = 2026100500;            // Moodle 5.3
 $plugin->supported = [503, 503];
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.18.0';
+$plugin->release   = '0.18.1';

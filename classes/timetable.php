@@ -128,6 +128,44 @@ class timetable {
     }
 
     /**
+     * Kalit nomuvofiqligi: jadvalda shu odamning DARSI bor, lekin kaliti
+     * boshqa.
+     *
+     * NEGA KERAK: `teacher_key_of()` moslik topmasa bo'sh qaytaradi va sahifa
+     * jimgina "sinf jadvali" rejimiga o'tadi — o'qituvchi o'z darslari o'rniga
+     * butun sinfning jadvalini ko'radi va "Umumiy jadval" yorlig'i ham
+     * yo'qoladi. Hech qanday xato chiqmaydi, shuning uchun sabab topilmaydi.
+     *
+     * Bu aynan shunday bo'lgan: Frappe'da `Instructor` ga `Employee`
+     * bog'langach kalit `INSTR-<ism>` dan `HR-EMP-xxxxx` ga o'zgardi, jadval
+     * qatorlarida esa eski kalit qoldi. Yechim — Frappe'dan jadvalni qayta
+     * yuborish.
+     *
+     * Aniqlash usuli: ism bo'yicha. Kalit mos kelmagani uchun boshqa yo'l yo'q
+     * — ism faqat SHU ogohlantirish uchun ishlatiladi, ma'lumot bog'lash uchun
+     * emas.
+     */
+    public static function kalit_nomuvofiqmi(\stdClass $user, string $year): bool {
+        global $DB;
+
+        if (empty($user->idnumber)) {
+            return false;
+        }
+        // Kaliti bo'yicha topilsa — nomuvofiqlik yo'q.
+        if ($DB->record_exists('local_targetzenit_timetable',
+                ['academicyear' => $year, 'teacherkey' => $user->idnumber])) {
+            return false;
+        }
+        $ism = fullname($user);
+        if (trim($ism) === '') {
+            return false;
+        }
+        return $DB->record_exists_select('local_targetzenit_timetable',
+            'academicyear = :y AND ' . $DB->sql_compare_text('teachername') . ' = :ism',
+            ['y' => $year, 'ism' => $ism]);
+    }
+
+    /**
      * Foydalanuvchining guruhlari — yozilgan kurslaridan olinadi.
      * Kurs idnumber'i "<yil>::<guruh>::<fan>" ko'rinishida, ya'ni o'quvchi
      * qaysi sinfda ekanini alohida uzatish shart emas.

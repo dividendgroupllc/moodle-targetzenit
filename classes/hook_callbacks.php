@@ -44,4 +44,35 @@ class hook_callbacks {
             );
         }
     }
+
+    /**
+     * Avatar menyusiga (yuqori o'ngda) "Mening oyligim".
+     *
+     * NEGA ENG MUHIM JOY: odam shaxsiy narsani — profil, baholar, sozlamalar —
+     * aynan shu ro'yxatdan qidiradi. Yuqori (primary) menyuda havola Boost
+     * temasining "More" ro'yxatiga yashirinib qolardi, chap menyuda esa
+     * foydalanuvchi uni topa olmadi.
+     *
+     * Shart: oylik ma'lumoti BOR odam. O'quvchi va ota-onada bunday qator
+     * bo'lmaydi, shuning uchun element ularda umuman chiqmaydi — `Moodle`ning
+     * `customusermenuitems` sozlamasidan afzalligi ham shunda: u hammaga
+     * ko'rinardi.
+     */
+    public static function extend_user_menu(\core_user\hook\extend_user_menu $hook): void {
+        global $USER;
+
+        if (!isloggedin() || isguestuser()) {
+            return;
+        }
+        if (!payroll::has_any((int) $USER->id)) {
+            return;
+        }
+
+        $hook->add_menu_item(new \core_user\output\user_action_menu\link(
+            new \core\url('/local/targetzenit/oylik.php'),
+            get_string('mypayroll', 'local_targetzenit'),
+            null,
+            new \core\output\pix_icon('i/payment', '')
+        ));
+    }
 }
