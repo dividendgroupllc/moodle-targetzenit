@@ -164,7 +164,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         // Frappe oylik tabeli nusxasi — o'qituvchi o'z oyligini Moodle'da ko'radi.
         $table = new xmldb_table('local_targetzenit_payroll');
         if (!$dbman->table_exists($table)) {
-            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
             $table->add_field('useridnumber', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
             $table->add_field('employeename', XMLDB_TYPE_CHAR, '255', null, null, null, null);
             $table->add_field('yil', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, null);
@@ -187,6 +187,43 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026102908, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026102910) {
+
+        // 2026102908 jadvalni `id` ustuniga ketma-ketlik (auto-increment)
+        // BERMASDAN yaratgan edi — `add_field()` ning 6-parametri o'tkazib
+        // yuborilgan. Natijada har insert `dmlwriteexception` bilan yiqilardi.
+        // Jadval Frappe tabelining NUSXASI, shuning uchun uni o'chirib
+        // yangidan qurish xavfsiz: keyingi sinxronda ma'lumot to'liq qaytadi.
+        $table = new xmldb_table('local_targetzenit_payroll');
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        $table = new xmldb_table('local_targetzenit_payroll');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('useridnumber', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('employeename', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('yil', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('oy', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('lavozim', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('tolovturi', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'kun');
+        $table->add_field('normakun', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('kelgankun', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0');
+        foreach (['ishlagan' => '10', 'kunliknarx' => '15', 'oylik' => '15', 'bonus' => '15',
+                  'nalog' => '15', 'pitaniya' => '15', 'hisob' => '15', 'jami' => '15'] as $nom => $uz) {
+            $table->add_field($nom, XMLDB_TYPE_NUMBER, $uz . ', 2', null, XMLDB_NOTNULL, null, '0');
+        }
+        $table->add_field('valyuta', XMLDB_TYPE_CHAR, '10', null, null, null, null);
+        $table->add_field('holat', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'Ochiq');
+        $table->add_field('kunlarjson', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('ref_oy', XMLDB_INDEX_UNIQUE, ['useridnumber', 'yil', 'oy']);
+        $dbman->create_table($table);
+
+        upgrade_plugin_savepoint(true, 2026102910, 'local', 'targetzenit');
     }
 
     return true;

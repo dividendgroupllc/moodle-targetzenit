@@ -118,13 +118,23 @@ class push_payroll extends external_api {
 
             $mavjud = $DB->get_record('local_targetzenit_payroll',
                 ['useridnumber' => $ref, 'yil' => $yil, 'oy' => $oy], 'id');
-            if ($mavjud) {
-                $yozuv->id = $mavjud->id;
-                $DB->update_record('local_targetzenit_payroll', $yozuv);
-                $yangilandi++;
-            } else {
-                $DB->insert_record('local_targetzenit_payroll', $yozuv);
-                $yangi++;
+            try {
+                if ($mavjud) {
+                    $yozuv->id = $mavjud->id;
+                    $DB->update_record('local_targetzenit_payroll', $yozuv);
+                    $yangilandi++;
+                } else {
+                    $DB->insert_record('local_targetzenit_payroll', $yozuv);
+                    $yangi++;
+                }
+            } catch (\dml_exception $e) {
+                // Moodle DML xatosi tashqariga faqat "dmlwriteexception" bo'lib
+                // chiqadi — haqiqiy sabab `debuginfo` da qoladi va Frappe
+                // logida ko'rinmaydi. Sababni xabarga qo'shamiz, aks holda
+                // har xatoda server loglarini qo'lda kavlash kerak bo'ladi.
+                $sabab = "payroll yozish xatosi (ref=$ref, $yil-$oy): "
+                    . $e->getMessage() . ' | ' . ($e->debuginfo ?? '');
+                throw new \moodle_exception('error', 'local_targetzenit', '', $sabab, $sabab);
             }
         }
 

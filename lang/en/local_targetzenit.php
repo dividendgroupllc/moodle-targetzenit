@@ -81,3 +81,5 @@ $string['ai_ffmpeg_desc'] = "Audioni bo'laklarga ajratish uchun kerak (apt insta
 
 $string['mypayroll'] = 'Mening oyligim';
 $string['targetzenit:viewallpayroll'] = "Barcha xodimlarning oyligini ko'rish";
+
+$string['error'] = '{$a}';
