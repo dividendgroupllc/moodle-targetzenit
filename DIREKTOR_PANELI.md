@@ -805,10 +805,21 @@ sudo -u www-data php /opt/moodle/public/local/targetzenit/cli/direktor.php --hol
 
 | Satr | Nimani bildiradi |
 |---|---|
-| `Moodle useri yo'q` > 0 | shu kalitlarning darslari **hech kimning** hisobotiga tushmaydi |
-| `eski kalit (INSTR-)` > 0 | Frappe'da `Instructor` ga `Employee` bog'lanmagan — jadvalni qayta yuborish kerak |
-| `slotlar` = 0 | kalendar (`_calendar`) bo'sh — chorak oraliqlarini Frappe'dan yuborish kerak |
+| `Employee bog'lanmagan` > 0 | `INSTR-*` kalit. **Ikki xil sabab:** vakansiya (`...vakant`, `TUTOR` — xato emas, o'qituvchi tayinlanmagan) yoki Frappe'da `Instructor` ga `Employee` bog'lanmagan (tuzatish kerak). Ikkisida ham bu darslar hech kimning hisobotiga tushmaydi |
+| `bayramlar` = 0 | bayram kunlari **dars kuni** deb hisoblanadi va o'qituvchida "dars o'tmagan" bo'lib ko'rinadi — kalendarni bayramlar bilan yuborish kerak |
+| `slot: kurs topilmagan` > 0 | jadvaldagi `courseidnumber` Moodle kursida yo'q — bu slotlarga dars yozuvi hech qachon bog'lanmaydi |
+| `dars yozuvi … bog'lanmadi` katta | slot bilan birlashtirish buzuq (kurs yoki dars raqami mos kelmagan) |
 | `Normalar: 0` | baho normasi hali Frappe'dan kelmagan, `norm::ZAXIRA` ishlatilmoqda |
+
+### 2026-10-29 dagi birinchi yurishdan
+
+- **Postgres** indeks chegarasi (333 belgi) `_norm` jadvalini yaratishga yo'l
+  bermadi va migratsiya shu yerda to'xtadi — unikal kalit `normkey` (md5) ustiga
+  ko'chirildi. Jadvallar `table_exists` bilan himoyalangani uchun qadam xavfsiz
+  qayta yuriladi.
+- Reja to'ldi: **31 945 slot**, 171 dars kuni, 7 842 tasi muzlatilgan.
+- 42 kalitdan **37 tasi bog'landi**, 5 tasi vakansiya (haftada 82 dars).
+- **Bayramlar 0** — kalendarda bayram yo'q, chorak oraliqlari bor.
 
 Keyingi yurishlar avtomatik: `slot_build` 04:00, `fact_rebuild` 04:30,
 `fact_refresh` har 15 daqiqada, jadval push'idan keyin esa reja darhol

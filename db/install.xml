@@ -299,6 +299,7 @@
     <TABLE NAME="local_targetzenit_norm" COMMENT="Frappe dan kelgan normalar. Moodle hech qachon hisoblamaydi va o'zgartirmaydi — Frappe yagona manba.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="normkey" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false" COMMENT="md5(yil|qamrov|kalit|kod) — tabiiy kalit indeks chegarasidan (333 belgi) oshadi"/>
         <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="scope" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="global" SEQUENCE="false" COMMENT="global|subject|group|teacher"/>
         <FIELD NAME="scopekey" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="scope=global da bo'sh"/>
@@ -310,7 +311,8 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="norm_key" UNIQUE="true" FIELDS="academicyear, scope, scopekey, code"/>
+        <INDEX NAME="normkey" UNIQUE="true" FIELDS="normkey"/>
+        <INDEX NAME="academicyear" UNIQUE="false" FIELDS="academicyear"/>
       </INDEXES>
     </TABLE>
   </TABLES>

@@ -30,7 +30,21 @@ class staff {
     const OK = 'ok';
     /** Jadvalda kalit bor, Moodle'da bunday idnumber yo'q. */
     const USERLESS = 'userless';
-    /** Eski ko'rinishdagi kalit — Frappe'dan jadvalni qayta yuborish kerak. */
+    /**
+     * `INSTR-<ism>` ko'rinishidagi kalit: Frappe'da `Instructor` ga `Employee`
+     * bog'lanmagan.
+     *
+     * IKKI XIL SABAB bo'lishi mumkin va ularni ajratish MUHIM:
+     *   1) VAKANSIYA — "Chess vakant", "TUTOR" kabi. O'qituvchi hali
+     *      tayinlanmagan. Bu xato EMAS, lekin bu darslar hech kimning
+     *      hisobotiga tushmaydi va panelda "o'qituvchi tayinlanmagan"
+     *      bo'lib ko'rinishi kerak.
+     *   2) TUZATISH KERAK — haqiqiy o'qituvchi, lekin `Employee` bog'lanmagan
+     *      yoki jadval eski kalit bilan yuborilgan.
+     *
+     * Tizim ikkisini farqlay olmaydi (ikkisida ham bog'lanadigan ID yo'q),
+     * shuning uchun ro'yxat ISM bilan ko'rsatiladi — qarorni odam qabul qiladi.
+     */
     const LEGACY = 'legacykey';
 
     /** Eski kalitlar shu bilan boshlanadi. */

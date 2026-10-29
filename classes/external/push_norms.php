@@ -92,14 +92,14 @@ class push_norms extends external_api {
                 'value' => (float) $n['value'],
                 'timemodified' => $now,
             ];
+            // Unikal kalit hash ustida: tabiiy kalit (yil+qamrov+kalit+kod)
+            // Moodle indeks chegarasidan (333 belgi) oshadi.
+            $qator->normkey = \local_targetzenit\norm::key(
+                $year, $qator->scope, $qator->scopekey, $qator->code);
 
             // `append` rejimida bir xil kalit qayta kelsa — yangilanadi.
-            $mavjud = $DB->get_record('local_targetzenit_norm', [
-                'academicyear' => $qator->academicyear,
-                'scope' => $qator->scope,
-                'scopekey' => $qator->scopekey,
-                'code' => $qator->code,
-            ], 'id');
+            $mavjud = $DB->get_record('local_targetzenit_norm',
+                ['normkey' => $qator->normkey], 'id');
 
             if ($mavjud) {
                 $qator->id = $mavjud->id;

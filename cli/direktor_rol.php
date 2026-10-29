@@ -28,14 +28,16 @@ const TZ_RUXSATLAR = [
 ];
 
 [$opt, $un] = cli_get_params(
-    ['help' => false, 'yarat' => false, 'bergan' => false, 'ber' => ''],
+    ['help' => false, 'yarat' => false, 'bergan' => false, 'ber' => '', 'qidir' => ''],
     ['h' => 'help']
 );
 
-if ($opt['help'] || (!$opt['yarat'] && !$opt['bergan'] && $opt['ber'] === '')) {
+if ($opt['help'] || (!$opt['yarat'] && !$opt['bergan'] && $opt['ber'] === ''
+        && $opt['qidir'] === '')) {
     cli_writeln("--yarat              `Direktor` rolini yaratadi (bor bo'lsa ruxsatlarini tiklaydi)");
-    cli_writeln("--bergan             rol kimga berilganini ko'rsatadi");
+    cli_writeln("--qidir=<matn>       xodimni topadi va Employee ID sini ko'rsatadi");
     cli_writeln("--ber=<idnumber>     rolni shu xodimga beradi (Employee ID bo'yicha)");
+    cli_writeln("--bergan             rol kimga berilganini ko'rsatadi");
     exit(0);
 }
 
@@ -75,6 +77,31 @@ if ($opt['yarat']) {
 
     $context->mark_dirty();
     cli_writeln('Tayyor. Rolni berish: --ber=<Employee ID>');
+}
+
+// -------------------------------------------------------------------- QIDIR
+// Employee ID ni qo'lda qidirib yurmaslik uchun. DIQQAT: bu faqat KO'RSATISH
+// — rol berish baribir `idnumber` bilan ketadi, ism bilan hech qachon.
+if ($opt['qidir'] !== '') {
+    $q = '%' . $DB->sql_like_escape($opt['qidir']) . '%';
+    $rows = $DB->get_records_select('user',
+        "deleted = 0 AND idnumber <> '' AND ("
+        . $DB->sql_like('firstname', ':q1', false) . ' OR '
+        . $DB->sql_like('lastname', ':q2', false) . ' OR '
+        . $DB->sql_like('idnumber', ':q3', false) . ' OR '
+        . $DB->sql_like('email', ':q4', false) . ')',
+        ['q1' => $q, 'q2' => $q, 'q3' => $q, 'q4' => $q],
+        'lastname ASC', 'id, firstname, lastname, idnumber, email', 0, 30);
+
+    if (!$rows) {
+        cli_writeln("Topilmadi. Xodim Frappe'da `Employee` bo'lib, sinxron o'tganmi?");
+    }
+    foreach ($rows as $u) {
+        cli_writeln('  ' . str_pad(fullname($u), 32) . str_pad((string) $u->idnumber, 18)
+            . $u->email);
+    }
+    cli_writeln('');
+    cli_writeln("Rol berish: --ber=<yuqoridagi Employee ID>");
 }
 
 // ---------------------------------------------------------------------- BER

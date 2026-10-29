@@ -32,6 +32,17 @@ class norm {
         'jurnal_kechikish_soat' => 48,  // shundan ko'p bo'lsa — kech to'ldirilgan
     ];
 
+    /**
+     * Norma qatorining unikal kaliti.
+     *
+     * NEGA HASH: tabiiy kalit (yil + qamrov + qamrov kaliti + kod) 365 belgi
+     * chiqadi, Moodle'ning indeks chegarasi esa 333 belgi.
+     */
+    public static function key(string $year, string $scope, string $scopekey,
+                               string $code): string {
+        return md5($year . '|' . $scope . '|' . $scopekey . '|' . $code);
+    }
+
     /** Normalar keshi: [year => [scope|scopekey|code => value]] */
     protected static $kesh = [];
 

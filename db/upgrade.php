@@ -251,7 +251,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102917, 'local', 'targetzenit');
     }
 
-    if ($oldversion < 2026102920) {
+    if ($oldversion < 2026102921) {
 
         // ============ DIREKTOR PANELI — 1-bosqich ============
         // Reja ↔ fakt qatlami. Batafsil: DIREKTOR_PANELI.md
@@ -378,6 +378,13 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         $table = new xmldb_table('local_targetzenit_norm');
         if (!$dbman->table_exists($table)) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            // `normkey` = md5(yil|qamrov|kalit|kod).
+            //
+            // NEGA HASH: tabiiy kalit (academicyear + scope + scopekey + code)
+            // 365 belgi chiqadi, Moodle'ning indeks chegarasi esa 333 belgi
+            // (Postgres'da 999 bayt). Tabiiy kalit bilan jadval UMUMAN
+            // yaratilmadi — 2026-10-29 da migratsiya aynan shu yerda to'xtagan.
+            $table->add_field('normkey', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
             $table->add_field('academicyear', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
             $table->add_field('scope', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'global');
             $table->add_field('scopekey', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
@@ -385,8 +392,8 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
             $table->add_field('value', XMLDB_TYPE_NUMBER, '10, 2', null, XMLDB_NOTNULL, null, '0');
             $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
             $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-            $table->add_index('norm_key', XMLDB_INDEX_UNIQUE,
-                ['academicyear', 'scope', 'scopekey', 'code']);
+            $table->add_index('normkey', XMLDB_INDEX_UNIQUE, ['normkey']);
+            $table->add_index('academicyear', XMLDB_INDEX_NOTUNIQUE, ['academicyear']);
             $dbman->create_table($table);
         }
 
@@ -402,7 +409,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
             $dbman->add_index($table, $index);
         }
 
-        upgrade_plugin_savepoint(true, 2026102920, 'local', 'targetzenit');
+        upgrade_plugin_savepoint(true, 2026102921, 'local', 'targetzenit');
     }
 
     return true;
