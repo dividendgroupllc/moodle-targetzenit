@@ -52,7 +52,7 @@ $terms = array_values(timetable::terms($year));
 echo $OUTPUT->header();
 
 if (!$terms) {
-    echo $OUTPUT->notification('Chorak sanalari topilmadi.', 'warn');
+    echo $OUTPUT->notification(get_string('mg_noterms', 'local_targetzenit'), 'warn');
     echo $OUTPUT->footer();
     exit;
 }
@@ -77,7 +77,7 @@ foreach ($terms as $i => $t) {
 $select = new single_select(
     new moodle_url('/local/targetzenit/baholarim.php', ['userid' => $userid]),
     'term', $options, $termidx);
-$select->set_label('Chorak: ');
+$select->set_label(get_string('mg_term', 'local_targetzenit') . ': ');
 echo html_writer::div($OUTPUT->render($select), 'mb-2');
 
 // Asosiy manba — Moodle'ning STANDART baholar hisoboti. Bu sahifa esa
@@ -85,12 +85,10 @@ echo html_writer::div($OUTPUT->render($select), 'mb-2');
 echo html_writer::div(
     html_writer::link(
         new moodle_url('/grade/report/overview/index.php', ['userid' => $userid]),
-        '📊 Moodle baholar hisoboti (barcha kurslar)',
+        get_string('mg_gradebooklink', 'local_targetzenit'),
         ['class' => 'btn btn-sm btn-outline-primary mr-2']) .
     html_writer::tag('span',
-        'Baholar Moodle gradebook\'ida saqlanadi — mobil ilovada va standart ' .
-        'hisobotlarda ham ko\'rinadi. Bu sahifa qulaylik uchun: baho, davomat ' .
-        'va uy vazifa bir joyda.',
+        get_string('mg_gradebookhint', 'local_targetzenit'),
         ['class' => 'text-muted small']),
     'mb-3'
 );
@@ -98,10 +96,15 @@ echo html_writer::div(
 $fanlar = student_view::grades((int) $userid, $term->startdate, $term->enddate);
 
 if (!$fanlar) {
-    echo $OUTPUT->notification('Bu chorakda hali baho qo\'yilmagan.', 'info');
+    echo $OUTPUT->notification(get_string('mg_nogrades', 'local_targetzenit'), 'info');
 } else {
     $t = new html_table();
-    $t->head = ['Fan', 'Baholar', "O'rtacha", 'Davomat'];
+    $t->head = [
+        get_string('subject', 'local_targetzenit'),
+        get_string('mg_grades', 'local_targetzenit'),
+        get_string('average', 'local_targetzenit'),
+        get_string('mg_attendance', 'local_targetzenit'),
+    ];
     $t->attributes['class'] = 'generaltable tz-baholarim';
 
     foreach ($fanlar as $cid => $v) {
@@ -121,15 +124,22 @@ if (!$fanlar) {
             }
         }
         if ($kataklar === '') {
-            $kataklar = html_writer::tag('span', 'baho yo\'q', ['class' => 'text-muted small']);
+            $kataklar = html_writer::tag('span',
+                get_string('mg_nograde', 'local_targetzenit'),
+                ['class' => 'text-muted small']);
         }
 
         $d = $v['davomat'];
         $davomat = $d['absent'] || $d['excused'] || $d['late']
-            ? trim(($d['absent'] ? "kelmadi: {$d['absent']}  " : '') .
-                   ($d['excused'] ? "sababli: {$d['excused']}  " : '') .
-                   ($d['late'] ? "kechikdi: {$d['late']}" : ''))
-            : html_writer::tag('span', 'to\'liq', ['class' => 'text-success']);
+            ? trim(
+                ($d['absent']
+                    ? get_string('mg_absent', 'local_targetzenit', $d['absent']) . '  ' : '') .
+                ($d['excused']
+                    ? get_string('mg_excused', 'local_targetzenit', $d['excused']) . '  ' : '') .
+                ($d['late']
+                    ? get_string('mg_late', 'local_targetzenit', $d['late']) : ''))
+            : html_writer::tag('span',
+                get_string('mg_full', 'local_targetzenit'), ['class' => 'text-success']);
 
         $t->data[] = [
             html_writer::tag('strong', format_string($v['course']->fullname ?? '')),
@@ -142,32 +152,37 @@ if (!$fanlar) {
     }
     echo html_writer::div(html_writer::table($t), 'tz-scroll');
     echo html_writer::tag('p',
-        'Bahoga sichqonchani olib borsangiz, sanasi va dars mavzusi ko\'rinadi. ' .
-        '<b>k</b> — kelmadi, <b>s</b> — sababli, <b>kech</b> — kechikdi.',
+        get_string('mg_hint', 'local_targetzenit'),
         ['class' => 'text-muted small']);
 }
 
 // ---------------------------------------------------------------- Uy vazifa
 $vazifalar = student_view::homework((int) $userid, $year, 7);
-echo html_writer::tag('h4', 'Uy vazifalar', ['class' => 'mt-4']);
+echo html_writer::tag('h4', get_string('mg_homework', 'local_targetzenit'),
+    ['class' => 'mt-4']);
 
 if (!$vazifalar) {
-    echo $OUTPUT->notification('Yaqin kunlarda uy vazifa yozilmagan.', 'info');
+    echo $OUTPUT->notification(get_string('mg_nohomework', 'local_targetzenit'), 'info');
 } else {
     echo html_writer::tag('p',
-        'Har uy vazifa Moodle\'da <b>topshiriq</b> sifatida ham ochiladi — ' .
-        'kurs sahifasida, boshqaruv panelidagi "Timeline" da va kalendarda ' .
-        'ko\'rinadi, o\'sha yerdan topshiriladi.',
+        get_string('mg_homeworkhint', 'local_targetzenit'),
         ['class' => 'text-muted small']);
     $t = new html_table();
-    $t->head = ['Sana', 'Fan', 'Mavzu', 'Uy vazifa'];
+    $t->head = [
+        get_string('mg_date', 'local_targetzenit'),
+        get_string('subject', 'local_targetzenit'),
+        get_string('topic', 'local_targetzenit'),
+        get_string('homework', 'local_targetzenit'),
+    ];
     $t->attributes['class'] = 'generaltable';
     $bugun = date('Y-m-d');
     foreach ($vazifalar as $v) {
         $sana = userdate(strtotime($v->lessondate), '%d.%m');
         $t->data[] = [
             ($v->lessondate === $bugun)
-                ? html_writer::tag('strong', $sana . ' (bugun)') : $sana,
+                ? html_writer::tag('strong',
+                    $sana . get_string('tt_today_suffix', 'local_targetzenit'))
+                : $sana,
             format_string($v->coursename),
             format_string($v->topic ?? ''),
             format_string($v->homework),

@@ -1,0 +1,378 @@
+# -*- coding: utf-8 -*-
+"""Til satrlarining YAGONA MANBASI — bundan lang/{en,uz,ru} generatsiya qilinadi.
+
+NEGA SHUNDAY: uchta faylni qo'lda yuritganda ular bir-biridan ajralib ketadi —
+kalit bittasiga qo'shilib, boshqasida esdan chiqadi. Bu jadvalda har kalit
+uchta tilda yonma-yon turadi, ya'ni tushib qolgani darhol ko'rinadi.
+
+Ishlatish:
+    python3 lang/tools/gen.py        # uchta lang faylini qayta yozadi
+
+Moodle qoidasi: `en` — ZAXIRA til. Tarjimasi yo'q kalit `en` dan olinadi,
+shuning uchun `en` to'liq va INGLIZ tilida bo'lishi shart.
+"""
+
+# kalit: (en, uz, ru)
+S = {
+    # ---------------------------------------------------------------- umumiy
+    "pluginname": (
+        "Target Zenit integration",
+        "Target Zenit integratsiyasi",
+        "Интеграция Target Zenit",
+    ),
+    "privacy:metadata": (
+        "The Target Zenit integration plugin does not store any personal data. "
+        "User records are created and updated through Moodle core web services "
+        "by the Frappe ERP system.",
+        "Target Zenit integratsiya plagini shaxsiy ma'lumot saqlamaydi. "
+        "Foydalanuvchi yozuvlari Frappe ERP tizimi tomonidan Moodle yadrosining "
+        "web-servislari orqali yaratiladi va yangilanadi.",
+        "Плагин интеграции Target Zenit не хранит персональных данных. "
+        "Записи пользователей создаются и обновляются системой Frappe ERP "
+        "через веб-сервисы ядра Moodle.",
+    ),
+    "error": ("{$a}", "{$a}", "{$a}"),
+
+    # ------------------------------------------------------------- ruxsatlar
+    "targetzenit:push": (
+        "Push timetable and calendar data from Frappe",
+        "Frappe'dan jadval va kalendarni yuborish",
+        "Отправлять расписание и календарь из Frappe",
+    ),
+    "targetzenit:teach": (
+        "Record topic, attendance and grades for a lesson",
+        "Dars mavzusi, yo'qlama va baho qo'yish",
+        "Записывать тему урока, посещаемость и оценки",
+    ),
+    "targetzenit:viewanalysis": (
+        "View AI analysis of any lesson recording",
+        "Har qanday dars yozuvining AI tahlilini ko'rish",
+        "Просматривать ИИ-анализ любой записи урока",
+    ),
+    "targetzenit:viewalltimetable": (
+        "View the whole-school timetable",
+        "Butun maktab jadvalini ko'rish",
+        "Просматривать расписание всей школы",
+    ),
+    "targetzenit:viewallpayroll": (
+        "View payroll of all staff",
+        "Barcha xodimlarning oyligini ko'rish",
+        "Просматривать зарплату всех сотрудников",
+    ),
+
+    # -------------------------------------------------------- dars jadvali
+    "timetable": ("Timetable", "Dars jadvali", "Расписание"),
+    "timetable_my": ("My timetable", "Mening jadvalim", "Моё расписание"),
+    "timetable_today": ("Today", "Bugun", "Сегодня"),
+    "timetable_week": ("Week", "Hafta", "Неделя"),
+    "timetable_all": ("Whole school", "Umumiy jadval", "Общее расписание"),
+    "timetable_empty": ("No timetable found.", "Jadval topilmadi.", "Расписание не найдено."),
+    "timetable_nolessons": ("No lessons on this day.", "Bu kuni dars yo'q.", "В этот день уроков нет."),
+    "lesson": ("Lesson", "Dars", "Урок"),
+    "room": ("Room", "Xona", "Аудитория"),
+    "teacher": ("Teacher", "O'qituvchi", "Учитель"),
+    "group": ("Group", "Guruh", "Группа"),
+    "subject": ("Subject", "Fan", "Предмет"),
+
+    # -------------------------------------------------------- dars kokpiti
+    "topic": ("Lesson topic", "Dars mavzusi", "Тема урока"),
+    "homework": ("Homework", "Uy vazifa", "Домашнее задание"),
+    "student": ("Student", "O'quvchi", "Ученик"),
+    "attendance": ("Attendance", "Yo'qlama", "Посещаемость"),
+    "grade": ("Grade", "Baho", "Оценка"),
+    "comment": ("Comment", "Izoh", "Комментарий"),
+    "journal": ("Journal — previous lessons", "Jurnal — oldingi darslar", "Журнал — предыдущие уроки"),
+    "average": ("Average", "O'rtacha", "Средний балл"),
+    "openlesson": ("Open lesson", "Darsni ochish", "Открыть урок"),
+    "mygrades": ("My grades", "Baholarim", "Мои оценки"),
+
+    # ---------------------------------------------------------- dars audiosi
+    "audio_settings": ("Lesson audio recording", "Dars audio yozuvi", "Аудиозапись урока"),
+    "audio_enabled": ("Enable audio recording", "Audio yozuvni yoqish", "Включить аудиозапись"),
+    "audio_enabled_desc": (
+        "Teachers can start recording from the lesson page.",
+        "O'qituvchi dars sahifasida yozishni boshlay oladi.",
+        "Учитель может начать запись на странице урока.",
+    ),
+    "audio_retention": ("Retention period (days)", "Saqlash muddati (kun)", "Срок хранения (дней)"),
+    "audio_retention_desc": (
+        "Audio older than this is deleted AUTOMATICALLY, whether or not it has "
+        "been transcribed. The transcript text is kept. Reason: about 7.5 GB of "
+        "audio accumulates per week and the disk must not fill up.",
+        "Shu kundan oshgan audio AVTOMATIK o'chiriladi — transkript qilingan "
+        "yoki qilinmaganidan qat'i nazar. Transkript matni o'chmaydi. Sabab: "
+        "haftasiga ~7.5 GB audio to'planadi, disk to'lib qolmasligi kerak.",
+        "Аудио старше указанного срока удаляется АВТОМАТИЧЕСКИ — независимо от "
+        "того, расшифровано оно или нет. Текст расшифровки сохраняется. "
+        "Причина: за неделю накапливается около 7,5 ГБ аудио, диск не должен "
+        "переполниться.",
+    ),
+    "audio_maxmb": ("Limit per recording (MB)", "Bitta yozuv uchun chegara (MB)", "Лимит на одну запись (МБ)"),
+    "audio_maxmb_desc": (
+        "Recording stops above this size. At 24 kbps, 120 MB is about 11 hours.",
+        "Shu hajmdan oshsa yozish to'xtaydi. 24 kbps da 120 MB ~ 11 soat.",
+        "При превышении этого размера запись останавливается. При 24 кбит/с "
+        "120 МБ — около 11 часов.",
+    ),
+    "audio_record": ("Record the lesson", "Darsni yozib olish", "Записать урок"),
+    "audio_stop": ("Stop and save", "To'xtatish va saqlash", "Остановить и сохранить"),
+    "audio_recording": ("Recording", "Yozilmoqda", "Идёт запись"),
+    "audio_ready": ("Recording saved", "Yozuv saqlandi", "Запись сохранена"),
+    "audio_cleanup": (
+        "Delete expired lesson audio",
+        "Muddati o'tgan dars audiolarini o'chirish",
+        "Удалить устаревшие аудиозаписи уроков",
+    ),
+    "recordings": ("Lesson recordings", "Dars yozuvlari", "Записи уроков"),
+
+    # ------------------------------------------------------------ AI tahlili
+    "ai_settings": ("AI lesson analysis", "AI dars tahlili", "ИИ-анализ урока"),
+    "ai_enabled": ("Enable AI analysis", "AI tahlilni yoqish", "Включить ИИ-анализ"),
+    "ai_enabled_desc": (
+        "Recorded lessons are transcribed and analysed automatically.",
+        "Yozib olingan dars avtomatik transkript qilinadi va tahlil qilinadi.",
+        "Записанный урок автоматически расшифровывается и анализируется.",
+    ),
+    "ai_key": ("Gemini API key", "Gemini API kalit", "Ключ Gemini API"),
+    "ai_key_desc": (
+        "Key obtained from Google AI Studio.",
+        "Google AI Studio dan olingan kalit.",
+        "Ключ, полученный в Google AI Studio.",
+    ),
+    "ai_model": ("Model", "Model", "Модель"),
+    "ai_model_desc": ("For example: gemini-3.8-flash", "Masalan: gemini-3.8-flash", "Например: gemini-3.8-flash"),
+    "ai_fallback": ("Fallback model", "Zaxira model", "Резервная модель"),
+    "ai_fallback_desc": (
+        "Used when the main model runs out of quota. Leave empty to disable.",
+        "Asosiy modelning kvotasi tugasa shunga o'tiladi. Bo'sh qoldirilsa "
+        "zaxira ishlatilmaydi.",
+        "Используется, когда у основной модели закончилась квота. Оставьте "
+        "пустым, чтобы отключить.",
+    ),
+    "ai_perrun": ("Lessons per run", "Bir yurishda nechta dars", "Уроков за один запуск"),
+    "ai_perrun_desc": (
+        "This many recordings are analysed every 15 minutes. A high value "
+        "exhausts the quota quickly.",
+        "Har 15 daqiqada shuncha yozuv tahlil qilinadi. Ko'p qo'yilsa kvota "
+        "tez tugaydi.",
+        "Столько записей анализируется каждые 15 минут. При большом значении "
+        "квота расходуется быстро.",
+    ),
+    "ai_segment": (
+        "Transcription segment (minutes)",
+        "Transkripsiya bo'lagi (daqiqa)",
+        "Фрагмент расшифровки (минут)",
+    ),
+    "ai_segment_desc": (
+        "A long lesson is split into segments of this length and each is "
+        "transcribed separately. Asked for a 45-minute lesson in one request, "
+        "the model hits its output limit and cuts the text in the middle. "
+        "5 minutes is a tested value. Set 0 to disable splitting.",
+        "Uzun dars shu uzunlikdagi bo'laklarga ajratilib, har biri alohida "
+        "matnga o'giriladi. Bitta so'rovda 45 daqiqalik dars so'ralsa, model "
+        "javob uzunligi chegarasiga urilib matnni o'rtasidan kesadi. "
+        "5 daqiqa — sinalgan qiymat. 0 qo'yilsa bo'linmaydi.",
+        "Длинный урок разбивается на фрагменты указанной длины, каждый "
+        "расшифровывается отдельно. Если запросить 45-минутный урок одним "
+        "запросом, модель упирается в предел длины ответа и обрывает текст на "
+        "середине. 5 минут — проверенное значение. 0 — не разбивать.",
+    ),
+    "ai_ffmpeg": ("Path to ffmpeg", "ffmpeg yo'li", "Путь к ffmpeg"),
+    "ai_ffmpeg_desc": (
+        "Needed to split audio into segments (apt install ffmpeg). If not "
+        "found, audio is not split and long lessons may be transcribed only "
+        "partially.",
+        "Audioni bo'laklarga ajratish uchun kerak (apt install ffmpeg). "
+        "Topilmasa bo'linmaydi va uzun darslarning matni chala qolishi mumkin.",
+        "Нужен для разбиения аудио на фрагменты (apt install ffmpeg). Если не "
+        "найден, аудио не разбивается и длинные уроки могут быть расшифрованы "
+        "не полностью.",
+    ),
+    "ai_analyse": ("Lesson analysis", "Dars tahlili", "Анализ урока"),
+    "ai_pending": ("Analysis queued", "Tahlil navbatda", "Анализ в очереди"),
+    "ai_running": ("Analysis in progress", "Tahlil qilinmoqda", "Анализ выполняется"),
+    "ai_task": (
+        "Analyse lesson recordings with AI",
+        "Dars yozuvlarini AI bilan tahlil qilish",
+        "Анализировать записи уроков с помощью ИИ",
+    ),
+
+    # --------------------------------------------------------------- oylik
+    "mypayroll": ("My payroll", "Mening oyligim", "Моя зарплата"),
+    "pr_noidnumber": (
+        "Your profile has no ID number, so payroll data could not be linked. "
+        "Please contact the administrator.",
+        "Profilingizda ID raqami yo'q, shuning uchun oylik ma'lumoti "
+        "bog'lanmadi. Administratorga murojaat qiling.",
+        "В вашем профиле нет идентификационного номера, поэтому данные о "
+        "зарплате не связаны. Обратитесь к администратору.",
+    ),
+    "pr_nodata": (
+        "No payroll data yet. Data is refreshed every morning.",
+        "Hali oylik ma'lumoti kelmagan. Ma'lumot har kuni ertalab yangilanadi.",
+        "Данных о зарплате пока нет. Данные обновляются каждое утро.",
+    ),
+    "pr_nomonth": (
+        "No data for this month.",
+        "Bu oy uchun ma'lumot yo'q.",
+        "За этот месяц данных нет.",
+    ),
+    "pr_month": ("Month", "Oy", "Месяц"),
+    "pr_inprogress": ("in progress", "davom etmoqda", "продолжается"),
+    "pr_open_notice": (
+        "The month is not closed yet — the figures may change until the end of "
+        "the month. Last update: {$a}",
+        "Oy hali yopilmagan — sonlar oy oxirigacha o'zgarishi mumkin. "
+        "Oxirgi yangilanish: {$a}",
+        "Месяц ещё не закрыт — суммы могут измениться до конца месяца. "
+        "Последнее обновление: {$a}",
+    ),
+    "pr_takehome": ("Take-home pay", "Qo'lga tegadigan summa", "Сумма на руки"),
+    "pr_workeddays": ("Days worked", "Ishlagan kun", "Отработано дней"),
+    "pr_workedhours": ("Hours worked", "Ishlagan soat", "Отработано часов"),
+    "pr_worked": ("Worked", "Ishlagan", "Отработано"),
+    "pr_bonus": ("Bonus", "Bonus", "Премия"),
+    "pr_bonus_penalty": ("Bonus / penalty", "Bonus / jarima", "Премия / штраф"),
+    "pr_breakdown": ("Calculation details", "Hisob tafsiloti", "Детали расчёта"),
+    "pr_indicator": ("Item", "Ko'rsatkich", "Показатель"),
+    "pr_value": ("Value", "Qiymat", "Значение"),
+    "pr_salary": ("Contract salary", "Shartnoma oyligi", "Оклад по договору"),
+    "pr_hourrate": ("Hourly rate", "1 soat narxi", "Стоимость часа"),
+    "pr_normdays": ("Standard working days this month", "Shu oydagi norma ish kuni", "Норма рабочих дней за месяц"),
+    "pr_dayrate": ("Daily rate", "Bir kunlik narx", "Стоимость одного дня"),
+    "pr_attended": ("Days attended", "Kelgan kunlar", "Дней присутствия"),
+    "pr_gross": ("Calculated pay", "Hisoblangan ish haqi", "Начисленная оплата"),
+    "pr_tax": ("Tax withheld", "Soliq ushlovi", "Удержание налога"),
+    "pr_meals": ("Meals", "Ovqat (pitaniya)", "Питание"),
+    "pr_days": ("Day-by-day attendance", "Kunma-kun davomat", "Посещаемость по дням"),
+    "pr_days_hint_source": (
+        "Entry and exit times come from the Face ID turnstile.",
+        "Kirish va chiqish vaqti Face ID turniketidan olingan.",
+        "Время входа и выхода берётся с турникета Face ID.",
+    ),
+    "pr_days_hint_hours": ("Column: hours on that day.", "Ustun: shu kundagi soat.", "Столбец: часы за этот день."),
+    "pr_days_hint_koef": (
+        "Column: coefficient for that day (1 = full day, 0.5 = half day, "
+        "0 = absent).",
+        "Ustun: shu kundagi koeffitsient (1 = to'liq kun, 0.5 = yarim kun, "
+        "0 = kelmagan).",
+        "Столбец: коэффициент за этот день (1 = полный день, 0,5 = полдня, "
+        "0 = отсутствовал).",
+    ),
+    "pr_day": ("Day", "Kun", "День"),
+    "pr_weekday": ("Weekday", "Hafta kuni", "День недели"),
+    "pr_hours": ("Hours", "Soat", "Часы"),
+    "pr_koef": ("Coef.", "Koef", "Коэф."),
+    "pr_in": ("In", "Kirish", "Вход"),
+    "pr_out": ("Out", "Chiqish", "Выход"),
+    "pr_unit_day": ("d", "kun", "дн."),
+    "pr_unit_hour": ("h", "soat", "ч."),
+    "pr_footnote": (
+        "This data is a copy from the Frappe (accounting) system. If you have "
+        "questions, please contact the accounting department.",
+        "Bu ma'lumot Frappe (buxgalteriya) tizimidan olingan nusxa. Savol "
+        "bo'lsa buxgalteriyaga murojaat qiling.",
+        "Эти данные — копия из системы Frappe (бухгалтерия). По вопросам "
+        "обращайтесь в бухгалтерию.",
+    ),
+    "pr_allstaff": ("All staff — {$a}", "Barcha xodimlar — {$a}", "Все сотрудники — {$a}"),
+    "pr_employee": ("Employee", "Xodim", "Сотрудник"),
+    "pr_position": ("Position", "Lavozim", "Должность"),
+    "pr_linked": ("In Moodle", "Moodle'da", "В Moodle"),
+    "pr_notlinked": ("not linked", "bog'lanmagan", "не связан"),
+    "pr_currency_uzs": ("UZS", "so'm", "сум"),
+
+    # --------------------------------------------------- jadval sahifasi
+    "tt_noclass": (
+        "Your class could not be determined — you are not enrolled in any "
+        "course yet.",
+        "Sizning sinfingiz aniqlanmadi — hali birorta kursga yozilmagansiz.",
+        "Ваш класс не определён — вы ещё не зачислены ни на один курс.",
+    ),
+    "tt_search": (
+        "Search by class or teacher...",
+        "Sinf yoki o'qituvchi bo'yicha qidirish...",
+        "Поиск по классу или учителю...",
+    ),
+    "tt_classcount": ("{$a} classes", "{$a} sinf", "классов: {$a}"),
+    "tt_prevweek": ("\u2190 Previous week", "\u2190 oldingi hafta", "\u2190 Предыдущая неделя"),
+    "tt_thisweek": ("This week", "shu hafta", "Текущая неделя"),
+    "tt_nextweek": ("Next week \u2192", "keyingi hafta \u2192", "Следующая неделя \u2192"),
+    "tt_today_suffix": (" (today)", " (bugun)", " (сегодня)"),
+
+    # ------------------------------------------------- baholarim sahifasi
+    "mg_noterms": (
+        "Term dates not found.",
+        "Chorak sanalari topilmadi.",
+        "Даты учебных четвертей не найдены.",
+    ),
+    "mg_term": ("Term", "Chorak", "Четверть"),
+    "mg_nogrades": (
+        "No grades have been given this term yet.",
+        "Bu chorakda hali baho qo'yilmagan.",
+        "В этой четверти оценок пока нет.",
+    ),
+    "mg_gradebooklink": (
+        "📊 Moodle grade report (all courses)",
+        "📊 Moodle baholar hisoboti (barcha kurslar)",
+        "📊 Отчёт по оценкам Moodle (все курсы)",
+    ),
+    "mg_gradebookhint": (
+        "Grades are stored in the Moodle gradebook — they also appear in the "
+        "mobile app and in the standard reports. This page is for convenience: "
+        "grades, attendance and homework in one place.",
+        "Baholar Moodle gradebook'ida saqlanadi — mobil ilovada va standart "
+        "hisobotlarda ham ko'rinadi. Bu sahifa qulaylik uchun: baho, davomat "
+        "va uy vazifa bir joyda.",
+        "Оценки хранятся в журнале оценок Moodle — они видны и в мобильном "
+        "приложении, и в стандартных отчётах. Эта страница — для удобства: "
+        "оценки, посещаемость и домашние задания в одном месте.",
+    ),
+    "mg_nograde": ("no grade", "baho yo'q", "нет оценки"),
+    "mg_full": ("full attendance", "to'liq", "без пропусков"),
+    "mg_absent": ("absent: {$a}", "kelmadi: {$a}", "пропустил: {$a}"),
+    "mg_excused": ("excused: {$a}", "sababli: {$a}", "по уважительной: {$a}"),
+    "mg_late": ("late: {$a}", "kechikdi: {$a}", "опоздал: {$a}"),
+    "mg_hint": (
+        "Hover over a grade to see its date and the lesson topic. "
+        "<b>k</b> — absent, <b>s</b> — excused, <b>kech</b> — late.",
+        "Bahoga sichqonchani olib borsangiz, sanasi va dars mavzusi ko'rinadi. "
+        "<b>k</b> — kelmadi, <b>s</b> — sababli, <b>kech</b> — kechikdi.",
+        "Наведите курсор на оценку, чтобы увидеть дату и тему урока. "
+        "<b>k</b> — пропуск, <b>s</b> — по уважительной, <b>kech</b> — опоздание.",
+    ),
+    "mg_homework": ("Homework", "Uy vazifalar", "Домашние задания"),
+    "mg_nohomework": (
+        "No homework has been set for the coming days.",
+        "Yaqin kunlarda uy vazifa yozilmagan.",
+        "На ближайшие дни домашнее задание не задано.",
+    ),
+    "mg_homeworkhint": (
+        "Every homework item is also created in Moodle as an <b>assignment</b> "
+        "— it appears on the course page, in the Timeline on the dashboard and "
+        "in the calendar, and is submitted from there.",
+        "Har uy vazifa Moodle'da <b>topshiriq</b> sifatida ham ochiladi — "
+        "kurs sahifasida, boshqaruv panelidagi \"Timeline\" da va kalendarda "
+        "ko'rinadi, o'sha yerdan topshiriladi.",
+        "Каждое домашнее задание создаётся в Moodle и как <b>задание</b> — оно "
+        "видно на странице курса, в разделе \"Timeline\" на главной и в "
+        "календаре, и сдаётся оттуда.",
+    ),
+    "mg_date": ("Date", "Sana", "Дата"),
+    "mg_grades": ("Grades", "Baholar", "Оценки"),
+    "mg_attendance": ("Attendance", "Davomat", "Посещаемость"),
+
+    # Oy nomlari — sana formatiga bog'liq emas, tabel oyi uchun
+    "month_1": ("January", "Yanvar", "Январь"),
+    "month_2": ("February", "Fevral", "Февраль"),
+    "month_3": ("March", "Mart", "Март"),
+    "month_4": ("April", "Aprel", "Апрель"),
+    "month_5": ("May", "May", "Май"),
+    "month_6": ("June", "Iyun", "Июнь"),
+    "month_7": ("July", "Iyul", "Июль"),
+    "month_8": ("August", "Avgust", "Август"),
+    "month_9": ("September", "Sentabr", "Сентябрь"),
+    "month_10": ("October", "Oktabr", "Октябрь"),
+    "month_11": ("November", "Noyabr", "Ноябрь"),
+    "month_12": ("December", "Dekabr", "Декабрь"),
+}

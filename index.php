@@ -134,7 +134,7 @@ if (!$rows && $view !== 'all') {
     echo $OUTPUT->notification(
         $teacherkey || $group
             ? get_string('timetable_empty', 'local_targetzenit')
-            : "Sizning sinfingiz aniqlanmadi — hali birorta kursga yozilmagansiz.",
+            : get_string('tt_noclass', 'local_targetzenit'),
         'info'
     );
     echo $OUTPUT->footer();
@@ -206,11 +206,18 @@ if ($view === 'today') {
     echo $OUTPUT->render($select);
     echo html_writer::empty_tag('input', [
         'type' => 'search', 'id' => 'tz-all-filter', 'class' => 'form-control form-control-sm tz-filter',
-        'placeholder' => "Sinf yoki o'qituvchi bo'yicha qidirish...",
+        'placeholder' => get_string('tt_search', 'local_targetzenit'),
         'autocomplete' => 'off',
     ]);
     echo local_targetzenit_zoom_panel('umumiy');
     echo html_writer::end_div();
+
+    // Qidiruv natijasi sanog'i JS'da yoziladi, matn esa tarjima qilinadi.
+    // Satrda {$a} o'rni bor, shuning uchun JS tomonga __N__ belgisi bilan
+    // beriladi va o'sha joyga son qo'yiladi.
+    $hisobmatn = json_encode(
+        get_string('tt_classcount', 'local_targetzenit', '__N__'),
+        JSON_UNESCAPED_UNICODE);
 
     $PAGE->requires->js_amd_inline("
         require([], function() {
@@ -226,7 +233,9 @@ if ($view === 'today') {
                     if (mos) { korindi++; }
                 });
                 var hisob = document.getElementById('tz-all-hisob');
-                if (hisob) { hisob.textContent = korindi + ' sinf'; }
+                if (hisob) {
+                    hisob.textContent = {$hisobmatn}.replace('__N__', korindi);
+                }
             });
         });
     ");
@@ -264,7 +273,9 @@ if ($view === 'today') {
             $t->data[] = $qator;
         }
         echo html_writer::div(
-            html_writer::tag('span', count($perguruh) . ' sinf', ['id' => 'tz-all-hisob']),
+            html_writer::tag('span',
+                get_string('tt_classcount', 'local_targetzenit', count($perguruh)),
+                ['id' => 'tz-all-hisob']),
             'text-muted small mb-1');
         echo html_writer::div(html_writer::table($t), 'tz-all-scroll');
     }
@@ -285,13 +296,13 @@ if ($view === 'today') {
     $navargs = ['view' => 'week', 'group' => $group];
     echo html_writer::div(
         html_writer::link(new moodle_url('/local/targetzenit/index.php',
-            $navargs + ['date' => $prev]), '← oldingi hafta',
+            $navargs + ['date' => $prev]), get_string('tt_prevweek', 'local_targetzenit'),
             ['class' => 'btn btn-outline-secondary mr-2']) .
         html_writer::link(new moodle_url('/local/targetzenit/index.php',
-            $navargs + ['date' => date('Y-m-d')]), 'shu hafta',
+            $navargs + ['date' => date('Y-m-d')]), get_string('tt_thisweek', 'local_targetzenit'),
             ['class' => 'btn btn-outline-secondary mr-2']) .
         html_writer::link(new moodle_url('/local/targetzenit/index.php',
-            $navargs + ['date' => $next]), 'keyingi hafta →',
+            $navargs + ['date' => $next]), get_string('tt_nextweek', 'local_targetzenit'),
             ['class' => 'btn btn-outline-secondary']),
         'mb-3'
     );

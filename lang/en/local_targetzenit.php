@@ -1,85 +1,152 @@
 <?php
-// Til satrlari. Moodle har bir plagindan kamida 'pluginname' ni talab qiladi.
+// AVTOMATIK GENERATSIYA QILINGAN — QO'LDA TAHRIRLAMANG.
+// Manba: lang/tools/strings.py  |  Qayta yozish: python3 lang/tools/gen.py
+//
+// Uchta til bitta jadvalda yuritiladi, aks holda ular bir-biridan ajralib
+// ketadi: kalit bittasiga qo'shilib, boshqasida esdan chiqadi.
+//
+// `en` — Moodle uchun ZAXIRA til: tarjimasi yo'q kalit shundan olinadi.
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Target Zenit integration';
-$string['privacy:metadata'] = 'The Target Zenit integration plugin does not store any personal data. '
-    . 'User records are created and updated through Moodle core web services by the Frappe ERP system.';
-
-// Ruxsatlar
-$string['targetzenit:push'] = 'Push timetable and calendar data from Frappe';
-$string['targetzenit:viewalltimetable'] = 'View the whole-school timetable';
-
-// Dars jadvali sahifasi
-$string['timetable'] = 'Dars jadvali';
-$string['timetable_my'] = 'Mening jadvalim';
-$string['timetable_today'] = 'Bugun';
-$string['timetable_week'] = 'Hafta';
-$string['timetable_all'] = 'Umumiy jadval';
-$string['timetable_empty'] = 'Jadval topilmadi.';
-$string['timetable_nolessons'] = 'Bu kuni dars yo\'q.';
-$string['lesson'] = 'Dars';
-$string['room'] = 'Xona';
-$string['teacher'] = 'O\'qituvchi';
-$string['group'] = 'Guruh';
-$string['subject'] = 'Fan';
-
-// Dars kokpiti
-$string['targetzenit:teach'] = 'Record topic, attendance and grades for a lesson';
-$string['topic'] = 'Dars mavzusi';
-$string['homework'] = 'Uy vazifa';
-$string['student'] = "O'quvchi";
-$string['attendance'] = "Yo'qlama";
-$string['grade'] = 'Baho';
-$string['comment'] = 'Izoh';
-$string['journal'] = 'Jurnal — oldingi darslar';
-$string['average'] = "O'rtacha";
-$string['openlesson'] = 'Darsni ochish';
-
-// Dars audiosi
-$string['audio_settings'] = 'Dars audio yozuvi';
-$string['audio_enabled'] = 'Audio yozuvni yoqish';
-$string['audio_enabled_desc'] = "O'qituvchi dars sahifasida yozishni boshlay oladi.";
-$string['audio_retention'] = 'Saqlash muddati (kun)';
-$string['audio_retention_desc'] = "Shu kundan oshgan audio AVTOMATIK o'chiriladi — transkript qilingan yoki qilinmaganidan qat'i nazar. Transkript matni o'chmaydi. Sabab: haftasiga ~7.5 GB audio to'planadi, disk to'lib qolmasligi kerak.";
-$string['audio_maxmb'] = 'Bitta yozuv uchun chegara (MB)';
-$string['audio_maxmb_desc'] = "Shu hajmdan oshsa yozish to'xtaydi. 24 kbps da 120 MB ~ 11 soat.";
-$string['audio_record'] = 'Darsni yozib olish';
-$string['audio_stop'] = "To'xtatish va saqlash";
-$string['audio_recording'] = 'Yozilmoqda';
-$string['audio_ready'] = 'Yozuv saqlandi';
-$string['audio_cleanup'] = "Muddati o'tgan dars audiolarini o'chirish";
-
-// O'quvchi ko'rinishi
-$string['mygrades'] = 'Baholarim';
-
-// AI tahlili
-$string['targetzenit:viewanalysis'] = 'View AI analysis of any lesson recording';
-$string['ai_settings'] = 'AI dars tahlili';
-$string['ai_enabled'] = 'AI tahlilni yoqish';
-$string['ai_enabled_desc'] = "Yozib olingan dars avtomatik transkript qilinadi va tahlil qilinadi.";
-$string['ai_key'] = 'Gemini API kalit';
-$string['ai_key_desc'] = 'Google AI Studio dan olingan kalit.';
+$string['ai_analyse'] = 'Lesson analysis';
+$string['ai_enabled'] = 'Enable AI analysis';
+$string['ai_enabled_desc'] = 'Recorded lessons are transcribed and analysed automatically.';
+$string['ai_fallback'] = 'Fallback model';
+$string['ai_fallback_desc'] = 'Used when the main model runs out of quota. Leave empty to disable.';
+$string['ai_ffmpeg'] = 'Path to ffmpeg';
+$string['ai_ffmpeg_desc'] = 'Needed to split audio into segments (apt install ffmpeg). If not found, audio is not split and long lessons may be transcribed only partially.';
+$string['ai_key'] = 'Gemini API key';
+$string['ai_key_desc'] = 'Key obtained from Google AI Studio.';
 $string['ai_model'] = 'Model';
-$string['ai_model_desc'] = "Masalan: gemini-3.8-flash";
-$string['ai_fallback'] = 'Zaxira model';
-$string['ai_fallback_desc'] = "Asosiy modelning kvotasi tugasa shunga o'tiladi. Bo'sh qoldirilsa zaxira ishlatilmaydi.";
-$string['ai_perrun'] = 'Bir yurishda nechta dars';
-$string['ai_perrun_desc'] = "Har 15 daqiqada shuncha yozuv tahlil qilinadi. Ko'p qo'yilsa kvota tez tugaydi.";
-$string['ai_analyse'] = 'Dars tahlili';
-$string['ai_pending'] = 'Tahlil navbatda';
-$string['ai_running'] = 'Tahlil qilinmoqda';
-$string['ai_task'] = 'Dars yozuvlarini AI bilan tahlil qilish';
-
-$string['recordings'] = 'Dars yozuvlari';
-
-$string['ai_segment'] = "Transkripsiya bo'lagi (daqiqa)";
-$string['ai_segment_desc'] = "Uzun dars shu uzunlikdagi bo'laklarga ajratilib, har biri alohida matnga o'giriladi. Bitta so'rovda 45 daqiqalik dars so'ralsa, model javob uzunligi chegarasiga urilib matnni o'rtasidan kesadi. 5 daqiqa — sinalgan qiymat. 0 qo'yilsa bo'linmaydi.";
-$string['ai_ffmpeg'] = 'ffmpeg yo\'li';
-$string['ai_ffmpeg_desc'] = "Audioni bo'laklarga ajratish uchun kerak (apt install ffmpeg). Topilmasa bo'linmaydi va uzun darslarning matni chala qolishi mumkin.";
-
-$string['mypayroll'] = 'Mening oyligim';
-$string['targetzenit:viewallpayroll'] = "Barcha xodimlarning oyligini ko'rish";
-
+$string['ai_model_desc'] = 'For example: gemini-3.8-flash';
+$string['ai_pending'] = 'Analysis queued';
+$string['ai_perrun'] = 'Lessons per run';
+$string['ai_perrun_desc'] = 'This many recordings are analysed every 15 minutes. A high value exhausts the quota quickly.';
+$string['ai_running'] = 'Analysis in progress';
+$string['ai_segment'] = 'Transcription segment (minutes)';
+$string['ai_segment_desc'] = 'A long lesson is split into segments of this length and each is transcribed separately. Asked for a 45-minute lesson in one request, the model hits its output limit and cuts the text in the middle. 5 minutes is a tested value. Set 0 to disable splitting.';
+$string['ai_settings'] = 'AI lesson analysis';
+$string['ai_task'] = 'Analyse lesson recordings with AI';
+$string['attendance'] = 'Attendance';
+$string['audio_cleanup'] = 'Delete expired lesson audio';
+$string['audio_enabled'] = 'Enable audio recording';
+$string['audio_enabled_desc'] = 'Teachers can start recording from the lesson page.';
+$string['audio_maxmb'] = 'Limit per recording (MB)';
+$string['audio_maxmb_desc'] = 'Recording stops above this size. At 24 kbps, 120 MB is about 11 hours.';
+$string['audio_ready'] = 'Recording saved';
+$string['audio_record'] = 'Record the lesson';
+$string['audio_recording'] = 'Recording';
+$string['audio_retention'] = 'Retention period (days)';
+$string['audio_retention_desc'] = 'Audio older than this is deleted AUTOMATICALLY, whether or not it has been transcribed. The transcript text is kept. Reason: about 7.5 GB of audio accumulates per week and the disk must not fill up.';
+$string['audio_settings'] = 'Lesson audio recording';
+$string['audio_stop'] = 'Stop and save';
+$string['average'] = 'Average';
+$string['comment'] = 'Comment';
 $string['error'] = '{$a}';
+$string['grade'] = 'Grade';
+$string['group'] = 'Group';
+$string['homework'] = 'Homework';
+$string['journal'] = 'Journal — previous lessons';
+$string['lesson'] = 'Lesson';
+$string['mg_absent'] = 'absent: {$a}';
+$string['mg_attendance'] = 'Attendance';
+$string['mg_date'] = 'Date';
+$string['mg_excused'] = 'excused: {$a}';
+$string['mg_full'] = 'full attendance';
+$string['mg_gradebookhint'] = 'Grades are stored in the Moodle gradebook — they also appear in the mobile app and in the standard reports. This page is for convenience: grades, attendance and homework in one place.';
+$string['mg_gradebooklink'] = '📊 Moodle grade report (all courses)';
+$string['mg_grades'] = 'Grades';
+$string['mg_hint'] = 'Hover over a grade to see its date and the lesson topic. <b>k</b> — absent, <b>s</b> — excused, <b>kech</b> — late.';
+$string['mg_homework'] = 'Homework';
+$string['mg_homeworkhint'] = 'Every homework item is also created in Moodle as an <b>assignment</b> — it appears on the course page, in the Timeline on the dashboard and in the calendar, and is submitted from there.';
+$string['mg_late'] = 'late: {$a}';
+$string['mg_nograde'] = 'no grade';
+$string['mg_nogrades'] = 'No grades have been given this term yet.';
+$string['mg_nohomework'] = 'No homework has been set for the coming days.';
+$string['mg_noterms'] = 'Term dates not found.';
+$string['mg_term'] = 'Term';
+$string['month_1'] = 'January';
+$string['month_10'] = 'October';
+$string['month_11'] = 'November';
+$string['month_12'] = 'December';
+$string['month_2'] = 'February';
+$string['month_3'] = 'March';
+$string['month_4'] = 'April';
+$string['month_5'] = 'May';
+$string['month_6'] = 'June';
+$string['month_7'] = 'July';
+$string['month_8'] = 'August';
+$string['month_9'] = 'September';
+$string['mygrades'] = 'My grades';
+$string['mypayroll'] = 'My payroll';
+$string['openlesson'] = 'Open lesson';
+$string['pluginname'] = 'Target Zenit integration';
+$string['pr_allstaff'] = 'All staff — {$a}';
+$string['pr_attended'] = 'Days attended';
+$string['pr_bonus'] = 'Bonus';
+$string['pr_bonus_penalty'] = 'Bonus / penalty';
+$string['pr_breakdown'] = 'Calculation details';
+$string['pr_currency_uzs'] = 'UZS';
+$string['pr_day'] = 'Day';
+$string['pr_dayrate'] = 'Daily rate';
+$string['pr_days'] = 'Day-by-day attendance';
+$string['pr_days_hint_hours'] = 'Column: hours on that day.';
+$string['pr_days_hint_koef'] = 'Column: coefficient for that day (1 = full day, 0.5 = half day, 0 = absent).';
+$string['pr_days_hint_source'] = 'Entry and exit times come from the Face ID turnstile.';
+$string['pr_employee'] = 'Employee';
+$string['pr_footnote'] = 'This data is a copy from the Frappe (accounting) system. If you have questions, please contact the accounting department.';
+$string['pr_gross'] = 'Calculated pay';
+$string['pr_hourrate'] = 'Hourly rate';
+$string['pr_hours'] = 'Hours';
+$string['pr_in'] = 'In';
+$string['pr_indicator'] = 'Item';
+$string['pr_inprogress'] = 'in progress';
+$string['pr_koef'] = 'Coef.';
+$string['pr_linked'] = 'In Moodle';
+$string['pr_meals'] = 'Meals';
+$string['pr_month'] = 'Month';
+$string['pr_nodata'] = 'No payroll data yet. Data is refreshed every morning.';
+$string['pr_noidnumber'] = 'Your profile has no ID number, so payroll data could not be linked. Please contact the administrator.';
+$string['pr_nomonth'] = 'No data for this month.';
+$string['pr_normdays'] = 'Standard working days this month';
+$string['pr_notlinked'] = 'not linked';
+$string['pr_open_notice'] = 'The month is not closed yet — the figures may change until the end of the month. Last update: {$a}';
+$string['pr_out'] = 'Out';
+$string['pr_position'] = 'Position';
+$string['pr_salary'] = 'Contract salary';
+$string['pr_takehome'] = 'Take-home pay';
+$string['pr_tax'] = 'Tax withheld';
+$string['pr_unit_day'] = 'd';
+$string['pr_unit_hour'] = 'h';
+$string['pr_value'] = 'Value';
+$string['pr_weekday'] = 'Weekday';
+$string['pr_worked'] = 'Worked';
+$string['pr_workeddays'] = 'Days worked';
+$string['pr_workedhours'] = 'Hours worked';
+$string['privacy:metadata'] = 'The Target Zenit integration plugin does not store any personal data. User records are created and updated through Moodle core web services by the Frappe ERP system.';
+$string['recordings'] = 'Lesson recordings';
+$string['room'] = 'Room';
+$string['student'] = 'Student';
+$string['subject'] = 'Subject';
+$string['targetzenit:push'] = 'Push timetable and calendar data from Frappe';
+$string['targetzenit:teach'] = 'Record topic, attendance and grades for a lesson';
+$string['targetzenit:viewallpayroll'] = 'View payroll of all staff';
+$string['targetzenit:viewalltimetable'] = 'View the whole-school timetable';
+$string['targetzenit:viewanalysis'] = 'View AI analysis of any lesson recording';
+$string['teacher'] = 'Teacher';
+$string['timetable'] = 'Timetable';
+$string['timetable_all'] = 'Whole school';
+$string['timetable_empty'] = 'No timetable found.';
+$string['timetable_my'] = 'My timetable';
+$string['timetable_nolessons'] = 'No lessons on this day.';
+$string['timetable_today'] = 'Today';
+$string['timetable_week'] = 'Week';
+$string['topic'] = 'Lesson topic';
+$string['tt_classcount'] = '{$a} classes';
+$string['tt_nextweek'] = 'Next week →';
+$string['tt_noclass'] = 'Your class could not be determined — you are not enrolled in any course yet.';
+$string['tt_prevweek'] = '← Previous week';
+$string['tt_search'] = 'Search by class or teacher...';
+$string['tt_thisweek'] = 'This week';
+$string['tt_today_suffix'] = ' (today)';

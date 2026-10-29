@@ -74,16 +74,24 @@ class payroll {
         return is_array($d) ? $d : [];
     }
 
-    /** Oy nomi. */
+    /** Oy nomi — foydalanuvchining Moodle tilida. */
     public static function oy_nomi(int $oy): string {
-        $nomlar = [1 => 'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
-            'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
-        return $nomlar[$oy] ?? (string) $oy;
+        if ($oy < 1 || $oy > 12) {
+            return (string) $oy;
+        }
+        return get_string('month_' . $oy, 'local_targetzenit');
     }
 
-    /** Summani o'qiladigan ko'rinishga keltiradi: 4 250 000 so'm */
+    /**
+     * Summani o'qiladigan ko'rinishga keltiradi: 4 250 000 so'm
+     *
+     * UZS uchun belgi tarjima qilinadi ("so'm" / "сум" / "UZS"), boshqa
+     * valyutada kod o'zi ko'rsatiladi.
+     */
     public static function pul($summa, ?string $valyuta = null): string {
-        $belgi = ($valyuta === null || $valyuta === 'UZS') ? "so'm" : $valyuta;
+        $belgi = ($valyuta === null || $valyuta === 'UZS')
+            ? get_string('pr_currency_uzs', 'local_targetzenit')
+            : $valyuta;
         return number_format((float) $summa, 0, ',', ' ') . ' ' . $belgi;
     }
 

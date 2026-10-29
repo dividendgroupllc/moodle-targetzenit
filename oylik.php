@@ -14,6 +14,16 @@ use local_targetzenit\payroll;
 
 require_login();
 
+/**
+ * Til satri — qisqartma.
+ *
+ * Sahifada o'nlab satr bor, har birida to'liq `get_string(..., 'local_...')`
+ * yozilsa kod o'qilmas bo'lib ketadi.
+ */
+function tz_s(string $kalit, $a = null): string {
+    return get_string($kalit, 'local_targetzenit', $a);
+}
+
 $yil = optional_param('yil', 0, PARAM_INT);
 $oy = optional_param('oy', 0, PARAM_INT);
 $kimuserid = optional_param('userid', 0, PARAM_INT);   // faqat viewallpayroll uchun
@@ -24,7 +34,7 @@ $url = new moodle_url('/local/targetzenit/oylik.php');
 $PAGE->set_url($url);
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Mening oyligim');
+$PAGE->set_title(tz_s('mypayroll'));
 
 $hammasi = has_capability('local/targetzenit:viewallpayroll', $context);
 
@@ -37,15 +47,16 @@ if ($kimuserid && $kimuserid != $USER->id) {
 }
 
 $ref = payroll::ref_for((int) $kim->id);
-$PAGE->set_heading($kim->id == $USER->id ? 'Mening oyligim' : fullname($kim) . ' — oylik');
+$PAGE->set_heading($kim->id == $USER->id
+    ? tz_s('mypayroll')
+    : fullname($kim) . ' — ' . tz_s('mypayroll'));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($PAGE->heading);
 
 if ($ref === '') {
     echo $OUTPUT->notification(
-        "Profilingizda ID raqami (idnumber) yo'q, shuning uchun oylik ma'lumoti "
-        . "bog'lanmadi. Administratorga murojaat qiling.",
+        tz_s('pr_noidnumber'),
         \core\output\notification::NOTIFY_WARNING);
     echo $OUTPUT->footer();
     exit;
@@ -54,7 +65,7 @@ if ($ref === '') {
 $oylar = payroll::months($ref);
 if (!$oylar) {
     echo $OUTPUT->notification(
-        "Hali oylik ma'lumoti kelmagan. Ma'lumot har kuni ertalab yangilanadi.",
+        tz_s('pr_nodata'),
         \core\output\notification::NOTIFY_INFO);
     echo $OUTPUT->footer();
     exit;
@@ -65,7 +76,7 @@ if (!$oylar) {
 $tanlov = [];
 foreach ($oylar as $o) {
     $tanlov[$o->yil . '-' . $o->oy] = payroll::oy_nomi((int) $o->oy) . ' ' . $o->yil
-        . ($o->holat === 'Yopiq' ? '' : ' (davom etmoqda)');
+        . ($o->holat === 'Yopiq' ? '' : ' (' . tz_s('pr_inprogress') . ')');
 }
 
 $juft = optional_param('oyjuft', '', PARAM_TEXT);
@@ -85,14 +96,14 @@ echo html_writer::start_tag('form', ['method' => 'get', 'action' => $url->out(fa
 foreach ($params as $k => $v) {
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => $k, 'value' => $v]);
 }
-echo html_writer::label('Oy', 'tz-oy', true, ['class' => 'me-2 mb-0']);
+echo html_writer::label(tz_s('pr_month'), 'tz-oy', true, ['class' => 'me-2 mb-0']);
 echo html_writer::select($tanlov, 'oyjuft', $joriy, false,
     ['id' => 'tz-oy', 'class' => 'custom-select', 'onchange' => 'this.form.submit()']);
 echo html_writer::end_tag('form');
 
 $rec = payroll::month($ref, $yil, $oy);
 if (!$rec) {
-    echo $OUTPUT->notification("Bu oy uchun ma'lumot yo'q.",
+    echo $OUTPUT->notification(tz_s('pr_nomonth'),
         \core\output\notification::NOTIFY_INFO);
     echo $OUTPUT->footer();
     exit;
@@ -102,18 +113,18 @@ $soatbay = $rec->tolovturi === 'soat';
 
 if ($rec->holat !== 'Yopiq') {
     echo $OUTPUT->notification(
-        'Oy hali yopilmagan — sonlar oy oxirigacha o\'zgarishi mumkin. '
-        . 'Oxirgi yangilanish: ' . userdate((int) $rec->timemodified),
+        tz_s('pr_open_notice', userdate((int) $rec->timemodified)),
         \core\output\notification::NOTIFY_INFO);
 }
 
 // ------------------------------------------------------------- asosiy sonlar
+$birlik = $soatbay ? tz_s('pr_unit_hour') : tz_s('pr_unit_day');
 $kartalar = [
-    ['Qo\'lga tegadigan summa', payroll::pul($rec->jami, $rec->valyuta), 'h3 text-primary'],
-    [$soatbay ? 'Ishlagan soat' : 'Ishlagan kun',
-        ($soatbay ? (float) $rec->ishlagan . ' soat'
-            : (float) $rec->ishlagan . ' / ' . $rec->normakun . ' kun'), 'h4'],
-    ['Bonus', payroll::pul($rec->bonus, $rec->valyuta), 'h4'],
+    [tz_s('pr_takehome'), payroll::pul($rec->jami, $rec->valyuta), 'h3 text-primary'],
+    [$soatbay ? tz_s('pr_workedhours') : tz_s('pr_workeddays'),
+        ($soatbay ? (float) $rec->ishlagan . ' ' . $birlik
+            : (float) $rec->ishlagan . ' / ' . $rec->normakun . ' ' . $birlik), 'h4'],
+    [tz_s('pr_bonus'), payroll::pul($rec->bonus, $rec->valyuta), 'h4'],
 ];
 echo html_writer::start_div('d-flex flex-wrap gap-3 mb-4');
 foreach ($kartalar as [$sarlavha, $qiymat, $klass]) {
@@ -126,42 +137,43 @@ echo html_writer::end_div();
 
 // --------------------------------------------------------------- tafsilot
 $qatorlar = [
-    [$soatbay ? '1 soat narxi' : 'Shartnoma oyligi', payroll::pul($rec->oylik, $rec->valyuta)],
+    [$soatbay ? tz_s('pr_hourrate') : tz_s('pr_salary'),
+        payroll::pul($rec->oylik, $rec->valyuta)],
 ];
 if (!$soatbay) {
-    $qatorlar[] = ['Shu oydagi norma ish kuni', (int) $rec->normakun . ' kun'];
-    $qatorlar[] = ['Bir kunlik narx', payroll::pul($rec->kunliknarx, $rec->valyuta)];
+    $qatorlar[] = [tz_s('pr_normdays'), (int) $rec->normakun . ' ' . $birlik];
+    $qatorlar[] = [tz_s('pr_dayrate'), payroll::pul($rec->kunliknarx, $rec->valyuta)];
 } else {
-    $qatorlar[] = ['Ishlagan soat', (float) $rec->ishlagan . ' soat'];
+    $qatorlar[] = [tz_s('pr_workedhours'), (float) $rec->ishlagan . ' ' . $birlik];
 }
-$qatorlar[] = ['Kelgan kunlar', (int) $rec->kelgankun . ' kun'];
-$qatorlar[] = ['Bonus / jarima', payroll::pul($rec->bonus, $rec->valyuta)];
-$qatorlar[] = ['<strong>Hisoblangan ish haqi</strong>',
+$qatorlar[] = [tz_s('pr_attended'), (int) $rec->kelgankun . ' ' . tz_s('pr_unit_day')];
+$qatorlar[] = [tz_s('pr_bonus_penalty'), payroll::pul($rec->bonus, $rec->valyuta)];
+$qatorlar[] = ['<strong>' . tz_s('pr_gross') . '</strong>',
     '<strong>' . payroll::pul($rec->hisob, $rec->valyuta) . '</strong>'];
-$qatorlar[] = ['Soliq ushlovi', '− ' . payroll::pul($rec->nalog, $rec->valyuta)];
-$qatorlar[] = ['Ovqat (pitaniya)', '− ' . payroll::pul($rec->pitaniya, $rec->valyuta)];
-$qatorlar[] = ['<strong>Qo\'lga tegadigan summa</strong>',
+$qatorlar[] = [tz_s('pr_tax'), '− ' . payroll::pul($rec->nalog, $rec->valyuta)];
+$qatorlar[] = [tz_s('pr_meals'), '− ' . payroll::pul($rec->pitaniya, $rec->valyuta)];
+$qatorlar[] = ['<strong>' . tz_s('pr_takehome') . '</strong>',
     '<strong>' . payroll::pul($rec->jami, $rec->valyuta) . '</strong>'];
 
 $t = new html_table();
-$t->head = ['Ko\'rsatkich', 'Qiymat'];
+$t->head = [tz_s('pr_indicator'), tz_s('pr_value')];
 $t->attributes['class'] = 'generaltable';
 $t->data = $qatorlar;
-echo $OUTPUT->heading('Hisob tafsiloti', 4);
+echo $OUTPUT->heading(tz_s('pr_breakdown'), 4);
 echo html_writer::table($t);
 
 // ------------------------------------------------------- kunma-kun davomat
 $kunlar = payroll::days($rec);
 if ($kunlar) {
-    echo $OUTPUT->heading('Kunma-kun davomat', 4);
+    echo $OUTPUT->heading(tz_s('pr_days'), 4);
     echo html_writer::div(
-        'Kirish va chiqish vaqti Face ID turniketidan olingan. '
-        . ($soatbay ? 'Ustun: shu kundagi soat.' : 'Ustun: shu kundagi koeffitsient '
-            . '(1 = to\'liq kun, 0.5 = yarim kun, 0 = kelmagan).'),
+        tz_s('pr_days_hint_source') . ' '
+        . ($soatbay ? tz_s('pr_days_hint_hours') : tz_s('pr_days_hint_koef')),
         'text-muted small mb-2');
 
     $kt = new html_table();
-    $kt->head = ['Kun', 'Hafta kuni', $soatbay ? 'Soat' : 'Koef', 'Kirish', 'Chiqish'];
+    $kt->head = [tz_s('pr_day'), tz_s('pr_weekday'),
+        $soatbay ? tz_s('pr_hours') : tz_s('pr_koef'), tz_s('pr_in'), tz_s('pr_out')];
     $kt->attributes['class'] = 'generaltable';
     foreach ($kunlar as $k) {
         $kun = (int) ($k['kun'] ?? 0);
@@ -185,16 +197,15 @@ if ($kunlar) {
     echo html_writer::table($kt);
 }
 
-echo html_writer::div(
-    "Bu ma'lumot Frappe (buxgalteriya) tizimidan olingan nusxa. Savol bo'lsa "
-    . "buxgalteriyaga murojaat qiling.", 'text-muted small mt-4');
+echo html_writer::div(tz_s('pr_footnote'), 'text-muted small mt-4');
 
 // ------------------------------------------------------------ admin ro'yxati
 if ($hammasi && $kim->id == $USER->id) {
-    echo $OUTPUT->heading('Barcha xodimlar — ' . payroll::oy_nomi($oy) . " $yil", 4);
+    echo $OUTPUT->heading(tz_s('pr_allstaff', payroll::oy_nomi($oy) . " $yil"), 4);
     $barcha = payroll::all_for_month($yil, $oy);
     $at = new html_table();
-    $at->head = ['Xodim', 'Lavozim', 'Ishlagan', 'Bonus', 'Qo\'lga', 'Moodle'];
+    $at->head = [tz_s('pr_employee'), tz_s('pr_position'), tz_s('pr_worked'),
+        tz_s('pr_bonus'), tz_s('pr_takehome'), tz_s('pr_linked')];
     $at->attributes['class'] = 'generaltable';
     foreach ($barcha as $b) {
         $ism = $b->moodleuserid
@@ -204,10 +215,11 @@ if ($hammasi && $kim->id == $USER->id) {
         $at->data[] = [
             $ism,
             s($b->lavozim),
-            (float) $b->ishlagan . ($b->tolovturi === 'soat' ? ' soat' : ' kun'),
+            (float) $b->ishlagan . ' ' . ($b->tolovturi === 'soat'
+                ? tz_s('pr_unit_hour') : tz_s('pr_unit_day')),
             payroll::pul($b->bonus, $b->valyuta),
             payroll::pul($b->jami, $b->valyuta),
-            $b->moodleuserid ? '✓' : html_writer::span('bog\'lanmagan', 'text-danger'),
+            $b->moodleuserid ? '✓' : html_writer::span(tz_s('pr_notlinked'), 'text-danger'),
         ];
     }
     echo html_writer::table($at);
