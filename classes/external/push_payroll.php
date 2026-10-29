@@ -55,7 +55,13 @@ class push_payroll extends external_api {
                     'jami' => new external_value(PARAM_FLOAT, "Qo'lga tegadigan summa", VALUE_DEFAULT, 0),
                     'kunlarjson' => new external_value(PARAM_RAW, 'Kunlar JSON', VALUE_DEFAULT, ''),
                 ]),
-                'Xodimlar qatori'
+                "Xodimlar qatori. Bo'sh bo'lishi mumkin — tozalash qadami "
+                . "faqat `keep` bilan keladi. MAJBURIY QILIB BO'LMAYDI: Frappe "
+                . "so'rovni forma maydonlari ko'rinishida yuboradi va bo'sh "
+                . "massiv hech qanday maydon bermaydi, ya'ni parametr "
+                . "so'rovdan butunlay yo'qoladi.",
+                VALUE_DEFAULT,
+                []
             ),
         ]);
     }
