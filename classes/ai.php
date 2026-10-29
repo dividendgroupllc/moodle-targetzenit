@@ -593,6 +593,23 @@ class ai {
         $audio->status = 'transcribed';
         $audio->timemodified = time();
         $DB->update_record('local_targetzenit_audio', $audio);
+
+        // Direktor paneli uchun: ballarni SQL bilan yig'ib bo'ladigan
+        // ko'rinishga ham yozamiz va faktni darhol yangilaymiz.
+        //
+        // try/catch MAJBURIY: indeks yoki fakt muammosi TAHLIL
+        // SAQLANISHINI to'smasligi kerak — asosiy natija yuqorida
+        // allaqachon saqlangan (gradebook bilan bir xil himoya usuli).
+        try {
+            if (!empty($javob['categories']) && is_array($javob['categories'])) {
+                aicat::store((int) $audio->lessonid, $javob['categories']);
+            }
+            fact::touch_lesson((int) $audio->lessonid);
+        } catch (\Throwable $e) {
+            debugging('local_targetzenit: tahlil indeksi yozilmadi — '
+                . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+
         return true;
     }
 

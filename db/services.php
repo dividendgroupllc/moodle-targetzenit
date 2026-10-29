@@ -33,4 +33,12 @@ $functions = [
         'capabilities' => 'local/targetzenit:push',
         'ajax'        => false,
     ],
+    'local_targetzenit_push_norms' => [
+        'classname'   => 'local_targetzenit\\external\\push_norms',
+        'methodname'  => 'execute',
+        'description' => "Frappe'dan baholash normalarini qabul qiladi",
+        'type'        => 'write',
+        'capabilities' => 'local/targetzenit:push',
+        'ajax'        => false,
+    ],
 ];

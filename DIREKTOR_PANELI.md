@@ -1,8 +1,12 @@
 # Direktor paneli — mantiq, ma'lumotlar arxitekturasi va dizayn rejasi
 
-> Sana: 2026-10-29. Holat: **loyiha hujjati, kod yozilmagan.**
+> Sana: 2026-10-29.
 > Maqsad: direktor har bir o'qituvchining dars jarayonini — jadvaldan AI tahlilgacha —
 > bitta joyda kuzatishi va fidbek berishi.
+>
+> **Holat:** 0–1 bosqich kodi yozildi (ruxsatlar, `Direktor` roli,
+> `_staff`/`_slot`/`_fact`/`_aicat`/`_norm`, 4 vazifa, CLI) — baza yangilanishi
+> hali qo'llanmagan, 8-bo'limga qarang. 2-bosqichdan boshlab — UI.
 
 Hujjat uch qismdan iborat va ataylab shu tartibda: avval **mantiq** (savolga qanday
 javob topiladi), keyin **ma'lumotlar arxitekturasi** (javobni tez va barqaror olish
@@ -103,7 +107,7 @@ chiqarish** kerak.
 ### 3.1 Dars o'rni (slot) — rejaning birligi
 
 ```
-slot = (o'quv yili, sana, dars raqami, kurs)
+slot = (o'quv yili, sana, dars raqami, guruh, fan)
 ```
 
 Hosil qilish qoidasi:
@@ -116,11 +120,19 @@ har bir _timetable qatori uchun:
            va date chorak ichida   ──►  slot yaratiladi
 ```
 
-**MUHIM QOIDA — o'tmish qotib qoladi.** Slotlar faqat **bugun va keyingi** sanalar
-uchun qayta qurildi. Sababi: jadval o'quv yili davomida o'zgaradi (o'qituvchi
-almashadi, dars ko'chadi). Agar o'tgan sanalarni ham qayta qursak, **o'tgan oyning
-hisoboti o'z-o'zidan o'zgarib ketadi** — direktor ko'rgan 78% ertaga 71% bo'lib
-qoladi va hech kim sababini topmaydi. Kuzatuv tarixi o'zgarmas bo'lishi shart.
+Kalitda **kurs emas, guruh + fan** turadi: `courseidnumber` jadvalda bo'sh bo'lishi
+mumkin, guruh va fan esa har doim to'lgan. Jadvalda ustun qiymatlari uzun bo'lgani
+uchun unikal indeks `slotkey` = `md5(yil|sana|dars|guruh|fan)` ustiga qo'yilgan.
+
+**MUHIM QOIDA — o'tmish qotib qoladi.** O'tgan sanalar uchun slot **faqat
+qo'shiladi**, hech qachon o'zgartirilmaydi va o'chirilmaydi. Sababi: jadval o'quv
+yili davomida o'zgaradi (o'qituvchi almashadi, dars ko'chadi). Agar o'tmishni ham
+qayta qursak, **o'tgan oyning hisoboti o'z-o'zidan o'zgarib ketadi** — direktor
+ko'rgan 78% ertaga 71% bo'lib qoladi va hech kim sababini topmaydi. Kuzatuv tarixi
+o'zgarmas bo'lishi shart.
+
+Faqat qo'shish ruxsat etilgani ataylab: panel birinchi marta ishga tushganda
+sentabr-oktabr ham to'ldirilishi kerak, aks holda chorak xaritasi bo'sh bo'ladi.
 
 ### 3.2 To'rtta mustaqil vazifa — bitta holat emas
 
@@ -150,7 +162,7 @@ hisoblamaydi va o'zgartirmaydi (oylik tabeli bilan bir xil tamoyil).
 
 | Signal | Qanday hisoblanadi | Nega qimmatli |
 |---|---|---|
-| **Jurnal kechikishi** | `_lesson.timecreated` − dars tugash vaqti | mavzu 3 kundan keyin yozilgan = eslash bo'yicha yozilgan |
+| **Jurnal kechikishi** | `_lesson.timemodified` − dars tugash vaqti | mavzu 3 kundan keyin yozilgan = eslash bo'yicha yozilgan |
 | **Yozuv qamrovi** | `_audio.duration` / 45 daqiqa | 7 daqiqalik "yozuv" — yozuv emas |
 | **O'rnini bosish** | `slot.teacherkey` ≠ `_lesson.teacherid` | kim kimning darsiga kirgan |
 | **Tahlil muvaffaqiyati** | `_audio.aierror` | yozuv bor, tahlil yiqilgan — o'qituvchining aybi emas |
@@ -271,14 +283,36 @@ Hajm: ~21 000 qator/chorak, ~84 000/yil. Kichik.
 | `overallscore` | int(4) null | AI vaznli foiz |
 | `normdelta` | int(4) null | `overallscore − ai::norm_overall()` — saralash uchun |
 | `lowconfcount` | int(3) | hisobga olinmagan kategoriyalar soni |
-| `firstwriteat` | int(10) null | mavzu birinchi saqlangan vaqt (kechikish) |
+| `lastwriteat` | int(10) null | jurnal oxirgi saqlangan vaqt |
+| `latehours` | int(4) null | dars tugagandan keyin qancha soat o'tib to'ldirildi |
 | `feedbackcount` | int(3) | |
 | `timemodified` | int(10) | |
 
-`UNIQUE(slotid)` · `INDEX(lessonid)` · `INDEX(analysestatus)`
+`UNIQUE(slotid)` · `INDEX(lessonid)` · `INDEX(attributeduserid)` · `INDEX(analysestatus)`
 
 `normdelta` ataylab denormallashtirilgan: direktor "normadan eng ko'p pastda" bo'yicha
 saralashni so'raydi, buni har safar PHP da hisoblash sahifani sekinlashtiradi.
+
+#### `local_targetzenit_norm` — Frappe'dan kelgan normalar
+
+| Maydon | Tip | Izoh |
+|---|---|---|
+| `id` | int(10) PK | |
+| `academicyear` | char(50) | |
+| `scope` | char(20) | `global` \| `subject` \| `group` \| `teacher` |
+| `scopekey` | char(255) | `scope='global'` da bo'sh |
+| `code` | char(40) | `baho_ulushi`, `uy_vazifa_ulushi`, … |
+| `value` | number(10,2) | |
+| `timemodified` | int(10) | |
+
+`UNIQUE(academicyear, scope, scopekey, code)`
+
+Moodle bu qiymatlarni **hech qachon o'zgartirmaydi va hisoblamaydi** — `_payroll`
+bilan bir xil tamoyil: Frappe yagona manba, bu yerda faqat nusxa. Norma kelmagan
+bo'lsa `classes/norm.php` dagi zaxira qiymat ishlatiladi va UI'da "norma Frappe'dan
+kelmagan" deb belgilanadi (jim nolga tushmaydi).
+
+Eng aniq moslik yutadi: `teacher` → `group` → `subject` → `global` → zaxira.
 
 #### `local_targetzenit_aicat` — kategoriya ballari (yassi)
 
@@ -370,6 +404,13 @@ Yangi ruxsatlar (`db/access.php`):
 `viewanalysis` (mavjud) tahlil va transkript uchun qayta ishlatiladi — yangi ruxsat
 yaratilmaydi.
 
+**Zavuch cheklanmaydi** (qaror: 2026-10-29): u ham butun maktabni ko'radi, ya'ni
+`Direktor` roli bilan bir xil ruxsat to'plami tizim kontekstida beriladi. Bu
+arxitekturani ancha soddalashtiradi — kurs kategoriyasi kontekstida ruxsat
+tekshirish, `_slot` ga sinf darajasi o'lchovi va har so'rovga qamrov filtri
+**umuman kerak emas**. Rollar ajralishi kelajakda kerak bo'lsa, qamrov `_staff`
+ustiga qo'shiladigan qatlam bo'ladi, hozirgi sxema buzilmaydi.
+
 **Login:** alohida autentifikatsiya **qurilmaydi**. Direktor — oddiy Moodle
 foydalanuvchisi, unga tizim kontekstida `Direktor` roli beriladi.
 
@@ -421,8 +462,13 @@ ishlatma") — panel ularni buzmasligi shart.
    saralanadi. "Diqqat tartibida" saralash — ataylab bosiladigan tanlov.
 5. **Ishonch darajasi yashirilmaydi.** `confidence='low'` — "audio orqali
    baholanmadi", bo'sh joy yoki nol emas.
-6. **Oyna ikki tomonga qaraydi.** O'qituvchi direktor ko'rgan narsani ko'radi
-   (`private` qaydlardan tashqari). Yashirin baho ishonchni buzadi.
+6. **Oyna ikki tomonga qaraydi — to'liq.** Qaror (2026-10-29): o'qituvchi **o'zi
+   haqida hamma narsani** ko'radi — ko'rsatkichlar, AI ballari, chorak xaritasi,
+   trend, direktorning fidbegi. Yashirin baho ishonchni buzadi. Amaliy natijasi:
+   o'qituvchi kartasi **bitta renderer**, ikki auditoriya — direktor boshqa odamni
+   ko'radi, o'qituvchi o'zini; ruxsat faqat *kimni* ko'rishni hal qiladi, *nimani*
+   ko'rishni emas. Yagona istisno — `visibility='private'` ma'muriy qayd
+   (ma'muriyat ichidagi muhokama), u ataylab tanlanadi va standart emas.
 
 ### 5.2 Ma'lumot arxitekturasi — to'rt qatlam
 
@@ -442,6 +488,7 @@ Sahifalar:
 | `direktor.php?view=oqituvchi&staffid=N` | o'qituvchi kartasi |
 | `direktor.php?view=dars&slotid=N` | dars kartasi (faqat o'qish) |
 | `direktor.php?view=fidbek` | fidbek navbati |
+| `mening_tahlilim.php` | **o'qituvchi tomoni** — o'z kartasi, direktor ko'rgani bilan bir xil (5.1/6) |
 | `fidbeklarim.php` | **o'qituvchi tomoni** — o'ziga kelgan fidbek |
 
 ### 5.3 Ekran 1 — «Bugun»
@@ -464,8 +511,8 @@ sahifaning asosiy elementi — setka emas, **diqqat navbati**.
 │  ▌ 10:20 · 3-dars · Matematika · 7-A · Karimov A.                      │
 │  ▌ mavzu yozilmagan · yo'qlama yo'q                    [Fidbek] [Dars →]│
 │                                                                         │
-│  ▌ 09:30 · 2-dars · Ingliz tili · 5-B · Yusupova M.                    │
-│  ▌ 4 dars ketma-ket yozuv yo'q                         [Fidbek] [Dars →]│
+│  ▌ Yusupova M. · Ingliz tili                                           │
+│  ▌ bugun 4 darsdan 3 tasida yozuv yo'q (ketma-ket 7)   [Fidbek] [Karta→]│
 │                                                                         │
 │  ▌ 08:40 · 1-dars · Fizika · 9-A · Rahimov B.          normadan −18%   │
 │  ▌ tahlil: ochiq savollar 14 dan 1 ta                  [Fidbek] [Dars →]│
@@ -484,7 +531,7 @@ sahifaning asosiy elementi — setka emas, **diqqat navbati**.
 | Daraja | Shart | Holat rangi |
 |---|---|---|
 | 1 | O'tgan dars, mavzu ham yo'qlama ham yo'q | `critical` |
-| 2 | N dars ketma-ket yozuv yo'q (sozlamadagi normadan past) | `serious` |
+| 2 | Yozuv yo'q — **o'qituvchi bo'yicha guruhlangan**, ketma-ket soni bo'yicha saralangan | `serious` |
 | 3 | `normdelta ≤ −15` **va** `lowconfcount` kichik (ishonchli) | `serious` |
 | 4 | Jurnal 48 soatdan ko'p kechikib to'ldirilgan | `warning` |
 | 5 | Yozuv bor, tahlil yiqilgan (`analysestatus='failed'`) | `warning` — **tizim muammosi, o'qituvchining aybi emas** |
@@ -492,6 +539,18 @@ sahifaning asosiy elementi — setka emas, **diqqat navbati**.
 
 5-darajani alohida belgilash muhim: aralashtirilsa o'qituvchi texnik xato uchun
 javob beradi.
+
+**Guruhlash qoidasi.** Yozuv har darsda majburiy bo'lgani uchun (3.2) "yozuv yo'q"
+kuniga ~70 marta uchraydi. Ularni qator-qator chiqarish navbatni o'ldiradi, shuning
+uchun:
+
+- **1-daraja** (mavzu ham yo'qlama ham yo'q) — **dars bo'yicha**, chunki kam
+  uchraydi va aniq hodisa.
+- **2-daraja** (yozuv) — **o'qituvchi bo'yicha bitta qator**, ichida bugungi sanoq
+  va ketma-ket seriya. 37 o'qituvchidan ko'pi bilan 37 qator chiqadi, odatda 5–10.
+- Navbat uzunligi **har daraja uchun 5 qator bilan cheklanadi**, qolgani
+  «hammasini ko'rish» ortida. Diqqat navbati ekranga sig'ishi kerak — sig'masa u
+  diqqat navbati emas, oddiy ro'yxat.
 
 ### 5.4 Ekran 2 — «O'qituvchilar»
 
@@ -683,10 +742,10 @@ Boshqa qoidalar:
 
 | № | Ish | Natija |
 |---|---|---|
-| 0 | 3 ta ruxsat, `Direktor` roli (CLI), navigatsiya | direktor kira oladi |
-| 1 | `_staff`, `_slot`, `_fact` + `slot_build`, `fact_refresh` + CLI | reja ↔ fakt tayyor |
+| 0 | ✅ 3 ta ruxsat, `Direktor` roli (CLI) | direktor kira oladi |
+| 1 | ✅ `_staff`, `_slot`, `_fact`, `_aicat`, `_norm` + 4 vazifa + `push_norms` + CLI | reja ↔ fakt tayyor |
 | 2 | «Bugun» ekrani: hero, diqqat navbati, kun setkasi | kundalik nazorat ishlaydi |
-| 3 | «O'qituvchilar» + «O'qituvchi kartasi» (xarita, trend) | davriy nazorat |
+| 3 | «O'qituvchilar» + «O'qituvchi kartasi» (xarita, trend) + `mening_tahlilim.php` | davriy nazorat, ikki tomonga ochiq |
 | 4 | `_aicat` + backfill + kategoriya profili | metodik tahlil |
 | 5 | `_feedback` + drawer + `fidbeklarim.php` + message provider | muloqot yopiladi |
 | 6 | `privacy/provider.php`, transkript muddati, hujjat | **majburiy**, 5 dan keyin kechikmaydi |
@@ -701,23 +760,73 @@ o'qituvchini reyting bo'yicha avtomatik jazolash/bonuslash (oylik Frappe'da,
 
 ---
 
-## 7. Hal qilinishi kerak bo'lgan savollar
+## 7. Qabul qilingan qarorlar (2026-10-29)
 
-Bular javobiga qarab **arxitektura o'zgaradi**, shuning uchun kod boshlanishidan
-oldin aniqlanishi kerak:
+| № | Savol | Qaror | Arxitekturaga ta'siri |
+|---|---|---|---|
+| 1 | Yozuv majburiymi? | **Har darsda shart** | Kutilish 100%; "yozuv yo'q" o'qituvchi bo'yicha guruhlanadi (3.2, 5.3) |
+| 2 | Baho normasi? | **Frappe'dan keladi** | `_norm` jadvali + `push_norms` WS; Moodle hisoblamaydi (4.2) |
+| 3 | Zavuch qamrovi? | **Cheklanmaydi** | Qamrov filtri, kategoriya konteksti, sinf o'lchovi kerak emas (4.4) |
+| 4 | O'qituvchi o'zini ko'radimi? | **Hammasi ochiq** | Bitta renderer, ikki auditoriya; `mening_tahlilim.php` (5.1/5.2) |
+| 5 | Transkriptda ismlar? | **Qoladi** | Pseudonimizatsiya qilinmaydi → `privacy/provider.php` jiddiyroq bo'ladi (4.5) |
+| 6 | O'rnini bosish? | **Darsni o'tganga** | `_fact.attributeduserid` ustuni; hamma yig'indi shu bo'yicha (3.4) |
 
-1. **Yozuv majburiymi?** Har darsda yoki tanlab (masalan haftada 2 ta)? Bu "yozmadi"
-   belgisining ma'nosini va diqqat navbatining 2-darajasini butunlay o'zgartiradi.
-2. **Baho normasi qancha?** Darslarning necha foizida baho bo'lishi kutiladi? Frappe
-   tomonda zavuch baholash sozlamalari allaqachon bor — norma shu yerdan kelishi
-   kerakmi yoki Moodle sozlamasida turadimi?
-3. **Direktordan tashqari kim ko'radi?** Zavuchlar sinf/fan bo'yicha cheklangan
-   ko'rinish oladimi? Agar ha — `_slot` ga filtr o'lchovi (sinf darajasi) qo'shiladi
-   va ruxsat kurs kategoriyasi kontekstida tekshiriladi.
-4. **O'qituvchi o'zi haqidagi hamma raqamni ko'radimi?** 6-tamoyil shuni taklif
-   qiladi (`private` qaydlardan tashqari), lekin bu boshqaruv qarori.
-5. **Transkriptda o'quvchi ismlari qolsinmi?** Pseudonimlashtirish panel uchun hech
-   narsa yo'qotmaydi, maxfiylik yuki esa keskin kamayadi.
-6. **O'rnini bosish qanday hisoblanadi?** Rejadagi o'qituvchi kasal, darsni boshqasi
-   o'tdi — hisobot kimga yozilsin? (Taklif: ikkisiga ham ko'rinsin, rejadagiga
-   "o'rnini bosildi" belgisi bilan — shuning uchun `_fact.writeruserid` bor.)
+### Shundan keyin ham ochiq qolgan bitta narsa
+
+**Transkript qancha saqlanadi?** Ismlar qolsa (5-qaror), transkript voyaga
+yetmaganlarning nomma-nom nutqi bo'ladi va hozir u **abadiy** saqlanyapti — audio
+esa 15 kunda o'chadi. Panel bu ma'lumotga kirishni kengaytiradi, shuning uchun
+muddat kerak (taklif: tahlil ballari abadiy, transkript matni 1 o'quv yili).
+6-bosqichda hal qilinadi, kodni to'smaydi.
+
+---
+
+## 8. Ishga tushirish (0–1 bosqich)
+
+Kod yozildi, baza yangilanishi **hali qo'llanmagan**. Tartib muhim:
+
+```bash
+# 1) Plagin yangilanishi — yangi jadvallar va ruxsatlar
+sudo -u www-data php /opt/moodle/admin/cli/upgrade.php --non-interactive
+sudo -u www-data php /opt/moodle/admin/cli/purge_caches.php
+
+# 2) Direktor roli (bir marta) va uni berish
+sudo -u www-data php /opt/moodle/public/local/targetzenit/cli/direktor_rol.php --yarat
+sudo -u www-data php /opt/moodle/public/local/targetzenit/cli/direktor_rol.php --ber=HR-EMP-00001
+
+# 3) Reja va faktni birinchi marta to'ldirish (sentabrdan beri)
+sudo -u www-data php /opt/moodle/public/local/targetzenit/cli/direktor.php --hammasi
+
+# 4) Tekshirish
+sudo -u www-data php /opt/moodle/public/local/targetzenit/cli/direktor.php --holat
+```
+
+`--holat` chiqishida diqqat qilinadigan joylar:
+
+| Satr | Nimani bildiradi |
+|---|---|
+| `Moodle useri yo'q` > 0 | shu kalitlarning darslari **hech kimning** hisobotiga tushmaydi |
+| `eski kalit (INSTR-)` > 0 | Frappe'da `Instructor` ga `Employee` bog'lanmagan — jadvalni qayta yuborish kerak |
+| `slotlar` = 0 | kalendar (`_calendar`) bo'sh — chorak oraliqlarini Frappe'dan yuborish kerak |
+| `Normalar: 0` | baho normasi hali Frappe'dan kelmagan, `norm::ZAXIRA` ishlatilmoqda |
+
+Keyingi yurishlar avtomatik: `slot_build` 04:00, `fact_rebuild` 04:30,
+`fact_refresh` har 15 daqiqada, jadval push'idan keyin esa reja darhol
+qayta quriladi (adhoc vazifa).
+
+### Frappe tomonida qoladigan ish
+
+`push_norms` web-servisi tayyor, lekin **Frappe hali uni chaqirmaydi**.
+Chaqiruvchi kod `target_zenit/integrations/moodle.py` ga qo'shilishi kerak:
+
+```
+local_targetzenit_push_norms(academicyear, norms[{scope, scopekey, code, value}], mode)
+```
+
+Kodlar: `baho_ulushi`, `uy_vazifa_ulushi`, `yoqlama_qamrovi`,
+`jurnal_kechikish_soat`. Yuborilmasa panel `norm::ZAXIRA` bilan ishlaydi va
+"norma Frappe'dan kelmagan" deb belgilaydi.
+
+> Yangi funksiya **qo'lda** `Frappe Sync` servisiga qo'shilishi kerak
+> (Server → Web services → External services → Frappe Sync → Functions) —
+> `db/services.php` da `services` ro'yxati ataylab bo'sh.

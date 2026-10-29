@@ -41,6 +41,35 @@ $capabilities = [
         'archetypes' => ['manager' => CAP_ALLOW],
     ],
 
+    // DIREKTOR PANELI: butun maktab o'qituvchilarining dars jarayonini ko'rish.
+    //
+    // Zavuch ham SHU ruxsat bilan yuradi va qamrovi CHEKLANMAYDI (qaror
+    // 2026-10-29, DIREKTOR_PANELI.md 4.4) — shuning uchun kurs kategoriyasi
+    // konteksti emas, tizim konteksti.
+    'local/targetzenit:viewteachers' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['manager' => CAP_ALLOW],
+    ],
+
+    // Dars yoki o'qituvchi haqida fidbek yozish.
+    'local/targetzenit:givefeedback' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['manager' => CAP_ALLOW],
+    ],
+
+    // Ma'muriy (o'qituvchiga ko'rinmaydigan) qaydni ko'rish.
+    //
+    // NEGA ALOHIDA RUXSAT: o'qituvchi o'zi haqida HAMMA narsani ko'radi (qaror
+    // 2026-10-29) — yagona istisno shu toifa. Ruxsat ajratilmasa, istisnoni
+    // amalda ajratib bo'lmaydi.
+    'local/targetzenit:viewprivatefeedback' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['manager' => CAP_ALLOW],
+    ],
+
     // Umumiy (butun maktab) dars jadvalini ko'rish — o'qituvchilar uchun.
     // O'quvchi faqat o'z sinfinikini ko'radi, bu ruxsat unga berilmaydi.
     'local/targetzenit:viewalltimetable' => [

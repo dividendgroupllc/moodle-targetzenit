@@ -59,6 +59,21 @@ S = {
         "Barcha xodimlarning oyligini ko'rish",
         "Просматривать зарплату всех сотрудников",
     ),
+    "targetzenit:viewteachers": (
+        "View the teaching activity of all teachers (director panel)",
+        "Barcha o'qituvchilarning dars jarayonini ko'rish (direktor paneli)",
+        "Просматривать учебную деятельность всех учителей (панель директора)",
+    ),
+    "targetzenit:givefeedback": (
+        "Write feedback on a lesson or a teacher",
+        "Dars yoki o'qituvchi haqida fidbek yozish",
+        "Писать обратную связь по уроку или учителю",
+    ),
+    "targetzenit:viewprivatefeedback": (
+        "View administrative notes hidden from the teacher",
+        "O'qituvchiga ko'rinmaydigan ma'muriy qaydni ko'rish",
+        "Просматривать административные заметки, скрытые от учителя",
+    ),
 
     # -------------------------------------------------------- dars jadvali
     "timetable": ("Timetable", "Dars jadvali", "Расписание"),
@@ -410,10 +425,36 @@ S = {
         "Nachisleniya yoki to'lov topilmadi.",
         "Начислений или выплат не найдено.",
     ),
+    "st_currentmissing": (
+        "{$a} is not in this table yet: the accrual is posted when the month "
+        "is closed in the accounting system. The figures above are the "
+        "calculation for the current month.",
+        "{$a} bu jadvalda hali yo'q: nachisleniya buxgalteriyada oy "
+        "yopilganda yoziladi. Yuqoridagi sonlar — joriy oyning hisobi.",
+        "{$a} в этой таблице ещё нет: начисление проводится при закрытии "
+        "месяца в бухгалтерии. Суммы выше — расчёт за текущий месяц.",
+    ),
     "st_nosalary": (
         "No pay set for this month in the timesheet",
         "Oylik tabelda bu oy uchun ish haqi kiritilmagan",
         "В табеле за этот месяц оклад не указан",
+    ),
+
+    # ------------------------------------------------- direktor paneli vazifalari
+    "task_slotbuild": (
+        "Rebuild the planned lesson slots from the timetable",
+        "Dars rejasini (slot) jadvaldan qayta qurish",
+        "Пересобрать запланированные уроки из расписания",
+    ),
+    "task_factrefresh": (
+        "Refresh lesson compliance data for recent days",
+        "Oxirgi kunlar uchun dars bajarilish ma'lumotini yangilash",
+        "Обновить данные о проведении уроков за последние дни",
+    ),
+    "task_factrebuild": (
+        "Recompute lesson compliance data for the whole academic year",
+        "Butun o'quv yili uchun dars bajarilish ma'lumotini qayta hisoblash",
+        "Пересчитать данные о проведении уроков за весь учебный год",
     ),
 
     # Oy nomlari — sana formatiga bog'liq emas, tabel oyi uchun

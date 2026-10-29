@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/targetzenit/db" VERSION="20261022" COMMENT="Target Zenit integration tables"
+<XMLDB PATH="local/targetzenit/db" VERSION="20261029" COMMENT="Target Zenit integration tables"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -68,6 +68,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="course_date_lesson" UNIQUE="true" FIELDS="courseid, lessondate, lessonno"/>
+        <INDEX NAME="lessondate" UNIQUE="false" FIELDS="lessondate"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_targetzenit_record" COMMENT="O'quvchining shu darsdagi davomati va bahosi.">
@@ -163,6 +164,153 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="ref_oy_cur" UNIQUE="true" FIELDS="useridnumber, oy, valyuta"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_settle" COMMENT="Xodim bilan hisob-kitob: oy kesimida nachisleniya / to'langan / qoldiq. Frappe'dan.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="useridnumber" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="oy" TYPE="char" LENGTH="7" NOTNULL="true" SEQUENCE="false" COMMENT="YYYY-MM"/>
+        <FIELD NAME="valyuta" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="UZS" SEQUENCE="false"/>
+        <FIELD NAME="oylik" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="nach" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="paid" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="advance" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="debt" TYPE="number" LENGTH="15" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ref_oy_cur" UNIQUE="true" FIELDS="useridnumber, oy, valyuta"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_staff" COMMENT="O'qituvchi o'lchovi va kalit ko'prigi: _timetable.teacherkey (Employee ID = user.idnumber) va Moodle user.id.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="teacherkey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Frappe Employee.name — yagona haqiqiy kalit"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="user.idnumber = teacherkey orqali topilgan"/>
+        <FIELD NAME="teachername" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="FAQAT ko'rsatish va diagnostika uchun — bog'lash uchun ishlatilmaydi"/>
+        <FIELD NAME="holat" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="ok" SEQUENCE="false" COMMENT="ok | userless | legacykey"/>
+        <FIELD NAME="lessonsweek" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="subjects" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="year_key" UNIQUE="true" FIELDS="academicyear, teacherkey"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="holat" UNIQUE="false" FIELDS="holat"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_slot" COMMENT="Rejalashtirilgan dars o'rni — jadval va kalendardan materiallashtirilgan. O'tgan sanalar frozen=1, qayta qurilmaydi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="slotkey" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false" COMMENT="md5(yil|sana|dars|guruh|fan) — tabiiy kalit CHAR ustunlari uzun bo'lgani uchun"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="lessondate" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="YYYY-MM-DD"/>
+        <FIELD NAME="dayno" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lessonno" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="termname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="groupkey" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="subjectkey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="subjectname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="teacherkey" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="REJADAGI o'qituvchi"/>
+        <FIELD NAME="teacheruserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="courseidnumber" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="endtime" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="room" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="frozen" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 = o'tmish, qayta qurilmaydi"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="slotkey" UNIQUE="true" FIELDS="slotkey"/>
+        <INDEX NAME="date_teacher" UNIQUE="false" FIELDS="lessondate, teacheruserid"/>
+        <INDEX NAME="teacher_date" UNIQUE="false" FIELDS="teacheruserid, lessondate"/>
+        <INDEX NAME="course_date" UNIQUE="false" FIELDS="courseid, lessondate"/>
+        <INDEX NAME="year_date" UNIQUE="false" FIELDS="academicyear, lessondate"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_fact" COMMENT="Reja va fakt taqqoslashi, slot bilan 1:1. Sana oraligi bo'yicha idempotent qayta hisoblanadi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="slotid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="lessonid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="writeruserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Haqiqatda yozgan odam"/>
+        <FIELD NAME="attributeduserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Hisobot kimga yoziladi: yozgan odam, u yo'q bo'lsa rejadagi"/>
+        <FIELD NAME="substituted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="hastopic" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="hashomework" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="studentcount" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="attendancecount" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="gradecount" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="absentcount" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="latecount" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="audiostatus" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="none" SEQUENCE="false"/>
+        <FIELD NAME="audioseconds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="analysestatus" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="none" SEQUENCE="false" COMMENT="none|pending|ok|failed"/>
+        <FIELD NAME="analysedat" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="JSON ni qayta o'qish kerakmi — shuni aniqlash uchun"/>
+        <FIELD NAME="overallscore" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="normdelta" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="overallscore minus xalqaro o'rtacha; saralash uchun"/>
+        <FIELD NAME="lowconfcount" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lastwriteat" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="latehours" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="Jurnal dars tugagandan keyin qancha soat o'tib to'ldirildi"/>
+        <FIELD NAME="feedbackcount" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="slotid" UNIQUE="true" FIELDS="slotid"/>
+        <INDEX NAME="lessonid" UNIQUE="false" FIELDS="lessonid"/>
+        <INDEX NAME="attributed" UNIQUE="false" FIELDS="attributeduserid"/>
+        <INDEX NAME="analysestatus" UNIQUE="false" FIELDS="analysestatus"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_aicat" COMMENT="AI kategoriya ballari — _audio.analysis JSON idan chiqarilgan indeks. Yagona manba JSON bo'lib qoladi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="lessonid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="code" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="score" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="confidence" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="weight" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="lesson_code" UNIQUE="true" FIELDS="lessonid, code"/>
+        <INDEX NAME="code" UNIQUE="false" FIELDS="code"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_norm" COMMENT="Frappe dan kelgan normalar. Moodle hech qachon hisoblamaydi va o'zgartirmaydi — Frappe yagona manba.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="scope" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="global" SEQUENCE="false" COMMENT="global|subject|group|teacher"/>
+        <FIELD NAME="scopekey" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="scope=global da bo'sh"/>
+        <FIELD NAME="code" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="value" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="norm_key" UNIQUE="true" FIELDS="academicyear, scope, scopekey, code"/>
       </INDEXES>
     </TABLE>
   </TABLES>

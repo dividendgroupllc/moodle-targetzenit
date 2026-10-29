@@ -166,35 +166,80 @@ echo html_writer::table($t);
 $kunlar = payroll::days($rec);
 if ($kunlar) {
     echo $OUTPUT->heading(tz_s('pr_days'), 4);
+
+    // Kunlar GORIZONTAL: ustun — kun, qator — ko'rsatkich.
+    //
+    // NEGA: oyda 28-31 kun bor. Har kunni alohida QATOR qilsak sahifa uzun
+    // ro'yxatga aylanadi va bir qarashda oyni ko'rib bo'lmaydi. Frappe'dagi
+    // oylik tabel ham aynan shu ko'rinishda — kunlar yuqorida.
+    //
+    // Kirish/chiqish qatorlari FAQAT ma'lumot bo'lsa chiziladi: turniket
+    // ID lari hali moslashtirilmagan, bo'sh ikki qator esa bekorga joy oladi.
+    $kirish_bor = false;
+    $chiqish_bor = false;
+    foreach ($kunlar as $k) {
+        if (trim((string) ($k['kirish'] ?? '')) !== '') {
+            $kirish_bor = true;
+        }
+        if (trim((string) ($k['chiqish'] ?? '')) !== '') {
+            $chiqish_bor = true;
+        }
+    }
+
+    // Turniket haqidagi jumla faqat o'sha ma'lumot ko'rsatilayotganda
+    // chiqadi — aks holda yo'q narsani tushuntirgan bo'lamiz.
     echo html_writer::div(
-        tz_s('pr_days_hint_source') . ' '
-        . ($soatbay ? tz_s('pr_days_hint_hours') : tz_s('pr_days_hint_koef')),
+        ($soatbay ? tz_s('pr_days_hint_hours') : tz_s('pr_days_hint_koef'))
+        . (($kirish_bor || $chiqish_bor) ? ' ' . tz_s('pr_days_hint_source') : ''),
         'text-muted small mb-2');
 
-    $kt = new html_table();
-    $kt->head = [tz_s('pr_day'), tz_s('pr_weekday'),
-        $soatbay ? tz_s('pr_hours') : tz_s('pr_koef'), tz_s('pr_in'), tz_s('pr_out')];
-    $kt->attributes['class'] = 'generaltable';
+    $sarlavha = [''];
+    $koefqator = [html_writer::tag('strong',
+        $soatbay ? tz_s('pr_hours') : tz_s('pr_koef'))];
+    $kirishqator = [html_writer::tag('strong', tz_s('pr_in'))];
+    $chiqishqator = [html_writer::tag('strong', tz_s('pr_out'))];
+
     foreach ($kunlar as $k) {
         $kun = (int) ($k['kun'] ?? 0);
         $vaqt = make_timestamp($yil, $oy, $kun ?: 1);
+        // Dam olish kuni — kulrang, shunda hafta chegaralari ko'rinib turadi.
+        $dam = in_array((int) date('w', $vaqt), [0, 6], true);
+        $sarlavha[] = html_writer::div(
+            html_writer::tag('strong', $kun)
+            . html_writer::div(userdate($vaqt, '%a'), 'small'),
+            $dam ? 'text-muted' : '');
+
         $koef = $k['koef'] ?? null;
         if ($koef === null) {
-            $belgi = html_writer::span('—', 'text-muted');
+            $koefqator[] = html_writer::span('—', 'text-muted');
         } else if ((float) $koef > 0) {
-            $belgi = html_writer::span((float) $koef, 'text-success');
+            $koefqator[] = html_writer::span((float) $koef, 'text-success font-weight-bold');
         } else {
-            $belgi = html_writer::span('0', 'text-danger');
+            $koefqator[] = html_writer::span('0', 'text-danger');
         }
-        $kt->data[] = [
-            $kun,
-            userdate($vaqt, '%A'),
-            $belgi,
-            s($k['kirish'] ?? '') ?: html_writer::span('—', 'text-muted'),
-            s($k['chiqish'] ?? '') ?: html_writer::span('—', 'text-muted'),
-        ];
+
+        $kirishqator[] = s($k['kirish'] ?? '') ?: html_writer::span('·', 'text-muted');
+        $chiqishqator[] = s($k['chiqish'] ?? '') ?: html_writer::span('·', 'text-muted');
     }
-    echo html_writer::table($kt);
+
+    $kt = new html_table();
+    $kt->head = $sarlavha;
+    $kt->data = [$koefqator];
+    if ($kirish_bor) {
+        $kt->data[] = $kirishqator;
+    }
+    if ($chiqish_bor) {
+        $kt->data[] = $chiqishqator;
+    }
+    $kt->attributes['class'] = 'generaltable tz-kunlar';
+    $kt->align = array_merge(['left'], array_fill(0, count($kunlar), 'center'));
+
+    // Tor ekranda jadval SAHIFANI emas, o'zini surib ko'rsatadi.
+    echo html_writer::div(html_writer::table($kt), '',
+        ['style' => 'overflow-x:auto']);
+    echo html_writer::tag('style',
+        '.tz-kunlar td, .tz-kunlar th { padding:.25rem .4rem; '
+        . 'font-size:.85rem; white-space:nowrap; }');
 }
 
 // ------------------------------------------- oylar kesimida hisob-kitob
@@ -205,6 +250,22 @@ $hisob = payroll::settle($ref);
 if ($hisob) {
     echo $OUTPUT->heading(tz_s('st_title'), 4);
     echo html_writer::div(tz_s('st_hint'), 'text-muted small mb-2');
+
+    // Joriy oy bu jadvalda bo'lmasligi KUTILGAN holat: nachisleniya
+    // buxgalteriyada oy yopilganda yoziladi. Tushuntirilmasa o'qituvchi
+    // "oktabrdamiz-ku, nega sentabr?" deb o'ylaydi.
+    $eng_yangi = '';
+    foreach ($hisob as $m) {
+        if ($m->oy > $eng_yangi) {
+            $eng_yangi = $m->oy;
+        }
+    }
+    $joriy_oy = sprintf('%04d-%02d', $yil, $oy);
+    if ($eng_yangi < $joriy_oy) {
+        echo $OUTPUT->notification(
+            tz_s('st_currentmissing', payroll::oy_yorlig($joriy_oy)),
+            \core\output\notification::NOTIFY_INFO);
+    }
 
     $yashil = 'color:#1f7a3d;white-space:nowrap';
     $qizil = 'color:#a4252a;white-space:nowrap';

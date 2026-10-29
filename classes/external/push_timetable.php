@@ -131,6 +131,11 @@ class push_timetable extends external_api {
 
         $transaction->allow_commit();
 
+        // Reja (slot) jadvalga tayanadi — push tugashi bilan uni qayta
+        // quramiz. Fonda bajariladi: jadval 900+ qatordan iborat va bu
+        // ishni web-so'rov ichida qilsak, Frappe tomonda timeout bo'ladi.
+        \local_targetzenit\task\slot_rebuild_now::queue($year);
+
         return [
             'lessons' => count($rows),
             'calendar' => $calcount,
