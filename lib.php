@@ -9,6 +9,8 @@ defined('MOODLE_INTERNAL') || die();
  * ko'rishini (o'quvchi/o'qituvchi) ichkarida hal qiladi.
  */
 function local_targetzenit_extend_navigation(global_navigation $navigation) {
+    global $USER;
+
     if (!isloggedin() || isguestuser()) {
         return;
     }
@@ -22,6 +24,49 @@ function local_targetzenit_extend_navigation(global_navigation $navigation) {
     );
     $node->showinflatnavigation = true;
     $navigation->add_node($node);
+
+    // "Mening oyligim" — chap menyuda (dashbordda ham ko'rinadi).
+    //
+    // NEGA SHU YERDA HAM: yuqori (primary) menyuga qo'yilgan edi, lekin Boost
+    // temasi sig'magan elementlarni "More" ro'yxatiga yashiradi va havola
+    // ko'rinmay qoldi. Chap menyu dashbordda doim ochiq — xodim shu yerdan
+    // o'tadi.
+    //
+    // Shart: oylik ma'lumoti BOR odam. O'quvchi va ota-onada bunday qator
+    // bo'lmaydi, shuning uchun ularga havola chiqmaydi.
+    if (\local_targetzenit\payroll::has_any((int) $USER->id)) {
+        $oylik = navigation_node::create(
+            get_string('mypayroll', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/oylik.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzpayroll',
+            new pix_icon('i/payment', '')
+        );
+        $oylik->showinflatnavigation = true;
+        $navigation->add_node($oylik);
+    }
+}
+
+/**
+ * Foydalanuvchi profiliga "Mening oyligim" havolasi.
+ *
+ * Chap menyudan tashqari ikkinchi, barqaror kirish nuqtasi: tema o'zgarsa yoki
+ * menyu yig'ilib qolsa ham xodim o'z profilidan oyligini topadi. Faqat O'Z
+ * profilida va faqat oylik ma'lumoti bor bo'lsa ko'rinadi.
+ */
+function local_targetzenit_myprofile_navigation(\core_user\output\myprofile\tree $tree,
+                                                $user, $iscurrentuser, $course) {
+    if (!$iscurrentuser || !\local_targetzenit\payroll::has_any((int) $user->id)) {
+        return;
+    }
+    $tree->add_node(new \core_user\output\myprofile\node(
+        'miscellaneous',
+        'tzpayroll',
+        get_string('mypayroll', 'local_targetzenit'),
+        null,
+        new moodle_url('/local/targetzenit/oylik.php')
+    ));
 }
 
 /**
