@@ -25,6 +25,21 @@ function local_targetzenit_extend_navigation(global_navigation $navigation) {
     $node->showinflatnavigation = true;
     $navigation->add_node($node);
 
+    // Direktor paneli — ruxsati borlarga. Jadvaldan YUQORIDA turadi:
+    // direktor uchun kundalik kirish nuqtasi shu, jadval emas.
+    if (has_capability('local/targetzenit:viewteachers', context_system::instance())) {
+        $dir = navigation_node::create(
+            get_string('dir_panel', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/direktor.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzdirektor',
+            new pix_icon('i/report', '')
+        );
+        $dir->showinflatnavigation = true;
+        $navigation->add_node($dir);
+    }
+
     // "Mening oyligim" — chap menyuda (dashbordda ham ko'rinadi).
     //
     // NEGA SHU YERDA HAM: yuqori (primary) menyuga qo'yilgan edi, lekin Boost

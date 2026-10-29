@@ -24,6 +24,18 @@ if ($hassiteconfig) {
         get_string('audio_maxmb', 'local_targetzenit'),
         get_string('audio_maxmb_desc', 'local_targetzenit'), 120, PARAM_INT));
 
+    // ---------------- Direktor paneli ----------------
+    $settings->add(new admin_setting_heading('local_targetzenit/dirheading',
+        get_string('dir_panel', 'local_targetzenit'), ''));
+
+    // Bo'sh qoldirilsa — jurnaldagi birinchi yozuvdan avtomatik aniqlanadi.
+    // NEGA KERAK: reja 1-sentabrdan to'lgan, jurnal esa keyinroq ishga
+    // tushgan. Sana bo'lmasa o'qituvchi jurnal mavjud bo'lmagan kunlar uchun
+    // ham "dars o'tmagan" bo'lib ko'rinadi.
+    $settings->add(new admin_setting_configtext('local_targetzenit/kuzatuvboshi',
+        get_string('dir_setting_start', 'local_targetzenit'),
+        get_string('dir_setting_start_desc', 'local_targetzenit'), '', PARAM_TEXT));
+
     // ---------------- AI tahlili ----------------
     $settings->add(new admin_setting_heading('local_targetzenit/aiheading',
         get_string('ai_settings', 'local_targetzenit'), ''));

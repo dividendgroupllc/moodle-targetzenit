@@ -1,0 +1,76 @@
+{{!
+    @template local_targetzenit/mobile_main
+
+    Mobil ilovaning asosiy paneli (0-bosqich).
+
+    DIQQAT: bu HTML emas, ILOVA shabloni. `<table>`, `<div class="card">` kabi
+    veb belgilari bu yerda ishlamaydi — Ionic komponentlari ishlatiladi
+    (`<ion-list>`, `<ion-item>`, `<ion-label>`). Shablon Moodle tomonida
+    render qilinadi, ilova esa natijani o'z komponentlariga aylantiradi.
+
+    Til: `{{ 'plugin.local_targetzenit.<kalit>' | translate }}`. Satrlar
+    `db/mobile.php` dagi `lang` ro'yxatiga kiritilgani uchun ilova ularni
+    o'zi yuklab oladi.
+
+    Context variables required for this template:
+    * ism - foydalanuvchi ismi
+    * bogli - hisobi Frappe yozuviga bog'langanmi
+    * oylik_bor - oylik ma'lumoti bormi
+    * jadval_bor - dars jadvali yuklanganmi
+    * wwwroot, oylik_url, baho_url - veb sahifalarga havolalar
+
+    Example context (json):
+    {
+        "ism": "Abdurashid Abdug'afforov",
+        "bogli": true,
+        "oylik_bor": true,
+        "jadval_bor": true,
+        "wwwroot": "https://lms.example.uz/local/targetzenit/index.php",
+        "oylik_url": "https://lms.example.uz/local/targetzenit/oylik.php",
+        "baho_url": "https://lms.example.uz/local/targetzenit/baholarim.php"
+    }
+}}
+<ion-card>
+    <ion-card-header>
+        <ion-card-title>{{ 'plugin.local_targetzenit.app_welcome' | translate }}</ion-card-title>
+        <ion-card-subtitle>{{ ism }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+        <p>{{ 'plugin.local_targetzenit.app_ok' | translate }}</p>
+        {{^ bogli }}
+            <ion-note color="warning">
+                {{ 'plugin.local_targetzenit.app_nolink' | translate }}
+            </ion-note>
+        {{/ bogli }}
+    </ion-card-content>
+</ion-card>
+
+<ion-list>
+    {{# jadval_bor }}
+    <ion-item button="true" core-link="true" [href]="'{{ wwwroot }}'" detail="true">
+        <ion-icon name="fas-calendar" slot="start"></ion-icon>
+        <ion-label>
+            <p class="item-heading">{{ 'plugin.local_targetzenit.timetable' | translate }}</p>
+            <p>{{ 'plugin.local_targetzenit.app_openweb' | translate }}</p>
+        </ion-label>
+    </ion-item>
+    {{/ jadval_bor }}
+
+    <ion-item button="true" core-link="true" [href]="'{{ baho_url }}'" detail="true">
+        <ion-icon name="fas-chart-bar" slot="start"></ion-icon>
+        <ion-label>
+            <p class="item-heading">{{ 'plugin.local_targetzenit.mygrades' | translate }}</p>
+            <p>{{ 'plugin.local_targetzenit.app_openweb' | translate }}</p>
+        </ion-label>
+    </ion-item>
+
+    {{# oylik_bor }}
+    <ion-item button="true" core-link="true" [href]="'{{ oylik_url }}'" detail="true">
+        <ion-icon name="fas-money-bill" slot="start"></ion-icon>
+        <ion-label>
+            <p class="item-heading">{{ 'plugin.local_targetzenit.mypayroll' | translate }}</p>
+            <p>{{ 'plugin.local_targetzenit.app_openweb' | translate }}</p>
+        </ion-label>
+    </ion-item>
+    {{/ oylik_bor }}
+</ion-list>

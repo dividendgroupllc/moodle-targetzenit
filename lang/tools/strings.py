@@ -297,6 +297,29 @@ S = {
     "pr_notlinked": ("not linked", "bog'lanmagan", "не связан"),
     "pr_currency_uzs": ("UZS", "so'm", "сум"),
 
+    # ----------------------------------------------------- mobil ilova
+    "app_title": ("Target Zenit", "Target Zenit", "Target Zenit"),
+    "app_welcome": (
+        "Target Zenit panels",
+        "Target Zenit panellari",
+        "Панели Target Zenit",
+    ),
+    "app_ok": (
+        "The app connection is working.",
+        "Ilova bilan bog'lanish ishlayapti.",
+        "Связь с приложением работает.",
+    ),
+    "app_soon": ("Coming soon", "Tez orada", "Скоро"),
+    "app_openweb": ("Open in browser", "Brauzerda ochish", "Открыть в браузере"),
+    "app_nolink": (
+        "Your account is not linked to a staff or student record, so some "
+        "panels will be empty.",
+        "Hisobingiz xodim yoki o'quvchi yozuviga bog'lanmagan, shuning uchun "
+        "ba'zi panellar bo'sh bo'ladi.",
+        "Ваша учётная запись не связана с записью сотрудника или ученика, "
+        "поэтому некоторые панели будут пустыми.",
+    ),
+
     # --------------------------------------------------- jadval sahifasi
     "tt_noclass": (
         "Your class could not be determined — you are not enrolled in any "
@@ -438,6 +461,93 @@ S = {
         "No pay set for this month in the timesheet",
         "Oylik tabelda bu oy uchun ish haqi kiritilmagan",
         "В табеле за этот месяц оклад не указан",
+    ),
+
+    # ---------------------------------------------------------- direktor paneli
+    "dir_panel": ("Director panel", "Direktor paneli", "Панель директора"),
+    "dir_today": ("Today", "Bugun", "Сегодня"),
+    "dir_since": (
+        "monitoring since {$a}",
+        "kuzatuv {$a} dan",
+        "наблюдение с {$a}",
+    ),
+    "dir_lessons_today": ("lessons today", "bugungi dars", "уроков сегодня"),
+    "dir_left": ("{$a} still to come", "{$a} tasi qoldi", "ещё {$a}"),
+    "dir_passed": ("already finished", "o'tib bo'ldi", "уже прошло"),
+    "dir_journal": ("journal filled", "jurnal to'ldirildi", "журнал заполнен"),
+    "dir_recorded": ("recorded", "yozuv olindi", "запись сделана"),
+    "dir_vsnorm": ("vs international average", "xalqaro o'rtachaga nisbatan",
+                   "относительно мирового среднего"),
+    "dir_noanalysis": ("no analysed lesson yet", "hali tahlil qilingan dars yo'q",
+                       "ещё нет проанализированных уроков"),
+    "dir_attention": ("Needs attention", "Diqqat talab qiladi", "Требует внимания"),
+    "dir_attention_window": (
+        "An action list, not a report: only lessons since {$a} are shown. "
+        "The full picture is in the teacher list.",
+        "Bu hisobot emas, amal ro'yxati: faqat {$a} dan keyingi darslar. "
+        "To'liq manzara o'qituvchilar ro'yxatida.",
+        "Это не отчёт, а список действий: только уроки с {$a}. "
+        "Полная картина — в списке учителей.",
+    ),
+    "dir_attention_empty": (
+        "Nothing needs attention — everything is filled in.",
+        "Diqqat talab qiladigan narsa yo'q — hammasi to'ldirilgan.",
+        "Ничего не требует внимания — всё заполнено.",
+    ),
+    "dir_more": (
+        "{$a} such lessons in total in this window.",
+        "Bu oynada jami {$a} ta shunday dars bor.",
+        "Всего в этом окне {$a} таких уроков.",
+    ),
+    "dir_openlesson": ("Lesson", "Dars", "Урок"),
+    "dir_grid": ("Day grid", "Kun setkasi", "Сетка дня"),
+    "dir_grid_empty": (
+        "No lessons scheduled for this day.",
+        "Bu kunga dars rejalashtirilmagan.",
+        "На этот день уроки не запланированы.",
+    ),
+    "dir_grid_legend": (
+        "The number in a cell = how many of the three required duties are done "
+        "(topic, attendance, recording). A grade is not expected in every lesson, "
+        "so it is shown as a separate dot. A dashed cell means the lesson has not "
+        "happened yet.",
+        "Katakdagi raqam = uchta majburiy vazifadan nechtasi bajarilgan "
+        "(mavzu, yo'qlama, yozuv). Baho har darsda kutilmaydi, shuning uchun "
+        "alohida nuqta bilan ko'rsatiladi. Uzuq chiziqli katak — dars hali bo'lmagan.",
+        "Число в ячейке = сколько из трёх обязательных задач выполнено "
+        "(тема, посещаемость, запись). Оценка не ожидается на каждом уроке, "
+        "поэтому показана отдельной точкой. Пунктирная ячейка — урок ещё не прошёл.",
+    ),
+    "dir_teacher": ("Teacher", "O'qituvchi", "Учитель"),
+    "dir_notyet": ("has not happened yet", "hali bo'lmagan", "ещё не прошёл"),
+    "dir_hasgrade": ("a grade was given", "baho qo'yilgan", "оценка выставлена"),
+    "dir_unlinked": ("not linked", "bog'lanmagan", "не связан"),
+    "dir_unlinked_help": (
+        "This timetable key is not linked to a Moodle account, so these lessons "
+        "do not count towards anyone. Either a vacancy, or Instructor has no "
+        "Employee linked in Frappe.",
+        "Bu jadval kaliti Moodle hisobiga bog'lanmagan, ya'ni bu darslar hech "
+        "kimning hisobotiga tushmaydi. Yo vakansiya, yoki Frappe'da `Instructor` "
+        "ga `Employee` bog'lanmagan.",
+        "Этот ключ расписания не связан с учётной записью Moodle, поэтому эти "
+        "уроки никому не зачитываются. Либо вакансия, либо в Frappe у Instructor "
+        "не привязан Employee.",
+    ),
+    "dir_setting_start": (
+        "Monitoring start date",
+        "Kuzatuv boshlanish sanasi",
+        "Дата начала наблюдения",
+    ),
+    "dir_setting_start_desc": (
+        "YYYY-MM-DD. Lessons before this date stay in the plan and the term map but "
+        "are not counted in the director panel. Leave empty to detect it "
+        "automatically from the first journal entry (the day the system went live).",
+        "YYYY-MM-DD. Bu sanadan oldingi darslar rejada va chorak xaritasida qoladi, "
+        "lekin direktor panelida hisobga olinmaydi. Bo'sh qoldirilsa — jurnaldagi "
+        "birinchi yozuvdan avtomatik aniqlanadi (dastur ishga tushgan kun).",
+        "ГГГГ-ММ-ДД. Уроки до этой даты остаются в плане и карте четверти, но не "
+        "учитываются в панели директора. Оставьте пустым — определится "
+        "автоматически по первой записи журнала (день запуска системы).",
     ),
 
     # ------------------------------------------------- direktor paneli vazifalari

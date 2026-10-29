@@ -4,9 +4,9 @@
 > Maqsad: direktor har bir o'qituvchining dars jarayonini — jadvaldan AI tahlilgacha —
 > bitta joyda kuzatishi va fidbek berishi.
 >
-> **Holat:** 0–1 bosqich kodi yozildi (ruxsatlar, `Direktor` roli,
-> `_staff`/`_slot`/`_fact`/`_aicat`/`_norm`, 4 vazifa, CLI) — baza yangilanishi
-> hali qo'llanmagan, 8-bo'limga qarang. 2-bosqichdan boshlab — UI.
+> **Holat:** 0–1 bosqich **prodda ishlayapti** (ruxsatlar, `Direktor` roli,
+> `_staff`/`_slot`/`_fact`/`_aicat`/`_norm`, 4 vazifa, CLI — 8-bo'lim).
+> 2-bosqich («Bugun» ekrani) kodi yozildi, deploy kutilmoqda.
 
 Hujjat uch qismdan iborat va ataylab shu tartibda: avval **mantiq** (savolga qanday
 javob topiladi), keyin **ma'lumotlar arxitekturasi** (javobni tez va barqaror olish
@@ -157,6 +157,26 @@ dars bo'yicha emas, o'qituvchi bo'yicha guruhlanadi** (5.3 ga qarang).
 tomonda (`target_zenit`) yuritiladi — Moodle'da ikkinchi nusxa yaratish ikki manba
 muammosini keltiradi. Norma `_norm` jadvaliga push qilinadi, Moodle hech narsa
 hisoblamaydi va o'zgartirmaydi (oylik tabeli bilan bir xil tamoyil).
+
+### 3.2a Kuzatuv boshlanish sanasi
+
+Reja 1-sentabrdan to'lgan (31 945 slot), jurnal esa keyinroq ishga tushgan.
+Sana belgilanmasa o'qituvchi **jurnal mavjud bo'lmagan kunlar uchun ham**
+"dars o'tmagan" bo'lib ko'rinadi.
+
+Qaror (2026-10-29): kuzatuv **dastur ishga tushgan kundan** boshlanadi va sana
+**qo'lda yozilmaydi** — `_lesson` dagi eng birinchi yozuvning `timecreated`
+qiymatidan aniqlanadi, ya'ni jurnal haqiqatda ishlatila boshlagan kun
+(`dashboard::kuzatuv_boshi()`). Sozlamada (`kuzatuvboshi`) qo'lda ustun qiymat
+berish mumkin.
+
+Bu sanadan oldingi darslar **rejada va chorak xaritasida qoladi**, faqat
+hisobga olinmaydi — tarix o'zgarmasligi qoidasi buzilmaydi.
+
+**Diqqat navbatining o'z oynasi bor** va u bundan ham qisqa: oxirgi 14 kun.
+Sabab — navbat hisobot emas, **amal ro'yxati**: "kecha mavzu yozilmagan" ni
+tuzatish mumkin, "sentabrda yozilmagan" ni endi yo'q. Hisobot (ro'yxat, chorak
+xaritasi) esa butun kuzatuv oynasini qamraydi.
 
 ### 3.3 Qo'shimcha signallar (ma'lumot bor, hisoblanmayapti)
 
@@ -462,7 +482,12 @@ ishlatma") — panel ularni buzmasligi shart.
    saralanadi. "Diqqat tartibida" saralash — ataylab bosiladigan tanlov.
 5. **Ishonch darajasi yashirilmaydi.** `confidence='low'` — "audio orqali
    baholanmadi", bo'sh joy yoki nol emas.
-6. **Oyna ikki tomonga qaraydi — to'liq.** Qaror (2026-10-29): o'qituvchi **o'zi
+6. **Baho katakdagi hisobga kirmaydi.** Majburiy uchlik — mavzu, yo'qlama,
+   yozuv. Baho har darsda kutilmaydi (normasi Frappe'dan keladi), shuning
+   uchun u alohida nuqta bilan ko'rsatiladi. Aks holda baho qo'yilmagan
+   mutlaqo normal dars "bajarilmagan" bo'lib chiqardi — panel yolg'on
+   ayblagan bo'lardi.
+7. **Oyna ikki tomonga qaraydi — to'liq.** Qaror (2026-10-29): o'qituvchi **o'zi
    haqida hamma narsani** ko'radi — ko'rsatkichlar, AI ballari, chorak xaritasi,
    trend, direktorning fidbegi. Yashirin baho ishonchni buzadi. Amaliy natijasi:
    o'qituvchi kartasi **bitta renderer**, ikki auditoriya — direktor boshqa odamni
@@ -518,11 +543,13 @@ sahifaning asosiy elementi — setka emas, **diqqat navbati**.
 │  ▌ tahlil: ochiq savollar 14 dan 1 ta                  [Fidbek] [Dars →]│
 ├────────────────────────────────────────────────────────────────────────┤
 │ KUN SETKASI                        1   2   3   4   5   6   7            │
-│ Karimov A.        Matematika       ■   ■   ◪   ◻   ·   ·   ·            │
-│ Yusupova M.       Ingliz tili      ■   ◻   ·   ■   ■   ·   ·            │
-│ Rahimov B.        Fizika           ◪   ·   ■   ■   ·   ·   ·            │
+│ Karimov A.        Matematika       3·  3   2   0   ·   ·   ·            │
+│ Yusupova M.       Ingliz tili      3   1   ·   3·  3   ·   ·            │
+│ Rahimov B.        Fizika           2   ·   3   3·  ·   ·   ·            │
 │                                                                         │
-│ ■ 4/4 vazifa   ◪ qisman   ◻ bo'sh   · darsi yo'q      [jadval ko'rinish]│
+│ Katakdagi raqam = 3 majburiy vazifadan nechtasi (mavzu/yo'qlama/yozuv)  │
+│ 3 yashil · 2 sariq · 1 to'q sariq · 0 qizil · «·» hali bo'lmagan        │
+│ Kichik nuqta (3·) = baho qo'yilgan                                      │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -595,7 +622,7 @@ jadval emas). Har ustun — o'z o'rnidagi mikro-vizualizatsiya.
 │   7-B Matematika       ▓  █  ▓  ▓  ▒      ▓  ▓  ▓  ░  █  ▓                │
 │   8-A Geometriya       █  ▓  ▓  ░  ▓      ▓  █  ▓  ▓  ▒  ▓                │
 │                                                                           │
-│   Bajarilgan vazifa:  ░ 0-1   ▒ 2   ▓ 3   █ 4            [jadval ⇄]      │
+│   Bajarilgan majburiy vazifa:  ░ 0   ▒ 1   ▓ 2   █ 3     [jadval ⇄]      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -744,7 +771,7 @@ Boshqa qoidalar:
 |---|---|---|
 | 0 | ✅ 3 ta ruxsat, `Direktor` roli (CLI) | direktor kira oladi |
 | 1 | ✅ `_staff`, `_slot`, `_fact`, `_aicat`, `_norm` + 4 vazifa + `push_norms` + CLI | reja ↔ fakt tayyor |
-| 2 | «Bugun» ekrani: hero, diqqat navbati, kun setkasi | kundalik nazorat ishlaydi |
+| 2 | ✅ «Bugun» ekrani: hero+sparkline, diqqat navbati (5 daraja), kun setkasi, ma'lumot sog'ligi | kundalik nazorat ishlaydi |
 | 3 | «O'qituvchilar» + «O'qituvchi kartasi» (xarita, trend) + `mening_tahlilim.php` | davriy nazorat, ikki tomonga ochiq |
 | 4 | `_aicat` + backfill + kategoriya profili | metodik tahlil |
 | 5 | `_feedback` + drawer + `fidbeklarim.php` + message provider | muloqot yopiladi |
@@ -770,6 +797,7 @@ o'qituvchini reyting bo'yicha avtomatik jazolash/bonuslash (oylik Frappe'da,
 | 4 | O'qituvchi o'zini ko'radimi? | **Hammasi ochiq** | Bitta renderer, ikki auditoriya; `mening_tahlilim.php` (5.1/5.2) |
 | 5 | Transkriptda ismlar? | **Qoladi** | Pseudonimizatsiya qilinmaydi → `privacy/provider.php` jiddiyroq bo'ladi (4.5) |
 | 6 | O'rnini bosish? | **Darsni o'tganga** | `_fact.attributeduserid` ustuni; hamma yig'indi shu bo'yicha (3.4) |
+| 7 | Kuzatuv qaysi sanadan? | **Dastur ishga tushgan kundan**, avtomatik aniqlanadi; standart ko'rinish — Bugun | `dashboard::kuzatuv_boshi()`; navbat uchun alohida 14 kunlik oyna (3.2a) |
 
 ### Shundan keyin ham ochiq qolgan bitta narsa
 
