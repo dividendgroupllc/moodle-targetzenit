@@ -160,9 +160,9 @@ class timetable {
         if (trim($ism) === '') {
             return false;
         }
-        return $DB->record_exists_select('local_targetzenit_timetable',
-            'academicyear = :y AND ' . $DB->sql_compare_text('teachername') . ' = :ism',
-            ['y' => $year, 'ism' => $ism]);
+        // `teachername` — char ustun, shuning uchun oddiy tenglik yetarli.
+        return $DB->record_exists('local_targetzenit_timetable',
+            ['academicyear' => $year, 'teachername' => $ism]);
     }
 
     /**

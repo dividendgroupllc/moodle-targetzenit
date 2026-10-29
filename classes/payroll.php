@@ -74,6 +74,52 @@ class payroll {
         return is_array($d) ? $d : [];
     }
 
+    /**
+     * Hisob-kitob: oy kesimida nachisleniya / to'langan / qoldiq.
+     *
+     * Sonlar Frappe'da hisoblanadi (investor paneli bilan bir manba), bu yerda
+     * faqat o'qiladi. Yangi oydan boshlab tartiblanadi.
+     */
+    public static function settle(string $ref): array {
+        global $DB;
+        if ($ref === '') {
+            return [];
+        }
+        return $DB->get_records('local_targetzenit_settle',
+            ['useridnumber' => $ref], 'oy DESC, valyuta');
+    }
+
+    /**
+     * Oy holati: to'langan / ortiq to'langan / qisman / to'lanmagan / avans.
+     *
+     * Chegara 0.5 — Frappe paneli bilan bir xil. Sabab: valyuta ayirboshlash
+     * va yaxlitlashdan keyin qoldiq nolga teng bo'lmay, 10^-9 kabi qoldiq
+     * chiqadi; uni "to'lanmagan" deb ko'rsatish xato bo'lardi.
+     */
+    public static function holat(\stdClass $m): string {
+        if ($m->nach > 0.5 && abs($m->debt) <= 0.5) {
+            return 'paid';
+        }
+        if ($m->nach > 0.5 && $m->debt < -0.5) {
+            return 'over';
+        }
+        if ($m->nach > 0.5 && $m->paid > 0.5) {
+            return 'partial';
+        }
+        if ($m->nach > 0.5) {
+            return 'unpaid';
+        }
+        return 'advance';
+    }
+
+    /** "2026-09" -> "2026 Sentabr" */
+    public static function oy_yorlig(string $oy): string {
+        if (!preg_match('/^(\d{4})-(\d{2})$/', $oy, $m)) {
+            return $oy;
+        }
+        return $m[1] . ' ' . self::oy_nomi((int) $m[2]);
+    }
+
     /** Oy nomi — foydalanuvchining Moodle tilida. */
     public static function oy_nomi(int $oy): string {
         if ($oy < 1 || $oy > 12) {

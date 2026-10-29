@@ -25,4 +25,12 @@ $functions = [
         'capabilities' => 'local/targetzenit:push',
         'ajax'        => false,
     ],
+    'local_targetzenit_push_settlement' => [
+        'classname'   => 'local_targetzenit\\external\\push_settlement',
+        'methodname'  => 'execute',
+        'description' => "Frappe'dan xodim bilan hisob-kitobni (oy kesimida) qabul qiladi",
+        'type'        => 'write',
+        'capabilities' => 'local/targetzenit:push',
+        'ajax'        => false,
+    ],
 ];

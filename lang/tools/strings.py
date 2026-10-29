@@ -298,6 +298,18 @@ S = {
     "tt_prevweek": ("\u2190 Previous week", "\u2190 oldingi hafta", "\u2190 Предыдущая неделя"),
     "tt_thisweek": ("This week", "shu hafta", "Текущая неделя"),
     "tt_nextweek": ("Next week \u2192", "keyingi hafta \u2192", "Следующая неделя \u2192"),
+    "tt_keymismatch": (
+        "Your timetable could not be matched to your account, so you are "
+        "seeing the whole class timetable instead of your own lessons. The "
+        "timetable needs to be re-sent from Frappe. Please tell the "
+        "administrator.",
+        "Jadval sizning hisobingizga bog'lanmadi, shuning uchun o'z "
+        "darslaringiz o'rniga butun sinf jadvalini ko'rib turasiz. Jadvalni "
+        "Frappe'dan qayta yuborish kerak. Administratorga aytib qo'ying.",
+        "Расписание не удалось сопоставить с вашей учётной записью, поэтому "
+        "вы видите расписание всего класса, а не свои уроки. Расписание нужно "
+        "заново отправить из Frappe. Сообщите администратору.",
+    ),
     "tt_today_suffix": (" (today)", " (bugun)", " (сегодня)"),
 
     # ------------------------------------------------- baholarim sahifasi
@@ -361,6 +373,48 @@ S = {
     "mg_date": ("Date", "Sana", "Дата"),
     "mg_grades": ("Grades", "Baholar", "Оценки"),
     "mg_attendance": ("Attendance", "Davomat", "Посещаемость"),
+
+    # ------------------------------------------- xodim bilan hisob-kitob
+    "st_title": ("Settlement by month", "Oylar kesimida hisob-kitob", "Расчёты по месяцам"),
+    "st_hint": (
+        "Accrued and paid amounts come from the accounting system. "
+        "\u00abRemaining\u00bb is what is still owed for that month; a plus sign "
+        "means it was overpaid.",
+        "Hisoblangan va to'langan summalar buxgalteriya tizimidan olingan. "
+        "\u00abQoldiq\u00bb \u2014 shu oy uchun to'lanmagan qism; oldidagi "
+        "ortiqcha belgisi ortiq to'langanini bildiradi.",
+        "Начисленные и выплаченные суммы берутся из бухгалтерской системы. "
+        "\u00abОстаток\u00bb \u2014 невыплаченная часть за этот месяц; знак "
+        "плюс означает переплату.",
+    ),
+    "st_month": ("Month", "Oy", "Месяц"),
+    "st_salary": ("Monthly pay", "Oylik ish haqi", "Оклад"),
+    "st_accrued": ("Accrued", "Nachisleniya", "Начислено"),
+    "st_paid": ("Paid", "To'langan", "Выплачено"),
+    "st_remaining": ("Remaining", "Qoldiq", "Остаток"),
+    "st_status": ("Status", "Holat", "Статус"),
+    "st_total": ("TOTAL", "JAMI", "ИТОГО"),
+    "st_average": ("average", "o'rtacha", "в среднем"),
+    "st_unlinked": (
+        "of which unallocated: {$a}",
+        "shundan bog'lanmagan: {$a}",
+        "из них не привязано: {$a}",
+    ),
+    "st_s_paid": ("Paid", "To'langan", "Выплачено"),
+    "st_s_over": ("Overpaid", "Ortiq to'langan", "Переплата"),
+    "st_s_partial": ("Partial", "Qisman", "Частично"),
+    "st_s_unpaid": ("Unpaid", "To'lanmagan", "Не выплачено"),
+    "st_s_advance": ("Advance", "Avans", "Аванс"),
+    "st_none": (
+        "No accruals or payments found.",
+        "Nachisleniya yoki to'lov topilmadi.",
+        "Начислений или выплат не найдено.",
+    ),
+    "st_nosalary": (
+        "No pay set for this month in the timesheet",
+        "Oylik tabelda bu oy uchun ish haqi kiritilmagan",
+        "В табеле за этот месяц оклад не указан",
+    ),
 
     # Oy nomlari — sana formatiga bog'liq emas, tabel oyi uchun
     "month_1": ("January", "Yanvar", "Январь"),

@@ -197,6 +197,99 @@ if ($kunlar) {
     echo html_writer::table($kt);
 }
 
+// ------------------------------------------- oylar kesimida hisob-kitob
+// Sonlar Frappe'dan keladi va investor panelidagi bilan AYNAN BIR XIL —
+// manba bitta (`investor_dashboard.personal_months`). Shuning uchun bu yerda
+// hech narsa hisoblanmaydi, faqat chiziladi.
+$hisob = payroll::settle($ref);
+if ($hisob) {
+    echo $OUTPUT->heading(tz_s('st_title'), 4);
+    echo html_writer::div(tz_s('st_hint'), 'text-muted small mb-2');
+
+    $yashil = 'color:#1f7a3d;white-space:nowrap';
+    $qizil = 'color:#a4252a;white-space:nowrap';
+    $belgilar = [
+        'paid' => ['st_s_paid', 'badge badge-success'],
+        'over' => ['st_s_over', 'badge badge-success'],
+        'partial' => ['st_s_partial', 'badge badge-warning'],
+        'unpaid' => ['st_s_unpaid', 'badge badge-danger'],
+        'advance' => ['st_s_advance', 'badge badge-success'],
+    ];
+
+    $ht = new html_table();
+    $ht->attributes['class'] = 'generaltable';
+    $ht->head = [tz_s('st_month'), tz_s('st_salary'), tz_s('st_accrued'),
+        tz_s('st_paid'), tz_s('st_remaining'), tz_s('st_status')];
+    $ht->align = ['left', 'right', 'right', 'right', 'right', 'left'];
+
+    $jami = [];
+    foreach ($hisob as $m) {
+        $cur = $m->valyuta;
+        if (!isset($jami[$cur])) {
+            $jami[$cur] = ['nach' => 0, 'paid' => 0, 'debt' => 0, 'oysum' => 0, 'oyn' => 0];
+        }
+        $jami[$cur]['nach'] += $m->nach;
+        $jami[$cur]['paid'] += $m->paid;
+        $jami[$cur]['debt'] += $m->debt;
+        if ($m->oylik > 0.5) {
+            $jami[$cur]['oysum'] += $m->oylik;
+            $jami[$cur]['oyn']++;
+        }
+
+        // Qoldiq: musbat = to'lanmagan (qizil), manfiy = ortiq to'langan
+        // (yashil, oldida +), nolga yaqin = oddiy 0.
+        if ($m->debt > 0.5) {
+            $qoldiq = html_writer::span(payroll::pul($m->debt, $cur), '', ['style' => $qizil]);
+        } else if ($m->debt < -0.5) {
+            $qoldiq = html_writer::span('+' . payroll::pul(-$m->debt, $cur), '',
+                ['style' => $yashil]);
+        } else {
+            $qoldiq = html_writer::span('0', 'text-muted');
+        }
+
+        $tolangan = html_writer::span(payroll::pul($m->paid, $cur), '', ['style' => $yashil]);
+        if ($m->advance > 0.5) {
+            $tolangan .= html_writer::div(
+                tz_s('st_unlinked', payroll::pul($m->advance, $cur)), 'text-muted small');
+        }
+
+        [$kalit, $klass] = $belgilar[payroll::holat($m)];
+
+        $ht->data[] = [
+            payroll::oy_yorlig($m->oy) . ' ' . html_writer::span(s($cur), 'text-muted small'),
+            $m->oylik > 0.5
+                ? payroll::pul($m->oylik, $cur)
+                : html_writer::span('—', 'text-muted', ['title' => tz_s('st_nosalary')]),
+            payroll::pul($m->nach, $cur),
+            $tolangan,
+            $qoldiq,
+            html_writer::span(tz_s($kalit), $klass),
+        ];
+    }
+
+    // JAMI — har valyuta uchun alohida. Ish haqi ustunida O'RTACHA ko'rsatiladi:
+    // oylik summalarni qo'shib bo'lmaydi, ular bir oyning qiymati.
+    foreach ($jami as $cur => $t) {
+        $ht->data[] = [
+            html_writer::tag('strong', tz_s('st_total'))
+                . ' ' . html_writer::span(s($cur), 'text-muted small'),
+            $t['oyn']
+                ? html_writer::tag('strong', payroll::pul($t['oysum'] / $t['oyn'], $cur))
+                    . html_writer::div(tz_s('st_average'), 'text-muted small')
+                : html_writer::span('—', 'text-muted'),
+            html_writer::tag('strong', payroll::pul($t['nach'], $cur)),
+            html_writer::tag('strong', payroll::pul($t['paid'], $cur), ['style' => $yashil]),
+            html_writer::tag('strong',
+                $t['debt'] < -0.5 ? '+' . payroll::pul(-$t['debt'], $cur)
+                                  : payroll::pul($t['debt'], $cur),
+                ['style' => $t['debt'] > 0.5 ? $qizil : $yashil]),
+            '',
+        ];
+    }
+
+    echo html_writer::div(html_writer::table($ht), 'table-responsive');
+}
+
 echo html_writer::div(tz_s('pr_footnote'), 'text-muted small mt-4');
 
 // ------------------------------------------------------------ admin ro'yxati

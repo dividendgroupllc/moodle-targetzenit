@@ -55,6 +55,12 @@ if (!$group && !$teacherkey) {
     $group = $mygroups ? array_key_first($mygroups) : '';
 }
 
+// Kalit nomuvofiqligi — JIM YIQILISHNI ko'rinadigan qiladi. Kalit mos
+// kelmasa sahifa o'z-o'zidan "sinf jadvali" rejimiga o'tadi va o'qituvchi
+// buning sababini bilmaydi. Faqat ANIQLANADI; xabar header'dan keyin
+// chiqariladi (undan oldin echo qilish mumkin emas).
+$kalitxatosi = !$teacherkey && timetable::kalit_nomuvofiqmi($USER, $year);
+
 // --- Jadval qatorlarini olish
 $isteacherview = ($teacherkey && !$group);
 $rows = [];
@@ -74,7 +80,8 @@ $courseids = timetable::course_ids(array_map(fn($r) => $r->courseidnumber, $rows
  * KOKPITIGA olib boradi (mavzu + yo'qlama + baho), kursning o'ziga emas —
  * kunlik ish aynan shu yerda bajariladi.
  */
-$fan = function($r, $sana = null) use ($courseids, $isteacherview) {
+$kirish_keshi = [];
+$fan = function($r, $sana = null) use ($courseids, $isteacherview, &$kirish_keshi) {
     $nom = format_string($r->subjectname);
     $cid = $courseids[$r->courseidnumber] ?? 0;
     if (!$cid) {
@@ -88,10 +95,31 @@ $fan = function($r, $sana = null) use ($courseids, $isteacherview) {
         ]);
         return html_writer::link($url, $nom, ['title' => get_string('openlesson', 'local_targetzenit')]);
     }
+
+    // Kursga kirish huquqi bo'lmasa HAVOLA QO'YILMAYDI.
+    //
+    // NEGA: sinf jadvalida boshqa o'qituvchilarning fanlari ham turadi.
+    // Ularning kursiga bu odam yozilmagan, shuning uchun havola bosilganda
+    // Moodle "You cannot enrol yourself in this course" sahifasini ko'rsatadi
+    // — boshi berk yo'l. Havola bo'lmasa fan nomi oddiy matn bo'lib turadi.
+    if (!array_key_exists($cid, $kirish_keshi)) {
+        // Bir sahifada bitta kurs bir necha marta uchraydi (haftaning turli
+        // kunlarida), shuning uchun natija keshlanadi.
+        $kurs = get_course($cid);
+        $kirish_keshi[$cid] = $kurs && can_access_course($kurs);
+    }
+    if (!$kirish_keshi[$cid]) {
+        return $nom;
+    }
     return html_writer::link(new moodle_url('/course/view.php', ['id' => $cid]), $nom);
 };
 
 echo $OUTPUT->header();
+
+if ($kalitxatosi) {
+    echo $OUTPUT->notification(get_string('tt_keymismatch', 'local_targetzenit'),
+        \core\output\notification::NOTIFY_WARNING);
+}
 
 // --- Yuqori menyu
 $tabs = [];

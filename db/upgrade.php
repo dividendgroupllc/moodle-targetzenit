@@ -226,5 +226,30 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102910, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026102917) {
+
+        // Xodim bilan hisob-kitob: oy kesimida nachisleniya / to'langan /
+        // qoldiq. Frappe investor panelidagi bilan BIR XIL manbadan keladi.
+        $table = new xmldb_table('local_targetzenit_settle');
+        if (!$dbman->table_exists($table)) {
+            // DIQQAT: `id` ga XMLDB_SEQUENCE berilishi SHART — berilmasa jadval
+            // yaratiladi, SELECT ishlaydi, har INSERT esa dmlwriteexception
+            // bilan yiqiladi (payroll jadvalida aynan shu bo'lgan).
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('useridnumber', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('oy', XMLDB_TYPE_CHAR, '7', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('valyuta', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'UZS');
+            foreach (['oylik', 'nach', 'paid', 'advance', 'debt'] as $nom) {
+                $table->add_field($nom, XMLDB_TYPE_NUMBER, '15, 2', null, XMLDB_NOTNULL, null, '0');
+            }
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('ref_oy_cur', XMLDB_INDEX_UNIQUE, ['useridnumber', 'oy', 'valyuta']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026102917, 'local', 'targetzenit');
+    }
+
     return true;
 }
