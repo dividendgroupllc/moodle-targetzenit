@@ -97,7 +97,16 @@ function local_targetzenit_pluginfile($course, $cm, $context, $filearea, $args,
         return false;
     }
     require_login($course, false, $cm);
-    require_capability('local/targetzenit:teach', $context);
+
+    // Shu kursda dars o'tadigan odam YOKI butun maktab tahlilini ko'rish
+    // huquqi borlar (direktor/zavuch). O'quvchilarga ochiq emas.
+    //
+    // NEGA IKKINCHI SHART: direktorning kurs kontekstida `teach` ruxsati
+    // yo'q (ataylab — u baho qo'ymasligi kerak), lekin tahlilni audio bilan
+    // tekshirishi kerak. Aks holda tahlil sahifasidagi pleyer 403 berardi.
+    if (!has_capability('local/targetzenit:teach', $context)) {
+        require_capability('local/targetzenit:viewanalysis', context_system::instance());
+    }
 
     $itemid = (int) array_shift($args);
     $filename = array_pop($args);

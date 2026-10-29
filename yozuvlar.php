@@ -126,10 +126,16 @@ if (!$rows) {
             $holat .= html_writer::div(s($r->aierror), 'small text-muted');
         }
 
+        // Dars kokpiti EMAS, faqat-o'qish tahlil sahifasi.
+        //
+        // NEGA: kokpit kurs kontekstida `teach` ruxsatini talab qiladi va
+        // direktorda u ataylab yo'q (u baho qo'ymasligi kerak) — eski havola
+        // unda "ruxsat yo'q" sahifasiga olib borardi.
         $amallar = html_writer::link(
-            new moodle_url('/local/targetzenit/dars.php', [
-                'courseid' => $r->courseid, 'date' => $r->lessondate, 'lessonno' => $r->lessonno]),
-            'Dars', ['class' => 'btn btn-sm btn-outline-secondary mr-1']);
+            new moodle_url('/local/targetzenit/dars_tahlil.php',
+                ['lessonid' => $r->lessonid]),
+            get_string('dir_analysis', 'local_targetzenit'),
+            ['class' => 'btn btn-sm btn-outline-primary mr-1']);
 
         if ($url) {
             $amallar .= html_writer::link($url, 'Tinglash',

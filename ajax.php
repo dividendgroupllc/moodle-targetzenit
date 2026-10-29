@@ -15,7 +15,15 @@ $lessonid = required_param('lessonid', PARAM_INT);
 
 $dars = $DB->get_record('local_targetzenit_lesson', ['id' => $lessonid], '*', MUST_EXIST);
 $context = context_course::instance($dars->courseid);
-require_capability('local/targetzenit:teach', $context);
+
+// YOZUV amallari — faqat shu kursda dars o'tadigan odam.
+// TAHLIL amallari (status/analyse/reanalyse) — direktor/zavuch ham: ularda
+// kurs kontekstidagi `teach` yo'q, tizim darajasida `viewanalysis` bor.
+if (in_array($action, ['start', 'chunk', 'finish', 'cancel'], true)) {
+    require_capability('local/targetzenit:teach', $context);
+} else if (!has_capability('local/targetzenit:teach', $context)) {
+    require_capability('local/targetzenit:viewanalysis', context_system::instance());
+}
 
 if (in_array($action, ['start', 'chunk', 'finish', 'cancel'], true)
         && !get_config('local_targetzenit', 'audioenabled')) {

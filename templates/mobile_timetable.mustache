@@ -1,0 +1,67 @@
+{{!
+    @template local_targetzenit/mobile_timetable
+
+    Dars jadvali — mobil ilova uchun (1-bosqich).
+
+    Joriy haftaning kunlari bo'yicha ro'yxat. Bugungi kun ajratib ko'rsatiladi,
+    dars bo'lmagan kunda sababi yoziladi (bayram, ta'til, dam olish).
+
+    Context variables required for this template:
+    * bor - jadval topildimi
+    * xabar - topilmasa sabab
+    * kunlar - [{nomi, sana, bugun, yopiq, sabab, bor, darslar}]
+    * darslar - [{lessonno, vaqt, fan, xona, kim}]
+
+    Example context (json):
+    {
+        "bor": true,
+        "xabar": "",
+        "kunlar": [{
+            "nomi": "Monday", "sana": "03/11/26", "bugun": true,
+            "yopiq": false, "sabab": "1-chorak", "bor": true,
+            "darslar": [{"lessonno": 1, "vaqt": "08:30 – 09:15",
+                         "fan": "ROBOTICS", "xona": "204", "kim": "8 A(full)"}]
+        }]
+    }
+}}
+{{^ bor }}
+    <ion-card>
+        <ion-card-content>
+            <p>{{ xabar }}</p>
+        </ion-card-content>
+    </ion-card>
+{{/ bor }}
+
+{{# bor }}
+<ion-list>
+    {{# kunlar }}
+        <ion-item-divider {{# bugun }}color="light"{{/ bugun }}>
+            <ion-label>
+                <strong>{{ nomi }}</strong>
+                <span class="ion-padding-start">{{ sana }}</span>
+            </ion-label>
+        </ion-item-divider>
+
+        {{# bor }}
+            {{# darslar }}
+            <ion-item>
+                <ion-badge slot="start">{{ lessonno }}</ion-badge>
+                <ion-label class="ion-text-wrap">
+                    <p class="item-heading">{{ fan }}</p>
+                    <p>{{ kim }}{{# xona }} · {{ xona }}{{/ xona }}</p>
+                </ion-label>
+                {{# vaqt }}<ion-note slot="end">{{ vaqt }}</ion-note>{{/ vaqt }}
+            </ion-item>
+            {{/ darslar }}
+        {{/ bor }}
+
+        {{^ bor }}
+            <ion-item>
+                <ion-label class="ion-text-wrap">
+                    <p>{{# yopiq }}{{ sabab }}{{/ yopiq }}{{^ yopiq }}{{#str}}timetable_nolessons, local_targetzenit{{/str}}{{/ yopiq }}</p>
+                </ion-label>
+            </ion-item>
+        {{/ bor }}
+    {{/ kunlar }}
+</ion-list>
+{{/ bor }}

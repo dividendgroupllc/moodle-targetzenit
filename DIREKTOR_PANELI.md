@@ -771,7 +771,7 @@ Boshqa qoidalar:
 |---|---|---|
 | 0 | ✅ 3 ta ruxsat, `Direktor` roli (CLI) | direktor kira oladi |
 | 1 | ✅ `_staff`, `_slot`, `_fact`, `_aicat`, `_norm` + 4 vazifa + `push_norms` + CLI | reja ↔ fakt tayyor |
-| 2 | ✅ «Bugun» ekrani: hero+sparkline, diqqat navbati (5 daraja), kun setkasi, ma'lumot sog'ligi | kundalik nazorat ishlaydi |
+| 2 | ✅ «Bugun» ekrani + faqat-o'qish **dars kartasi** (`dars_tahlil.php`) va umumiy tahlil chizuvchisi (`classes/output/tahlil.php`) | kundalik nazorat ishlaydi |
 | 3 | «O'qituvchilar» + «O'qituvchi kartasi» (xarita, trend) + `mening_tahlilim.php` | davriy nazorat, ikki tomonga ochiq |
 | 4 | `_aicat` + backfill + kategoriya profili | metodik tahlil |
 | 5 | `_feedback` + drawer + `fidbeklarim.php` + message provider | muloqot yopiladi |
@@ -808,6 +808,28 @@ muddat kerak (taklif: tahlil ballari abadiy, transkript matni 1 o'quv yili).
 6-bosqichda hal qilinadi, kodni to'smaydi.
 
 ---
+
+## 7a. Ruxsatlar dizayni: direktor nega `teach` olmaydi
+
+Dars kokpiti (`dars.php`) kurs kontekstida `local/targetzenit:teach` talab
+qiladi va u yerda baho/yo'qlama **tahrir** qilinadi. Direktorga bu ruxsat
+**ataylab berilmagan** — kuzatuvchi baho qo'ymasligi kerak.
+
+Shu sababli tahlil uchun alohida faqat-o'qish sahifasi bor
+(`dars_tahlil.php`), u tizim darajasidagi `viewanalysis` bilan ishlaydi.
+Tahlil kartasining o'zi `classes/output/tahlil.php` da — **o'qituvchi
+ko'rayotgani bilan ayni bir kod**. Nusxalansa, tahlil ramkasi o'zgarganda
+(allaqachon ikki marta o'zgargan: ha/yo'q → foiz → 15 kategoriya) ikki sahifa
+boshqa-boshqa narsa ko'rsatardi.
+
+Shundan kelib chiqib ikki joyda ruxsat yumshatildi:
+
+| Joy | Oldin | Endi |
+|---|---|---|
+| `lib.php` audio fayl berish | faqat `teach` | `teach` **yoki** `viewanalysis` — aks holda direktorda pleyer 403 berardi |
+| `ajax.php` | hamma amal `teach` | yozuv amallari (`start/chunk/finish/cancel`) `teach`; tahlil amallari (`status/analyse/reanalyse`) `viewanalysis` ham |
+
+O'quvchiga hech biri ochilmaydi — ikkala ruxsat ham unda yo'q.
 
 ## 8. Ishga tushirish (0–1 bosqich)
 

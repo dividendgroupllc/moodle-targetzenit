@@ -550,6 +550,54 @@ S = {
         "автоматически по первой записи журнала (день запуска системы).",
     ),
 
+    # --------------------------------------------- dars kartasi (faqat o'qish)
+    "dir_lessoncard": ("Lesson card", "Dars kartasi", "Карточка урока"),
+    "dir_analysis": ("Analysis", "Tahlil", "Анализ"),
+    "dir_nojournal": (
+        "Nothing was written for this lesson: the teacher never opened the lesson "
+        "cockpit, so there is no topic, attendance or recording.",
+        "Bu dars uchun hech narsa yozilmagan: o'qituvchi dars kokpitini ochmagan, "
+        "ya'ni mavzu, yo'qlama va yozuv yo'q.",
+        "По этому уроку ничего не записано: учитель не открывал кокпит урока, "
+        "поэтому нет ни темы, ни посещаемости, ни записи.",
+    ),
+    "dir_wroteby": ("filled in by {$a}", "jurnalni to'ldirgan: {$a}", "журнал заполнил: {$a}"),
+    "dir_opencockpit": ("Open the lesson cockpit", "Dars kokpitida ochish",
+                        "Открыть в кокпите урока"),
+    "dir_journalstate": ("Journal", "Jurnal holati", "Состояние журнала"),
+    "dir_topic": ("topic", "mavzu", "тема"),
+    "dir_notopic": ("no topic", "mavzu yozilmagan", "тема не записана"),
+    "dir_hw": ("homework", "uy vazifa", "домашнее задание"),
+    "dir_nohw": ("no homework", "uy vazifa yo'q", "домашнего задания нет"),
+    "dir_noatt": ("attendance not taken", "yo'qlama qilinmagan", "посещаемость не отмечена"),
+    "dir_attdone": ("attendance taken", "yo'qlama qilingan", "посещаемость отмечена"),
+    "dir_attn": ("present {$a->kelgan} of {$a->jami}",
+                 "{$a->jami} dan {$a->kelgan} tasi keldi",
+                 "пришли {$a->kelgan} из {$a->jami}"),
+    "dir_nograde": ("no grades given", "baho qo'yilmagan", "оценки не выставлены"),
+    "dir_recording": ("Recording", "Yozuv", "Запись"),
+    "dir_audiogone": (
+        "The audio has been deleted after the retention period — the transcript "
+        "and the analysis remain.",
+        "Audio saqlash muddati o'tgach o'chirilgan — transkript va tahlil qoldi.",
+        "Аудио удалено по истечении срока хранения — расшифровка и анализ остались.",
+    ),
+    "dir_audiorec": ("still recording", "hozir yozilmoqda", "идёт запись"),
+    "dir_audionone": ("the audio file is missing", "audio fayl yo'q", "аудиофайла нет"),
+    "dir_analysisnone": (
+        "There is no analysis for this lesson yet — either no recording was made, "
+        "or the analysis has not run.",
+        "Bu dars uchun hali tahlil yo'q — yoki yozuv olinmagan, yoki tahlil "
+        "ishga tushmagan.",
+        "Для этого урока анализа ещё нет — либо запись не сделана, либо анализ "
+        "не запускался.",
+    ),
+    "dir_aioff": (
+        "AI analysis is switched off in the plugin settings.",
+        "AI tahlil plagin sozlamalarida o'chirilgan.",
+        "ИИ-анализ отключён в настройках плагина.",
+    ),
+
     # ------------------------------------------------- direktor paneli vazifalari
     "task_slotbuild": (
         "Rebuild the planned lesson slots from the timetable",

@@ -188,13 +188,13 @@ if (!$items) {
             ? trim(($it->starttime ?? '') . ' · ' . $it->lessonno . '-dars')
             : $sana;
 
+        // Faqat-o'qish dars kartasi: direktorda kurs kontekstidagi `teach`
+        // ruxsati yo'q, shuning uchun kokpitga havola qilinmaydi.
         $amal = '';
-        if ($it->courseid && $it->lessonno) {
-            $amal = html_writer::link(new moodle_url('/local/targetzenit/dars.php', [
-                'courseid' => $it->courseid,
-                'date' => $it->lessondate,
-                'lessonno' => $it->lessonno,
-            ]), get_string('dir_openlesson', 'local_targetzenit'),
+        if ($it->slotid) {
+            $amal = html_writer::link(new moodle_url('/local/targetzenit/dars_tahlil.php',
+                ['slotid' => $it->slotid]),
+                get_string('dir_openlesson', 'local_targetzenit'),
                 ['class' => 'btn btn-sm btn-outline-secondary']);
         }
 
@@ -290,12 +290,8 @@ if (!$g['darslar']) {
                 $ichi .= html_writer::tag('i', '', ['class' => 'tz-dir-dot',
                     'title' => get_string('dir_hasgrade', 'local_targetzenit')]);
             }
-            if ($k->courseid) {
-                $ichi = html_writer::link(new moodle_url('/local/targetzenit/dars.php', [
-                    'courseid' => $k->courseid, 'date' => $k->lessondate,
-                    'lessonno' => $k->lessonno,
-                ]), $ichi, ['class' => 'tz-dir-celllink']);
-            }
+            $ichi = html_writer::link(new moodle_url('/local/targetzenit/dars_tahlil.php',
+                ['slotid' => $k->slotid]), $ichi, ['class' => 'tz-dir-celllink']);
             echo html_writer::tag('td', $ichi, ['class' => 'tz-dir-cell']);
         }
         echo html_writer::end_tag('tr');

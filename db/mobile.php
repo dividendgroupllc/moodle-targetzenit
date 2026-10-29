@@ -30,6 +30,21 @@ $addons = [
                     'class' => '',
                 ],
             ],
+            // Dars jadvali — alohida menyu elementi.
+            //
+            // NEGA ALOHIDA, asosiy paneldan havola emas: menyu elementi
+            // ishlashi KAFOLATLANGAN, shablon ichidan boshqa panelga o'tish
+            // esa ilova versiyasiga bog'liq direktivaga tayanadi. Eng ko'p
+            // ishlatiladigan panelni noaniqlikka qo'yish to'g'ri bo'lmaydi.
+            'timetable' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'timetable_view',
+                'displaydata' => [
+                    'title' => 'timetable',
+                    'icon' => 'fas-calendar',
+                    'class' => '',
+                ],
+            ],
         ],
         // Ilova shu satrlarni o'zi yuklab oladi va foydalanuvchining tilida
         // ko'rsatadi. Uchta til `lang/tools/strings.py` dan keladi —
@@ -44,6 +59,9 @@ $addons = [
             ['timetable', 'local_targetzenit'],
             ['mygrades', 'local_targetzenit'],
             ['mypayroll', 'local_targetzenit'],
+            ['timetable_empty', 'local_targetzenit'],
+            ['timetable_nolessons', 'local_targetzenit'],
+            ['tt_noclass', 'local_targetzenit'],
         ],
     ],
 ];
