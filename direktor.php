@@ -1,19 +1,22 @@
 <?php
-// DIREKTOR PANELI — «Bugun» ekrani.
+// DIREKTOR PANELI — «Darslar tahlili» va «Reytinglar».
 //
-// Sahifaning asosiy elementi grafik emas, DIQQAT NAVBATI: direktor
-// qidirmaydi, unga ustuvorlik tartibida ko'rsatiladi.
+// Dizayn: Edulytics maketi (yon panel + stat plitalari + jadval).
+// React/Vite versiyasidan VOZ KECHILDI — backend allaqachon shu yerda
+// ishlayapti, shuning uchun faqat ko'rinish ko'chirildi.
 //
-// Tamoyillar (DIREKTOR_PANELI.md 5.1):
-//   - normaga nisbatan, mutlaq emas
-//   - namuna hajmi (n) ko'rinadi
-//   - har raqam dalilga olib boradi
-//   - reyting emas, ro'yxat: saralash ISM bo'yicha
-//   - holat hech qachon faqat rang bilan ifodalanmaydi (raqam + yorliq)
+// MAKETDAN BITTA ATAYLAB CHEKINISH: maketda reyting mutlaq foizda edi va
+// 61% "E'tibor kerak" deb qizil turardi. Xalqaro o'rtacha esa 59%
+// (`ai::norm_overall()`) — ya'ni u dars o'rtachadan YUQORI. Shuning uchun
+// hamma ball NORMAGA NISBATAN rangalanadi va chiziqda norma belgisi turadi.
+// Aks holda panel o'rtacha ishlayotgan o'qituvchini muvaffaqiyatsiz deb
+// ko'rsatardi va ishonchni birinchi kuni yo'qotardi.
 
 require(__DIR__ . '/../../config.php');
 
+use local_targetzenit\ai;
 use local_targetzenit\dashboard;
+use local_targetzenit\reyting;
 use local_targetzenit\timetable;
 
 require_login();
@@ -21,45 +24,91 @@ require_login();
 $context = context_system::instance();
 require_capability('local/targetzenit:viewteachers', $context);
 
+$view = optional_param('view', 'darslar', PARAM_ALPHA);        // darslar | reyting
 $date = optional_param('date', date('Y-m-d'), PARAM_TEXT);
+$filter = optional_param('filter', 'all', PARAM_ALPHA);        // all|recorded|missing|upcoming
+$page = optional_param('page', 0, PARAM_INT);
+$qidiruv = optional_param('q', '', PARAM_TEXT);
+$davrkod = optional_param('davr', 'oy', PARAM_ALPHA);          // hafta | oy | chorak
+$kesim = optional_param('kesim', 'teacher', PARAM_ALPHA);      // teacher | class
+
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
     $date = date('Y-m-d');
 }
+const TZ_PER_PAGE = 20;
 
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/local/targetzenit/direktor.php', ['date' => $date]));
+$PAGE->set_url(new moodle_url('/local/targetzenit/direktor.php', ['view' => $view]));
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('dir_panel', 'local_targetzenit'));
-$PAGE->set_heading(get_string('dir_panel', 'local_targetzenit'));
+$PAGE->set_heading('');
 
 $year = timetable::current_year();
-$terms = $year ? timetable::terms($year) : [];
-$holidays = $year ? timetable::holidays($year) : [];
-$kunholat = $terms ? timetable::school_day($date, $terms, $holidays)
-    : ['ok' => false, 'reason' => ''];
 
-$boshi = dashboard::kuzatuv_boshi();
+// ---------------------------------------------------------------- YORDAMCHI
 
-/** Holat belgisi: rang + RAQAM/YORLIQ (rang yolg'iz ma'no tashlamaydi). */
-function tz_dir_chip(string $status, string $matn, string $title = ''): string {
-    return html_writer::tag('span', s($matn), [
-        'class' => 'tz-dir-chip tz-dir-' . $status,
-        'title' => $title,
-    ]);
+/** Holat chipi: rang + MATN (rang yolg'iz ma'no tashlamaydi). */
+function tz_chip(string $status, string $matn, string $title = ''): string {
+    return html_writer::tag('span', s($matn),
+        ['class' => 'tz-dir-chip tz-dir-' . $status, 'title' => $title]);
+}
+
+/** Ism bosh harflari — avatar uchun. */
+function tz_av(string $ism): string {
+    $q = preg_split('/\s+/', trim($ism)) ?: [];
+    $b = '';
+    foreach (array_slice($q, 0, 2) as $w) {
+        $b .= \core_text::substr($w, 0, 1);
+    }
+    return html_writer::tag('span', s($b ?: '—'), ['class' => 'tz-dir-av']);
 }
 
 /**
- * Sparkline — bitta chiziq, raqamsiz (stat tile qoidasi).
- * Tashqi kutubxona yo'q: Moodle'da CDN'ga tayanish CSP va oflayn ishlash
- * bo'yicha noto'g'ri, shuning uchun SVG qo'lda chiziladi.
+ * Ball halqasi. Rang NORMAGA NISBATAN — mutlaq shkalada emas.
  */
-function tz_dir_spark(array $nuqtalar, string $kalit): string {
-    $qiymat = [];
-    foreach ($nuqtalar as $n) {
-        if ($n[$kalit] !== null) {
-            $qiymat[] = (int) $n[$kalit];
-        }
+function tz_donut(?int $ball): string {
+    if ($ball === null) {
+        return html_writer::tag('span', '—', ['class' => 'tz-dir-sub']);
     }
+    $band = dashboard::band($ball);
+    $rang = ['good' => 'var(--tz-good)', 'warning' => 'var(--tz-warning)',
+             'serious' => 'var(--tz-serious)', 'critical' => 'var(--tz-critical)'][$band['status']]
+        ?? 'var(--tz-brand)';
+    $c = 94.2;                       // 2*pi*15
+    $t = round($c * min(100, max(0, $ball)) / 100, 1);
+
+    $svg = '<svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">'
+        . '<circle cx="19" cy="19" r="15" fill="none" stroke="var(--tz-line)" stroke-width="4"/>'
+        . '<circle cx="19" cy="19" r="15" fill="none" stroke="' . $rang . '" stroke-width="4"'
+        . ' stroke-linecap="round" stroke-dasharray="' . $t . ' ' . ($c - $t) . '"'
+        . ' transform="rotate(-90 19 19)"/>'
+        . '<text x="19" y="22.5" text-anchor="middle" font-size="10" font-weight="700"'
+        . ' fill="currentColor">' . (int) $ball . '</text></svg>';
+
+    return html_writer::div($svg . html_writer::div(
+        html_writer::tag('b', $ball . '%')
+        . html_writer::div(get_string('dir_overall', 'local_targetzenit'), 'tz-dir-sub')),
+        'tz-dir-donut');
+}
+
+/** Normaga nisbatan chiziq: to'ldirish + norma belgisi. */
+function tz_bar(?float $ball, ?int $norma = null): string {
+    if ($ball === null) {
+        return '';
+    }
+    $ichi = html_writer::tag('i', '', ['style' => 'width:' . min(100, max(0, $ball)) . '%']);
+    if ($norma !== null) {
+        $ichi .= html_writer::tag('u', '', [
+            'style' => 'left:' . $norma . '%',
+            'title' => get_string('dir_normis', 'local_targetzenit', $norma),
+        ]);
+    }
+    return html_writer::div($ichi, 'tz-dir-bar');
+}
+
+/** Sparkline — bitta chiziq, raqamsiz. Tashqi kutubxona yo'q (CSP). */
+function tz_spark(array $qiymat): string {
+    $qiymat = array_values(array_filter($qiymat, fn($v) => $v !== null));
     if (count($qiymat) < 2) {
         return '';
     }
@@ -69,29 +118,33 @@ function tz_dir_spark(array $nuqtalar, string $kalit): string {
     $yol = [];
     foreach ($qiymat as $i => $v) {
         $x = round($i * ($w - 2) / ($n - 1) + 1, 1);
-        $y = round($h - 2 - ($v / 100) * ($h - 4), 1);
+        $y = round($h - 2 - (min(100, max(0, $v)) / 100) * ($h - 4), 1);
         $yol[] = ($i ? 'L' : 'M') . $x . ' ' . $y;
     }
-    return '<svg class="tz-dir-spark" width="' . $w . '" height="' . $h . '" '
-        . 'viewBox="0 0 ' . $w . ' ' . $h . '" aria-hidden="true" focusable="false">'
-        . '<path d="' . implode(' ', $yol) . '" fill="none" stroke="currentColor" '
-        . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return '<svg class="tz-dir-spark" width="' . $w . '" height="' . $h . '"'
+        . ' viewBox="0 0 ' . $w . ' ' . $h . '" aria-hidden="true">'
+        . '<path d="' . implode(' ', $yol) . '" fill="none" stroke="currentColor"'
+        . ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
-/** Stat plitasi: katta raqam + izoh (+ sparkline). */
-function tz_dir_tile(string $qiymat, string $yorliq, string $izoh = '',
-                     string $spark = '', string $status = ''): string {
-    $ichi = html_writer::div(s($qiymat), 'tz-dir-num' . ($status ? ' tz-dir-t-' . $status : ''));
-    $ichi .= html_writer::div(s($yorliq), 'tz-dir-lab');
+/** Stat plitasi. */
+function tz_tile(string $qiymat, string $yorliq, string $izoh = '',
+                 string $qoshimcha = '', string $status = ''): string {
+    $h = html_writer::div(s($yorliq), 'tz-dir-lab');
+    $h .= html_writer::div(s($qiymat), 'tz-dir-num' . ($status ? ' tz-dir-t-' . $status : ''));
     if ($izoh !== '') {
-        $ichi .= html_writer::div(s($izoh), 'tz-dir-sub');
+        $h .= html_writer::div(s($izoh), 'tz-dir-sub');
     }
-    if ($spark !== '') {
-        $ichi .= html_writer::div($spark, 'tz-dir-sparkwrap');
+    if ($qoshimcha !== '') {
+        $h .= html_writer::div($qoshimcha, 'tz-dir-sparkwrap');
     }
-    return html_writer::div($ichi, 'tz-dir-tile');
+    return html_writer::div($h, 'tz-dir-tile');
 }
 
+$url = function(array $p = []) use ($view, $date, $davrkod, $kesim) {
+    return new moodle_url('/local/targetzenit/direktor.php',
+        $p + ['view' => $view, 'date' => $date, 'davr' => $davrkod, 'kesim' => $kesim]);
+};
 
 echo $OUTPUT->header();
 
@@ -102,30 +155,48 @@ if (!$year) {
 }
 
 echo html_writer::start_div('tz-dir');
+echo html_writer::start_div('tz-dir-shell');
 
-// ====================================================== SARLAVHA QATORI
-$oldin = date('Y-m-d', strtotime('-1 day', strtotime($date)));
-$keyin = date('Y-m-d', strtotime('+1 day', strtotime($date)));
-$url = fn($d) => new moodle_url('/local/targetzenit/direktor.php', ['date' => $d]);
+// ====================================================== YON PANEL
+echo html_writer::start_div('tz-dir-side');
+echo html_writer::div(html_writer::tag('span', '◧') . 'Edulytics', 'tz-dir-logo');
 
-$nav = html_writer::link($url($oldin), '‹', ['class' => 'btn btn-sm btn-outline-secondary']);
-$nav .= html_writer::tag('span', userdate(strtotime($date), '%d %B, %A'), ['class' => 'tz-dir-date']);
-$nav .= html_writer::link($url($keyin), '›', ['class' => 'btn btn-sm btn-outline-secondary']);
-if ($date !== date('Y-m-d')) {
-    $nav .= html_writer::link($url(date('Y-m-d')), get_string('dir_today', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-primary ml-2']);
+echo html_writer::div(get_string('dir_navmain', 'local_targetzenit'), 'tz-dir-navlab');
+foreach ([
+    'darslar' => get_string('dir_navlessons', 'local_targetzenit'),
+    'reyting' => get_string('dir_navranks', 'local_targetzenit'),
+] as $k => $nom) {
+    echo html_writer::link(
+        new moodle_url('/local/targetzenit/direktor.php', ['view' => $k]),
+        $nom, ['class' => 'tz-dir-navitem' . ($view === $k ? ' tz-on' : '')]);
 }
-$nav .= html_writer::link(new moodle_url('/local/targetzenit/yozuvlar.php'),
-    get_string('recordings', 'local_targetzenit'),
-    ['class' => 'btn btn-sm btn-outline-secondary ml-2']);
-$nav .= html_writer::tag('span',
-    ($kunholat['ok'] ? s($kunholat['reason']) : '⚠ ' . s($kunholat['reason']))
-    . ' · ' . get_string('dir_since', 'local_targetzenit', userdate(strtotime($boshi), '%d.%m.%Y')),
-    ['class' => 'tz-dir-meta']);
+echo html_writer::link(new moodle_url('/local/targetzenit/yozuvlar.php'),
+    get_string('recordings', 'local_targetzenit'), ['class' => 'tz-dir-navitem']);
 
-echo html_writer::div($nav, 'tz-dir-head');
+echo html_writer::div(get_string('dir_navmanage', 'local_targetzenit'), 'tz-dir-navlab');
+echo html_writer::link(new moodle_url('/local/targetzenit/index.php'),
+    get_string('timetable', 'local_targetzenit'), ['class' => 'tz-dir-navitem']);
+if (has_capability('moodle/site:config', $context)) {
+    echo html_writer::link(new moodle_url('/admin/settings.php',
+        ['section' => 'local_targetzenit']),
+        get_string('dir_navsettings', 'local_targetzenit'), ['class' => 'tz-dir-navitem']);
+}
+echo html_writer::end_div();
 
-// ============================================== MA'LUMOT SOG'LIGI
+// ====================================================== ASOSIY USTUN
+echo html_writer::start_div('tz-dir-main');
+
+$soat = (int) date('H');
+$salom = $soat < 12 ? 'dir_morning' : ($soat < 18 ? 'dir_afternoon' : 'dir_evening');
+
+echo html_writer::start_div('tz-dir-top');
+echo html_writer::div(
+    html_writer::div(format_string($SITE->fullname), 'tz-dir-school')
+    . html_writer::tag('h2',
+        get_string($salom, 'local_targetzenit', $USER->firstname), ['class' => 'tz-dir-hello']));
+echo html_writer::end_div();
+
+// Ma'lumot sog'ligi — panel raqamlari noto'g'ri bo'lishi mumkin bo'lgan holatlar
 foreach (dashboard::health($year) as $h) {
     echo html_writer::div(
         html_writer::tag('b', $h->status === 'serious' ? '⚠ ' : 'ℹ ')
@@ -133,177 +204,15 @@ foreach (dashboard::health($year) as $h) {
         'tz-dir-health tz-dir-h-' . $h->status);
 }
 
-// ======================================================== HERO
-$s = dashboard::today_summary($date);
-$trend = dashboard::trend($date);
-
-$jf = dashboard::foiz($s->mavzu, $s->otgan);
-$yf = dashboard::foiz($s->yozuv, $s->otgan);
-
-$tiles = tz_dir_tile((string) $s->jami, get_string('dir_lessons_today', 'local_targetzenit'),
-    $s->qoldi ? get_string('dir_left', 'local_targetzenit', $s->qoldi) : '');
-$tiles .= tz_dir_tile((string) $s->otgan, get_string('dir_passed', 'local_targetzenit'));
-$tiles .= tz_dir_tile($jf === null ? '—' : $jf . '%',
-    get_string('dir_journal', 'local_targetzenit'),
-    $s->otgan ? "{$s->mavzu} / {$s->otgan}" : '',
-    tz_dir_spark($trend, 'mavzu'));
-$tiles .= tz_dir_tile($yf === null ? '—' : $yf . '%',
-    get_string('dir_recorded', 'local_targetzenit'),
-    $s->otgan ? "{$s->yozuv} / {$s->otgan}" : '',
-    tz_dir_spark($trend, 'yozuv'));
-
-// Normaga nisbatan — diverging: ko'k (+) / qizil (−), nol = xalqaro o'rtacha.
-// Namuna hajmi ALBATTA ko'rsatiladi: 2 ta darsdan chiqqan foiz fakt emas.
-if ($s->delta === null) {
-    $tiles .= tz_dir_tile('—', get_string('dir_vsnorm', 'local_targetzenit'),
-        get_string('dir_noanalysis', 'local_targetzenit'));
+// Ko'rinishlar alohida fayllarda — har biri `MOODLE_INTERNAL` bilan
+// himoyalangan, ya'ni to'g'ridan-to'g'ri so'rov bilan ochilmaydi.
+if ($view === 'reyting') {
+    require(__DIR__ . '/views/reyting.php');
 } else {
-    $tiles .= tz_dir_tile(($s->delta >= 0 ? '+' : '') . $s->delta . '%',
-        get_string('dir_vsnorm', 'local_targetzenit'),
-        'n = ' . $s->delta_n . ($s->delta_n < 5 ? ' ⚠' : ''),
-        '', $s->delta >= 0 ? 'pos' : 'neg');
+    require(__DIR__ . '/views/darslar.php');
 }
 
-echo html_writer::div($tiles, 'tz-dir-hero');
-
-// ============================================== DIQQAT NAVBATI
-$a = dashboard::attention($date);
-$items = $a['items'] ?? [];
-
-echo html_writer::start_div('tz-dir-card');
-echo html_writer::tag('h4',
-    '⚠ ' . get_string('dir_attention', 'local_targetzenit')
-    . html_writer::tag('span', ' (' . count($items) . ')', ['class' => 'tz-dir-count']),
-    ['class' => 'tz-dir-cardtitle']);
-echo html_writer::div(
-    get_string('dir_attention_window', 'local_targetzenit',
-        userdate(strtotime($a['oyna_boshi'] ?? $date), '%d.%m')),
-    'tz-dir-sub mb-2');
-
-if (!$items) {
-    echo html_writer::div(get_string('dir_attention_empty', 'local_targetzenit'),
-        'tz-dir-ok');
-} else {
-    echo html_writer::start_div('tz-dir-queue');
-    foreach ($items as $it) {
-        $sana = userdate(strtotime($it->lessondate), '%d.%m');
-        $chap = $it->lessonno
-            ? trim(($it->starttime ?? '') . ' · ' . $it->lessonno . '-dars')
-            : $sana;
-
-        // Faqat-o'qish dars kartasi: direktorda kurs kontekstidagi `teach`
-        // ruxsati yo'q, shuning uchun kokpitga havola qilinmaydi.
-        $amal = '';
-        if ($it->slotid) {
-            $amal = html_writer::link(new moodle_url('/local/targetzenit/dars_tahlil.php',
-                ['slotid' => $it->slotid]),
-                get_string('dir_openlesson', 'local_targetzenit'),
-                ['class' => 'btn btn-sm btn-outline-secondary']);
-        }
-
-        echo html_writer::div(
-            html_writer::div(tz_dir_chip($it->status, $it->kind), 'tz-dir-qchip')
-            . html_writer::div(
-                html_writer::div(s($chap) . ' · ' . s($it->title), 'tz-dir-qtitle')
-                . html_writer::div(s($it->detail), 'tz-dir-sub'), 'tz-dir-qbody')
-            . html_writer::div($amal, 'tz-dir-qact'),
-            'tz-dir-qrow tz-dir-l' . $it->level);
-    }
-    echo html_writer::end_div();
-
-    if (!empty($a['jami1']) && $a['jami1'] > dashboard::NAVBAT_QATOR) {
-        echo html_writer::div(
-            get_string('dir_more', 'local_targetzenit', $a['jami1']), 'tz-dir-sub mt-2');
-    }
-}
-echo html_writer::end_div();
-
-// ================================================= KUN SETKASI
-$g = dashboard::day_grid($date);
-
-echo html_writer::start_div('tz-dir-card');
-echo html_writer::tag('h4', get_string('dir_grid', 'local_targetzenit'),
-    ['class' => 'tz-dir-cardtitle']);
-
-if (!$g['darslar']) {
-    echo html_writer::div(get_string('dir_grid_empty', 'local_targetzenit'), 'tz-dir-sub');
-} else {
-    echo html_writer::div(
-        get_string('dir_grid_legend', 'local_targetzenit'), 'tz-dir-sub mb-2');
-
-    echo html_writer::start_div('tz-dir-gridwrap');
-    echo html_writer::start_tag('table', ['class' => 'tz-dir-grid']);
-
-    echo html_writer::start_tag('thead');
-    echo html_writer::start_tag('tr');
-    echo html_writer::tag('th', get_string('dir_teacher', 'local_targetzenit'),
-        ['class' => 'tz-dir-gname']);
-    foreach ($g['darslar'] as $no => $vaqt) {
-        echo html_writer::tag('th',
-            $no . html_writer::div(s((string) $vaqt), 'tz-dir-gtime'));
-    }
-    echo html_writer::end_tag('tr');
-    echo html_writer::end_tag('thead');
-
-    echo html_writer::start_tag('tbody');
-    foreach ($g['qatorlar'] as $q) {
-        echo html_writer::start_tag('tr');
-
-        $ism = s($q->ism ?: '—');
-        if (!$q->bogli) {
-            // Bog'lanmagan kalit: bu darslar hech kimning hisobotiga tushmaydi
-            $ism .= ' ' . tz_dir_chip('warning', get_string('dir_unlinked', 'local_targetzenit'),
-                get_string('dir_unlinked_help', 'local_targetzenit'));
-        }
-        echo html_writer::tag('td',
-            $ism . html_writer::div(s(implode(', ', array_keys($q->fanlar))), 'tz-dir-sub'),
-            ['class' => 'tz-dir-gname']);
-
-        foreach ($g['darslar'] as $no => $vaqt) {
-            $k = $q->kataklar[$no] ?? null;
-            if (!$k) {
-                echo html_writer::tag('td', '', ['class' => 'tz-dir-cell tz-dir-c-none']);
-                continue;
-            }
-            if (!$k->otgan) {
-                echo html_writer::tag('td',
-                    html_writer::tag('span', '·', [
-                        'class' => 'tz-dir-box tz-dir-c-future',
-                        'title' => s($k->fan . ' · ' . $k->guruh . ' · '
-                            . get_string('dir_notyet', 'local_targetzenit')),
-                    ]), ['class' => 'tz-dir-cell']);
-                continue;
-            }
-
-            $holat = [0 => 'critical', 1 => 'serious', 2 => 'warning', 3 => 'good'][$k->bajarildi];
-            $title = $k->fan . ' · ' . $k->guruh . "\n"
-                . ($k->mavzu ? '✔' : '✖') . ' mavzu'
-                . "\n" . ($k->yoqlama ? '✔' : '✖') . ' yo\'qlama'
-                . ($k->yoqlama ? " ({$k->yoqlama}/{$k->oquvchi})" : '')
-                . "\n" . ($k->yozuv ? '✔' : '✖') . ' yozuv'
-                . "\n" . ($k->baho ? "baho: {$k->baho}" : 'baho qo\'yilmagan')
-                . ($k->delta !== null ? "\ntahlil: normadan "
-                    . ($k->delta >= 0 ? '+' : '') . $k->delta . '%' : '');
-
-            $ichi = html_writer::tag('span', (string) $k->bajarildi, [
-                'class' => 'tz-dir-box tz-dir-c-' . $holat,
-                'title' => s($title),
-            ]);
-            if ($k->baho) {
-                $ichi .= html_writer::tag('i', '', ['class' => 'tz-dir-dot',
-                    'title' => get_string('dir_hasgrade', 'local_targetzenit')]);
-            }
-            $ichi = html_writer::link(new moodle_url('/local/targetzenit/dars_tahlil.php',
-                ['slotid' => $k->slotid]), $ichi, ['class' => 'tz-dir-celllink']);
-            echo html_writer::tag('td', $ichi, ['class' => 'tz-dir-cell']);
-        }
-        echo html_writer::end_tag('tr');
-    }
-    echo html_writer::end_tag('tbody');
-    echo html_writer::end_tag('table');
-    echo html_writer::end_div();
-}
-echo html_writer::end_div();
-
+echo html_writer::end_div();   // .tz-dir-main
+echo html_writer::end_div();   // .tz-dir-shell
 echo html_writer::end_div();   // .tz-dir
 echo $OUTPUT->footer();

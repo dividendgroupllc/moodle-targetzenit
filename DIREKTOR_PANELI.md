@@ -4,6 +4,11 @@
 > Maqsad: direktor har bir o'qituvchining dars jarayonini — jadvaldan AI tahlilgacha —
 > bitta joyda kuzatishi va fidbek berishi.
 >
+> **Dizayn:** Edulytics maketi (Figma Make) ko'chirildi. React/Vite versiyasidan
+> voz kechildi — backend allaqachon shu yerda ishlayotgani uchun faqat
+> ko'rinish olindi. Maketdan bitta ataylab chekinish bor: reyting **normaga
+> nisbatan** (quyida 5.1/7-qarorga qarang).
+>
 > **Holat:** 0–1 bosqich **prodda ishlayapti** (ruxsatlar, `Direktor` roli,
 > `_staff`/`_slot`/`_fact`/`_aicat`/`_norm`, 4 vazifa, CLI — 8-bo'lim).
 > 2-bosqich («Bugun» ekrani) kodi yozildi, deploy kutilmoqda.
@@ -772,7 +777,8 @@ Boshqa qoidalar:
 | 0 | ✅ 3 ta ruxsat, `Direktor` roli (CLI) | direktor kira oladi |
 | 1 | ✅ `_staff`, `_slot`, `_fact`, `_aicat`, `_norm` + 4 vazifa + `push_norms` + CLI | reja ↔ fakt tayyor |
 | 2 | ✅ «Bugun» ekrani + faqat-o'qish **dars kartasi** (`dars_tahlil.php`) va umumiy tahlil chizuvchisi (`classes/output/tahlil.php`) | kundalik nazorat ishlaydi |
-| 3 | «O'qituvchilar» + «O'qituvchi kartasi» (xarita, trend) + `mening_tahlilim.php` | davriy nazorat, ikki tomonga ochiq |
+| 3 | ✅ «Reytinglar» ekrani (o'qituvchi/sinf/fan, normaga nisbatan, min namuna) | davriy nazorat |
+| 3b | «O'qituvchi kartasi» (chorak xaritasi, 15 kategoriya profili) + `mening_tahlilim.php` | ikki tomonga ochiq |
 | 4 | `_aicat` + backfill + kategoriya profili | metodik tahlil |
 | 5 | `_feedback` + drawer + `fidbeklarim.php` + message provider | muloqot yopiladi |
 | 6 | `privacy/provider.php`, transkript muddati, hujjat | **majburiy**, 5 dan keyin kechikmaydi |
@@ -808,6 +814,34 @@ muddat kerak (taklif: tahlil ballari abadiy, transkript matni 1 o'quv yili).
 6-bosqichda hal qilinadi, kodni to'smaydi.
 
 ---
+
+## 6a. Edulytics maketidan nima olindi, nima o'zgartirildi
+
+Maket (Figma Make) bilan birga kelgan brief mustaqil React+Node backend so'ragan
+edi. Tekshirganda ma'lum bo'ldi: brief'dagi backend **shu tizimdan kelib chiqqan** —
+14 indikator nomi, `metrics` maydonlari va hatto "Bu — ovozda eshitilgan faktlar,
+xulosa emas" satri so'zma-so'z bizning koddan. Shuning uchun faqat **ko'rinish**
+ko'chirildi (qaror 2026-10-31).
+
+| Maketdan olingan | Holat |
+|---|---|
+| Yon panel + sarlavha + 4 stat plitasi | ✅ |
+| «Bugungi yozuvlar nazorati» kartachalari, Jami/Yozdi/Yozmadi filtri | ✅ |
+| «Dars yozuvlari» jadvali, ball halqasi (donut), holat chipi | ✅ |
+| «Reytinglar»: davr tablari, eng yaxshi o'qituvchi, sinf/fan kesimi | ✅ |
+| «Kuchli ko'rsatkichlar» / «Rivojlantirish kerak» panellari | ✅ |
+| O'ng tomondan ochiladigan drawer | ❌ — hozircha alohida sahifa (`dars_tahlil.php`) |
+| «Eslatma» tugmasi | ❌ — bildirishnoma 5-bosqichda |
+
+**Ataylab o'zgartirilgani — reyting shkalasi.** Maketda ball mutlaq edi va 61%
+qizil «E'tibor kerak» bo'lib turardi. Xalqaro o'rtacha esa **59%**
+(`ai::norm_overall()`), ya'ni u dars o'rtachadan yuqori. Hamma ball endi normaga
+nisbatan rangalanadi, chiziqda norma belgisi turadi.
+
+Xuddi shu xato «kuchli/kuchsiz tomon» da ham bor edi: mutlaq shkalada
+«Tabaqalashtirilgan yondashuv 54%» eng past ko'rinadi, lekin uning xalqaro
+o'rtachasi 35% — ya'ni bu aslida **kuchli** tomon. Shuning uchun kuchli/kuchsiz
+har kategoriyaning **o'z** normasiga nisbatan tanlanadi.
 
 ## 7a. Ruxsatlar dizayni: direktor nega `teach` olmaydi
 

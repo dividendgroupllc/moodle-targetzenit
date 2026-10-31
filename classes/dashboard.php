@@ -119,6 +119,8 @@ class dashboard {
                    SUM(CASE WHEN $otgan AND f.gradecount > 0 THEN 1 ELSE 0 END) AS baho,
                    SUM(CASE WHEN $otgan AND f.audiostatus IN ($yoz) THEN 1 ELSE 0 END) AS yozuv,
                    SUM(CASE WHEN f.analysestatus = 'ok' THEN 1 ELSE 0 END) AS tahlil,
+                   SUM(f.audioseconds) AS audiosoniya,
+                   SUM(f.overallscore) AS ball_yigindi,
                    SUM(f.normdelta) AS delta_yigindi,
                    COUNT(f.normdelta) AS delta_soni
               FROM {local_targetzenit_slot} s
@@ -138,9 +140,39 @@ class dashboard {
             'delta' => (int) ($r->delta_soni ?? 0)
                 ? (int) round(((float) $r->delta_yigindi) / ((int) $r->delta_soni)) : null,
             'delta_n' => (int) ($r->delta_soni ?? 0),
+            'audiosoniya' => (int) ($r->audiosoniya ?? 0),
+            'ball' => (int) ($r->delta_soni ?? 0)
+                ? (int) round(((float) $r->ball_yigindi) / ((int) $r->delta_soni)) : null,
         ];
         $out->qoldi = max(0, $out->jami - $out->otgan);
         return $out;
+    }
+
+    /**
+     * Ball bandi — XALQARO O'RTACHAGA NISBATAN.
+     *
+     * NEGA MUTLAQ EMAS: norma 59% (CLASS va ICALT tadqiqotlari, `ai::norm_overall()`).
+     * Mutlaq shkalada 61% "yomon" ko'rinadi, aslida esa u o'rtachadan +2% yuqori.
+     * Edulytics dizaynida aynan shu xato bor edi — o'rtacha ishlayotgan
+     * o'qituvchi qizil "E'tibor kerak" bo'lib turardi.
+     *
+     * @return array ['nom', 'status', 'delta']
+     */
+    public static function band(?int $score): array {
+        if ($score === null) {
+            return ['nom' => '—', 'status' => 'none', 'delta' => null];
+        }
+        $delta = $score - ai::norm_overall();
+        if ($delta >= 15) {
+            return ['nom' => "A'lo", 'status' => 'good', 'delta' => $delta];
+        }
+        if ($delta >= 6) {
+            return ['nom' => 'Yuqori', 'status' => 'good', 'delta' => $delta];
+        }
+        if ($delta >= -5) {
+            return ['nom' => "O'rtacha", 'status' => 'warning', 'delta' => $delta];
+        }
+        return ['nom' => "E'tibor kerak", 'status' => 'serious', 'delta' => $delta];
     }
 
     /** Foiz — bo'luvchi nol bo'lsa null (0% deb ko'rsatish yolg'on bo'lardi). */
@@ -420,6 +452,99 @@ class dashboard {
         uasort($setka, fn($a, $b) => strnatcasecmp((string) $a->ism, (string) $b->ism));
 
         return ['qatorlar' => $setka, 'darslar' => $darslar];
+    }
+
+    // --------------------------------------------- KUNLIK DARSLAR RO'YXATI
+    /**
+     * Jadval uchun darslar ro'yxati.
+     *
+     * @param string $filter all | recorded | missing | upcoming
+     * @return array ['rows' => [...], 'jami' => int]
+     */
+    public static function daily_lessons(string $date, string $filter = 'all',
+                                          int $page = 0, int $perpage = 20,
+                                          string $qidiruv = ''): array {
+        global $DB;
+
+        $otgan = self::otgan_sql();
+        $yoz = self::YOZILGAN;
+        $params = ['d' => $date];
+
+        $shart = ['s.lessondate = :d'];
+        if ($filter === 'recorded') {
+            $shart[] = "$otgan AND f.audiostatus IN ($yoz)";
+        } else if ($filter === 'missing') {
+            $shart[] = "$otgan AND f.audiostatus NOT IN ($yoz)";
+        } else if ($filter === 'upcoming') {
+            $shart[] = "NOT $otgan";
+        }
+        if ($qidiruv !== '') {
+            $q = '%' . $DB->sql_like_escape($qidiruv) . '%';
+            $shart[] = '(' . $DB->sql_like('u.firstname', ':q1', false)
+                . ' OR ' . $DB->sql_like('u.lastname', ':q2', false)
+                . ' OR ' . $DB->sql_like('s.subjectname', ':q3', false)
+                . ' OR ' . $DB->sql_like('s.groupname', ':q4', false) . ')';
+            $params += ['q1' => $q, 'q2' => $q, 'q3' => $q, 'q4' => $q];
+        }
+        $where = 'WHERE ' . implode(' AND ', $shart);
+
+        $manba = "FROM {local_targetzenit_slot} s
+                  JOIN {local_targetzenit_fact} f ON f.slotid = s.id
+             LEFT JOIN {user} u ON u.id = f.attributeduserid
+             LEFT JOIN {local_targetzenit_staff} st
+                    ON st.academicyear = s.academicyear AND st.teacherkey = s.teacherkey
+             LEFT JOIN {local_targetzenit_lesson} l ON l.id = f.lessonid";
+
+        $jami = $DB->count_records_sql("SELECT COUNT(1) $manba $where", $params);
+
+        $rows = $DB->get_records_sql("
+            SELECT s.id AS slotid, s.lessondate, s.lessonno, s.starttime, s.endtime,
+                   s.groupname, s.subjectname, s.courseid,
+                   f.lessonid, f.attributeduserid, f.hastopic, f.attendancecount,
+                   f.gradecount, f.audiostatus, f.audioseconds, f.analysestatus,
+                   f.overallscore, f.normdelta, f.lowconfcount,
+                   CASE WHEN $otgan THEN 1 ELSE 0 END AS otgan,
+                   CASE WHEN f.audiostatus IN ($yoz) THEN 1 ELSE 0 END AS yozuvbor,
+                   u.firstname, u.lastname, st.teachername, l.topic
+              $manba $where
+          ORDER BY s.lessonno ASC, s.groupname ASC", $params, $page * $perpage, $perpage);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $r->ism = ($r->firstname || $r->lastname)
+                ? self::ism($r->firstname, $r->lastname)
+                : ($r->teachername ?: '—');
+            $r->otgan = (int) $r->otgan === 1;
+            $r->yozuvbor = (int) $r->yozuvbor === 1;
+            $r->band = self::band($r->overallscore === null ? null : (int) $r->overallscore);
+            $r->topicshort = \core_text::substr(trim((string) $r->topic), 0, 60);
+            $out[] = $r;
+        }
+        return ['rows' => $out, 'jami' => (int) $jami];
+    }
+
+    /** Bugungi yozuv nazorati uchun sanoqlar: jami / yozdi / yozmadi / kutilmoqda. */
+    public static function daily_counts(string $date): array {
+        global $DB;
+
+        $otgan = self::otgan_sql();
+        $yoz = self::YOZILGAN;
+
+        $r = $DB->get_record_sql("
+            SELECT COUNT(1) AS jami,
+                   SUM(CASE WHEN $otgan AND f.audiostatus IN ($yoz) THEN 1 ELSE 0 END) AS yozdi,
+                   SUM(CASE WHEN $otgan AND f.audiostatus NOT IN ($yoz) THEN 1 ELSE 0 END) AS yozmadi,
+                   SUM(CASE WHEN NOT ($otgan) THEN 1 ELSE 0 END) AS kutilmoqda
+              FROM {local_targetzenit_slot} s
+              JOIN {local_targetzenit_fact} f ON f.slotid = s.id
+             WHERE s.lessondate = :d", ['d' => $date]);
+
+        return [
+            'jami' => (int) ($r->jami ?? 0),
+            'yozdi' => (int) ($r->yozdi ?? 0),
+            'yozmadi' => (int) ($r->yozmadi ?? 0),
+            'kutilmoqda' => (int) ($r->kutilmoqda ?? 0),
+        ];
     }
 
     // ------------------------------------------------- MA'LUMOT SOG'LIGI

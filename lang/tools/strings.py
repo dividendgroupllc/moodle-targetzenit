@@ -598,6 +598,150 @@ S = {
         "ИИ-анализ отключён в настройках плагина.",
     ),
 
+    # --------------------------------------- direktor paneli: Edulytics ko'rinishi
+    "dir_morning": ("Good morning, {$a}", "Xayrli tong, {$a}", "Доброе утро, {$a}"),
+    "dir_afternoon": ("Good afternoon, {$a}", "Xayrli kun, {$a}", "Добрый день, {$a}"),
+    "dir_evening": ("Good evening, {$a}", "Xayrli kech, {$a}", "Добрый вечер, {$a}"),
+
+    "dir_navmain": ("Main", "Asosiy", "Основное"),
+    "dir_navmanage": ("Management", "Boshqaruv", "Управление"),
+    "dir_navlessons": ("Lesson analysis", "Darslar tahlili", "Анализ уроков"),
+    "dir_navranks": ("Rankings", "Reytinglar", "Рейтинги"),
+    "dir_navsettings": ("Settings", "Sozlamalar", "Настройки"),
+
+    "dir_lessonstitle": ("Today's lesson analysis", "Bugungi darslar tahlili",
+                         "Анализ сегодняшних уроков"),
+    "dir_lessonssub": (
+        "Lesson recordings analysed by AI, and the recommendations",
+        "AI yordamida tahlil qilingan dars yozuvlari va tavsiyalar",
+        "Записи уроков, проанализированные ИИ, и рекомендации",
+    ),
+    "dir_byschedule": ("by the timetable", "dars jadvali bo'yicha", "по расписанию"),
+    "dir_totalaudio": ("Total audio length", "Umumiy audio davomiyligi",
+                       "Общая длительность аудио"),
+    "dir_nrecordings": ("{$a} recordings", "{$a} ta yozuv", "{$a} записей"),
+    "dir_quality": ("Average quality score", "O'rtacha sifat ko'rsatkichi",
+                    "Средний показатель качества"),
+    "dir_vsnormshort": (
+        "{$a->delta} vs the international average ({$a->norma}%) · n = {$a->n}",
+        "xalqaro o'rtachadan {$a->delta}% ({$a->norma}%) · n = {$a->n}",
+        "{$a->delta}% к мировому среднему ({$a->norma}%) · n = {$a->n}",
+    ),
+    "dir_notsent": ("No recording sent", "Yozuv yuborilmagan", "Запись не отправлена"),
+    "dir_sendreminder": ("needs a reminder", "o'qituvchiga eslatma kerak",
+                         "нужно напомнить учителю"),
+
+    "dir_control": ("Today's recording control", "Bugungi yozuvlar nazorati",
+                    "Контроль сегодняшних записей"),
+    "dir_controlsub": (
+        "automatically matched against the timetable",
+        "dars jadvali bilan avtomatik solishtirildi",
+        "автоматически сверено с расписанием",
+    ),
+    "dir_fall": ("All", "Jami dars", "Всего"),
+    "dir_frec": ("Recorded", "Yozdi", "Записал"),
+    "dir_fmiss": ("Not recorded", "Yozmadi", "Не записал"),
+    "dir_fsoon": ("Upcoming", "Hali bo'lmagan", "Ещё не прошли"),
+    "dir_notrecorded": ("Not recorded", "Yozmadi", "Не записал"),
+    "dir_norec": ("no recording", "yozuv yo'q", "записи нет"),
+    "dir_seemissing": (
+        "See all {$a} lessons without a recording",
+        "Yozuvi yo'q {$a} ta darsni ko'rish",
+        "Показать все {$a} уроков без записи",
+    ),
+    "dir_nolessons": ("No lessons found.", "Dars topilmadi.", "Уроки не найдены."),
+
+    "dir_lessonlist": ("Lesson recordings", "Dars yozuvlari", "Записи уроков"),
+    "dir_showing": ("{$a->n} of {$a->jami} shown", "{$a->jami} tadan {$a->n} tasi",
+                    "показано {$a->n} из {$a->jami}"),
+    "dir_search": ("Teacher, subject or class...", "O'qituvchi, fan yoki sinf...",
+                   "Учитель, предмет или класс..."),
+    "dir_searchbtn": ("Search", "Qidirish", "Искать"),
+    "dir_colteacher": ("Teacher", "O'qituvchi", "Учитель"),
+    "dir_collesson": ("Lesson", "Dars ma'lumoti", "Данные урока"),
+    "dir_coltime": ("Time and audio", "Vaqt va audio", "Время и аудио"),
+    "dir_colscore": ("AI score", "AI bahosi", "Оценка ИИ"),
+    "dir_colstatus": ("Status", "Holati", "Статус"),
+    "dir_overall": ("overall", "umumiy natija", "общий результат"),
+    "dir_noanalysisshort": ("not analysed", "tahlil qilinmagan", "не проанализирован"),
+    "dir_failed": ("analysis failed", "tahlil yiqilgan", "анализ не прошёл"),
+
+    # ---- reytinglar
+    "dir_rankstitle": ("Rankings and indicators", "Reytinglar va ko'rsatkichlar",
+                       "Рейтинги и показатели"),
+    "dir_rankssub": (
+        "Performance by teacher, class and subject",
+        "O'qituvchilar, sinflar va fanlar kesimida samaradorlik",
+        "Эффективность по учителям, классам и предметам",
+    ),
+    "dir_week": ("This week", "Bu hafta", "Эта неделя"),
+    "dir_month": ("This month", "Bu oy", "Этот месяц"),
+    "dir_term": ("Term", "Chorak", "Четверть"),
+    "dir_rankperiod": (
+        "{$a->nom}: {$a->from} – {$a->to} · {$a->n} analysed lessons",
+        "{$a->nom}: {$a->from} – {$a->to} · {$a->n} ta tahlil qilingan dars",
+        "{$a->nom}: {$a->from} – {$a->to} · {$a->n} проанализированных уроков",
+    ),
+    "dir_noranks": (
+        "There is not a single analysed lesson in this period.",
+        "Bu davrda birorta ham tahlil qilingan dars yo'q.",
+        "За этот период нет ни одного проанализированного урока.",
+    ),
+    "dir_noranks_help": (
+        "A ranking needs recordings that have been analysed. Choose a longer "
+        "period, or check that recording and AI analysis are switched on.",
+        "Reyting uchun tahlil qilingan yozuvlar kerak. Uzunroq davrni tanlang "
+        "yoki yozuv va AI tahlili yoqilganini tekshiring.",
+        "Для рейтинга нужны проанализированные записи. Выберите более длинный "
+        "период или проверьте, включены ли запись и ИИ-анализ.",
+    ),
+    "dir_bestteacher": ("Best teacher of {$a}", "{$a}ning eng yaxshi o'qituvchisi",
+                        "Лучший учитель за {$a}"),
+    "dir_bestclass": ("Highest scoring class", "Eng yuqori natijali sinf",
+                      "Класс с лучшим результатом"),
+    "dir_avgscore": ("School average", "Maktab o'rtachasi", "Среднее по школе"),
+    "dir_nlessons": ("{$a} lessons", "{$a} ta dars", "{$a} уроков"),
+    "dir_lessonword": ("lessons", "ta dars", "уроков"),
+    "dir_nosample": ("not enough data yet", "hali ma'lumot yetarli emas",
+                     "данных пока недостаточно"),
+    "dir_byteacher": ("Teachers", "O'qituvchilar", "Учителя"),
+    "dir_byclass": ("Classes", "Sinflar", "Классы"),
+    "dir_bysubject": ("Subjects", "Fanlar", "Предметы"),
+    "dir_colclass": ("Class", "Sinf", "Класс"),
+    "dir_colsubject": ("Subject", "Fan", "Предмет"),
+    "dir_collessons": ("Lessons", "Darslar", "Уроки"),
+    "dir_coltrend": ("Trend", "Dinamika", "Динамика"),
+    "dir_colstrong": ("Strongest area", "Kuchli tomoni", "Сильная сторона"),
+    "dir_colresult": ("Result", "Natija", "Результат"),
+    "dir_normis": ("International average: {$a}%", "Xalqaro o'rtacha: {$a}%",
+                   "Мировое среднее: {$a}%"),
+    "dir_normlegend": (
+        "The mark on the bar is the international average ({$a}%):",
+        "Chiziqdagi belgi — xalqaro o'rtacha ({$a}%):",
+        "Отметка на полосе — мировое среднее ({$a}%):",
+    ),
+    "dir_strongwhy": (
+        "{$a->avg}% — {$a->delta}% against this area's own international average",
+        "{$a->avg}% — shu yo'nalishning o'z xalqaro o'rtachasidan {$a->delta}%",
+        "{$a->avg}% — {$a->delta}% к собственному мировому среднему этого направления",
+    ),
+    "dir_lowsample": (
+        "Not in the ranking (fewer than {$a->min} analysed lessons): {$a->ismlar}",
+        "Reytingga kirmadi (tahlil qilingan dars {$a->min} tadan kam): {$a->ismlar}",
+        "Не вошли в рейтинг (меньше {$a->min} проанализированных уроков): {$a->ismlar}",
+    ),
+    "dir_strongest": ("Strongest areas", "Kuchli yo'nalishlar", "Сильные направления"),
+    "dir_todevelop": ("Areas to develop", "Rivojlantirish kerak", "Требуют развития"),
+    "dir_vsownnorm": (
+        "Ranked against each area's OWN international average — not against each "
+        "other. An area with a low raw percentage can still be a strong one.",
+        "Har yo'nalish O'Z xalqaro o'rtachasiga nisbatan tartiblangan — bir-biriga "
+        "emas. Foizi past yo'nalish ham kuchli bo'lishi mumkin.",
+        "Отсортировано относительно СОБСТВЕННОГО мирового среднего каждого "
+        "направления, а не друг друга. Направление с низким процентом тоже может "
+        "быть сильным.",
+    ),
+
     # ------------------------------------------------- direktor paneli vazifalari
     "task_slotbuild": (
         "Rebuild the planned lesson slots from the timetable",

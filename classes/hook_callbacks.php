@@ -13,10 +13,33 @@ class hook_callbacks {
      * login talab qiladi, havola esa bekorga chalkashtirmasin.
      */
     public static function primary_extend(\core\hook\navigation\primary_extend $hook): void {
+        // DIQQAT: `global $USER` SHART. Pastda `$USER->id` ishlatiladi va u
+        // e'lon qilinmagani uchun "Mening oyligim" yuqori menyuda hech qachon
+        // chiqmagan (chap menyudagi nusxasi ishlagani uchun sezilmagan).
+        global $USER;
+
         if (!isloggedin() || isguestuser()) {
             return;
         }
         $nav = $hook->get_primaryview();
+
+        // DIREKTOR PANELI — birinchi o'rinda: ruxsati bor odam uchun kundalik
+        // kirish nuqtasi aynan shu, jadval emas.
+        //
+        // NEGA CHAP MENYU EMAS: Boost temasi Dashboard sahifasida chap
+        // menyuni UMUMAN ko'rsatmaydi, shuning uchun `lib.php` dagi
+        // `extend_navigation` orqali qo'shilgan havola direktorga ko'rinmadi
+        // (2026-10-29). Yuqori menyu esa har sahifada turadi.
+        if (has_capability('local/targetzenit:viewteachers', \context_system::instance())) {
+            $nav->add(
+                get_string('dir_panel', 'local_targetzenit'),
+                '/local/targetzenit/direktor.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzdirektor'
+            );
+        }
+
         $nav->add(
             get_string('timetable', 'local_targetzenit'),
             '/local/targetzenit/index.php',
