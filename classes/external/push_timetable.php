@@ -23,17 +23,17 @@ class push_timetable extends external_api {
             'lessons' => new external_multiple_structure(
                 new external_single_structure([
                     'groupkey' => new external_value(PARAM_TEXT, 'Frappe Student Group docname'),
-                    'groupname' => new external_value(PARAM_TEXT, 'Guruh ko\'rinadigan nomi'),
+                    'groupname' => new external_value(PARAM_RAW, 'Guruh ko\'rinadigan nomi'),
                     'subjectkey' => new external_value(PARAM_TEXT, 'Frappe Course docname'),
-                    'subjectname' => new external_value(PARAM_TEXT, 'Fan nomi'),
+                    'subjectname' => new external_value(PARAM_RAW, 'Fan nomi'),
                     'teacherkey' => new external_value(PARAM_TEXT, 'Employee ID yoki INSTR-<ism>', VALUE_DEFAULT, ''),
-                    'teachername' => new external_value(PARAM_TEXT, 'O\'qituvchi F.I.Sh.', VALUE_DEFAULT, ''),
+                    'teachername' => new external_value(PARAM_RAW, 'O\'qituvchi F.I.Sh.', VALUE_DEFAULT, ''),
                     'dayno' => new external_value(PARAM_INT, '1=Dushanba ... 5=Juma'),
-                    'dayname' => new external_value(PARAM_TEXT, 'Kun nomi', VALUE_DEFAULT, ''),
+                    'dayname' => new external_value(PARAM_RAW, 'Kun nomi', VALUE_DEFAULT, ''),
                     'lessonno' => new external_value(PARAM_INT, 'Dars raqami'),
                     'starttime' => new external_value(PARAM_TEXT, 'HH:MM', VALUE_DEFAULT, ''),
                     'endtime' => new external_value(PARAM_TEXT, 'HH:MM', VALUE_DEFAULT, ''),
-                    'room' => new external_value(PARAM_TEXT, 'Xona', VALUE_DEFAULT, ''),
+                    'room' => new external_value(PARAM_RAW, 'Xona', VALUE_DEFAULT, ''),
                     'courseidnumber' => new external_value(PARAM_TEXT, 'Moodle kursining idnumber i', VALUE_DEFAULT, ''),
                 ]),
                 'Dars jadvali qatorlari'
@@ -47,7 +47,7 @@ class push_timetable extends external_api {
             'calendar' => new external_multiple_structure(
                 new external_single_structure([
                     'entrytype' => new external_value(PARAM_ALPHA, 'term yoki holiday'),
-                    'name' => new external_value(PARAM_TEXT, 'Nomi'),
+                    'name' => new external_value(PARAM_RAW, 'Nomi'),
                     'startdate' => new external_value(PARAM_TEXT, 'YYYY-MM-DD'),
                     'enddate' => new external_value(PARAM_TEXT, 'YYYY-MM-DD'),
                 ]),
@@ -56,6 +56,24 @@ class push_timetable extends external_api {
                 []
             ),
         ]);
+    }
+
+    /**
+     * Ko'rsatish uchun matnni tozalaydi.
+     *
+     * NEGA KERAK: `PARAM_TEXT` ni web-servis QAT'IY tekshiradi —
+     * `if ((string) $param !== (string) $cleaned) throw invalid_parameter_exception`.
+     * Ya'ni manbadagi bitta HTML tegi (masalan Frappe'ning `Text Editor`
+     * maydonidan kelgan `<p>...</p>`) BUTUN jadval sinxronini yiqitadi.
+     * 2026-11-03 da bayram nomi tufayli aynan shunday bo'lgan.
+     *
+     * Shuning uchun KO'RSATISH maydonlari `PARAM_RAW` bilan qabul qilinadi va
+     * shu yerda tozalanadi. KALITLAR (`groupkey`, `teacherkey`, ...) esa
+     * `PARAM_TEXT` bo'lib qoladi: ular aniq mos kelishi shart va jimgina
+     * o'zgartirilishi mumkin emas.
+     */
+    protected static function nom(?string $matn, int $uz = 255): string {
+        return \core_text::substr(trim(clean_param((string) $matn, PARAM_TEXT)), 0, $uz);
     }
 
     public static function execute(string $academicyear, array $lessons,
@@ -89,17 +107,17 @@ class push_timetable extends external_api {
             $rows[] = (object) [
                 'academicyear' => $year,
                 'groupkey' => $l['groupkey'],
-                'groupname' => $l['groupname'],
+                'groupname' => self::nom($l['groupname']),
                 'subjectkey' => $l['subjectkey'],
-                'subjectname' => $l['subjectname'],
+                'subjectname' => self::nom($l['subjectname']),
                 'teacherkey' => $l['teacherkey'],
-                'teachername' => $l['teachername'],
+                'teachername' => self::nom($l['teachername']),
                 'dayno' => $l['dayno'],
-                'dayname' => $l['dayname'],
+                'dayname' => self::nom($l['dayname'], 50),
                 'lessonno' => $l['lessonno'],
                 'starttime' => $l['starttime'],
                 'endtime' => $l['endtime'],
-                'room' => $l['room'],
+                'room' => self::nom($l['room'], 100),
                 'courseidnumber' => $l['courseidnumber'],
                 'timemodified' => $now,
             ];
@@ -117,7 +135,7 @@ class push_timetable extends external_api {
                 $crows[] = (object) [
                     'academicyear' => $year,
                     'entrytype' => $c['entrytype'],
-                    'name' => $c['name'],
+                    'name' => self::nom($c['name']),
                     'startdate' => $c['startdate'],
                     'enddate' => $c['enddate'],
                     'timemodified' => $now,

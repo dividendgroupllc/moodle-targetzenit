@@ -41,4 +41,17 @@ $functions = [
         'capabilities' => 'local/targetzenit:push',
         'ajax'        => false,
     ],
+    // Mobil ilovadan yozish. Panellardan farqli o'laroq BU funksiya
+    // ro'yxatga qo'shilishi SHART — ilova uni to'g'ridan-to'g'ri chaqiradi.
+    // `services` da `moodle_mobile_app` ko'rsatilgani uchun u servisga
+    // AVTOMATIK qo'shiladi (Frappe funksiyalaridan farqi shunda).
+    'local_targetzenit_mobile_save_record' => [
+        'classname'   => 'local_targetzenit\\external\\mobile_save_record',
+        'methodname'  => 'execute',
+        'description' => "Mobil ilovadan yo'qlama va baho saqlash",
+        'type'        => 'write',
+        'capabilities' => 'local/targetzenit:teach',
+        'ajax'        => true,
+        'services'    => [MOODLE_OFFICIAL_MOBILE_SERVICE],
+    ],
 ];

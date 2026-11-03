@@ -320,6 +320,49 @@ S = {
         "поэтому некоторые панели будут пустыми.",
     ),
 
+    # --------------------------------------------- yo'qlama belgilari
+    "att_present": ("Present", "Keldi", "Присутствовал"),
+    "att_absent": ("Absent", "Kelmadi", "Отсутствовал"),
+    "att_late": ("Late", "Kechikdi", "Опоздал"),
+    "att_excused": ("Excused", "Sababli", "По уважительной"),
+
+    # ------------------------------------------- ilovadagi dars kokpiti
+    "app_lesson": ("Lesson", "Dars", "Урок"),
+    "app_todaylessons": ("Today's lessons", "Bugungi darslar", "Сегодняшние уроки"),
+    "app_nolessontoday": (
+        "You have no lessons today.",
+        "Bugun darsingiz yo'q.",
+        "Сегодня у вас нет уроков.",
+    ),
+    "app_students": ("Students", "O'quvchilar", "Ученики"),
+    "app_nostudents": (
+        "No students are enrolled in this course.",
+        "Bu kursga o'quvchi yozilmagan.",
+        "На этот курс не записаны ученики.",
+    ),
+    "app_savegrade": ("Save grade", "Bahoni saqlash", "Сохранить оценку"),
+    "app_saved": ("Saved", "Saqlandi", "Сохранено"),
+    "app_gradehint": (
+        "Grade from 1 to {$a}. Leave empty to remove the grade.",
+        "Baho 1 dan {$a} gacha. Bahoni olib tashlash uchun bo'sh qoldiring.",
+        "Оценка от 1 до {$a}. Оставьте пустым, чтобы удалить оценку.",
+    ),
+    "app_attendancehint": (
+        "Tap a status — it is saved immediately.",
+        "Belgini bosing — darhol saqlanadi.",
+        "Нажмите на статус — сохранится сразу.",
+    ),
+    "app_lessonsaved": (
+        "The grade is also written to the Moodle gradebook.",
+        "Baho Moodle gradebook'iga ham yoziladi.",
+        "Оценка также записывается в журнал оценок Moodle.",
+    ),
+    "app_noteach": (
+        "You do not have permission to teach this course.",
+        "Bu kursda dars o'tish huquqingiz yo'q.",
+        "У вас нет прав вести занятия по этому курсу.",
+    ),
+
     # --------------------------------------------------- jadval sahifasi
     "tt_noclass": (
         "Your class could not be determined — you are not enrolled in any "

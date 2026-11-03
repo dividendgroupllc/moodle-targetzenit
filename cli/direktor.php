@@ -26,13 +26,13 @@ use local_targetzenit\timetable;
 
 [$opt, $un] = cli_get_params(
     ['help' => false, 'holat' => false, 'staff' => false, 'reja' => false,
-     'fakt' => false, 'aicat' => false, 'hammasi' => false,
-     'from' => '', 'to' => '', 'year' => ''],
+     'fakt' => false, 'aicat' => false, 'hammasi' => false, 'bayram' => false,
+     'majburiy' => false, 'from' => '', 'to' => '', 'year' => ''],
     ['h' => 'help']
 );
 
 $ish = $opt['holat'] || $opt['staff'] || $opt['reja'] || $opt['fakt']
-    || $opt['aicat'] || $opt['hammasi'];
+    || $opt['aicat'] || $opt['hammasi'] || $opt['bayram'];
 
 if ($opt['help'] || !$ish) {
     cli_writeln("--holat    reja/fakt qatlamining holatini ko'rsatadi");
@@ -41,6 +41,8 @@ if ($opt['help'] || !$ish) {
     cli_writeln("--fakt     faktni qayta hisoblaydi [--from=... --to=...]");
     cli_writeln("--aicat    AI kategoriya indeksini JSON'lardan qayta quradi");
     cli_writeln("--hammasi  hammasini to'g'ri tartibda (birinchi o'rnatish uchun)");
+    cli_writeln("--bayram   bayram kunlariga tushib qolgan slotlarni ko'rsatadi");
+    cli_writeln("           (o'chirish uchun: --bayram --majburiy)");
     cli_writeln("--year     o'quv yili (standart: jadvaldagi oxirgisi)");
     exit(0);
 }
@@ -200,6 +202,34 @@ if ($opt['fakt'] || $opt['hammasi']) {
     $r = fact::refresh($from, $to, $log);
     cli_writeln("  {$r['slotlar']} slot: +{$r['qoshildi']} qo'shildi, "
         . "{$r['yangilandi']} yangilandi, {$r['tegilmadi']} o'zgarmadi");
+}
+
+// ------------------------------------------------------------------ BAYRAM
+if ($opt['bayram']) {
+    cli_writeln('');
+    $r = slot::holiday_cleanup($year, !$opt['majburiy']);
+
+    if (!$r['bayram']) {
+        cli_writeln("Kalendarda bayram kuni yo'q — avval Frappe'da Moodle Settings →");
+        cli_writeln("«Bayram kunlari ro'yxati» ni tanlab, jadvalni qayta yuboring.");
+    } else {
+        cli_writeln("Kalendarda {$r['bayram']} ta bayram kuni bor.");
+        cli_writeln("Bayram sanalariga tushgan slotlar: {$r['slot']}");
+        foreach ($r['kunlar'] as $kun => $soni) {
+            cli_writeln('    ' . $kun . ' — ' . $soni . ' slot');
+        }
+        if ($r['tegilmadi']) {
+            cli_writeln("  {$r['tegilmadi']} ta slotda jurnal yozuvi BOR — tegilmadi.");
+            cli_writeln("  (dars haqiqatda o'tilgan yoki bayram sanasi xato bo'lishi mumkin)");
+        }
+        if ($opt['majburiy']) {
+            cli_writeln("  O'CHIRILDI: {$r['ochirildi']} slot.");
+        } else {
+            cli_writeln("  O'chiriladi: " . ($r['ochiriladi'] ?? 0) . " slot.");
+            cli_writeln("  Bu SINOV yurishi — hech narsa o'chirilmadi.");
+            cli_writeln("  Rostdan o'chirish: --bayram --majburiy");
+        }
+    }
 }
 
 cli_writeln('');

@@ -36,6 +36,18 @@ $addons = [
             // ishlashi KAFOLATLANGAN, shablon ichidan boshqa panelga o'tish
             // esa ilova versiyasiga bog'liq direktivaga tayanadi. Eng ko'p
             // ishlatiladigan panelni noaniqlikka qo'yish to'g'ri bo'lmaydi.
+            // Dars kokpiti — bugungi darslar ro'yxati, undan o'quvchilar
+            // ro'yxatiga o'tiladi. O'qituvchi uchun eng ko'p ishlatiladigan
+            // panel, shuning uchun menyuda alohida turadi.
+            'lesson' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'lesson_view',
+                'displaydata' => [
+                    'title' => 'app_todaylessons',
+                    'icon' => 'fas-clipboard-check',
+                    'class' => '',
+                ],
+            ],
             'timetable' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'timetable_view',
@@ -62,6 +74,20 @@ $addons = [
             ['timetable_empty', 'local_targetzenit'],
             ['timetable_nolessons', 'local_targetzenit'],
             ['tt_noclass', 'local_targetzenit'],
+            ['app_todaylessons', 'local_targetzenit'],
+            ['app_nolessontoday', 'local_targetzenit'],
+            ['app_lesson', 'local_targetzenit'],
+            ['app_savegrade', 'local_targetzenit'],
+            ['app_saved', 'local_targetzenit'],
+            ['app_attendancehint', 'local_targetzenit'],
+            ['app_lessonsaved', 'local_targetzenit'],
+            ['app_noteach', 'local_targetzenit'],
+            ['app_nostudents', 'local_targetzenit'],
+            ['grade', 'local_targetzenit'],
+            ['att_present', 'local_targetzenit'],
+            ['att_absent', 'local_targetzenit'],
+            ['att_late', 'local_targetzenit'],
+            ['att_excused', 'local_targetzenit'],
         ],
     ],
 ];

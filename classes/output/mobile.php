@@ -14,6 +14,7 @@
 
 namespace local_targetzenit\output;
 
+use local_targetzenit\lesson;
 use local_targetzenit\payroll;
 use local_targetzenit\timetable;
 
@@ -152,8 +153,141 @@ class mobile {
         return self::javob('mobile_timetable', $data);
     }
 
+    /**
+     * Bugungi darslar ro'yxati — kokpitga kirish nuqtasi.
+     *
+     * O'qituvchi dars paytida telefonni ochadi va darhol o'z darsini topishi
+     * kerak. Shuning uchun hafta emas, FAQAT bugun va faqat o'ziniki.
+     */
+    public static function lesson_view(array $args): array {
+        global $USER;
+
+        $context = \context_system::instance();
+        self::tekshir($context);
+
+        $year = timetable::current_year();
+        $data = ['bor' => false, 'xabar' => '', 'darslar' => [],
+                 'sana' => userdate(time(), get_string('strftimedaydate'))];
+
+        $teacherkey = $year === '' ? '' : timetable::teacher_key_of($USER, $year);
+        if ($teacherkey === '') {
+            $data['xabar'] = get_string('app_nolessontoday', 'local_targetzenit');
+            return self::javob('mobile_lessons', $data);
+        }
+
+        $bugun = date('Y-m-d');
+        $dayno = (int) date('N');
+        $rows = timetable::for_teacher($year, $teacherkey);
+        $kurslar = timetable::course_ids(array_map(
+            fn($r) => $r->courseidnumber, $rows));
+
+        foreach ($rows as $r) {
+            if ((int) $r->dayno !== $dayno) {
+                continue;
+            }
+            $cid = $kurslar[$r->courseidnumber] ?? 0;
+            if (!$cid) {
+                continue;             // kursi topilmagan dars — ochib bo'lmaydi
+            }
+            $vaqt = trim((string) $r->starttime);
+            if (!empty($r->endtime)) {
+                $vaqt .= ' – ' . $r->endtime;
+            }
+            $data['darslar'][] = [
+                'courseid' => $cid,
+                'date' => $bugun,
+                'lessonno' => (int) $r->lessonno,
+                'vaqt' => $vaqt,
+                'fan' => format_string($r->subjectname),
+                'guruh' => format_string((string) $r->groupname),
+                'xona' => format_string((string) $r->room),
+            ];
+        }
+
+        if (!$data['darslar']) {
+            $data['xabar'] = get_string('app_nolessontoday', 'local_targetzenit');
+        } else {
+            $data['bor'] = true;
+        }
+        return self::javob('mobile_lessons', $data);
+    }
+
+    /**
+     * Dars kokpiti — o'quvchilar ro'yxati, yo'qlama va baho.
+     *
+     * YOZISH shablon ichidagi `core-site-plugins-call-ws` tugmalari orqali
+     * `local_targetzenit_mobile_save_record` ga boradi. Yo'qlama bitta
+     * bosishda saqlanadi (dars paytida eng tez-tez qilinadigan amal), baho
+     * esa kiritilib, yonidagi tugma bilan.
+     */
+    public static function lesson_cockpit(array $args): array {
+        global $USER;
+
+        $courseid = (int) ($args['courseid'] ?? 0);
+        $sana = (string) ($args['date'] ?? date('Y-m-d'));
+        $lessonno = (int) ($args['lessonno'] ?? 1);
+
+        $course = get_course($courseid);
+        $context = \context_course::instance($courseid);
+        self::tekshir($context);
+
+        $data = [
+            'kurs' => format_string($course->fullname),
+            'sana' => userdate(strtotime($sana), get_string('strftimedaydate')),
+            'lessonno' => $lessonno,
+            'maxgrade' => lesson::MAX_GRADE,
+            'ruxsat' => has_capability('local/targetzenit:teach', $context),
+            'oquvchilar' => [],
+            'xabar' => '',
+        ];
+
+        if (!$data['ruxsat']) {
+            $data['xabar'] = get_string('app_noteach', 'local_targetzenit');
+            return self::javob('mobile_cockpit', $data);
+        }
+
+        // Dars yozuvi shu yerda yaratiladi: o'qituvchi kokpitni ochgan
+        // paytda mavjud bo'lishi kerak, aks holda birinchi saqlashda
+        // `lessonid` bo'lmaydi.
+        $dars = lesson::get_or_create($courseid, $sana, $lessonno, (int) $USER->id);
+        $data['lessonid'] = (int) $dars->id;
+        $data['mavzu'] = (string) $dars->topic;
+
+        $oquvchilar = lesson::students($context);
+        if (!$oquvchilar) {
+            $data['xabar'] = get_string('app_nostudents', 'local_targetzenit');
+            return self::javob('mobile_cockpit', $data);
+        }
+
+        $yozuvlar = lesson::records((int) $dars->id);
+        $otherdata = [];
+        foreach ($oquvchilar as $st) {
+            $rec = $yozuvlar[$st->id] ?? null;
+            $holat = $rec->attendance ?? 'present';
+            $baho = ($rec && $rec->grade !== null) ? (string) $rec->grade : '';
+
+            $data['oquvchilar'][] = [
+                'userid' => (int) $st->id,
+                'ism' => fullname($st),
+                'holat' => $holat,
+                'baho' => $baho,
+                // Shablonda `{{# keldi }}` kabi ishlatish uchun — mustache'da
+                // tenglikni tekshirib bo'lmaydi.
+                'keldi' => $holat === 'present',
+                'kelmadi' => $holat === 'absent',
+                'kechikdi' => $holat === 'late',
+                'sababli' => $holat === 'excused',
+            ];
+            // Ilova input qiymatlarini `CONTENT_OTHERDATA` dan oladi.
+            $otherdata['gr_' . $st->id] = $baho;
+        }
+
+        return self::javob('mobile_cockpit', $data, $otherdata);
+    }
+
     /** Ilova kutadigan javob shakli — har metodda takrorlanmasligi uchun. */
-    private static function javob(string $shablon, array $data): array {
+    private static function javob(string $shablon, array $data,
+                                  array $otherdata = []): array {
         global $OUTPUT;
         return [
             'templates' => [[
@@ -162,7 +296,7 @@ class mobile {
                     'local_targetzenit/' . $shablon, $data),
             ]],
             'javascript' => '',
-            'otherdata' => [],
+            'otherdata' => $otherdata,
             'files' => [],
         ];
     }

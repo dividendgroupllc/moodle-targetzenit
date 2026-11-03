@@ -1,0 +1,55 @@
+{{!
+    @template local_targetzenit/mobile_lessons
+
+    Bugungi darslar — dars kokpitiga kirish nuqtasi (mobil ilova).
+
+    Har element `core-site-plugins-new-content` bilan kokpitni ochadi: ilova
+    shu plaginning boshqa metodini chaqirib, natijani yangi sahifada
+    ko'rsatadi.
+
+    Context variables required for this template:
+    * bor - bugun dars bormi
+    * sana - bugungi sana (o'qiladigan ko'rinishda)
+    * xabar - dars bo'lmasa sabab
+    * darslar - [{courseid, date, lessonno, vaqt, fan, guruh, xona}]
+
+    Example context (json):
+    {
+        "bor": true, "sana": "3 November 2026", "xabar": "",
+        "darslar": [{"courseid": 12, "date": "2026-11-03", "lessonno": 2,
+                     "vaqt": "09:20 – 10:05", "fan": "ROBOTICS",
+                     "guruh": "8 A(full)", "xona": "204"}]
+    }
+}}
+<ion-list-header>
+    <ion-label>
+        {{#str}}app_todaylessons, local_targetzenit{{/str}}
+        <p>{{ sana }}</p>
+    </ion-label>
+</ion-list-header>
+
+{{^ bor }}
+    <ion-card>
+        <ion-card-content><p>{{ xabar }}</p></ion-card-content>
+    </ion-card>
+{{/ bor }}
+
+{{# bor }}
+<ion-list>
+    {{# darslar }}
+    <ion-item button="true" detail="true"
+              core-site-plugins-new-content
+              component="local_targetzenit"
+              method="lesson_cockpit"
+              [args]="{courseid: {{ courseid }}, date: '{{ date }}', lessonno: {{ lessonno }}}"
+              title="{{ fan }}">
+        <ion-badge slot="start">{{ lessonno }}</ion-badge>
+        <ion-label class="ion-text-wrap">
+            <p class="item-heading">{{ fan }}</p>
+            <p>{{ guruh }}{{# xona }} · {{ xona }}{{/ xona }}</p>
+        </ion-label>
+        {{# vaqt }}<ion-note slot="end">{{ vaqt }}</ion-note>{{/ vaqt }}
+    </ion-item>
+    {{/ darslar }}
+</ion-list>
+{{/ bor }}

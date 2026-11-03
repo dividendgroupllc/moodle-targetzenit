@@ -229,6 +229,72 @@ class slot {
         return $natija;
     }
 
+    /**
+     * Bayram kunlariga tushib qolgan slotlarni tozalaydi.
+     *
+     * NEGA MUZLATISH QOIDASIGA ISTISNO: odatda o'tgan slotlar o'zgartirilmaydi,
+     * chunki jadval o'zgarishi tarixni buzmasligi kerak. Bu holat boshqacha —
+     * bayram ro'yxati umuman YUBORILMAGAN edi, ya'ni o'sha darslar hech qachon
+     * BO'LMAGAN. Bu jadval o'zgarishi emas, yetishmagan ma'lumotning kelishi.
+     *
+     * EHTIYOT: jurnal yozuvi (mavzu/yo'qlama/yozuv) bor slot O'CHIRILMAYDI —
+     * dars haqiqatda o'tilgan bo'lishi yoki bayram sanasi xato kiritilgan
+     * bo'lishi mumkin. Ular alohida sanaladi va qarorni odam qabul qiladi.
+     *
+     * @param bool $quruq true = faqat hisoblaydi, o'chirmaydi
+     */
+    public static function holiday_cleanup(string $year, bool $quruq = true): array {
+        global $DB;
+
+        $bayramlar = timetable::holidays($year);
+        $natija = ['bayram' => count($bayramlar), 'slot' => 0,
+                   'ochirildi' => 0, 'tegilmadi' => 0, 'kunlar' => []];
+        if (!$bayramlar) {
+            return $natija;
+        }
+
+        list($in, $params) = $DB->get_in_or_equal(array_keys($bayramlar), SQL_PARAMS_NAMED, 'd');
+        $params['y'] = $year;
+
+        $rows = $DB->get_records_sql("
+            SELECT s.id, s.lessondate, s.groupname, s.subjectname,
+                   COALESCE(f.hastopic, 0) AS hastopic,
+                   COALESCE(f.attendancecount, 0) AS yoqlama,
+                   COALESCE(f.audiostatus, 'none') AS audiostatus
+              FROM {local_targetzenit_slot} s
+         LEFT JOIN {local_targetzenit_fact} f ON f.slotid = s.id
+             WHERE s.academicyear = :y AND s.lessondate $in", $params);
+
+        $ochir = [];
+        foreach ($rows as $r) {
+            $natija['slot']++;
+            $natija['kunlar'][$r->lessondate] = ($natija['kunlar'][$r->lessondate] ?? 0) + 1;
+
+            // Jurnalda iz qoldirgan dars — tegmaymiz
+            if ((int) $r->hastopic || (int) $r->yoqlama
+                    || !in_array($r->audiostatus, ['none', ''], true)) {
+                $natija['tegilmadi']++;
+                continue;
+            }
+            $ochir[] = (int) $r->id;
+        }
+
+        if (!$quruq && $ochir) {
+            foreach (array_chunk($ochir, 500) as $bolak) {
+                list($fin, $fp) = $DB->get_in_or_equal($bolak, SQL_PARAMS_NAMED, 'f');
+                $DB->delete_records_select('local_targetzenit_fact', "slotid $fin", $fp);
+                $DB->delete_records_select('local_targetzenit_slot', "id $fin", $fp);
+            }
+            $natija['ochirildi'] = count($ochir);
+        } else {
+            $natija['ochirildi'] = $quruq ? 0 : 0;
+            $natija['ochiriladi'] = count($ochir);
+        }
+
+        ksort($natija['kunlar']);
+        return $natija;
+    }
+
     /** Sana oralig'idagi slotlar (fakt qayta hisoblash uchun). */
     public static function in_range(string $from, string $to, ?string $year = null): array {
         global $DB;
