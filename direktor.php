@@ -39,7 +39,18 @@ const TZ_PER_PAGE = 20;
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/direktor.php', ['view' => $view]));
-$PAGE->set_pagelayout('standard');
+// `embedded` LAYOUT — Moodle sarlavhasi, navigatsiyasi va drawer'larisiz
+// toza holst: `<div id="page"><section class="embedded-main">` dan boshqa
+// hech narsa yo'q.
+//
+// NEGA: `standard` da maket Boost konteynerlari ichida qisilib qolardi —
+// `#region-main` ba'zi holatlarda `display:inline-flex` bo'ladi, ya'ni quti
+// mazmuniga qarab torayadi va `width:100%` ham yordam bermaydi. Manfiy
+// margin bilan ham yechilmadi (0.22.1).
+//
+// Maketning o'z yon paneli bor, shuning uchun Moodle navigatsiyasi baribir
+// takrorlanardi. Qaytish yo'li yon panel tepasidagi havolada.
+$PAGE->set_pagelayout('embedded');
 $PAGE->set_title(get_string('dir_panel', 'local_targetzenit'));
 $PAGE->set_heading('');
 
@@ -161,6 +172,12 @@ echo html_writer::start_div('tz-dir-shell');
 echo html_writer::start_div('tz-dir-side');
 echo html_writer::div(html_writer::tag('span', '◧') . 'Edulytics', 'tz-dir-logo');
 
+// `embedded` da Moodle navigatsiyasi yo'q — qaytish yo'lini O'ZIMIZ beramiz,
+// aks holda direktor sahifada qamalib qoladi.
+echo html_writer::link(new moodle_url('/my/'),
+    '← ' . format_string($SITE->shortname ?: $SITE->fullname),
+    ['class' => 'tz-dir-back']);
+
 echo html_writer::div(get_string('dir_navmain', 'local_targetzenit'), 'tz-dir-navlab');
 foreach ([
     'darslar' => get_string('dir_navlessons', 'local_targetzenit'),
@@ -183,6 +200,13 @@ if (has_capability('moodle/site:config', $context)) {
         ['section' => 'local_targetzenit']),
         get_string('dir_navsettings', 'local_targetzenit'), ['class' => 'tz-dir-navitem']);
 }
+
+// Foydalanuvchi — yon panel pastida (embedded'da Moodle avatar menyusi yo'q)
+echo html_writer::div(
+    html_writer::div(s(fullname($USER)), 'tz-dir-username')
+    . html_writer::link(new moodle_url('/login/logout.php', ['sesskey' => sesskey()]),
+        get_string('logout'), ['class' => 'tz-dir-logout']),
+    'tz-dir-user');
 echo html_writer::end_div();
 
 // ====================================================== ASOSIY USTUN

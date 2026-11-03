@@ -251,17 +251,17 @@
 }
 
 /* ---------------- qobiq: yon panel + asosiy ustun ---------------- */
-/* BUTUN SAHIFANI EGALLASH.
-   Boost `#topofscroll` ga 1rem padding beradi va bizning maket uning ichida
-   qisilib qolardi. Manfiy margin bilan o'sha paddingni qaytarib olamiz —
-   panel chetdan chetga cho'ziladi, Moodle navigatsiyasi esa tepada qoladi
-   (direktor Moodle'ga qaytish yo'lini yo'qotmasligi kerak). */
-.tz-dir { margin: -1rem; width: calc(100% + 2rem); }
+/* BUTUN SAHIFANI EGALLASH — `embedded` layout bilan.
+   Moodle qobig'i (sarlavha, navigatsiya, drawer) umuman chizilmaydi, shuning
+   uchun hech qanday konteynerdan "chiqish" kerak emas. */
+.pagelayout-embedded #page,
+.pagelayout-embedded .embedded-main { width: 100%; max-width: none; padding: 0; margin: 0; }
+.tz-dir { margin: 0; width: 100%; }
 
 .tz-dir-shell { display: flex; gap: 0; align-items: stretch; background: var(--tz-bg);
-    border: 0; border-radius: 0; overflow: hidden;
-    min-height: calc(100vh - 60px); }
-.tz-dir-side { flex: 0 0 230px; background: var(--tz-side); padding: 18px 14px; }
+    border: 0; border-radius: 0; min-height: 100vh; width: 100%; }
+.tz-dir-side { flex: 0 0 230px; background: var(--tz-side); padding: 18px 14px;
+    display: flex; flex-direction: column; }
 .tz-dir-main { flex: 1 1 auto; min-width: 0; padding: 24px 28px 32px; }
 
 .tz-dir-logo { display: flex; align-items: center; gap: 9px; color: #fff;
@@ -429,3 +429,12 @@
     position: absolute; left: 10px; color: var(--tz-ink-2);
     font-size: 1rem; pointer-events: none; line-height: 1;
 }
+
+/* Yon panel: Moodle'ga qaytish va foydalanuvchi (embedded'da Moodle menyusi yo'q) */
+.tz-dir-back { display: block; color: var(--tz-side-ink); font-size: .78rem;
+    text-decoration: none; margin: -14px 4px 14px; }
+.tz-dir-back:hover { color: #fff; text-decoration: none; }
+.tz-dir-user { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.1); }
+.tz-dir-username { color: #fff; font-size: .85rem; font-weight: 600; }
+.tz-dir-logout { color: var(--tz-side-ink); font-size: .78rem; text-decoration: none; }
+.tz-dir-logout:hover { color: #fff; text-decoration: none; }
