@@ -203,18 +203,20 @@
    ---------------------------------------------------------------- */
 
 .tz-dir {
-    color-scheme: light;
+    /* RANGLAR MOODLE'DAN: Moodle 5.3 dizayn tizimi (MDS) 354 ta `--mds-*`
+       o'zgaruvchi beradi. Ularga bog'lanamiz — shunda panel sayt temasiga
+       va qorong'i rejimga O'ZI moslashadi. Zaxira qiymatlar MDS bo'lmagan
+       o'rnatmalar uchun. Maket tuzilishi saqlanadi, faqat palitra Moodle'niki. */
+    --tz-brand:      var(--mds-bg-interactive-primary-default, #0f6cbf);
+    --tz-brand-soft: var(--mds-bg-feedback-primary-subtle, #e7f0f9);
+    --tz-side:       var(--mds-text-default, #1d2125);   /* yon panel — Moodle siyohi */
+    --tz-side-ink:   #adb5bd;
 
-    --tz-brand:      #6c5ce7;   /* brend urg'usi — ketma-ket (sequential) hue */
-    --tz-brand-soft: #eeecfd;
-    --tz-side:       #171532;   /* yon panel foni */
-    --tz-side-ink:   #a9a6c9;
-
-    --tz-bg:         #f6f7fb;
-    --tz-card:       #ffffff;
-    --tz-line:       #eceef5;
-    --tz-ink:        #141331;
-    --tz-ink-2:      #7b7a96;
+    --tz-bg:         var(--mds-bg-surface-subtle, #f8f9fa);
+    --tz-card:       var(--mds-bg-surface-default, #ffffff);
+    --tz-line:       var(--mds-border-default, #dee2e6);
+    --tz-ink:        var(--mds-text-default, #1d2125);
+    --tz-ink-2:      #6a737b;
 
     /* Holat — o'zgarmas to'rtlik, seriya rangi sifatida ishlatilmaydi */
     --tz-good:       #0ca30c;
@@ -234,53 +236,40 @@
     font-size: .95rem;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-bs-theme="light"]) .tz-dir {
-        color-scheme: dark;
-        --tz-brand:      #8b7df0;
-        --tz-brand-soft: #262046;
-        --tz-side:       #121026;
-        --tz-bg:         #15141f;
-        --tz-card:       #1d1c2b;
-        --tz-line:       #2e2c44;
-        --tz-ink:        #ffffff;
-        --tz-ink-2:      #a6a4bd;
-        --tz-good-bg:    #11300f;
-        --tz-warning-bg: #332603;
-        --tz-serious-bg: #35190d;
-        --tz-critical-bg:#330f0f;
-        --tz-pos:        #3987e5;
-    }
-}
-:root[data-bs-theme="dark"] .tz-dir {
-    color-scheme: dark;
-    --tz-brand:      #8b7df0;
-    --tz-brand-soft: #262046;
-    --tz-side:       #121026;
-    --tz-bg:         #15141f;
-    --tz-card:       #1d1c2b;
-    --tz-line:       #2e2c44;
-    --tz-ink:        #ffffff;
-    --tz-ink-2:      #a6a4bd;
+/* Qorong'i rejim: `--mds-*` qiymatlari Moodle tomonidan almashtiriladi,
+   shuning uchun bu yerda faqat MDS qamramaydigan qiymatlar qayta beriladi. */
+:root[data-bs-theme="dark"] .tz-dir,
+.tz-dir[data-bs-theme="dark"] {
+    --tz-brand-soft: #16304a;
+    --tz-side:       #0d1013;
+    --tz-side-ink:   #adb5bd;
+    --tz-ink-2:      #adb5bd;
     --tz-good-bg:    #11300f;
     --tz-warning-bg: #332603;
     --tz-serious-bg: #35190d;
     --tz-critical-bg:#330f0f;
-    --tz-pos:        #3987e5;
 }
 
 /* ---------------- qobiq: yon panel + asosiy ustun ---------------- */
+/* BUTUN SAHIFANI EGALLASH.
+   Boost `#topofscroll` ga 1rem padding beradi va bizning maket uning ichida
+   qisilib qolardi. Manfiy margin bilan o'sha paddingni qaytarib olamiz —
+   panel chetdan chetga cho'ziladi, Moodle navigatsiyasi esa tepada qoladi
+   (direktor Moodle'ga qaytish yo'lini yo'qotmasligi kerak). */
+.tz-dir { margin: -1rem; width: calc(100% + 2rem); }
+
 .tz-dir-shell { display: flex; gap: 0; align-items: stretch; background: var(--tz-bg);
-    border-radius: 14px; overflow: hidden; border: 1px solid var(--tz-line); }
-.tz-dir-side { flex: 0 0 218px; background: var(--tz-side); padding: 18px 14px; }
-.tz-dir-main { flex: 1 1 auto; min-width: 0; padding: 22px 24px 28px; }
+    border: 0; border-radius: 0; overflow: hidden;
+    min-height: calc(100vh - 60px); }
+.tz-dir-side { flex: 0 0 230px; background: var(--tz-side); padding: 18px 14px; }
+.tz-dir-main { flex: 1 1 auto; min-width: 0; padding: 24px 28px 32px; }
 
 .tz-dir-logo { display: flex; align-items: center; gap: 9px; color: #fff;
     font-weight: 700; font-size: 1.05rem; margin: 2px 4px 22px; }
 .tz-dir-logo span { display: inline-flex; width: 28px; height: 28px; border-radius: 8px;
     background: var(--tz-brand); align-items: center; justify-content: center; font-size: .9rem; }
 
-.tz-dir-navlab { color: #67648c; font-size: .68rem; font-weight: 700;
+.tz-dir-navlab { color: #868e96; font-size: .68rem; font-weight: 700;
     letter-spacing: .09em; text-transform: uppercase; margin: 16px 8px 7px; }
 .tz-dir-navitem { display: block; padding: 9px 12px; border-radius: 9px;
     color: var(--tz-side-ink); font-size: .9rem; margin-bottom: 2px; text-decoration: none; }
@@ -377,7 +366,7 @@
 @media (max-width: 900px) { .tz-dir-top3 { grid-template-columns: 1fr; } }
 .tz-dir-best { background: var(--tz-side); color: #fff; border-radius: 13px;
     padding: 17px 19px; display: flex; align-items: center; gap: 14px; }
-.tz-dir-best .tz-dir-lab { color: #a9a6c9; }
+.tz-dir-best .tz-dir-lab { color: #adb5bd; }
 .tz-dir-bestname { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
 .tz-dir-rank { display: inline-flex; width: 26px; height: 26px; border-radius: 7px;
     background: var(--tz-brand-soft); color: var(--tz-brand);
@@ -426,4 +415,17 @@
     .tz-dir-tools { margin-left: 0; }
     .tz-dir-qrow { flex-wrap: wrap; }
     .tz-dir-qchip { min-width: 0; }
+}
+
+/* Yuqori qatordagi qidiruv — maketdagidek */
+.tz-dir-search { position: relative; display: flex; align-items: center; margin: 0; }
+.tz-dir-search input {
+    width: 260px; max-width: 100%; padding: 7px 12px 7px 30px;
+    border: 1px solid var(--tz-line); border-radius: 9px;
+    background: var(--tz-card); color: var(--tz-ink); font-size: .85rem;
+}
+.tz-dir-search input:focus { outline: 2px solid var(--tz-brand); outline-offset: -1px; }
+.tz-dir-searchicon {
+    position: absolute; left: 10px; color: var(--tz-ink-2);
+    font-size: 1rem; pointer-events: none; line-height: 1;
 }

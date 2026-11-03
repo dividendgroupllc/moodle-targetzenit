@@ -68,6 +68,7 @@ $string['dir_byclass'] = 'Sinflar';
 $string['dir_byschedule'] = 'dars jadvali bo\'yicha';
 $string['dir_bysubject'] = 'Fanlar';
 $string['dir_byteacher'] = 'O\'qituvchilar';
+$string['dir_clearsearch'] = 'qidiruvni tozalash';
 $string['dir_colclass'] = 'Sinf';
 $string['dir_collesson'] = 'Dars ma\'lumoti';
 $string['dir_collessons'] = 'Darslar';

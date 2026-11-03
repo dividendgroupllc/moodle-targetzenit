@@ -8,6 +8,12 @@
 // ham HAR KATEGORIYANING O'Z normasiga nisbatan hisoblanadi.
 defined('MOODLE_INTERNAL') || die();
 
+// DIQQAT: `use` ifodalari PHP'da FAYLGA XOS va `require` orqali O'TMAYDI.
+// direktor.php dagi `use` lar bu yerda ishlamaydi — 2026-11-03 da
+// "Class \"reyting\" not found" xatosi aynan shundan kelib chiqqan.
+use local_targetzenit\dashboard;
+use local_targetzenit\reyting;
+
 $davr = reyting::period($davrkod);
 $xulosa = reyting::summary($davr);
 $norma = $xulosa['norma'];

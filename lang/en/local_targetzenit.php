@@ -68,6 +68,7 @@ $string['dir_byclass'] = 'Classes';
 $string['dir_byschedule'] = 'by the timetable';
 $string['dir_bysubject'] = 'Subjects';
 $string['dir_byteacher'] = 'Teachers';
+$string['dir_clearsearch'] = 'clear the search';
 $string['dir_colclass'] = 'Class';
 $string['dir_collesson'] = 'Lesson';
 $string['dir_collessons'] = 'Lessons';

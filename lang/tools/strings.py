@@ -657,6 +657,7 @@ S = {
     "dir_search": ("Teacher, subject or class...", "O'qituvchi, fan yoki sinf...",
                    "Учитель, предмет или класс..."),
     "dir_searchbtn": ("Search", "Qidirish", "Искать"),
+    "dir_clearsearch": ("clear the search", "qidiruvni tozalash", "очистить поиск"),
     "dir_colteacher": ("Teacher", "O'qituvchi", "Учитель"),
     "dir_collesson": ("Lesson", "Dars ma'lumoti", "Данные урока"),
     "dir_coltime": ("Time and audio", "Vaqt va audio", "Время и аудио"),

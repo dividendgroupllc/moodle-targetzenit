@@ -194,6 +194,19 @@ echo html_writer::div(
     html_writer::div(format_string($SITE->fullname), 'tz-dir-school')
     . html_writer::tag('h2',
         get_string($salom, 'local_targetzenit', $USER->firstname), ['class' => 'tz-dir-hello']));
+
+// Qidiruv — maketdagidek YUQORI qatorda, ikkala ekranda ham bir joyda.
+echo html_writer::start_div('tz-dir-tools');
+echo html_writer::start_tag('form',
+    ['method' => 'get', 'action' => (new moodle_url('/local/targetzenit/direktor.php'))->out(false),
+     'class' => 'tz-dir-search']);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'view', 'value' => $view]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'date', 'value' => $date]);
+echo html_writer::tag('span', '⌕', ['class' => 'tz-dir-searchicon']);
+echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'q', 'value' => $qidiruv,
+    'placeholder' => get_string('dir_search', 'local_targetzenit')]);
+echo html_writer::end_tag('form');
+echo html_writer::end_div();
 echo html_writer::end_div();
 
 // Ma'lumot sog'ligi — panel raqamlari noto'g'ri bo'lishi mumkin bo'lgan holatlar

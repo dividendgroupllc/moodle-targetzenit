@@ -5,6 +5,13 @@
 // MOODLE_INTERNAL ham aniqlanmagan bo'ladi.
 defined('MOODLE_INTERNAL') || die();
 
+// DIQQAT: `use` ifodalari PHP'da FAYLGA XOS va `require` orqali O'TMAYDI.
+// direktor.php dagi `use` lar bu yerda ishlamaydi — 2026-11-03 da
+// "Class \"reyting\" not found" xatosi aynan shundan kelib chiqqan.
+use local_targetzenit\ai;
+use local_targetzenit\dashboard;
+use local_targetzenit\timetable;
+
 $terms = timetable::terms($year);
 $holidays = timetable::holidays($year);
 $kunholat = timetable::school_day($date, $terms, $holidays);
@@ -181,18 +188,14 @@ echo html_writer::div(
     . html_writer::div(get_string('dir_showing', 'local_targetzenit',
         (object) ['n' => count($list['rows']), 'jami' => $list['jami']]), 'tz-dir-sub'));
 
-echo html_writer::start_div('tz-dir-tools');
-echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'form-inline']);
-foreach (['view' => $view, 'date' => $date, 'filter' => $filter] as $k => $v) {
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => $k, 'value' => $v]);
+// Qidiruv yuqori sarlavhada (direktor.php) — bu yerda takrorlanmaydi.
+// Qidiruv faol bo'lsa, uni bekor qilish havolasi ko'rsatiladi.
+if ($qidiruv !== '') {
+    echo html_writer::div(
+        html_writer::tag('b', '"' . s($qidiruv) . '"') . ' — '
+        . html_writer::link($url(['filter' => $filter]),
+            get_string('dir_clearsearch', 'local_targetzenit')), 'tz-dir-tools');
 }
-echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'q', 'value' => $qidiruv,
-    'class' => 'form-control form-control-sm mr-2',
-    'placeholder' => get_string('dir_search', 'local_targetzenit')]);
-echo html_writer::empty_tag('input', ['type' => 'submit', 'class' => 'btn btn-sm btn-outline-secondary',
-    'value' => get_string('dir_searchbtn', 'local_targetzenit')]);
-echo html_writer::end_tag('form');
-echo html_writer::end_div();
 echo html_writer::end_div();
 
 if (!$list['rows']) {

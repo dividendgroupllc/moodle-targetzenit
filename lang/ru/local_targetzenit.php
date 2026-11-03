@@ -68,6 +68,7 @@ $string['dir_byclass'] = 'Классы';
 $string['dir_byschedule'] = 'по расписанию';
 $string['dir_bysubject'] = 'Предметы';
 $string['dir_byteacher'] = 'Учителя';
+$string['dir_clearsearch'] = 'очистить поиск';
 $string['dir_colclass'] = 'Класс';
 $string['dir_collesson'] = 'Данные урока';
 $string['dir_collessons'] = 'Уроки';
