@@ -412,5 +412,48 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102921, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026110310) {
+
+        // --- Guruh tutori (sinf rahbari).
+        //
+        // NEGA KERAK: jadvalda ba'zi fanlar VAKANT — o'qituvchi hali
+        // tayinlanmagan (`INSTR-...vakant`, `INSTR-TUTOR`). Bunday darslarni
+        // guruhning o'z tutori o'tadi. Tutorsiz bu darslar hech kimning
+        // hisobotiga tushmasdi: haftada 82 dars g'oyib bo'lardi.
+        //
+        // NEGA MOODLE'DA: Frappe'da guruh<->tutor bog'lanishi umuman yo'q
+        // (tutor faqat `Employee.designation` da lavozim sifatida bor).
+        // Qoida: moliya ERP'da, dars jarayoni Moodle'da — biriktirish shu yerda.
+        $table = new xmldb_table('local_targetzenit_tutor');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('tutorkey', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('academicyear', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('groupkey', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('groupname', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            // Unikal kalit hash ustida — `groupkey` uzun CHAR (indeks chegarasi
+            // 333 belgi; `_norm` da aynan shu xato migratsiyani to'xtatgan).
+            $table->add_index('tutorkey', XMLDB_INDEX_UNIQUE, ['tutorkey']);
+            $table->add_index('year', XMLDB_INDEX_NOTUNIQUE, ['academicyear']);
+            $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $dbman->create_table($table);
+        }
+
+        // Vakant dars belgisi: rejada o'qituvchi YO'Q edi va dars guruh
+        // tutoriga yozildi. `substituted` dan farqli — u "boshqa o'qituvchi
+        // o'rnini bosdi" degani, bu esa "o'qituvchi umuman tayinlanmagan".
+        $table = new xmldb_table('local_targetzenit_fact');
+        $field = new xmldb_field('vacancy', XMLDB_TYPE_INTEGER, '1', null,
+            XMLDB_NOTNULL, null, '0', 'substituted');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110310, 'local', 'targetzenit');
+    }
+
     return true;
 }

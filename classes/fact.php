@@ -14,7 +14,7 @@
 //
 // To'rtta mustaqil vazifa o'lchanadi — bitta "bajarildi" holati emas: mavzu,
 // yo'qlama, baho, yozuv. O'qituvchi mavzuni yozib, baho qo'ymasligi mumkin
-// va bu normal (baho normasi Frappe'dan keladi, `norm` sinfiga qarang).
+// va bu normal (baho normasi Moodle sozlamasida, `norm` sinfiga qarang).
 
 namespace local_targetzenit;
 
@@ -26,7 +26,7 @@ class fact {
     const BLOK_KUN = 14;
 
     /** Faktga ko'chiriladigan maydonlar — yangilashda taqqoslash uchun. */
-    const MAYDONLAR = ['lessonid', 'writeruserid', 'attributeduserid', 'substituted',
+    const MAYDONLAR = ['lessonid', 'writeruserid', 'attributeduserid', 'substituted', 'vacancy',
         'hastopic', 'hashomework', 'studentcount', 'attendancecount', 'gradecount',
         'absentcount', 'latecount', 'audiostatus', 'audioseconds', 'analysestatus',
         'analysedat', 'overallscore', 'normdelta', 'lowconfcount', 'lastwriteat',
@@ -47,6 +47,10 @@ class fact {
         }
 
         $norma = ai::norm_overall();
+        // Guruh tutorlari — vakant fanlarning darslari shularga yoziladi.
+        // O'quv yili bo'yicha keshlanadi: slotlar bir necha yilga tegishli
+        // bo'lishi mumkin.
+        $tutorlar = [];
 
         $blok_boshi = $from;
         while ($blok_boshi <= $to) {
@@ -56,7 +60,7 @@ class fact {
             $slotlar = slot::in_range($blok_boshi, $blok_oxiri);
             if ($slotlar) {
                 $natija['slotlar'] += count($slotlar);
-                self::blok($slotlar, $blok_boshi, $blok_oxiri, $norma, $natija);
+                self::blok($slotlar, $blok_boshi, $blok_oxiri, $norma, $natija, $tutorlar);
             }
 
             if ($xabar) {
@@ -71,7 +75,7 @@ class fact {
 
     /** Bitta blokni ishlaydi. */
     protected static function blok(array $slotlar, string $from, string $to,
-                                    int $norma, array &$natija): void {
+                                    int $norma, array &$natija, array &$tutorlar): void {
         global $DB;
 
         // --- Shu oraliqdagi HAQIQATDA yozilgan darslar.
@@ -153,6 +157,7 @@ class fact {
                 'writeruserid' => null,
                 'attributeduserid' => $s->teacheruserid ? (int) $s->teacheruserid : null,
                 'substituted' => 0,
+                'vacancy' => 0,
                 'hastopic' => 0,
                 'hashomework' => 0,
                 'studentcount' => (int) ($oquvchilar[(int) $s->courseid] ?? 0),
@@ -172,6 +177,22 @@ class fact {
                 'feedbackcount' => $eski ? (int) $eski->feedbackcount : 0,
                 'timemodified' => $now,
             ];
+
+            // VAKANT FAN: rejada o'qituvchi yo'q (`INSTR-...vakant`, `INSTR-TUTOR`).
+            // Bunday darsni guruhning O'Z TUTORI o'tadi, shuning uchun hisobot
+            // unga yoziladi. Aks holda haftada 82 dars hech kimga tegmay
+            // qolardi va "yozmadi" hodisasi ko'rinmasdi.
+            if (!$f->attributeduserid) {
+                $yil = (string) $s->academicyear;
+                if (!isset($tutorlar[$yil])) {
+                    $tutorlar[$yil] = tutor::map($yil);
+                }
+                $t = $tutorlar[$yil][(string) $s->groupkey] ?? 0;
+                if ($t) {
+                    $f->attributeduserid = (int) $t;
+                    $f->vacancy = 1;
+                }
+            }
 
             if ($dars) {
                 $lessonid = (int) $dars->id;

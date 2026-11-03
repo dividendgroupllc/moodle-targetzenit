@@ -36,6 +36,17 @@ if ($hassiteconfig) {
         get_string('dir_setting_start', 'local_targetzenit'),
         get_string('dir_setting_start_desc', 'local_targetzenit'), '', PARAM_TEXT));
 
+    // BAHOLASH NORMALARI — MOODLE'DA (qaror 2026-11-03).
+    // Tamoyil: moliya ERP'da, dars jarayoni Moodle'da. Baholash dars
+    // jarayonining qismi, shuning uchun normasi ham shu yerda turadi.
+    // Bo'sh qoldirilsa `norm::ZAXIRA` dagi qiymat ishlatiladi.
+    foreach (\local_targetzenit\norm::ZAXIRA as $kod => $zaxira) {
+        $settings->add(new admin_setting_configtext('local_targetzenit/norm_' . $kod,
+            get_string('norm_' . $kod, 'local_targetzenit'),
+            get_string('norm_' . $kod . '_desc', 'local_targetzenit'),
+            (string) $zaxira, PARAM_INT));
+    }
+
     // ---------------- AI tahlili ----------------
     $settings->add(new admin_setting_heading('local_targetzenit/aiheading',
         get_string('ai_settings', 'local_targetzenit'), ''));

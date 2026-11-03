@@ -249,6 +249,7 @@
         <FIELD NAME="writeruserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Haqiqatda yozgan odam"/>
         <FIELD NAME="attributeduserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Hisobot kimga yoziladi: yozgan odam, u yo'q bo'lsa rejadagi"/>
         <FIELD NAME="substituted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="vacancy" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 = rejada o'qituvchi yo'q edi, dars guruh tutoriga yozildi"/>
         <FIELD NAME="hastopic" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="hashomework" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="studentcount" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -313,6 +314,25 @@
       <INDEXES>
         <INDEX NAME="normkey" UNIQUE="true" FIELDS="normkey"/>
         <INDEX NAME="academicyear" UNIQUE="false" FIELDS="academicyear"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_tutor" COMMENT="Guruh tutori (sinf rahbari). Vakant fanlarning darslari shu odamga yoziladi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="tutorkey" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false" COMMENT="md5(yil|guruh) — groupkey uzun, indeks chegarasiga sig'maydi"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="groupkey" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tutorkey" UNIQUE="true" FIELDS="tutorkey"/>
+        <INDEX NAME="year" UNIQUE="false" FIELDS="academicyear"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

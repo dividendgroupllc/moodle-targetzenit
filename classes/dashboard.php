@@ -580,20 +580,35 @@ class dashboard {
             }
             $out[] = (object) [
                 'status' => 'warning',
-                'matn' => count($muammo) . " o'qituvchi kaliti Moodle hisobiga bog'lanmagan "
-                    . "— haftada {$dars} dars hech kimning hisobotiga tushmaydi: "
-                    . implode(', ', $ismlar),
-                'amal' => "Vakansiya bo'lsa — normal. Aks holda Frappe'da `Instructor` ga "
-                    . "`Employee` bog'lab, jadvalni qayta yuborish kerak.",
+                'matn' => count($muammo) . " fan uchun o'qituvchi tayinlanmagan "
+                    . "(haftada {$dars} dars): " . implode(', ', $ismlar),
+                'amal' => "Bu darslarni guruh tutori o'tadi — «Guruh tutorlari» "
+                    . "sahifasida biriktirilgan bo'lsa, hisobot o'shanga yoziladi. "
+                    . "Agar haqiqiy o'qituvchi bo'lsa, Frappe'da `Instructor` ga "
+                    . "`Employee` bog'lab jadvalni qayta yuboring.",
             ];
         }
 
-        if (!norm::has_any($year)) {
+        // Vakant fanlar: tutori biriktirilmagan guruhlar.
+        //
+        // NEGA MUHIM: vakant darsni guruh tutori o'tadi. Tutor biriktirilmasa
+        // bu darslar hech kimning hisobotiga tushmaydi va "yozmadi" hodisasi
+        // umuman ko'rinmaydi.
+        $tutorsiz = tutor::missing($year);
+        if ($tutorsiz) {
+            $dars = 0;
+            $nomlar = [];
+            foreach ($tutorsiz as $g) {
+                $dars += (int) $g['vakant'];
+                $nomlar[] = $g['nom'];
+            }
             $out[] = (object) [
-                'status' => 'warning',
-                'matn' => "Baholash normalari Frappe'dan kelmagan — zaxira qiymatlar "
-                    . "ishlatilmoqda.",
-                'amal' => "Frappe'da `local_targetzenit_push_norms` chaqiruvini yoqish kerak.",
+                'status' => 'serious',
+                'matn' => count($tutorsiz) . " guruhda vakant fan bor, lekin tutor "
+                    . "biriktirilmagan — haftada {$dars} dars hech kimning hisobotiga "
+                    . "tushmaydi: " . implode(', ', $nomlar),
+                'amal' => "«Guruh tutorlari» sahifasida biriktiring — vakant darslar "
+                    . "o'sha tutorga yoziladi.",
             ];
         }
 

@@ -743,6 +743,82 @@ S = {
         "быть сильным.",
     ),
 
+    # ------------------------------------------------------- guruh tutorlari
+    "dir_tutors": ("Group tutors", "Guruh tutorlari", "Кураторы групп"),
+    "dir_tutorshelp": (
+        "Some subjects in the timetable have no teacher assigned yet. Those "
+        "lessons are taught by the group's own tutor, so they are reported "
+        "against that tutor. Without an assignment those lessons count for "
+        "nobody and a missing recording never shows up.",
+        "Jadvaldagi ba'zi fanlarga o'qituvchi hali tayinlanmagan. Bunday "
+        "darslarni guruhning o'z tutori o'tadi, shuning uchun hisobot o'shanga "
+        "yoziladi. Biriktirilmasa bu darslar hech kimga tegmaydi va yozuv "
+        "yo'qligi umuman ko'rinmaydi.",
+        "Некоторым предметам в расписании учитель ещё не назначен. Такие уроки "
+        "ведёт куратор группы, поэтому отчёт пишется на него. Без привязки эти "
+        "уроки никому не засчитываются и отсутствие записи не видно.",
+    ),
+    "dir_tutorsum": (
+        "{$a->vakant} lessons a week have no assigned teacher; {$a->guruh} groups still have no tutor.",
+        "Haftada {$a->vakant} dars o'qituvchisiz; {$a->guruh} guruhda tutor hali biriktirilmagan.",
+        "{$a->vakant} уроков в неделю без учителя; в {$a->guruh} группах куратор ещё не назначен.",
+    ),
+    "dir_tutorsaved": ("{$a} assignments changed.", "{$a} ta biriktirish o'zgardi.",
+                       "Изменено привязок: {$a}."),
+    "dir_tutornone": ("— not assigned —", "— biriktirilmagan —", "— не назначен —"),
+    "dir_tutornocand": (
+        "There is no teacher linked to a Moodle account yet, so there is nobody to assign.",
+        "Moodle hisobiga bog'langan o'qituvchi yo'q — biriktiradigan odam topilmadi.",
+        "Нет ни одного учителя, связанного с учётной записью Moodle — некого назначить.",
+    ),
+    "dir_colgroup": ("Group", "Guruh", "Группа"),
+    "dir_colvacant": ("Without a teacher", "O'qituvchisiz", "Без учителя"),
+    "dir_colvacsubj": ("Subjects", "Qaysi fanlar", "Какие предметы"),
+    "dir_coltutor": ("Tutor", "Tutor", "Куратор"),
+    "dir_nweek": ("{$a} a week", "haftada {$a} ta", "{$a} в неделю"),
+
+    # --------------------------------------------- baholash normalari (Moodle)
+    "norm_mavzu_ulushi": ("Topic: expected share of lessons, %",
+                          "Mavzu: darslarning necha foizida kutiladi, %",
+                          "Тема: в каком проценте уроков ожидается, %"),
+    "norm_mavzu_ulushi_desc": ("Normally 100 — a topic is written for every lesson.",
+                               "Odatda 100 — mavzu har darsda yoziladi.",
+                               "Обычно 100 — тема записывается на каждом уроке."),
+    "norm_yoqlama_qamrovi": ("Attendance: share of the class list to be marked, %",
+                             "Yo'qlama: sinf ro'yxatining necha foizi belgilanishi kerak, %",
+                             "Посещаемость: какой процент списка класса отмечается, %"),
+    "norm_yoqlama_qamrovi_desc": ("", "", ""),
+    "norm_baho_ulushi": ("Grades: expected share of lessons, %",
+                         "Baho: darslarning necha foizida kutiladi, %",
+                         "Оценки: в каком проценте уроков ожидаются, %"),
+    "norm_baho_ulushi_desc": (
+        "A grade is not expected in every lesson. This value decides when the "
+        "panel treats grading as insufficient.",
+        "Baho har darsda kutilmaydi. Panel qachon \'baho kam\' deb hisoblashini "
+        "shu qiymat belgilaydi.",
+        "Оценка ожидается не на каждом уроке. Это значение определяет, когда "
+        "панель считает оценивание недостаточным.",
+    ),
+    "norm_uy_vazifa_ulushi": ("Homework: expected share of lessons, %",
+                              "Uy vazifa: darslarning necha foizida kutiladi, %",
+                              "Домашнее задание: в каком проценте уроков ожидается, %"),
+    "norm_uy_vazifa_ulushi_desc": ("", "", ""),
+    "norm_yozuv_ulushi": ("Recording: expected share of lessons, %",
+                          "Yozuv: darslarning necha foizida kutiladi, %",
+                          "Запись: в каком проценте уроков ожидается, %"),
+    "norm_yozuv_ulushi_desc": ("100 — recording every lesson is mandatory.",
+                               "100 — yozuv har darsda majburiy.",
+                               "100 — запись обязательна на каждом уроке."),
+    "norm_jurnal_kechikish_soat": ("Journal: allowed delay, hours",
+                                   "Jurnal: ruxsat etilgan kechikish, soat",
+                                   "Журнал: допустимая задержка, часов"),
+    "norm_jurnal_kechikish_soat_desc": (
+        "If the journal is filled in later than this after the lesson ends, it "
+        "appears in the attention queue.",
+        "Jurnal dars tugagandan keyin shundan ko'p kechiksa — diqqat navbatiga tushadi.",
+        "Если журнал заполнен позже этого срока после урока — попадает в очередь внимания.",
+    ),
+
     # ------------------------------------------------- direktor paneli vazifalari
     "task_slotbuild": (
         "Rebuild the planned lesson slots from the timetable",

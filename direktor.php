@@ -174,6 +174,8 @@ echo html_writer::link(new moodle_url('/local/targetzenit/yozuvlar.php'),
     get_string('recordings', 'local_targetzenit'), ['class' => 'tz-dir-navitem']);
 
 echo html_writer::div(get_string('dir_navmanage', 'local_targetzenit'), 'tz-dir-navlab');
+echo html_writer::link(new moodle_url('/local/targetzenit/tutorlar.php'),
+    get_string('dir_tutors', 'local_targetzenit'), ['class' => 'tz-dir-navitem']);
 echo html_writer::link(new moodle_url('/local/targetzenit/index.php'),
     get_string('timetable', 'local_targetzenit'), ['class' => 'tz-dir-navitem']);
 if (has_capability('moodle/site:config', $context)) {

@@ -1,14 +1,16 @@
 <?php
 // NORMALAR — "nima kutiladi" degan qiymatlar.
 //
-// MANBA: Frappe (`target_zenit`). Zavuch baholash sozlamalari allaqachon
-// o'sha tomonda yuritiladi; Moodle'da ikkinchi nusxa yaratish ikki manba
-// muammosini keltiradi. Shuning uchun `_payroll` bilan BIR XIL tamoyil:
-// Frappe yuboradi, Moodle faqat ko'rsatadi va HECH NARSA hisoblamaydi.
+// MANBA: MOODLE (plagin sozlamalari). Qaror 2026-11-03 da o'zgardi —
+// avval Frappe'dan kelishi rejalashtirilgan edi, lekin umumiy tamoyil
+// aniqlashtirildi: **moliya ERP'da, dars jarayoni Moodle'da**. Baholash
+// dars jarayonining qismi, shuning uchun normasi ham shu yerda.
 //
-// ZAXIRA QIYMAT: norma kelmagan bo'lsa panel jim nolga tushmasligi kerak —
-// zaxira ishlatiladi va UI'da "norma Frappe'dan kelmagan" deb belgilanadi.
-// Jim nol "hamma narsa yaxshi" degan yolg'on signal berardi.
+// Ustunlik tartibi: plagin sozlamasi -> `_norm` jadvali (Frappe push'i,
+// eski integratsiya uchun qoldirilgan) -> {@see ZAXIRA}.
+//
+// ZAXIRA QIYMAT: hech qayerda belgilanmagan bo'lsa panel jim NOLGA
+// tushmasligi kerak — nol "hamma narsa yomon" degan yolg'on signal berardi.
 
 namespace local_targetzenit;
 
@@ -72,6 +74,12 @@ class norm {
     public static function get(string $code, array $ctx = []): array {
         $year = (string) ($ctx['year'] ?? timetable::current_year());
         $xarita = $year !== '' ? self::load($year) : [];
+
+        // 1) Moodle sozlamasi — eng ustun manba
+        $sozlama = get_config('local_targetzenit', 'norm_' . $code);
+        if ($sozlama !== false && trim((string) $sozlama) !== '') {
+            return ['value' => (float) $sozlama, 'source' => 'moodle', 'scope' => 'global'];
+        }
 
         $tartib = [
             ['teacher', (string) ($ctx['teacherkey'] ?? '')],
