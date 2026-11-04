@@ -79,7 +79,8 @@ class dashboard {
      *
      * @return string SQL sharti
      */
-    protected static function otgan_sql(string $alias = 's'): string {
+    // O'qituvchi paneli ham shu shartni ishlatadi, shuning uchun `public`.
+    public static function otgan_sql(string $alias = 's'): string {
         $bugun = date('Y-m-d');
         $vaqt = date('H:i');
         return "({$alias}.lessondate < '{$bugun}'"
@@ -545,6 +546,136 @@ class dashboard {
             'yozmadi' => (int) ($r->yozmadi ?? 0),
             'kutilmoqda' => (int) ($r->kutilmoqda ?? 0),
         ];
+    }
+
+    // ------------------------------------------------------ DARS YOZUVLARI
+    /**
+     * Dars yozuvlari lentasi — har qator bitta yozuv.
+     *
+     * Tuzilma Frappe'dagi «Sotuv nazorati» sahifasidan olingan: master qator
+     * (kim, qayerda, nima) + bosilganda ochiladigan karta (audio + tahlil).
+     *
+     * @param array $f ['teacher'=>int, 'groupkey'=>string, 'from'=>'Y-m-d', 'to'=>'Y-m-d']
+     */
+    public static function recordings(array $f, int $page = 0, int $perpage = 20): array {
+        global $DB;
+
+        $params = [];
+        $shart = ['a.lessonid > 0'];
+
+        if (!empty($f['from'])) {
+            $shart[] = 'l.lessondate >= :a';
+            $params['a'] = $f['from'];
+        }
+        if (!empty($f['to'])) {
+            $shart[] = 'l.lessondate <= :b';
+            $params['b'] = $f['to'];
+        }
+        if (!empty($f['teacher'])) {
+            // Hisobot kimga yozilgan bo'lsa — o'sha (vakant darsda tutor)
+            $shart[] = 'COALESCE(f.attributeduserid, l.teacherid) = :t';
+            $params['t'] = (int) $f['teacher'];
+        }
+        if (!empty($f['groupkey'])) {
+            $shart[] = 's.groupkey = :g';
+            $params['g'] = $f['groupkey'];
+        }
+        $where = 'WHERE ' . implode(' AND ', $shart);
+
+        // `_fact`/`_slot` LEFT JOIN: jadvaldan tashqarida o'tilgan darsning
+        // yozuvi ham ko'rinishi kerak, aks holda u jimgina g'oyib bo'lardi.
+        $manba = "FROM {local_targetzenit_audio} a
+                  JOIN {local_targetzenit_lesson} l ON l.id = a.lessonid
+             LEFT JOIN {local_targetzenit_fact} f ON f.lessonid = l.id
+             LEFT JOIN {local_targetzenit_slot} s ON s.id = f.slotid
+             LEFT JOIN {course} c ON c.id = l.courseid
+             LEFT JOIN {user} u ON u.id = COALESCE(f.attributeduserid, l.teacherid)";
+
+        $jami = $DB->count_records_sql("SELECT COUNT(1) $manba $where", $params);
+
+        $rows = $DB->get_records_sql("
+            SELECT a.id AS audioid, a.lessonid, a.status AS audiostatus, a.duration,
+                   a.filesize, a.timecreated, a.analysedat, a.aierror, a.analysis,
+                   CASE WHEN a.transcript IS NULL OR a.transcript = '' THEN 0 ELSE 1 END AS hasmatn,
+                   l.topic, l.lessondate, l.lessonno, l.courseid,
+                   s.id AS slotid, s.groupname, s.groupkey, s.subjectname,
+                   f.overallscore, f.normdelta, f.analysestatus, f.vacancy,
+                   c.fullname AS coursename,
+                   u.id AS teacheruserid, u.firstname, u.lastname
+              $manba $where
+          ORDER BY l.lessondate DESC, l.lessonno DESC, a.id DESC",
+            $params, $page * $perpage, $perpage);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $r->ism = ($r->firstname || $r->lastname)
+                ? self::ism($r->firstname, $r->lastname) : '—';
+
+            // Guruh/fan slotdan keladi; jadvaldan tashqari dars bo'lsa — kurs nomidan
+            if (!$r->groupname && $r->coursename) {
+                $qism = explode('::', (string) ($r->coursename ?? ''));
+                $r->groupname = trim((string) $r->coursename);
+            }
+
+            $d = $r->analysis ? json_decode((string) $r->analysis, true) : null;
+            $r->xulosa = is_array($d) ? trim((string) ($d['summary'] ?? '')) : '';
+            $r->tavsiyalar = (is_array($d) && !empty($d['recommendations']))
+                ? array_slice((array) $d['recommendations'], 0, 2) : [];
+
+            // Ball faktdan; fakt bo'lmasa (jadvaldan tashqari dars) JSON'dan
+            $ball = $r->overallscore;
+            if ($ball === null && is_array($d) && isset($d['overall']['score'])) {
+                $ball = $d['overall']['score'];
+            }
+            $r->ball = ($ball === null || $ball === '') ? null : (int) $ball;
+            $r->band = self::band($r->ball);
+
+            // Kategoriyalar — normadan eng uzoqlashganlari (ijobiy va salbiy)
+            $r->kuchli = null;
+            $r->kuchsiz = null;
+            if (is_array($d) && !empty($d['categories'])) {
+                $k = [];
+                foreach ($d['categories'] as $c) {
+                    $kod = $c['code'] ?? '';
+                    if (!isset(ai::CATEGORIES[$kod]) || ($c['confidence'] ?? '') === 'low') {
+                        continue;
+                    }
+                    $k[] = ['nom' => ai::CATEGORIES[$kod]['nom'],
+                            'ball' => (int) ($c['score'] ?? 0),
+                            'delta' => (int) ($c['score'] ?? 0) - ai::CATEGORIES[$kod]['norm']];
+                }
+                if ($k) {
+                    usort($k, fn($x, $y) => $y['delta'] <=> $x['delta']);
+                    $r->kuchli = reset($k);
+                    $r->kuchsiz = end($k);
+                }
+            }
+            unset($r->analysis);   // katta matn — sahifaga kerak emas
+            $out[] = $r;
+        }
+        return ['rows' => $out, 'jami' => (int) $jami];
+    }
+
+    /** Yozuvlar sahifasi filtrlari uchun ro'yxatlar. */
+    public static function recording_filters(string $year): array {
+        global $DB;
+
+        $oqituvchilar = [];
+        foreach (staff::all($year) as $st) {
+            if (!empty($st->userid)) {
+                $oqituvchilar[(int) $st->userid] = (string) $st->teachername;
+            }
+        }
+        asort($oqituvchilar, SORT_NATURAL | SORT_FLAG_CASE);
+
+        $guruhlar = [];
+        $rows = $DB->get_records_sql("
+            SELECT DISTINCT groupkey, groupname FROM {local_targetzenit_slot}
+             WHERE academicyear = :y ORDER BY groupname", ['y' => $year]);
+        foreach ($rows as $r) {
+            $guruhlar[(string) $r->groupkey] = (string) $r->groupname;
+        }
+        return ['oqituvchilar' => $oqituvchilar, 'guruhlar' => $guruhlar];
     }
 
     // ------------------------------------------------- MA'LUMOT SOG'LIGI

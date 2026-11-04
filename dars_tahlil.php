@@ -14,6 +14,7 @@ require(__DIR__ . '/../../config.php');
 
 use local_targetzenit\ai;
 use local_targetzenit\audio;
+use local_targetzenit\output\shell;
 use local_targetzenit\output\tahlil;
 
 require_login();
@@ -32,15 +33,16 @@ if (!$lessonid && $slotid) {
         $slot = $DB->get_record('local_targetzenit_slot', ['id' => $slotid], '*', MUST_EXIST);
         $PAGE->set_context($syscontext);
         $PAGE->set_url(new moodle_url('/local/targetzenit/dars_tahlil.php', ['slotid' => $slotid]));
-        $PAGE->set_title(get_string('dir_lessoncard', 'local_targetzenit'));
-        $PAGE->set_heading(get_string('dir_lessoncard', 'local_targetzenit'));
+        shell::setup($PAGE, get_string('dir_lessoncard', 'local_targetzenit'));
         echo $OUTPUT->header();
+        shell::start('yozuvlar', get_string('dir_lessoncard', 'local_targetzenit'));
         echo html_writer::div(
             html_writer::tag('b', format_string($slot->subjectname) . ' · '
                 . format_string($slot->groupname)) . ' · '
             . userdate(strtotime($slot->lessondate), '%d.%m.%Y') . ' · '
             . $slot->lessonno . '-dars', 'mb-2');
         echo $OUTPUT->notification(get_string('dir_nojournal', 'local_targetzenit'), 'info');
+        shell::end();
         echo $OUTPUT->footer();
         exit;
     }
@@ -52,9 +54,7 @@ $context = context_course::instance($dars->courseid);
 
 $PAGE->set_context($syscontext);
 $PAGE->set_url(new moodle_url('/local/targetzenit/dars_tahlil.php', ['lessonid' => $lessonid]));
-$PAGE->set_pagelayout('standard');
-$PAGE->set_title(get_string('dir_lessoncard', 'local_targetzenit'));
-$PAGE->set_heading(get_string('dir_lessoncard', 'local_targetzenit'));
+shell::setup($PAGE, get_string('dir_lessoncard', 'local_targetzenit'));
 
 // Jurnal holati — yo'qlama va baholar yig'indisi
 $yoz = $DB->get_record_sql("
@@ -72,19 +72,12 @@ $oqituvchi = $dars->teacherid
     : null;
 
 echo $OUTPUT->header();
-echo html_writer::start_div('tz-dir');
-
-// =================================================== DARS SARLAVHASI
-$sarlavha = html_writer::tag('b', format_string($course->fullname))
-    . html_writer::tag('span',
-        ' · ' . userdate(strtotime($dars->lessondate), '%d.%m.%Y')
+shell::start('yozuvlar',
+    format_string($course->fullname) . ' · '
+        . userdate(strtotime($dars->lessondate), '%d.%m.%Y')
         . ' · ' . $dars->lessonno . '-dars',
-        ['class' => 'tz-dir-meta']);
-if ($oqituvchi) {
-    $sarlavha .= html_writer::div(
-        get_string('dir_wroteby', 'local_targetzenit', fullname($oqituvchi)), 'tz-dir-sub');
-}
-echo html_writer::div($sarlavha, 'tz-dir-head');
+    $oqituvchi
+        ? get_string('dir_wroteby', 'local_targetzenit', fullname($oqituvchi)) : '');
 
 // Dars kokpitiga havola — FAQAT shu kursda dars o'tish huquqi borlarga.
 // Direktorda bu ruxsat yo'q, shuning uchun unda tugma ham ko'rinmaydi.
@@ -193,5 +186,5 @@ if ($karta === '') {
     echo $karta;
 }
 
-echo html_writer::end_div();
+shell::end();
 echo $OUTPUT->footer();

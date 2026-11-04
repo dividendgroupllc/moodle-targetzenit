@@ -1,0 +1,90 @@
+{{!
+    @template local_targetzenit/mobile_grades
+
+    Choraklik baholar — o'qituvchi uchun umumiy jadval (mobil ilova).
+
+    Qatorlar — o'quvchilar, ustunlar — choraklar. Jurnalning to'liq setkasi
+    (o'quvchi x dars) telefonga sig'maydi, chorak o'rtachalari esa sig'adi.
+    Past o'rtacha (6 dan kichik) qizil — o'qituvchi aynan shuni qidiradi.
+
+    Context variables required for this template:
+    * bor - ko'rsatadigan narsa bormi
+    * xabar - bo'lmasa sabab
+    * choraklar - [{nomi}] ustun sarlavhalari
+    * kurslar - [{nomi, bor, oquvchilar}]
+    * oquvchilar - [{ism, baho_soni, yoq_soni, hujayralar}]
+    * hujayralar - [{qiymat, bor, past}] choraklar tartibida
+
+    Example context (json):
+    {
+        "bor": true, "xabar": "",
+        "choraklar": [{"nomi": "1-chorak"}, {"nomi": "2-chorak"}],
+        "kurslar": [{
+            "nomi": "8 A(full) — ROBOTICS", "bor": true,
+            "oquvchilar": [{
+                "ism": "Ali Valiyev", "baho_soni": "12 ta baho",
+                "yoq_soni": "2 ta qoldirgan",
+                "hujayralar": [{"qiymat": "8.4", "bor": true, "past": false},
+                               {"qiymat": "5.2", "bor": true, "past": true}]
+            }]
+        }]
+    }
+}}
+{{^ bor }}
+    <ion-card>
+        <ion-card-content><p>{{ xabar }}</p></ion-card-content>
+    </ion-card>
+{{/ bor }}
+
+{{# bor }}
+<ion-card>
+    <ion-card-content>
+        <p>{{#str}}app_termaverages, local_targetzenit{{/str}}</p>
+    </ion-card-content>
+</ion-card>
+
+{{# kurslar }}
+<ion-card>
+    <ion-card-header>
+        <ion-card-title class="ion-text-wrap">{{ nomi }}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+        {{^ bor }}
+            <p>{{#str}}app_nogradesyet, local_targetzenit{{/str}}</p>
+        {{/ bor }}
+
+        {{# bor }}
+        <ion-grid class="ion-no-padding">
+            <ion-row class="ion-align-items-center">
+                <ion-col size="5"></ion-col>
+                {{# choraklar }}
+                <ion-col class="ion-text-center">
+                    <small>{{ nomi }}</small>
+                </ion-col>
+                {{/ choraklar }}
+            </ion-row>
+
+            {{# oquvchilar }}
+            <ion-row class="ion-align-items-center">
+                <ion-col size="5">
+                    <p class="ion-no-margin">{{ ism }}</p>
+                    <small>{{ baho_soni }}{{# yoq_soni }} · {{ yoq_soni }}{{/ yoq_soni }}</small>
+                </ion-col>
+                {{# hujayralar }}
+                <ion-col class="ion-text-center">
+                    {{# bor }}
+                        <ion-badge color="{{# past }}danger{{/ past }}{{^ past }}success{{/ past }}">
+                            {{ qiymat }}
+                        </ion-badge>
+                    {{/ bor }}
+                    {{^ bor }}<small>—</small>{{/ bor }}
+                </ion-col>
+                {{/ hujayralar }}
+            </ion-row>
+            {{/ oquvchilar }}
+        </ion-grid>
+        {{/ bor }}
+    </ion-card-content>
+</ion-card>
+{{/ kurslar }}
+{{/ bor }}

@@ -363,6 +363,28 @@ S = {
         "У вас нет прав вести занятия по этому курсу.",
     ),
 
+    # ------------------------------------- ilovadagi choraklik baholar
+    "app_termgrades": ("Term grades", "Choraklik baholar", "Оценки по четвертям"),
+    "app_nocourses": (
+        "You are not teaching any courses.",
+        "Sizga biriktirilgan kurs yo'q.",
+        "За вами не закреплены курсы.",
+    ),
+    "app_nogradesyet": (
+        "No grades in this course yet.",
+        "Bu kursda hali baho qo'yilmagan.",
+        "В этом курсе оценок пока нет.",
+    ),
+    "app_gradecount": ("{$a} grades", "{$a} ta baho", "оценок: {$a}"),
+    "app_absences": ("{$a} absences", "{$a} ta qoldirgan", "пропусков: {$a}"),
+    "app_termaverages": (
+        "Average grade per term. Tap a lesson in Today's lessons to enter grades.",
+        "Chorak bo'yicha o'rtacha baho. Baho qo'yish uchun \"Bugungi darslar\" "
+        "dan darsni oching.",
+        "Средний балл по четвертям. Чтобы выставить оценки, откройте урок в "
+        "разделе \"Сегодняшние уроки\".",
+    ),
+
     # --------------------------------------------------- jadval sahifasi
     "tt_noclass": (
         "Your class could not be determined — you are not enrolled in any "
@@ -861,6 +883,245 @@ S = {
         "Jurnal dars tugagandan keyin shundan ko'p kechiksa — diqqat navbatiga tushadi.",
         "Если журнал заполнен позже этого срока после урока — попадает в очередь внимания.",
     ),
+
+    # --------------------------------------------------- dars yozuvlari lentasi
+    "rec_sub": (
+        "{$a} recordings. Click a row to hear the lesson and read the short analysis.",
+        "{$a} ta yozuv. Qatorni bosing — darsni eshitasiz va qisqa tahlilni o'qiysiz.",
+        "{$a} записей. Нажмите строку — услышите урок и прочитаете краткий анализ.",
+    ),
+    "rec_allteachers": ("All teachers", "Barcha o'qituvchilar", "Все учителя"),
+    "rec_allgroups": ("All groups", "Barcha guruhlar", "Все группы"),
+    "rec_from": ("From", "Sanadan", "С даты"),
+    "rec_to": ("To", "Sanagacha", "По дату"),
+    "rec_apply": ("Apply", "Qo'llash", "Применить"),
+    "rec_reset": ("reset", "tozalash", "сбросить"),
+    "rec_none": ("No recordings for this filter.", "Bu filtrda yozuv yo'q.",
+                 "По этому фильтру записей нет."),
+    "rec_none_help": (
+        "Widen the date range, or pick \'All teachers\' and \'All groups\'.",
+        "Sana oralig'ini kengaytiring yoki «Barcha o'qituvchilar» va «Barcha guruhlar» ni tanlang.",
+        "Расширьте диапазон дат или выберите «Все учителя» и «Все группы».",
+    ),
+    "rec_coltopic": ("Topic", "Mavzu", "Тема"),
+    "rec_colwhen": ("Recorded", "Qachon yozilgan", "Когда записано"),
+    "rec_collength": ("Length", "Davomiyligi", "Длительность"),
+    "rec_colai": ("AI assessment", "AI bahosi", "Оценка ИИ"),
+    "rec_colsummary": ("Short summary", "Qisqa xulosa", "Краткое резюме"),
+    "rec_min": ("min", "daq", "мин"),
+    "rec_expand": ("Click to open the recording and the analysis",
+                   "Yozuv va tahlilni ochish uchun bosing",
+                   "Нажмите, чтобы открыть запись и анализ"),
+    "rec_pending": ("not analysed yet", "hali tahlil qilinmagan", "ещё не проанализирован"),
+    "rec_vacancy": ("vacancy — taught by the tutor", "vakant — tutor o'tgan",
+                    "вакансия — вёл куратор"),
+    "rec_hastext": ("transcript available", "transkript bor", "есть расшифровка"),
+    "rec_strong": ("strongest", "kuchli tomoni", "сильная сторона"),
+    "rec_weak": ("to develop", "rivojlantirish kerak", "требует развития"),
+    "rec_openlesson": ("Open the lesson in full", "Dars jarayonini to'liq ochish",
+                       "Открыть урок полностью"),
+    "rec_delaudio": ("Delete the audio", "Audioni o'chirish", "Удалить аудио"),
+    "rec_delaudio_q": (
+        "The audio will be deleted. The transcript and the analysis stay. Continue?",
+        "Audio o'chiriladi. Transkript va tahlil qoladi. Davom etamizmi?",
+        "Аудио будет удалено. Расшифровка и анализ останутся. Продолжить?",
+    ),
+    "rec_delall": ("Delete everything", "Butunlay o'chirish", "Удалить полностью"),
+    "rec_delall_q": (
+        "The audio, the transcript AND the analysis will be deleted. Continue?",
+        "Audio, transkript VA tahlil butunlay o'chiriladi. Davom etamizmi?",
+        "Аудио, расшифровка И анализ будут удалены полностью. Продолжить?",
+    ),
+    "rec_deleted_audio": (
+        "The audio was deleted. The transcript and the analysis remain.",
+        "Audio o'chirildi. Transkript va tahlil saqlanib qoldi.",
+        "Аудио удалено. Расшифровка и анализ сохранены.",
+    ),
+    "rec_deleted_all": (
+        "The recording was deleted completely (audio, transcript and analysis).",
+        "Yozuv butunlay o'chirildi (audio, transkript va tahlil).",
+        "Запись удалена полностью (аудио, расшифровка и анализ).",
+    ),
+
+    # ------------------------------------------------- O'QITUVCHI PANELI
+    "oq_mypanel": (
+        "My lessons",
+        "Mening darslarim",
+        "Мои уроки",
+    ),
+    "oq_mylessons": (
+        "My lessons",
+        "Mening darslarim",
+        "Мои уроки",
+    ),
+    "oq_card": (
+        "Teacher card",
+        "O'qituvchi kartasi",
+        "Карточка учителя",
+    ),
+    "oq_noaccess": (
+        "You may only view your own lessons.",
+        "Siz faqat o'z darslaringizni ko'rishingiz mumkin.",
+        "Вы можете просматривать только свои уроки.",
+    ),
+    "oq_empty": (
+        "No lesson is recorded for this person in the selected period. If this looks "
+        "wrong, the staff key may be unlinked: the Employee ID must match the Moodle "
+        "user idnumber.",
+        "Tanlangan davrda bu odamga yozilgan dars yo'q. Agar bu noto'g'ri ko'rinsa, "
+        "kalit bog'lanmagan bo'lishi mumkin: Employee ID Moodle'dagi user idnumber "
+        "bilan mos bo'lishi shart.",
+        "За выбранный период уроков за этим человеком не записано. Если это неверно, "
+        "возможно не связан ключ: Employee ID должен совпадать с idnumber пользователя "
+        "Moodle.",
+    ),
+    "oq_tryall": (
+        "Show the whole monitoring period",
+        "Butun kuzatuv davrini ko'rsatish",
+        "Показать весь период наблюдения",
+    ),
+    "oq_all": ("All", "Hammasi", "Всё"),
+    "oq_periodis": (
+        "{$a->nom}: {$a->from} - {$a->to}",
+        "{$a->nom}: {$a->from} - {$a->to}",
+        "{$a->nom}: {$a->from} - {$a->to}",
+    ),
+    "oq_watchfrom": (
+        "Monitoring starts on {$a} - the journal was not in use before that date, "
+        "so earlier lessons are not counted.",
+        "Kuzatuv {$a} dan boshlanadi - undan oldin jurnal ishlatilmagan, "
+        "shuning uchun avvalgi darslar hisobga olinmaydi.",
+        "Наблюдение начинается с {$a} - до этой даты журнал не использовался, "
+        "поэтому более ранние уроки не учитываются.",
+    ),
+    "oq_perweek": (
+        "{$a} lessons/week",
+        "{$a} dars/hafta",
+        "{$a} уроков/неделя",
+    ),
+
+    # --- plitalar
+    "oq_done": ("Lessons taught", "O'tilgan darslar", "Проведённые уроки"),
+    "oq_ofplanned": (
+        "of {$a} planned",
+        "rejadagi {$a} tadan",
+        "из {$a} по плану",
+    ),
+    "oq_complete": ("Fully completed", "To'liq bajarilgan", "Полностью выполнено"),
+    "oq_complete_sub": (
+        "topic + attendance + recording, all three present",
+        "mavzu + yo'qlama + yozuv, uchalasi ham bor",
+        "тема + посещаемость + запись, все три на месте",
+    ),
+
+    # --- majburiy vazifalar
+    "oq_duties": ("Required work", "Majburiy vazifalar", "Обязательные задачи"),
+    "oq_duties_sub": (
+        "Share of past lessons where each item was recorded.",
+        "Vaqti o'tgan darslarning qanchasida bu ish bajarilgani.",
+        "Доля прошедших уроков, где это было выполнено.",
+    ),
+    "oq_m_topic": ("Lesson topic", "Dars mavzusi", "Тема урока"),
+    "oq_m_att": ("Attendance", "Yo'qlama", "Посещаемость"),
+    "oq_m_rec": ("Recording", "Dars yozuvi", "Запись урока"),
+    "oq_m_hw": ("Homework", "Uy vazifa", "Домашнее задание"),
+    "oq_m_grade": ("Grades", "Baholar", "Оценки"),
+    "oq_notrequired": (
+        "not expected in every lesson",
+        "har darsda kutilmaydi",
+        "не требуется на каждом уроке",
+    ),
+    "oq_substituted": (
+        "{$a} of these lessons were taught as a substitute.",
+        "Shu darslardan {$a} tasini o'rnini bosib o'tgansiz.",
+        "Из этих уроков {$a} проведено в качестве замены.",
+    ),
+
+    # --- guruh x fan
+    "oq_bygroup": ("By class and subject", "Sinf va fan bo'yicha", "По классам и предметам"),
+    "oq_colgroup": ("Class", "Sinf", "Класс"),
+    "oq_colsubject": ("Subject", "Fan", "Предмет"),
+    "oq_collessons": ("Taught / planned", "O'tilgan / rejada", "Проведено / по плану"),
+    "oq_colcomplete": ("Completed", "Bajarilgan", "Выполнено"),
+    "oq_clearfilter": (
+        "Show all classes",
+        "Hamma sinfni ko'rsatish",
+        "Показать все классы",
+    ),
+
+    # --- kategoriya profili
+    "oq_profile": (
+        "Teaching profile (15 criteria)",
+        "Dars berish profili (15 mezon)",
+        "Профиль преподавания (15 критериев)",
+    ),
+    "oq_profile_sub": (
+        "Each criterion is compared with its OWN international average, not with 100%.",
+        "Har mezon O'Z xalqaro o'rtachasiga nisbatan ko'rsatilgan, 100% ga emas.",
+        "Каждый критерий показан относительно СВОЕГО международного среднего, а не 100%.",
+    ),
+    "oq_noprofile": (
+        "No analysed lesson in this period yet - the profile appears once recordings "
+        "have been analysed.",
+        "Bu davrda tahlil qilingan dars yo'q - yozuvlar tahlil qilingach profil paydo bo'ladi.",
+        "В этом периоде нет проанализированных уроков - профиль появится после анализа записей.",
+    ),
+    "oq_strong": ("Strongest", "Kuchli tomon", "Сильная сторона"),
+    "oq_weak": ("Needs work", "Ishlash kerak", "Требует работы"),
+    "oq_below": ("below average", "o'rtachadan past", "ниже среднего"),
+    "oq_normzero": ("international average", "xalqaro o'rtacha", "международное среднее"),
+    "oq_above": ("above average", "o'rtachadan yuqori", "выше среднего"),
+    "oq_notmeasured": (
+        "not measurable from audio",
+        "audio orqali baholanmadi",
+        "по аудио не оценивается",
+    ),
+    "oq_normn": (
+        "average {$a->norma}% · n={$a->n}",
+        "o'rtacha {$a->norma}% · n={$a->n}",
+        "среднее {$a->norma}% · n={$a->n}",
+    ),
+    "oq_profile_note": (
+        "Rows based on fewer than {$a} lessons are dimmed: the sample is too small "
+        "to draw a conclusion.",
+        "{$a} tadan kam darsga asoslangan qatorlar susaytirilgan: xulosa chiqarish "
+        "uchun namuna kichik.",
+        "Строки на основе менее {$a} уроков показаны бледнее: выборка слишком мала "
+        "для вывода.",
+    ),
+
+    # --- darslar ro'yxati
+    "oq_lessons": ("Lesson by lesson", "Dars-dars ro'yxat", "Урок за уроком"),
+    "oq_fgap": ("needs attention", "e'tibor kerak", "требуют внимания"),
+    "oq_fnorec": ("no recording", "yozuvsiz", "без записи"),
+    "oq_fanalysed": ("analysed", "tahlil qilingan", "проанализировано"),
+    "oq_coldate": ("Date", "Sana", "Дата"),
+    "oq_coltopic": ("Topic and homework", "Mavzu va uy vazifa", "Тема и домашнее задание"),
+    "oq_colchecks": ("All in place?", "Hammasi joyidami?", "Всё на месте?"),
+    "oq_subst": ("substitute", "o'rnini bosdi", "замена"),
+    "oq_c_topic": ("topic", "mavzu", "тема"),
+    "oq_c_att": ("attendance", "yo'qlama", "посещаемость"),
+    "oq_c_att_t": (
+        "present {$a->kelgan} of {$a->jami} · absent {$a->yoq} · late {$a->kech}",
+        "{$a->jami} dan {$a->kelgan} kelgan · kelmadi {$a->yoq} · kechikdi {$a->kech}",
+        "пришли {$a->kelgan} из {$a->jami} · отсутствовали {$a->yoq} · опоздали {$a->kech}",
+    ),
+    "oq_c_rec": ("recording", "yozuv", "запись"),
+    "oq_c_hw": ("homework", "uy vazifa", "дом. задание"),
+    "oq_c_grade": ("grades", "baho", "оценки"),
+    "oq_c_grade_t": (
+        "{$a} grades given",
+        "{$a} ta baho qo'yilgan",
+        "выставлено оценок: {$a}",
+    ),
+    "oq_lowconf": (
+        "{$a} criteria could not be assessed from the audio",
+        "{$a} mezon audio orqali baholanmadi",
+        "{$a} критериев не оценены по аудио",
+    ),
+    "oq_open": ("Open lesson", "Darsga o'tish", "Открыть урок"),
+    "oq_fill": ("Fill in", "To'ldirish", "Заполнить"),
+    "oq_opencard": ("Lesson card", "Dars kartasi", "Карточка урока"),
 
     # ------------------------------------------------- direktor paneli vazifalari
     "task_slotbuild": (

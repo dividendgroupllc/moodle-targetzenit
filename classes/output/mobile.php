@@ -14,6 +14,7 @@
 
 namespace local_targetzenit\output;
 
+use local_targetzenit\journal;
 use local_targetzenit\lesson;
 use local_targetzenit\payroll;
 use local_targetzenit\timetable;
@@ -283,6 +284,128 @@ class mobile {
         }
 
         return self::javob('mobile_cockpit', $data, $otherdata);
+    }
+
+    /**
+     * Choraklik baholar — o'qituvchi uchun umumiy jadval.
+     *
+     * Qatorlar — o'quvchilar, ustunlar — choraklar. ATAYLAB shunday:
+     * jurnalning to'liq setkasi (o'quvchi x dars) telefonga sig'maydi,
+     * chorak o'rtachalari esa 4 ustun bo'lib sig'adi va o'qituvchiga aynan
+     * shu manzara kerak — kim orqada qolyapti.
+     *
+     * Sahifadan sahifaga o'tish YO'Q: o'qituvchining hamma kursi bitta
+     * ro'yxatda. Navigatsiya direktivasiga tayanmaslik ataylab — u ilova
+     * versiyasiga bog'liq.
+     */
+    public static function grades_view(array $args): array {
+        global $DB, $USER;
+
+        $context = \context_system::instance();
+        self::tekshir($context);
+
+        $year = timetable::current_year();
+        $data = ['bor' => false, 'xabar' => '', 'choraklar' => [], 'kurslar' => []];
+
+        $teacherkey = $year === '' ? '' : timetable::teacher_key_of($USER, $year);
+        if ($teacherkey === '') {
+            $data['xabar'] = get_string('app_nocourses', 'local_targetzenit');
+            return self::javob('mobile_grades', $data);
+        }
+
+        $terms = array_values(timetable::terms($year));
+        if (!$terms) {
+            $data['xabar'] = get_string('mg_noterms', 'local_targetzenit');
+            return self::javob('mobile_grades', $data);
+        }
+        foreach ($terms as $t) {
+            $data['choraklar'][] = ['nomi' => format_string($t->name)];
+        }
+
+        // O'qituvchining kurslari — jadvaldan, takrorsiz.
+        $rows = timetable::for_teacher($year, $teacherkey);
+        $idnumbers = array_unique(array_map(fn($r) => $r->courseidnumber, $rows));
+        $kurslar = timetable::course_ids($idnumbers);
+
+        foreach ($kurslar as $idnumber => $courseid) {
+            $cc = \context_course::instance((int) $courseid, IGNORE_MISSING);
+            if (!$cc || !has_capability('local/targetzenit:teach', $cc)) {
+                continue;
+            }
+            $oquvchilar = lesson::students($cc);
+            if (!$oquvchilar) {
+                continue;
+            }
+
+            // Shu kursning butun yildagi darslari — bir marta o'qiladi,
+            // keyin chorak bo'yicha ajratiladi.
+            $darslar = $DB->get_records('local_targetzenit_lesson',
+                ['courseid' => $courseid], '', 'id, lessondate');
+            if (!$darslar) {
+                continue;
+            }
+            $kataklar = journal::cells(array_keys($darslar));
+
+            $qatorlar = [];
+            foreach ($oquvchilar as $st) {
+                $uzani = $kataklar[(int) $st->id] ?? [];
+                if (!$uzani) {
+                    continue;        // bu o'quvchida umuman yozuv yo'q
+                }
+
+                $hujayralar = [];
+                $jami_baho = 0;
+                $jami_yoq = 0;
+                foreach ($terms as $t) {
+                    $chorak = [];
+                    foreach ($uzani as $lessonid => $rec) {
+                        $sana = $darslar[$lessonid]->lessondate ?? '';
+                        if ($sana < $t->startdate || $sana > $t->enddate) {
+                            continue;
+                        }
+                        $chorak[] = $rec;
+                        if ($rec->grade !== null && $rec->grade !== '') {
+                            $jami_baho++;
+                        }
+                        if ($rec->attendance === 'absent') {
+                            $jami_yoq++;
+                        }
+                    }
+                    $ortacha = lesson::average($chorak);
+                    $hujayralar[] = [
+                        'qiymat' => $ortacha === null ? '—' : (string) $ortacha,
+                        'bor' => $ortacha !== null,
+                        // Past baho ko'zga tashlanishi kerak — o'qituvchi
+                        // aynan shuni qidiradi.
+                        'past' => $ortacha !== null && $ortacha < 6,
+                    ];
+                }
+
+                $qatorlar[] = [
+                    'ism' => fullname($st),
+                    'hujayralar' => $hujayralar,
+                    'baho_soni' => get_string('app_gradecount', 'local_targetzenit',
+                        $jami_baho),
+                    'yoq_soni' => $jami_yoq
+                        ? get_string('app_absences', 'local_targetzenit', $jami_yoq)
+                        : '',
+                ];
+            }
+
+            $data['kurslar'][] = [
+                'nomi' => format_string($DB->get_field('course', 'fullname',
+                    ['id' => $courseid])),
+                'bor' => (bool) $qatorlar,
+                'oquvchilar' => $qatorlar,
+            ];
+        }
+
+        if (!$data['kurslar']) {
+            $data['xabar'] = get_string('app_nocourses', 'local_targetzenit');
+        } else {
+            $data['bor'] = true;
+        }
+        return self::javob('mobile_grades', $data);
     }
 
     /** Ilova kutadigan javob shakli — har metodda takrorlanmasligi uchun. */

@@ -48,6 +48,16 @@ $addons = [
                     'class' => '',
                 ],
             ],
+            // Choraklik baholar — o'quvchi x chorak jadvali.
+            'grades' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'grades_view',
+                'displaydata' => [
+                    'title' => 'app_termgrades',
+                    'icon' => 'fas-table',
+                    'class' => '',
+                ],
+            ],
             'timetable' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'timetable_view',
@@ -88,6 +98,10 @@ $addons = [
             ['att_absent', 'local_targetzenit'],
             ['att_late', 'local_targetzenit'],
             ['att_excused', 'local_targetzenit'],
+            ['app_termgrades', 'local_targetzenit'],
+            ['app_nocourses', 'local_targetzenit'],
+            ['app_nogradesyet', 'local_targetzenit'],
+            ['app_termaverages', 'local_targetzenit'],
         ],
     ],
 ];

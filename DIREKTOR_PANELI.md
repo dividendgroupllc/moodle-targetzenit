@@ -778,7 +778,7 @@ Boshqa qoidalar:
 | 1 | ✅ `_staff`, `_slot`, `_fact`, `_aicat`, `_norm` + 4 vazifa + `push_norms` + CLI | reja ↔ fakt tayyor |
 | 2 | ✅ «Bugun» ekrani + faqat-o'qish **dars kartasi** (`dars_tahlil.php`) va umumiy tahlil chizuvchisi (`classes/output/tahlil.php`) | kundalik nazorat ishlaydi |
 | 3 | ✅ «Reytinglar» ekrani (o'qituvchi/sinf/fan, normaga nisbatan, min namuna) | davriy nazorat |
-| 3b | «O'qituvchi kartasi» (chorak xaritasi, 15 kategoriya profili) + `mening_tahlilim.php` | ikki tomonga ochiq |
+| 3b | ✅ «O'qituvchi paneli» (`oqituvchi.php`): dars-dars ro'yxati, majburiy vazifa meterlari, guruh×fan kesimi, 15 kategoriya diverging profili | ikki tomonga ochiq |
 | 4 | `_aicat` + backfill + kategoriya profili | metodik tahlil |
 | 5 | `_feedback` + drawer + `fidbeklarim.php` + message provider | muloqot yopiladi |
 | 6 | `privacy/provider.php`, transkript muddati, hujjat | **majburiy**, 5 dan keyin kechikmaydi |
@@ -925,3 +925,68 @@ Kodlar: `baho_ulushi`, `uy_vazifa_ulushi`, `yoqlama_qamrovi`,
 > Yangi funksiya **qo'lda** `Frappe Sync` servisiga qo'shilishi kerak
 > (Server → Web services → External services → Frappe Sync → Functions) —
 > `db/services.php` da `services` ro'yxati ataylab bo'sh.
+
+---
+
+## 9. 3b bosqich: o'qituvchi paneli (2026-11-04)
+
+### Nega bitta fayl, `mening_tahlilim.php` emas
+
+5.2 dagi jadvalda o'qituvchi tomoni alohida fayl (`mening_tahlilim.php`) deb
+rejalashtirilgan edi. Amalda **bitta fayl** qilindi — `oqituvchi.php?userid=N`:
+
+- 5.1/7-tamoyil "bitta renderer, ikki auditoriya" deydi. Ikki fayl bo'lsa
+  renderer ham ikkiga bo'linishga intiladi va vaqt o'tib ikki sahifa
+  boshqa-boshqa narsa ko'rsatadi (bu `tahlil.php` da bir marta boshdan
+  kechirilgan).
+- Ruxsat faqat KIMNI ko'rishni hal qiladi: `userid` o'zi bo'lsa — ochiq,
+  boshqa odam bo'lsa `viewteachers` kerak (`teacher::korish_mumkinmi()`).
+  Shuning uchun fayl ajratishning xavfsizlik foydasi ham yo'q.
+
+### Tuzilma
+
+| Qatlam | Joy |
+|---|---|
+| So'rovlar | `classes/teacher.php` — bitta odam, uzun davr, dars-dars kesimi |
+| Chizuvchi elementlar | `classes/output/ui.php` — chip, halqa, chiziq, sparkline, plita, **diverging** |
+| Sahifa | `oqituvchi.php` |
+
+`dashboard` (butun maktab × kun) va `reyting` (o'qituvchilarni taqqoslash)
+o'z joyida qoldi: o'qituvchining savoli uchinchi xil — "MENING hamma darslarim
+bo'yicha nima holat va qaysi darsda nima yetishmayapti?".
+
+`direktor.php` dagi `tz_*` yordamchi funksiyalari endi `ui::` ga o'giriladi
+(nomlar saqlangan, `views/*.php` o'zgarmadi).
+
+### Qabul qilingan qarorlar
+
+| Savol | Qaror | Sabab |
+|---|---|---|
+| Qamrov | Davr tanlagichi: hafta / oy / chorak / **hammasi** | "barcha o'tgan darslarim" — o'qituvchining asl savoli; `reyting::period()` da `hammasi` yo'q, chunki reyting teng davr talab qiladi |
+| Standart davr | chorak | kundalik emas, davriy o'z-o'zini tekshirish ekrani |
+| Saralash | eng yangi dars yuqorida | o'qituvchi oxirgi darslarini tekshiradi, sentabrdagisini emas |
+| «Hammasi joyidami» | mavzu / yo'qlama / yozuv — **majburiy**; uy vazifa va baho — kulrang, "har darsda kutilmaydi" izohi bilan | 6-tamoyil; aks holda baho qo'yilmagan normal dars "bajarilmagan" bo'lib chiqardi |
+| Tugma manzili | `dars.php` (kokpit) — unda baho tahrirlanadi, audio pleyer va AI tahlili bir joyda | `dars_tahlil.php` direktor uchun: o'qituvchida `viewanalysis` yo'q |
+| Kursga yozilmagan dars | havola **qo'yilmaydi** | "You cannot enrol yourself" — boshi berk yo'l |
+| 15 kategoriya formasi | nolga (har kategoriyaning O'Z normasiga) markazlashgan diverging bar | 5.5; radar burchaklari maydonni buzadi va taqqoslash mumkin bo'lmaydi |
+| Kichik namuna | `n < 5` qatorlar susaytiriladi, lekin YASHIRILMAYDI | 2 va 5-tamoyillar |
+| Davrda dars yo'q | plitalar emas, sababini aytadigan xabar (kalit nomuvofiqligi gumoni) | jim yiqilish ko'rinadigan bo'ladi |
+
+### Kirish nuqtalari
+
+- Chap menyu: «Mening darslarim» — `_fact.attributeduserid` da yozuvi bor
+  odamga ko'rinadi (`teacher::has_any()`), ya'ni o'rnini bosgan odam ham
+  ko'radi, dars o'tmaydigan xodim esa ko'rmaydi.
+- Direktor qobig'i (`classes/output/shell.php`) yon paneli.
+- «Reytinglar» jadvalidagi ism — o'sha odamning kartasiga.
+- `dars.php` dan panelga qaytish tugmasi (halqa yopiladi).
+
+### Hali qilinmagani
+
+- **Chorak xaritasi** (5.5 dagi guruh × kun issiqlik setkasi) — dars-dars
+  ro'yxati bir xil savolga javob beradi, xarita esa butun chorakni bir
+  ekranda ko'rsatadi. Keyingi qadam.
+- **Fidbek** (5-bosqich) — `_feedback` jadvali hali yo'q, shuning uchun
+  panelda direktor izohlari ko'rinmaydi.
+- AI tavsiyalari panelda EMAS, dars kartasida: tavsiya darsga bog'liq,
+  davrga emas. Davr bo'yicha umumlashtirish uchun yetarli ma'lumot yo'q.

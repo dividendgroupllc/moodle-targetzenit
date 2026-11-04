@@ -260,9 +260,14 @@
 
 .tz-dir-shell { display: flex; gap: 0; align-items: stretch; background: var(--tz-bg);
     border: 0; border-radius: 0; min-height: 100vh; width: 100%; }
-.tz-dir-side { flex: 0 0 230px; background: var(--tz-side); padding: 18px 14px;
-    display: flex; flex-direction: column; }
-.tz-dir-main { flex: 1 1 auto; min-width: 0; padding: 24px 28px 32px; }
+/* Yon panel kengligi ekranga qarab: katta ekranda keng, o'rtachada tor.
+   `clamp()` oraliq o'lchamlarda ham silliq ishlaydi — sakrab o'tmaydi. */
+.tz-dir-side { flex: 0 0 clamp(180px, 16vw, 240px); background: var(--tz-side);
+    padding: 18px 14px; display: flex; flex-direction: column; }
+/* `min-width: 0` SHART: flex elementi standart holda mazmunidan kichraymaydi
+   va keng jadval butun sahifani gorizontal skrollga majburlardi. */
+.tz-dir-main { flex: 1 1 auto; min-width: 0; max-width: 100%;
+    padding: clamp(14px, 2vw, 28px) clamp(14px, 2.2vw, 32px) 32px; }
 
 .tz-dir-logo { display: flex; align-items: center; gap: 9px; color: #fff;
     font-weight: 700; font-size: 1.05rem; margin: 2px 4px 22px; }
@@ -280,9 +285,9 @@
 .tz-dir-top { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
     margin-bottom: 18px; }
 .tz-dir-school { color: var(--tz-ink-2); font-size: .78rem; margin-bottom: 2px; }
-.tz-dir-hello { font-size: 1.45rem; font-weight: 700; line-height: 1.2; margin: 0; }
+.tz-dir-hello { font-size: clamp(1.15rem, 2vw, 1.5rem); font-weight: 700; line-height: 1.2; margin: 0; }
 .tz-dir-tools { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.tz-dir-h1 { font-size: 1.3rem; font-weight: 700; margin: 0 0 2px; }
+.tz-dir-h1 { font-size: clamp(1.1rem, 1.8vw, 1.35rem); font-weight: 700; margin: 0 0 2px; }
 .tz-dir-sub { color: var(--tz-ink-2); font-size: .82rem; line-height: 1.4; }
 .tz-dir-meta { color: var(--tz-ink-2); font-size: .82rem; }
 .tz-dir-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -296,11 +301,11 @@
 
 /* ---------------- stat plitalari ---------------- */
 .tz-dir-hero { display: grid; gap: 12px; margin-bottom: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
 .tz-dir-tile { background: var(--tz-card); border: 1px solid var(--tz-line);
     border-radius: 13px; padding: 15px 16px; }
 .tz-dir-lab { font-size: .78rem; color: var(--tz-ink-2); margin-bottom: 6px; }
-.tz-dir-num { font-size: 1.85rem; font-weight: 700; line-height: 1.1; letter-spacing: -.6px; }
+.tz-dir-num { font-size: clamp(1.4rem, 2.4vw, 1.95rem); font-weight: 700; line-height: 1.1; letter-spacing: -.6px; }
 .tz-dir-t-pos { color: var(--tz-pos); }
 .tz-dir-t-neg { color: var(--tz-neg); }
 .tz-dir-sparkwrap { margin-top: 7px; color: var(--tz-brand); }
@@ -335,7 +340,7 @@
 /* ---------------- yozuv nazorati: o'qituvchi kartachalari ---------------- */
 .tz-dir-chips { display: grid; gap: 1px; background: var(--tz-line);
     border: 1px solid var(--tz-line); border-radius: 11px; overflow: hidden;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
 .tz-dir-chipcard { background: var(--tz-card); padding: 11px 13px;
     display: flex; gap: 10px; align-items: flex-start; }
 .tz-dir-chipcard.tz-miss { background: var(--tz-critical-bg); }
@@ -438,3 +443,162 @@
 .tz-dir-username { color: #fff; font-size: .85rem; font-weight: 600; }
 .tz-dir-logout { color: var(--tz-side-ink); font-size: .78rem; text-decoration: none; }
 .tz-dir-logout:hover { color: #fff; text-decoration: none; }
+
+/* ---------------- Dars yozuvlari lentasi ---------------- */
+.tz-dir-filters { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+    background: var(--tz-card); border: 1px solid var(--tz-line);
+    border-radius: 13px; padding: 13px 16px; margin-bottom: 16px; }
+.tz-dir-f { display: flex; flex-direction: column; gap: 4px; }
+.tz-dir-f label { font-size: .72rem; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--tz-ink-2); margin: 0; }
+.tz-dir-f select, .tz-dir-f input[type="date"] {
+    padding: 6px 10px; border: 1px solid var(--tz-line); border-radius: 8px;
+    background: var(--tz-card); color: var(--tz-ink); font-size: .87rem; min-width: 150px; }
+
+.tz-rec tbody tr.tz-rec-row { cursor: pointer; }
+.tz-rec tbody tr.tz-rec-row:focus { outline: 2px solid var(--tz-brand); outline-offset: -2px; }
+.tz-rec-caret { color: var(--tz-ink-2); font-size: .8rem; transition: transform .15s;
+    display: inline-block; width: 12px; flex: 0 0 12px; }
+.tz-rec-row.tz-on .tz-rec-caret { transform: rotate(90deg); }
+.tz-rec-row.tz-on > td { background: var(--tz-bg); }
+.tz-rec-row.tz-on > td:first-child { box-shadow: inset 3px 0 0 var(--tz-brand); }
+.tz-rec-xulosa { font-size: .84rem; line-height: 1.4; max-width: 420px; color: var(--tz-ink-2); }
+
+.tz-rec-drill > td { background: var(--tz-bg); padding: 14px 16px !important; }
+.tz-rec-card { display: grid; gap: 18px; grid-template-columns: minmax(260px, 340px) 1fr; }
+@media (max-width: 820px) { .tz-rec-card { grid-template-columns: 1fr; } }
+.tz-rec-audio { width: 100%; }
+.tz-rec-full { font-size: .9rem; line-height: 1.5; margin: 0 0 10px; }
+.tz-rec-cat { margin-bottom: 5px; font-size: .88rem; }
+.tz-rec-tavsiya { font-size: .85rem; color: var(--tz-brand); margin-top: 4px; }
+.tz-rec-actions { display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tz-line); }
+
+/* ======================================================================
+   O'QITUVCHI PANELI (oqituvchi.php)
+
+   Direktor paneli `embedded` maketda o'z yon paneli bilan ishlaydi;
+   o'qituvchi paneli esa `standard` maketda — o'qituvchi Moodle navigatsiyasi
+   bilan yuradi va kursga/jurnalga qaytib turadi. Shuning uchun `.tz-oq`
+   yon panel va to'liq ekran qoidalarini MEROS QILMAYDI, faqat kartalar,
+   plitalar va chiplarni qayta ishlatadi.
+   ====================================================================== */
+.tz-oq .tz-dir-hero { margin-bottom: 14px; }
+.tz-oq-ident { display: flex; align-items: center; gap: 12px; }
+.tz-oq-ident .tz-dir-av { width: 42px; height: 42px; font-size: 1rem; flex: 0 0 42px; }
+
+/* ---------------- majburiy vazifalar (meter qatori) ---------------- */
+.tz-oq-meters { display: grid; gap: 12px 18px; margin-top: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+.tz-oq-meter { min-width: 0; }
+.tz-oq-mhead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tz-oq-mname { font-size: .85rem; color: var(--tz-ink-2); }
+.tz-oq-mval { font-size: 1.05rem; font-weight: 700; }
+/* Majburiy o'lchov ko'zga ko'rinadigan darajada ajralib turadi: ixtiyoriysi
+   (uy vazifa, baho) bilan bir xil ko'rinsa, o'qituvchi hammasini 100% qilishga
+   urinadi va baho qo'yish majburiyatga aylanib qoladi. */
+.tz-oq-must .tz-oq-mname { color: var(--tz-ink); font-weight: 600; }
+.tz-oq-meter .tz-dir-bar { min-width: 0; width: 100%; }
+
+/* ---------------- kategoriya profili (diverging) ---------------- */
+.tz-oq-scale { display: grid; grid-template-columns: 1fr auto 1fr;
+    font-size: .72rem; color: var(--tz-ink-2); text-transform: uppercase;
+    letter-spacing: .04em; margin-bottom: 6px; }
+.tz-oq-lo { text-align: right; padding-right: 8px; }
+.tz-oq-mid { font-weight: 700; }
+.tz-oq-hi { padding-left: 8px; }
+
+.tz-oq-prow { display: grid; align-items: center; gap: 12px;
+    grid-template-columns: minmax(170px, 1.3fr) minmax(120px, 2fr) 52px;
+    padding: 6px 0; border-top: 1px solid var(--tz-line); }
+.tz-oq-pleft { min-width: 0; }
+.tz-oq-pname { font-size: .88rem; }
+.tz-oq-pdelta { text-align: right; font-weight: 700; font-size: .9rem; }
+/* Namunasi kichik qatorlar susaytiriladi — raqam bor, lekin xulosa emas. */
+.tz-oq-fade { opacity: .55; }
+
+/* Nol nuqtasi HAMMA QATORDA bitta vertikal chiziqda (50%) turadi — shunda
+   "normadan yuqorimi yoki pastmi" bir qarashda o'qiladi. */
+.tz-oq-dv { position: relative; height: 12px; background: var(--tz-bg);
+    border-radius: 3px; overflow: hidden; }
+.tz-oq-dv::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+    width: 2px; margin-left: -1px; background: var(--tz-ink); opacity: .45; z-index: 1; }
+.tz-oq-dv i { position: absolute; top: 2px; bottom: 2px; display: block; border-radius: 2px; }
+.tz-oq-pos { background: var(--tz-pos); }
+.tz-oq-neg { background: var(--tz-neg); }
+.tz-oq-dv i.tz-oq-nil { left: 0; right: 0; top: 4px; bottom: 4px;
+    background: repeating-linear-gradient(90deg,
+        var(--tz-line) 0 4px, transparent 4px 8px); }
+
+@media (max-width: 760px) {
+    .tz-oq-prow { grid-template-columns: 1fr 44px; }
+    .tz-oq-dv { grid-column: 1 / -1; }
+}
+
+/* ---------------- dars-dars ro'yxati ---------------- */
+.tz-oq-chips { display: flex; flex-wrap: wrap; gap: 4px; max-width: 290px; }
+.tz-oq-chips .tz-dir-chip { font-size: .7rem; padding: 2px 7px; }
+.tz-oq-table td { vertical-align: top; }
+.tz-oq-table tr.tz-on > td { background: var(--tz-brand-soft); }
+
+/* ---------------- har qanday ekranga moslashish ---------------- */
+
+/* Gorizontal skroll faqat JADVAL ichida bo'lsin, butun sahifada emas */
+.tz-dir, .tz-dir-shell { max-width: 100%; overflow-x: hidden; }
+.tz-dir-tablewrap { max-width: 100%; }
+
+/* Planshet: yon panel torayadi, jadval zichlashadi */
+@media (max-width: 1100px) {
+    .tz-dir-table th, .tz-dir-table td { padding: 9px 7px; }
+    .tz-rec-xulosa { max-width: 260px; }
+    .tz-dir-top3 { grid-template-columns: 1fr 1fr; }
+    .tz-dir-best { grid-column: 1 / -1; }
+}
+
+/* Kichik planshet: yon panel tepaga, gorizontal menyu bo'lib chiqadi */
+@media (max-width: 860px) {
+    .tz-dir-shell { flex-direction: column; min-height: 0; }
+    .tz-dir-side { flex: 1 1 auto; flex-direction: row; gap: 6px;
+        overflow-x: auto; padding: 10px; align-items: center; }
+    .tz-dir-logo, .tz-dir-navlab, .tz-dir-back { display: none; }
+    .tz-dir-navitem { white-space: nowrap; margin: 0; }
+    .tz-dir-user { margin: 0 0 0 auto; padding: 0 0 0 12px;
+        border-top: 0; border-left: 1px solid rgba(255,255,255,.12);
+        display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+    .tz-dir-top3 { grid-template-columns: 1fr; }
+    .tz-dir-filters { gap: 10px; }
+    .tz-dir-f, .tz-dir-f select, .tz-dir-f input[type="date"] { min-width: 0; width: 100%; }
+    .tz-dir-f { flex: 1 1 160px; }
+}
+
+/* Telefon: eng kam ma'lumotli ustunlar yashiriladi — ular ochilgan
+   kartada baribir to'liq ko'rinadi, shuning uchun ma'lumot yo'qolmaydi */
+@media (max-width: 680px) {
+    .tz-dir-hero { grid-template-columns: 1fr 1fr; }
+    .tz-rec th:nth-child(3), .tz-rec td:nth-child(3),
+    .tz-rec th:nth-child(6), .tz-rec td:nth-child(6) { display: none; }
+    .tz-dir-table th, .tz-dir-table td { padding: 8px 6px; font-size: .86rem; }
+    .tz-dir-cellname { min-width: 0; }
+    .tz-dir-search input { width: 100%; }
+    .tz-dir-tools { width: 100%; }
+    .tz-rec-actions .btn { flex: 1 1 auto; }
+}
+
+@media (max-width: 420px) {
+    .tz-dir-hero { grid-template-columns: 1fr; }
+    .tz-rec th:nth-child(4), .tz-rec td:nth-child(4) { display: none; }
+}
+
+/* Juda keng ekran: matn cheksiz cho'zilmasin, lekin maket to'liq qoladi */
+@media (min-width: 1800px) {
+    .tz-dir-main { padding-left: clamp(32px, 4vw, 90px); padding-right: clamp(32px, 4vw, 90px); }
+}
+
+/* Bosma va harakatni kamaytirish */
+@media print {
+    .tz-dir-side, .tz-dir-actions, .tz-rec-actions { display: none; }
+    .tz-dir-card { break-inside: avoid; border-color: #999; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tz-rec-caret, .tz-dir-bar i, .tz-bar-ichi { transition: none; }
+}

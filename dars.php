@@ -89,7 +89,11 @@ echo html_writer::div(
         '← ' . get_string('timetable', 'local_targetzenit'),
         ['class' => 'btn btn-sm btn-outline-secondary mr-2']) .
     html_writer::link(new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
-        'Chorak jurnali', ['class' => 'btn btn-sm btn-outline-primary']),
+        'Chorak jurnali', ['class' => 'btn btn-sm btn-outline-primary mr-2']) .
+    // Halqa yopiladi: panel darsga olib keladi, dars panelga qaytaradi.
+    html_writer::link(new moodle_url('/local/targetzenit/oqituvchi.php'),
+        get_string('oq_mypanel', 'local_targetzenit'),
+        ['class' => 'btn btn-sm btn-outline-secondary']),
     'mb-3'
 );
 

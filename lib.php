@@ -40,6 +40,25 @@ function local_targetzenit_extend_navigation(global_navigation $navigation) {
         $navigation->add_node($dir);
     }
 
+    // "Mening darslarim" — o'qituvchining o'z paneli.
+    //
+    // Shart: shu odamga YOZILGAN darsi bor. `_fact.attributeduserid` bo'yicha
+    // tekshiriladi, ya'ni o'rnini bosib dars o'tgan odam ham ko'radi, dars
+    // o'tmaydigan xodim esa ko'rmaydi. Jadvaldan YUQORIDA turmaydi: jadval
+    // kundalik kirish nuqtasi bo'lib qoladi, panel esa haftada bir ochiladi.
+    if (\local_targetzenit\teacher::has_any((int) $USER->id)) {
+        $oq = navigation_node::create(
+            get_string('oq_mypanel', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/oqituvchi.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzoqituvchi',
+            new pix_icon('i/grades', '')
+        );
+        $oq->showinflatnavigation = true;
+        $navigation->add_node($oq);
+    }
+
     // "Mening oyligim" — chap menyuda (dashbordda ham ko'rinadi).
     //
     // NEGA SHU YERDA HAM: yuqori (primary) menyuga qo'yilgan edi, lekin Boost

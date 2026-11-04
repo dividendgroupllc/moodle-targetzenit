@@ -1,36 +1,52 @@
 <?php
-// Dars yozuvlari — ma'muriy ro'yxat.
-// Kim yozgan, qancha joy egallagan, tahlil qilinganmi — va o'chirish.
+// DARS YOZUVLARI — direktor uchun lenta.
+//
+// Tuzilma Frappe'dagi «Sotuv nazorati» sahifasidan olingan: master qator
+// (kim, qayerda, nima, qachon, qancha, AI bahosi, qisqa xulosa) va qatorni
+// bosganda ochiladigan karta — chapda ovoz, o'ngda qisqa tahlil, pastda
+// dars jarayoniga o'tish tugmasi.
+//
+// ODDIY sahifa, admin sahifasi EMAS: `admin_externalpage_setup()` sahifani
+// ADMIN DARAXTIDAN qidiradi, daraxtga qo'shish esa `settings.php` da
+// `if ($hassiteconfig)` ichida — direktorda `moodle/site:config` yo'q va
+// sahifa o'z ruxsati bo'lsa ham "Access denied" berardi.
 
 require(__DIR__ . '/../../config.php');
 
+use local_targetzenit\ai;
 use local_targetzenit\audio;
+use local_targetzenit\dashboard;
+use local_targetzenit\output\shell;
+use local_targetzenit\timetable;
 
-// ODDIY sahifa, admin sahifasi EMAS.
-//
-// NEGA O'ZGARTIRILDI: avval `admin_externalpage_setup()` ishlatilardi va u
-// sahifani ADMIN DARAXTIDAN qidiradi. Daraxtga qo'shish kodi esa
-// `settings.php` da `if ($hassiteconfig)` ichida — ya'ni sahifa faqat
-// `moodle/site:config` bor odam uchun RO'YXATGA OLINADI. Direktorda bu
-// ruxsat yo'q (va bo'lmasligi ham kerak), shuning uchun sahifa o'zi
-// `viewanalysis` ni talab qilsa ham "Access denied" berardi.
 require_login();
 
 $context = context_system::instance();
 require_capability('local/targetzenit:viewanalysis', $context);
 
-$PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/local/targetzenit/yozuvlar.php'));
-$PAGE->set_pagelayout('standard');
-
+$oqituvchi = optional_param('oqituvchi', 0, PARAM_INT);
+$guruh = optional_param('guruh', '', PARAM_TEXT);
+$from = optional_param('from', '', PARAM_TEXT);
+$to = optional_param('to', '', PARAM_TEXT);
+$page = optional_param('page', 0, PARAM_INT);
 $ochir = optional_param('ochir', 0, PARAM_INT);
 $turi = optional_param('turi', 'audio', PARAM_ALPHA);   // audio | hammasi
-$sahifa = optional_param('page', 0, PARAM_INT);
-$qidiruv = optional_param('q', '', PARAM_TEXT);
-const PER_PAGE = 50;
 
-$PAGE->set_title(get_string('recordings', 'local_targetzenit'));
-$PAGE->set_heading(get_string('recordings', 'local_targetzenit'));
+$tekshir = fn($v, $zaxira) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $v) ? $v : $zaxira;
+$from = $tekshir($from, date('Y-m-d', strtotime('-30 days')));
+$to = $tekshir($to, date('Y-m-d'));
+
+const TZ_YOZUV_PER_PAGE = 20;
+
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/local/targetzenit/yozuvlar.php'));
+shell::setup($PAGE, get_string('recordings', 'local_targetzenit'));
+
+/** Holat chipi — rang + MATN (rang yolg'iz ma'no tashlamaydi). */
+function tz_rec_chip(string $status, string $matn, string $title = ''): string {
+    return html_writer::tag('span', s($matn),
+        ['class' => 'tz-dir-chip tz-dir-' . $status, 'title' => $title]);
+}
 
 // ------------------------------------------------------------------ O'CHIRISH
 if ($ochir && confirm_sesskey()) {
@@ -40,14 +56,14 @@ if ($ochir && confirm_sesskey()) {
     if ($dars) {
         $ctx = context_course::instance($dars->courseid, IGNORE_MISSING);
         if ($ctx) {
-            get_file_storage()->delete_area_files($ctx->id, audio::COMPONENT, audio::FILEAREA, $a->lessonid);
+            get_file_storage()->delete_area_files($ctx->id, audio::COMPONENT,
+                audio::FILEAREA, $a->lessonid);
         }
     }
-
     if ($turi === 'hammasi') {
         // Audio ham, transkript ham, tahlil ham — butunlay
         $DB->delete_records('local_targetzenit_audio', ['id' => $a->id]);
-        $xabar = "Yozuv butunlay o'chirildi (audio, transkript va tahlil).";
+        $xabar = get_string('rec_deleted_all', 'local_targetzenit');
     } else {
         // Faqat audio — transkript va tahlil qoladi
         $a->status = 'deleted';
@@ -55,131 +71,238 @@ if ($ochir && confirm_sesskey()) {
         $a->filesize = 0;
         $a->timemodified = time();
         $DB->update_record('local_targetzenit_audio', $a);
-        $xabar = "Audio o'chirildi. Transkript va tahlil saqlanib qoldi.";
+        $xabar = get_string('rec_deleted_audio', 'local_targetzenit');
     }
     redirect(new moodle_url('/local/targetzenit/yozuvlar.php'), $xabar, null,
         \core\output\notification::NOTIFY_SUCCESS);
 }
 
-// ------------------------------------------------------------------ RO'YXAT
-$where = '1=1';
-$params = [];
-if ($qidiruv !== '') {
-    $where .= ' AND (' . $DB->sql_like('c.fullname', ':q1', false) . ' OR ' .
-        $DB->sql_like('l.topic', ':q2', false) . ')';
-    $params['q1'] = '%' . $DB->sql_like_escape($qidiruv) . '%';
-    $params['q2'] = '%' . $DB->sql_like_escape($qidiruv) . '%';
-}
+$year = timetable::current_year();
+$filtrlar = $year ? dashboard::recording_filters($year)
+                  : ['oqituvchilar' => [], 'guruhlar' => []];
 
-$sql = "SELECT a.*, l.lessondate, l.lessonno, l.topic, l.courseid,
-               c.fullname AS coursename,
-               u.firstname, u.lastname
-          FROM {local_targetzenit_audio} a
-          JOIN {local_targetzenit_lesson} l ON l.id = a.lessonid
-          JOIN {course} c ON c.id = l.courseid
-     LEFT JOIN {user} u ON u.id = a.teacherid
-         WHERE $where
-      ORDER BY l.lessondate DESC, a.timecreated DESC";
+$natija = dashboard::recordings([
+    'teacher' => $oqituvchi, 'groupkey' => $guruh, 'from' => $from, 'to' => $to,
+], $page, TZ_YOZUV_PER_PAGE);
 
-$jami = $DB->count_records_sql(
-    "SELECT COUNT(1) FROM {local_targetzenit_audio} a
-       JOIN {local_targetzenit_lesson} l ON l.id = a.lessonid
-       JOIN {course} c ON c.id = l.courseid
-      WHERE $where", $params);
+$url = fn(array $p = []) => new moodle_url('/local/targetzenit/yozuvlar.php', $p + [
+    'oqituvchi' => $oqituvchi, 'guruh' => $guruh, 'from' => $from, 'to' => $to]);
 
-$rows = $DB->get_records_sql($sql, $params, $sahifa * PER_PAGE, PER_PAGE);
-
-// Umumiy hajm
-$hajm = (int) $DB->get_field_sql("SELECT SUM(filesize) FROM {local_targetzenit_audio}");
-$kun = (int) (get_config('local_targetzenit', 'audioretentiondays') ?: 15);
+$norma = ai::norm_overall();
 
 echo $OUTPUT->header();
+shell::start('yozuvlar', get_string('recordings', 'local_targetzenit'),
+    get_string('rec_sub', 'local_targetzenit', $natija['jami']));
+
+// ====================================================== FILTRLAR
+echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'tz-dir-filters',
+    'action' => (new moodle_url('/local/targetzenit/yozuvlar.php'))->out(false)]);
 
 echo html_writer::div(
-    "Jami <b>{$jami}</b> yozuv · diskda <b>" . number_format($hajm / 1048576, 1) . " MB</b> · " .
-    "audio <b>{$kun} kun</b> saqlanadi, so'ng avtomatik o'chadi (transkript qoladi)",
-    'alert alert-info'
-);
+    html_writer::tag('label', get_string('dir_colteacher', 'local_targetzenit'))
+    . html_writer::select([0 => get_string('rec_allteachers', 'local_targetzenit')]
+        + $filtrlar['oqituvchilar'], 'oqituvchi', $oqituvchi, false), 'tz-dir-f');
 
-// Qidiruv
-echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'form-inline mb-3']);
-echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'q', 'value' => $qidiruv,
-    'class' => 'form-control mr-2', 'placeholder' => 'Kurs yoki mavzu bo\'yicha...']);
-echo html_writer::empty_tag('input', ['type' => 'submit', 'value' => 'Qidirish',
-    'class' => 'btn btn-secondary']);
-if ($qidiruv !== '') {
-    echo html_writer::link(new moodle_url('/local/targetzenit/yozuvlar.php'), 'Tozalash',
-        ['class' => 'btn btn-link']);
-}
+echo html_writer::div(
+    html_writer::tag('label', get_string('dir_colgroup', 'local_targetzenit'))
+    . html_writer::select(['' => get_string('rec_allgroups', 'local_targetzenit')]
+        + $filtrlar['guruhlar'], 'guruh', $guruh, false), 'tz-dir-f');
+
+echo html_writer::div(
+    html_writer::tag('label', get_string('rec_from', 'local_targetzenit'))
+    . html_writer::empty_tag('input', ['type' => 'date', 'name' => 'from', 'value' => $from]),
+    'tz-dir-f');
+
+echo html_writer::div(
+    html_writer::tag('label', get_string('rec_to', 'local_targetzenit'))
+    . html_writer::empty_tag('input', ['type' => 'date', 'name' => 'to', 'value' => $to]),
+    'tz-dir-f');
+
+echo html_writer::div(
+    html_writer::empty_tag('input', ['type' => 'submit', 'class' => 'btn btn-primary btn-sm',
+        'value' => get_string('rec_apply', 'local_targetzenit')])
+    . ' ' . html_writer::link(new moodle_url('/local/targetzenit/yozuvlar.php'),
+        get_string('rec_reset', 'local_targetzenit'), ['class' => 'btn btn-sm btn-link']),
+    'tz-dir-f');
+
 echo html_writer::end_tag('form');
 
-if (!$rows) {
-    echo $OUTPUT->notification('Yozuv topilmadi.', 'info');
+// ============================================================ LENTA
+if (!$natija['rows']) {
+    echo html_writer::div(
+        html_writer::tag('b', get_string('rec_none', 'local_targetzenit'))
+        . html_writer::div(get_string('rec_none_help', 'local_targetzenit'), 'tz-dir-sub'),
+        'tz-dir-card');
 } else {
-    $t = new html_table();
-    $t->head = ['Sana', 'Kurs / mavzu', "O'qituvchi", 'Davomiylik', 'Hajm', 'Holat', 'Amallar'];
-    $t->attributes['class'] = 'generaltable';
+    echo html_writer::start_div('tz-dir-card');
+    echo html_writer::start_div('tz-dir-tablewrap');
+    echo html_writer::start_tag('table', ['class' => 'tz-dir-table tz-rec']);
 
-    foreach ($rows as $r) {
-        $ctx = context_course::instance($r->courseid, IGNORE_MISSING);
-        $url = ($ctx && in_array($r->status, audio::FAYLLI, true))
-            ? audio::file_url((int) $r->lessonid, $ctx) : null;
-
-        $holat = [
-            'recording' => '<span class="text-danger">● yozilmoqda</span>',
-            'ready' => '<span class="text-success">audio bor</span>',
-            'transcribed' => '<span class="text-primary">tahlil qilingan</span>',
-            'deleted' => '<span class="text-muted">audio o\'chirilgan</span>',
-            'failed' => '<span class="text-danger">xato</span>',
-        ][$r->status] ?? s($r->status);
-
-        if (!empty($r->aierror)) {
-            $holat .= html_writer::div(s($r->aierror), 'small text-muted');
-        }
-
-        // Dars kokpiti EMAS, faqat-o'qish tahlil sahifasi.
-        //
-        // NEGA: kokpit kurs kontekstida `teach` ruxsatini talab qiladi va
-        // direktorda u ataylab yo'q (u baho qo'ymasligi kerak) — eski havola
-        // unda "ruxsat yo'q" sahifasiga olib borardi.
-        $amallar = html_writer::link(
-            new moodle_url('/local/targetzenit/dars_tahlil.php',
-                ['lessonid' => $r->lessonid]),
-            get_string('dir_analysis', 'local_targetzenit'),
-            ['class' => 'btn btn-sm btn-outline-primary mr-1']);
-
-        if ($url) {
-            $amallar .= html_writer::link($url, 'Tinglash',
-                ['class' => 'btn btn-sm btn-outline-primary mr-1', 'target' => '_blank']);
-            $amallar .= html_writer::link(
-                new moodle_url('/local/targetzenit/yozuvlar.php',
-                    ['ochir' => $r->id, 'turi' => 'audio', 'sesskey' => sesskey()]),
-                'Audioni o\'chirish',
-                ['class' => 'btn btn-sm btn-outline-warning mr-1',
-                 'onclick' => "return confirm('Audio o\\'chiriladi. Transkript va tahlil qoladi. Davom etamizmi?')"]);
-        }
-        $amallar .= html_writer::link(
-            new moodle_url('/local/targetzenit/yozuvlar.php',
-                ['ochir' => $r->id, 'turi' => 'hammasi', 'sesskey' => sesskey()]),
-            'Butunlay',
-            ['class' => 'btn btn-sm btn-outline-danger',
-             'onclick' => "return confirm('Audio, transkript va tahlil BUTUNLAY o\\'chiriladi. Davom etamizmi?')"]);
-
-        $t->data[] = [
-            userdate(strtotime($r->lessondate), '%d.%m.%Y') .
-                html_writer::div($r->lessonno . '-dars', 'small text-muted'),
-            html_writer::tag('b', format_string($r->coursename)) .
-                html_writer::div(format_string($r->topic ?? ''), 'small text-muted'),
-            $r->firstname ? fullname($r) : '—',
-            $r->duration ? gmdate('H:i:s', (int) $r->duration) : '—',
-            $r->filesize ? number_format($r->filesize / 1048576, 1) . ' MB' : '—',
-            $holat,
-            $amallar,
-        ];
+    echo html_writer::start_tag('thead') . html_writer::start_tag('tr');
+    foreach (['dir_colteacher', 'rec_coltopic', 'rec_colwhen', 'rec_collength',
+              'rec_colai', 'rec_colsummary'] as $k) {
+        echo html_writer::tag('th', get_string($k, 'local_targetzenit'));
     }
-    echo html_writer::table($t);
-    echo $OUTPUT->paging_bar($jami, $sahifa, PER_PAGE,
-        new moodle_url('/local/targetzenit/yozuvlar.php', ['q' => $qidiruv]));
+    echo html_writer::end_tag('tr') . html_writer::end_tag('thead');
+
+    echo html_writer::start_tag('tbody');
+    foreach ($natija['rows'] as $r) {
+        $id = 'tzrec' . (int) $r->audioid;
+
+        // ------------------------------------------------ master qator
+        echo html_writer::start_tag('tr', ['class' => 'tz-rec-row', 'data-tzrec' => $id,
+            'tabindex' => '0', 'role' => 'button',
+            'title' => get_string('rec_expand', 'local_targetzenit')]);
+
+        echo html_writer::tag('td', html_writer::div(
+            html_writer::tag('span', '▸', ['class' => 'tz-rec-caret'])
+            . html_writer::div(
+                html_writer::div(s($r->ism), 'tz-dir-chipname')
+                . html_writer::div(s(trim(($r->subjectname ?: '') . ' · '
+                    . ($r->groupname ?: ''), ' ·')), 'tz-dir-sub')),
+            'tz-dir-cellname'));
+
+        echo html_writer::tag('td',
+            s(\core_text::substr(trim((string) $r->topic), 0, 70) ?: '—')
+            . ($r->vacancy ? ' ' . tz_rec_chip('warning',
+                get_string('rec_vacancy', 'local_targetzenit')) : ''));
+
+        echo html_writer::tag('td',
+            userdate(strtotime($r->lessondate), '%d.%m.%Y')
+            . html_writer::div(userdate((int) $r->timecreated, '%H:%M'), 'tz-dir-sub'));
+
+        $daq = (int) round(((int) $r->duration) / 60);
+        echo html_writer::tag('td', $r->duration
+            ? html_writer::tag('b', $daq . ' ' . get_string('rec_min', 'local_targetzenit'))
+            : html_writer::tag('span', '—', ['class' => 'tz-dir-sub']));
+
+        // AI — IJOBIYmi yoki yo'q: NORMAGA NISBATAN (59%), mutlaq shkalada emas
+        if ($r->ball === null) {
+            echo html_writer::tag('td', $r->aierror
+                ? tz_rec_chip('warning', get_string('dir_failed', 'local_targetzenit'),
+                    (string) $r->aierror)
+                : tz_rec_chip('none', get_string('rec_pending', 'local_targetzenit')));
+        } else {
+            echo html_writer::tag('td',
+                tz_rec_chip($r->band['status'], $r->band['nom'],
+                    get_string('dir_normis', 'local_targetzenit', $norma))
+                . html_writer::div($r->ball . '% · '
+                    . ($r->band['delta'] >= 0 ? '+' : '') . $r->band['delta'] . '%',
+                    'tz-dir-sub'));
+        }
+
+        $qisqa = \core_text::substr($r->xulosa, 0, 150);
+        echo html_writer::tag('td', html_writer::div(
+            s($qisqa . (\core_text::strlen($r->xulosa) > 150 ? '…' : '')) ?: '—',
+            'tz-rec-xulosa'));
+
+        echo html_writer::end_tag('tr');
+
+        // ------------------------------------------- ochiladigan karta
+        echo html_writer::start_tag('tr',
+            ['class' => 'tz-rec-drill', 'id' => $id, 'hidden' => 'hidden']);
+        echo html_writer::start_tag('td', ['colspan' => 6]);
+        echo html_writer::start_div('tz-rec-card');
+
+        // --- chap: ovoz
+        echo html_writer::start_div('tz-rec-left');
+        $ctx = $r->courseid ? context_course::instance((int) $r->courseid, IGNORE_MISSING) : null;
+        $aurl = $ctx ? audio::file_url((int) $r->lessonid, $ctx) : null;
+        if ($aurl) {
+            // preload="none" — qator ochilmaguncha audio yuklanmaydi
+            echo '<audio class="tz-rec-audio" controls preload="none" src="'
+                . $aurl->out(false) . '"></audio>';
+            echo html_writer::div(
+                ($r->filesize ? number_format($r->filesize / 1048576, 1) . ' MB' : '')
+                . ($r->hasmatn ? ' · ' . get_string('rec_hastext', 'local_targetzenit') : ''),
+                'tz-dir-sub mt-1');
+        } else {
+            echo html_writer::div($r->audiostatus === 'deleted'
+                ? get_string('dir_audiogone', 'local_targetzenit')
+                : get_string('dir_audionone', 'local_targetzenit'), 'tz-dir-sub');
+        }
+        echo html_writer::end_div();
+
+        // --- o'ng: qisqa tahlil
+        echo html_writer::start_div('tz-rec-right');
+        if ($r->xulosa !== '') {
+            echo html_writer::tag('p', s($r->xulosa), ['class' => 'tz-rec-full']);
+        }
+        foreach ([['rec_strong', $r->kuchli, 'good'], ['rec_weak', $r->kuchsiz, 'serious']]
+                 as [$yorliq, $k, $st]) {
+            if (!$k) {
+                continue;
+            }
+            echo html_writer::div(
+                tz_rec_chip($st, get_string($yorliq, 'local_targetzenit'))
+                . ' ' . html_writer::tag('b', s($k['nom']))
+                . html_writer::tag('span', ' ' . $k['ball'] . '% ('
+                    . ($k['delta'] >= 0 ? '+' : '') . $k['delta'] . '%)',
+                    ['class' => 'tz-dir-sub']), 'tz-rec-cat');
+        }
+        foreach ($r->tavsiyalar as $t) {
+            echo html_writer::div('→ ' . s($t), 'tz-rec-tavsiya');
+        }
+        if ($r->xulosa === '' && !$r->kuchli) {
+            echo html_writer::div($r->aierror
+                ? s((string) $r->aierror)
+                : get_string('rec_pending', 'local_targetzenit'), 'tz-dir-sub');
+        }
+        echo html_writer::end_div();
+        echo html_writer::end_div();
+
+        // --- amal tugmalari
+        echo html_writer::start_div('tz-rec-actions');
+        echo html_writer::link(
+            new moodle_url('/local/targetzenit/dars_tahlil.php', ['lessonid' => $r->lessonid]),
+            get_string('rec_openlesson', 'local_targetzenit'),
+            ['class' => 'btn btn-sm btn-primary']);
+        if ($aurl) {
+            echo html_writer::link($url(['ochir' => $r->audioid, 'turi' => 'audio',
+                'sesskey' => sesskey()]), get_string('rec_delaudio', 'local_targetzenit'),
+                ['class' => 'btn btn-sm btn-outline-warning',
+                 'onclick' => 'return confirm('
+                     . json_encode(get_string('rec_delaudio_q', 'local_targetzenit')) . ')']);
+        }
+        echo html_writer::link($url(['ochir' => $r->audioid, 'turi' => 'hammasi',
+            'sesskey' => sesskey()]), get_string('rec_delall', 'local_targetzenit'),
+            ['class' => 'btn btn-sm btn-outline-danger',
+             'onclick' => 'return confirm('
+                 . json_encode(get_string('rec_delall_q', 'local_targetzenit')) . ')']);
+        echo html_writer::end_div();
+
+        echo html_writer::end_tag('td') . html_writer::end_tag('tr');
+    }
+    echo html_writer::end_tag('tbody') . html_writer::end_tag('table');
+    echo html_writer::end_div();
+    echo html_writer::end_div();
+
+    echo $OUTPUT->paging_bar($natija['jami'], $page, TZ_YOZUV_PER_PAGE, $url());
 }
+
+shell::end();
+
+// Qatorni ochish/yopish — kichik vanilla JS, tashqi kutubxonasiz.
+// Yopilganda audio to'xtatiladi: bir vaqtda ikki yozuv jaranglamasin.
+$PAGE->requires->js_amd_inline("
+require([], function() {
+    document.querySelectorAll('.tz-rec-row').forEach(function (qator) {
+        var ochish = function () {
+            var d = document.getElementById(qator.dataset.tzrec);
+            if (!d) { return; }
+            d.hidden = !d.hidden;
+            qator.classList.toggle('tz-on', !d.hidden);
+            if (d.hidden) {
+                var a = d.querySelector('audio');
+                if (a) { a.pause(); }
+            }
+        };
+        qator.addEventListener('click', ochish);
+        qator.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ochish(); }
+        });
+    });
+});
+");
 
 echo $OUTPUT->footer();

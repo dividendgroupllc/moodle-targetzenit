@@ -9,6 +9,7 @@
 require(__DIR__ . '/../../config.php');
 
 use local_targetzenit\fact;
+use local_targetzenit\output\shell;
 use local_targetzenit\timetable;
 use local_targetzenit\tutor;
 
@@ -19,9 +20,7 @@ require_capability('local/targetzenit:viewteachers', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/tutorlar.php'));
-$PAGE->set_pagelayout('standard');
-$PAGE->set_title(get_string('dir_tutors', 'local_targetzenit'));
-$PAGE->set_heading(get_string('dir_tutors', 'local_targetzenit'));
+shell::setup($PAGE, get_string('dir_tutors', 'local_targetzenit'));
 
 $year = timetable::current_year();
 if (!$year) {
@@ -74,16 +73,12 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
 }
 
 echo $OUTPUT->header();
-echo html_writer::start_div('tz-dir');
-
-echo html_writer::div(
-    html_writer::tag('h1', get_string('dir_tutors', 'local_targetzenit'), ['class' => 'tz-dir-h1'])
-    . html_writer::div(get_string('dir_tutorshelp', 'local_targetzenit'), 'tz-dir-sub'),
-    'tz-dir-head');
+shell::start('tutorlar', get_string('dir_tutors', 'local_targetzenit'),
+    get_string('dir_tutorshelp', 'local_targetzenit'));
 
 if (!$nomzodlar) {
     echo $OUTPUT->notification(get_string('dir_tutornocand', 'local_targetzenit'), 'warning');
-    echo html_writer::end_div();
+    shell::end();
     echo $OUTPUT->footer();
     exit;
 }
@@ -149,5 +144,5 @@ echo html_writer::div(html_writer::empty_tag('input', [
 echo html_writer::end_div();
 echo html_writer::end_tag('form');
 
-echo html_writer::end_div();
+shell::end();
 echo $OUTPUT->footer();

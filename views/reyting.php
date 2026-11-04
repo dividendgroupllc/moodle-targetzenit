@@ -137,9 +137,18 @@ if ($kesim === 'teacher') {
         echo html_writer::start_tag('tr');
         echo html_writer::tag('td',
             html_writer::tag('span', (string) ($i + 1), ['class' => 'tz-dir-rank']));
+        // Ism — o'qituvchi kartasiga havola. Reyting "kim pastda" degan
+        // savolga javob beradi, keyingi savol esa doim "NEGA" — u javob
+        // o'qituvchi kartasida (dars-dars ro'yxati va kategoriya profili).
+        $ismkor = $r->userid
+            ? html_writer::link(
+                new moodle_url('/local/targetzenit/oqituvchi.php',
+                    ['userid' => $r->userid, 'davr' => $davrkod]),
+                s($r->nomi))
+            : s($r->nomi);
         echo html_writer::tag('td', html_writer::div(
             tz_av($r->nomi) . html_writer::div(
-                html_writer::div(s($r->nomi), 'tz-dir-chipname')
+                html_writer::div($ismkor, 'tz-dir-chipname')
                 . html_writer::div(s($r->fan), 'tz-dir-sub')), 'tz-dir-cellname'));
         echo html_writer::tag('td',
             html_writer::tag('b', (string) $r->darslar)
