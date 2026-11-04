@@ -698,3 +698,60 @@
     /* Telefonda fidbek ustuni yashiriladi — u ochilgan kartada to'liq bor */
     .tz-rec th:nth-child(7), .tz-rec td:nth-child(7) { display: none; }
 }
+
+/* ---------------- chorak jurnali: sinf va chorak tanlagichi ----------------
+   Ikki `single_select` — har biri alohida `<form>`. Flex qatorda yonma-yon
+   turadi, tor ekranda esa o'ziga ko'chadi. */
+.tz-jurnal-tanlov { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.tz-jurnal-tanlov form { margin: 0; }
+.tz-jurnal-tanlov select { max-width: 100%; }
+@media (max-width: 600px) {
+    .tz-jurnal-tanlov { flex-direction: column; align-items: stretch; }
+}
+
+/* ================================================================
+   OYLIK — yon panelsiz qobiq va gorizontal hisob-kitob
+   ---------------------------------------------------------------- */
+.tz-plain { background: var(--tz-bg); min-height: 100vh; }
+.tz-plain-main { max-width: 100%; min-width: 0;
+    padding: clamp(16px, 2.2vw, 30px) clamp(14px, 3vw, 48px) 40px; }
+.tz-plain-back { display: inline-block; color: var(--tz-ink-2); font-size: .8rem;
+    text-decoration: none; margin-bottom: 2px; }
+.tz-plain-back:hover { color: var(--tz-brand); text-decoration: none; }
+
+/* --- HISOB-KITOB: chapdan o'ngga o'qiladigan formula.
+   Har qadam o'z operatori bilan BITTA element — satr ko'chganda
+   operator sonidan ajralib qolmaydi. */
+.tz-pr-calc { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; }
+.tz-pr-step { display: flex; align-items: center; gap: 10px; padding: 0 2px 10px 0; }
+.tz-pr-op { font-style: normal; font-size: 1.15rem; font-weight: 600;
+    color: var(--tz-ink-2); padding: 0 8px; user-select: none; }
+.tz-pr-box { border: 1px solid var(--tz-line); border-radius: 11px;
+    padding: 10px 14px; background: var(--tz-card); min-width: 120px; }
+.tz-pr-lab { font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--tz-ink-2); margin-bottom: 3px;
+    white-space: nowrap; }
+.tz-pr-val { font-size: 1.05rem; font-weight: 650; white-space: nowrap; }
+
+/* Oraliq natija — ajralib tursin, lekin yakuniy bilan aralashmasin */
+.tz-pr-res .tz-pr-box { background: var(--tz-bg); border-color: var(--tz-ink-2); }
+/* Ushlanmalar */
+.tz-pr-neg .tz-pr-val { color: var(--tz-neg); }
+.tz-pr-neg .tz-pr-val::before { content: "− "; }
+/* Yakuniy summa — eng muhim son, shuning uchun eng kuchli urg'u */
+.tz-pr-final .tz-pr-box { background: var(--tz-brand); border-color: var(--tz-brand); }
+.tz-pr-final .tz-pr-lab { color: rgba(255,255,255,.75); }
+.tz-pr-final .tz-pr-val { color: #fff; font-size: 1.3rem; }
+.tz-pr-main { color: var(--tz-brand); }
+
+/* --- kunma-kun jadvali (ilgari inline <style> edi) */
+.tz-kunlar td, .tz-kunlar th { padding: .25rem .45rem; font-size: .85rem;
+    white-space: nowrap; text-align: center; }
+.tz-kunlar td:first-child, .tz-kunlar th:first-child { text-align: left;
+    position: sticky; left: 0; background: var(--tz-card); z-index: 1; }
+
+@media (max-width: 680px) {
+    .tz-pr-box { min-width: 96px; padding: 8px 11px; }
+    .tz-pr-val { font-size: .95rem; }
+    .tz-pr-op { padding: 0 5px; font-size: 1rem; }
+}

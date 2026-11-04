@@ -134,7 +134,30 @@ $kataklar = journal::cells($lessonids);
 
 echo $OUTPUT->header();
 
-// Chorak tanlash
+// ------------------------------------------------- SINF VA CHORAK TANLASH
+// Ikkalasi bitta qatorda: o'qituvchi jurnalni ochganda birinchi qiladigan
+// ishi — "qaysi sinf, qaysi chorak" ni to'g'rilash.
+echo html_writer::start_div('tz-jurnal-tanlov mb-2');
+
+// --- Sinf (kurs) tanlash.
+//
+// NEGA KERAK: avval kursni almashtirish uchun kurs sahifasidan qaytib,
+// boshqa kursga kirib, u yerdan jurnalni ochish kerak edi — 1-A dan 10-A ga
+// o'tish uch bosqich. Jurnal esa aynan sinfdan sinfga ko'chib yuriladigan
+// ekran.
+//
+// Chorak SAQLANADI: sinf almashsa ham o'qituvchi o'sha chorakda qoladi,
+// aks holda har almashtirishda joriy chorakka qaytarib tashlardi.
+$kurslar = journal::my_courses((int) $USER->id, $year);
+if (count($kurslar) > 1) {
+    $kurstanlov = new single_select(
+        new moodle_url('/local/targetzenit/jurnal.php', ['term' => $termidx]),
+        'courseid', $kurslar, $courseid);
+    $kurstanlov->set_label(get_string('jurnal_class', 'local_targetzenit') . ': ');
+    echo $OUTPUT->render($kurstanlov);
+}
+
+// --- Chorak tanlash
 $options = [];
 foreach ($terms as $i => $t) {
     $options[$i] = $t->name . ' (' . $t->startdate . ' – ' . $t->enddate . ')';
@@ -142,8 +165,10 @@ foreach ($terms as $i => $t) {
 $select = new single_select(
     new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
     'term', $options, $termidx);
-$select->set_label('Chorak: ');
-echo html_writer::div($OUTPUT->render($select), 'mb-2');
+$select->set_label(get_string('jurnal_term', 'local_targetzenit') . ': ');
+echo $OUTPUT->render($select);
+
+echo html_writer::end_div();
 
 echo html_writer::div(local_targetzenit_zoom_panel('jurnal'), 'mb-2');
 

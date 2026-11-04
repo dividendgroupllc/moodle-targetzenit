@@ -169,6 +169,41 @@ class shell {
             ['class' => 'tz-dir-navitem' . ($active === $kod ? ' tz-on' : '')]);
     }
 
+    /**
+     * YON PANELSIZ qobiq — xodimning o'z sahifalari uchun (oylik va h.k.).
+     *
+     * NEGA ALOHIDA: direktor paneli navigatsiyasi bu yerda ortiqcha —
+     * o'qituvchi u sahifalarga kira olmaydi. Lekin kenglik va ko'rinish
+     * bir xil bo'lishi kerak, shuning uchun `embedded` layout va o'sha
+     * token qatlami ishlatiladi. Moodle navigatsiyasi yo'qligi uchun
+     * qaytish havolasi shu yerda beriladi.
+     */
+    public static function plain_start(string $title, string $sub = '',
+                                        string $tools = ''): void {
+        global $SITE;
+
+        echo \html_writer::start_div('tz-dir tz-plain');
+        echo \html_writer::start_div('tz-plain-main');
+
+        echo \html_writer::start_div('tz-dir-top');
+        echo \html_writer::div(
+            \html_writer::link(new \moodle_url('/my/'),
+                '← ' . format_string($SITE->shortname ?: $SITE->fullname),
+                ['class' => 'tz-plain-back'])
+            . \html_writer::tag('h2', $title, ['class' => 'tz-dir-hello'])
+            . ($sub !== '' ? \html_writer::div($sub, 'tz-dir-sub') : ''));
+        if ($tools !== '') {
+            echo \html_writer::div($tools, 'tz-dir-tools');
+        }
+        echo \html_writer::end_div();
+    }
+
+    /** Yon panelsiz qobiqni yopadi. */
+    public static function plain_end(): void {
+        echo \html_writer::end_div();   // .tz-plain-main
+        echo \html_writer::end_div();   // .tz-dir
+    }
+
     /** Asosiy ustun va qobiqni yopadi. */
     public static function end(): void {
         echo \html_writer::end_div();   // .tz-dir-main

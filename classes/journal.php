@@ -75,6 +75,56 @@ class journal {
      * (param.php). Shuning uchun ichki kalit "2026-10-27#3" bo'lsa ham,
      * forma maydonida "20261027_3" ishlatiladi.
      */
+    /**
+     * Shu o'qituvchi jurnalini yuritadigan kurslar: [courseid => nomi].
+     *
+     * NEGA ENROLMENT BO'YICHA: `get_user_capability_course()` ham bor, lekin
+     * u tizim darajasida roli borlarga (menejer, admin) MAKTABDAGI HAMMA
+     * kursni qaytaradi — tanlagich yuzlab qatorga aylanardi. Jurnal esa
+     * "men dars o'tadigan sinflar" ro'yxati bo'lishi kerak, shuning uchun
+     * asos — haqiqiy yozilish (enrolment).
+     *
+     * `teach` ruxsati yana bir bor tekshiriladi: o'qituvchi boshqa kursga
+     * O'QUVCHI sifatida yozilgan bo'lishi mumkin (masalan malaka oshirish
+     * kursi) — unda jurnal ochish huquqi yo'q va ro'yxatda ham turmasligi
+     * kerak.
+     *
+     * Tartib — TABIIY: "1 A" dan keyin "2 A" keladi, "10 A" esa oxirida.
+     * Oddiy alifbo tartibida "10 A" "2 A" dan oldin turib qolardi.
+     */
+    public static function my_courses(int $userid, string $year): array {
+        global $DB;
+
+        $rows = $DB->get_records_sql("
+            SELECT DISTINCT c.id, c.fullname, c.idnumber
+              FROM {course} c
+              JOIN {enrol} e ON e.courseid = c.id
+              JOIN {user_enrolments} ue ON ue.enrolid = e.id
+             WHERE ue.userid = :userid AND ue.status = 0
+               AND c.idnumber LIKE :pattern",
+            ['userid' => $userid, 'pattern' => $year . '::%']);
+
+        $saralash = [];
+        $nomlar = [];
+        foreach ($rows as $r) {
+            $ctx = \context_course::instance((int) $r->id, IGNORE_MISSING);
+            if (!$ctx || !has_capability('local/targetzenit:teach', $ctx, $userid)) {
+                continue;
+            }
+            // idnumber: "{yil}::{guruh}::{fan}"
+            $q = explode('::', (string) $r->idnumber);
+            $saralash[(int) $r->id] = ($q[1] ?? '') . ' ' . ($q[2] ?? '');
+            $nomlar[(int) $r->id] = format_string($r->fullname);
+        }
+        uasort($saralash, fn($a, $b) => strnatcasecmp($a, $b));
+
+        $out = [];
+        foreach (array_keys($saralash) as $cid) {
+            $out[$cid] = $nomlar[$cid];
+        }
+        return $out;
+    }
+
     public static function pkey(array $l): string {
         return str_replace('-', '', $l['date']) . '_' . (int) $l['lessonno'];
     }

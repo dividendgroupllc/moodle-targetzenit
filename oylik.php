@@ -10,6 +10,7 @@
 
 require(__DIR__ . '/../../config.php');
 
+use local_targetzenit\output\shell;
 use local_targetzenit\payroll;
 
 require_login();
@@ -33,8 +34,7 @@ $url = new moodle_url('/local/targetzenit/oylik.php');
 
 $PAGE->set_url($url);
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('standard');
-$PAGE->set_title(tz_s('mypayroll'));
+shell::setup($PAGE, tz_s('mypayroll'));
 
 $hammasi = has_capability('local/targetzenit:viewallpayroll', $context);
 
@@ -47,26 +47,27 @@ if ($kimuserid && $kimuserid != $USER->id) {
 }
 
 $ref = payroll::ref_for((int) $kim->id);
-$PAGE->set_heading($kim->id == $USER->id
+$sarlavha = $kim->id == $USER->id
     ? tz_s('mypayroll')
-    : fullname($kim) . ' — ' . tz_s('mypayroll'));
+    : fullname($kim) . ' — ' . tz_s('mypayroll');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading($PAGE->heading);
 
 if ($ref === '') {
-    echo $OUTPUT->notification(
-        tz_s('pr_noidnumber'),
+    shell::plain_start($sarlavha);
+    echo $OUTPUT->notification(tz_s('pr_noidnumber'),
         \core\output\notification::NOTIFY_WARNING);
+    shell::plain_end();
     echo $OUTPUT->footer();
     exit;
 }
 
 $oylar = payroll::months($ref);
 if (!$oylar) {
-    echo $OUTPUT->notification(
-        tz_s('pr_nodata'),
+    shell::plain_start($sarlavha);
+    echo $OUTPUT->notification(tz_s('pr_nodata'),
         \core\output\notification::NOTIFY_INFO);
+    shell::plain_end();
     echo $OUTPUT->footer();
     exit;
 }
@@ -91,23 +92,33 @@ $params = [];
 if ($kim->id != $USER->id) {
     $params['userid'] = $kim->id;
 }
-echo html_writer::start_tag('form', ['method' => 'get', 'action' => $url->out(false),
-    'class' => 'mb-3 d-flex align-items-center gap-2']);
+// Oy tanlagich sarlavha qatorining o'ng tomonida — maketdagi filtr qatori
+// bilan bir xil joyda, shunda sahifa bo'ylab bir xil mantiq saqlanadi.
+$oyforma = html_writer::start_tag('form', ['method' => 'get',
+    'action' => $url->out(false), 'class' => 'tz-dir-f']);
 foreach ($params as $k => $v) {
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => $k, 'value' => $v]);
+    $oyforma .= html_writer::empty_tag('input',
+        ['type' => 'hidden', 'name' => $k, 'value' => $v]);
 }
-echo html_writer::label(tz_s('pr_month'), 'tz-oy', true, ['class' => 'me-2 mb-0']);
-echo html_writer::select($tanlov, 'oyjuft', $joriy, false,
-    ['id' => 'tz-oy', 'class' => 'custom-select', 'onchange' => 'this.form.submit()']);
-echo html_writer::end_tag('form');
+$oyforma .= html_writer::tag('label', tz_s('pr_month'), ['for' => 'tz-oy']);
+$oyforma .= html_writer::select($tanlov, 'oyjuft', $joriy, false,
+    ['id' => 'tz-oy', 'onchange' => 'this.form.submit()']);
+$oyforma .= html_writer::end_tag('form');
 
 $rec = payroll::month($ref, $yil, $oy);
 if (!$rec) {
+    shell::plain_start($sarlavha, '', $oyforma);
     echo $OUTPUT->notification(tz_s('pr_nomonth'),
         \core\output\notification::NOTIFY_INFO);
+    shell::plain_end();
     echo $OUTPUT->footer();
     exit;
 }
+
+shell::plain_start($sarlavha,
+    payroll::oy_nomi($oy) . ' ' . $yil
+        . ($rec->holat === 'Yopiq' ? '' : ' · ' . tz_s('pr_inprogress')),
+    $oyforma);
 
 $soatbay = $rec->tolovturi === 'soat';
 
@@ -119,53 +130,83 @@ if ($rec->holat !== 'Yopiq') {
 
 // ------------------------------------------------------------- asosiy sonlar
 $birlik = $soatbay ? tz_s('pr_unit_hour') : tz_s('pr_unit_day');
-$kartalar = [
-    [tz_s('pr_takehome'), payroll::pul($rec->jami, $rec->valyuta), 'h3 text-primary'],
-    [$soatbay ? tz_s('pr_workedhours') : tz_s('pr_workeddays'),
-        ($soatbay ? (float) $rec->ishlagan . ' ' . $birlik
-            : (float) $rec->ishlagan . ' / ' . $rec->normakun . ' ' . $birlik), 'h4'],
-    [tz_s('pr_bonus'), payroll::pul($rec->bonus, $rec->valyuta), 'h4'],
-];
-echo html_writer::start_div('d-flex flex-wrap gap-3 mb-4');
-foreach ($kartalar as [$sarlavha, $qiymat, $klass]) {
+
+$plita = function(string $yorliq, string $qiymat, string $izoh = '',
+                  string $turi = ''): string {
+    return html_writer::div(
+        html_writer::div(s($yorliq), 'tz-dir-lab')
+        . html_writer::div(s($qiymat), 'tz-dir-num' . ($turi ? ' tz-pr-' . $turi : ''))
+        . ($izoh !== '' ? html_writer::div(s($izoh), 'tz-dir-sub') : ''),
+        'tz-dir-tile');
+};
+
+$tiles = $plita(tz_s('pr_takehome'), payroll::pul($rec->jami, $rec->valyuta), '', 'main');
+$tiles .= $plita(
+    $soatbay ? tz_s('pr_workedhours') : tz_s('pr_workeddays'),
+    (float) $rec->ishlagan . ' ' . $birlik,
+    $soatbay ? '' : tz_s('pr_ofnorm', (int) $rec->normakun));
+$tiles .= $plita(tz_s('pr_bonus'), payroll::pul($rec->bonus, $rec->valyuta));
+$tiles .= $plita(tz_s('pr_attended'),
+    (int) $rec->kelgankun . ' ' . tz_s('pr_unit_day'));
+
+echo html_writer::div($tiles, 'tz-dir-hero');
+
+// --------------------------------------------------------------- HISOB-KITOB
+//
+// GORIZONTAL FORMULA: raqamlar ustma-ust ro'yxat emas, CHAPDAN O'NGGA
+// o'qiladigan hisob zanjiri. Sabab — oylik aslida formula: oylik ÷ norma
+// = kun narxi × ishlangan + bonus = hisoblandi − ushlanmalar = qo'lga.
+// Vertikal jadvalda bu bog'lanish ko'rinmaydi, odam "bu son qayerdan
+// chiqdi?" deb so'raydi.
+//
+// Operatorlar Frappe'dagi hisob bilan bir xil (`oylik_tabel.py`):
+// kunbay — kunlik narx normaga bo'linadi; soatbay — norma qatnashmaydi.
+$pul = fn($x) => payroll::pul($x, $rec->valyuta);
+
+if ($soatbay) {
+    $qadam = [
+        ['', tz_s('pr_hourrate'), $pul($rec->oylik), ''],
+        ['×', tz_s('pr_workedhours'), (float) $rec->ishlagan . ' ' . $birlik, ''],
+        ['+', tz_s('pr_bonus_penalty'), $pul($rec->bonus), ''],
+        ['=', tz_s('pr_gross'), $pul($rec->hisob), 'res'],
+    ];
+} else {
+    $qadam = [
+        ['', tz_s('pr_salary'), $pul($rec->oylik), ''],
+        ['÷', tz_s('pr_normdays'), (int) $rec->normakun . ' ' . $birlik, ''],
+        ['=', tz_s('pr_dayrate'), $pul($rec->kunliknarx), 'res'],
+        ['×', tz_s('pr_workeddays'), (float) $rec->ishlagan . ' ' . $birlik, ''],
+        ['+', tz_s('pr_bonus_penalty'), $pul($rec->bonus), ''],
+        ['=', tz_s('pr_gross'), $pul($rec->hisob), 'res'],
+    ];
+}
+$qadam[] = ['−', tz_s('pr_tax'), $pul($rec->nalog), 'neg'];
+$qadam[] = ['−', tz_s('pr_meals'), $pul($rec->pitaniya), 'neg'];
+$qadam[] = ['=', tz_s('pr_takehome'), $pul($rec->jami), 'final'];
+
+echo html_writer::start_div('tz-dir-card');
+echo html_writer::tag('h4', tz_s('pr_breakdown'), ['class' => 'tz-dir-cardtitle']);
+echo html_writer::div(tz_s('pr_calchint'), 'tz-dir-sub mb-2');
+
+echo html_writer::start_div('tz-pr-calc');
+foreach ($qadam as [$op, $yorliq, $qiymat, $turi]) {
+    // Operator QADAM ICHIDA turadi: satr ko'chganda u o'z sonidan
+    // ajralib qolmaydi va formula o'qilishda buzilmaydi.
     echo html_writer::div(
-        html_writer::div(s($sarlavha), 'text-muted small')
-        . html_writer::div(s($qiymat), $klass . ' mb-0'),
-        'card p-3', ['style' => 'min-width:220px']);
+        ($op !== '' ? html_writer::tag('i', $op, ['class' => 'tz-pr-op']) : '')
+        . html_writer::div(
+            html_writer::div(s($yorliq), 'tz-pr-lab')
+            . html_writer::div(s($qiymat), 'tz-pr-val'), 'tz-pr-box'),
+        'tz-pr-step' . ($turi ? ' tz-pr-' . $turi : ''));
 }
 echo html_writer::end_div();
-
-// --------------------------------------------------------------- tafsilot
-$qatorlar = [
-    [$soatbay ? tz_s('pr_hourrate') : tz_s('pr_salary'),
-        payroll::pul($rec->oylik, $rec->valyuta)],
-];
-if (!$soatbay) {
-    $qatorlar[] = [tz_s('pr_normdays'), (int) $rec->normakun . ' ' . $birlik];
-    $qatorlar[] = [tz_s('pr_dayrate'), payroll::pul($rec->kunliknarx, $rec->valyuta)];
-} else {
-    $qatorlar[] = [tz_s('pr_workedhours'), (float) $rec->ishlagan . ' ' . $birlik];
-}
-$qatorlar[] = [tz_s('pr_attended'), (int) $rec->kelgankun . ' ' . tz_s('pr_unit_day')];
-$qatorlar[] = [tz_s('pr_bonus_penalty'), payroll::pul($rec->bonus, $rec->valyuta)];
-$qatorlar[] = ['<strong>' . tz_s('pr_gross') . '</strong>',
-    '<strong>' . payroll::pul($rec->hisob, $rec->valyuta) . '</strong>'];
-$qatorlar[] = [tz_s('pr_tax'), '− ' . payroll::pul($rec->nalog, $rec->valyuta)];
-$qatorlar[] = [tz_s('pr_meals'), '− ' . payroll::pul($rec->pitaniya, $rec->valyuta)];
-$qatorlar[] = ['<strong>' . tz_s('pr_takehome') . '</strong>',
-    '<strong>' . payroll::pul($rec->jami, $rec->valyuta) . '</strong>'];
-
-$t = new html_table();
-$t->head = [tz_s('pr_indicator'), tz_s('pr_value')];
-$t->attributes['class'] = 'generaltable';
-$t->data = $qatorlar;
-echo $OUTPUT->heading(tz_s('pr_breakdown'), 4);
-echo html_writer::table($t);
+echo html_writer::end_div();
 
 // ------------------------------------------------------- kunma-kun davomat
 $kunlar = payroll::days($rec);
 if ($kunlar) {
-    echo $OUTPUT->heading(tz_s('pr_days'), 4);
+    echo html_writer::start_div('tz-dir-card');
+    echo html_writer::tag('h4', tz_s('pr_days'), ['class' => 'tz-dir-cardtitle']);
 
     // Kunlar GORIZONTAL: ustun — kun, qator — ko'rsatkich.
     //
@@ -191,7 +232,7 @@ if ($kunlar) {
     echo html_writer::div(
         ($soatbay ? tz_s('pr_days_hint_hours') : tz_s('pr_days_hint_koef'))
         . (($kirish_bor || $chiqish_bor) ? ' ' . tz_s('pr_days_hint_source') : ''),
-        'text-muted small mb-2');
+        'tz-dir-sub mb-2');
 
     $sarlavha = [''];
     $koefqator = [html_writer::tag('strong',
@@ -207,19 +248,19 @@ if ($kunlar) {
         $sarlavha[] = html_writer::div(
             html_writer::tag('strong', $kun)
             . html_writer::div(userdate($vaqt, '%a'), 'small'),
-            $dam ? 'text-muted' : '');
+            $dam ? 'tz-dir-sub' : '');
 
         $koef = $k['koef'] ?? null;
         if ($koef === null) {
-            $koefqator[] = html_writer::span('—', 'text-muted');
+            $koefqator[] = html_writer::span('—', 'tz-dir-sub');
         } else if ((float) $koef > 0) {
             $koefqator[] = html_writer::span((float) $koef, 'text-success font-weight-bold');
         } else {
             $koefqator[] = html_writer::span('0', 'text-danger');
         }
 
-        $kirishqator[] = s($k['kirish'] ?? '') ?: html_writer::span('·', 'text-muted');
-        $chiqishqator[] = s($k['chiqish'] ?? '') ?: html_writer::span('·', 'text-muted');
+        $kirishqator[] = s($k['kirish'] ?? '') ?: html_writer::span('·', 'tz-dir-sub');
+        $chiqishqator[] = s($k['chiqish'] ?? '') ?: html_writer::span('·', 'tz-dir-sub');
     }
 
     $kt = new html_table();
@@ -231,15 +272,13 @@ if ($kunlar) {
     if ($chiqish_bor) {
         $kt->data[] = $chiqishqator;
     }
-    $kt->attributes['class'] = 'generaltable tz-kunlar';
+    $kt->attributes['class'] = 'tz-dir-table tz-kunlar';
     $kt->align = array_merge(['left'], array_fill(0, count($kunlar), 'center'));
 
-    // Tor ekranda jadval SAHIFANI emas, o'zini surib ko'rsatadi.
-    echo html_writer::div(html_writer::table($kt), '',
-        ['style' => 'overflow-x:auto']);
-    echo html_writer::tag('style',
-        '.tz-kunlar td, .tz-kunlar th { padding:.25rem .4rem; '
-        . 'font-size:.85rem; white-space:nowrap; }');
+    // Tor ekranda jadval SAHIFANI emas, o'zini surib ko'rsatadi
+    // (uslub `styles.css` da — inline `<style>` sahifada takrorlanardi).
+    echo html_writer::div(html_writer::table($kt), 'tz-dir-tablewrap');
+    echo html_writer::end_div();
 }
 
 // ------------------------------------------- oylar kesimida hisob-kitob
@@ -248,8 +287,9 @@ if ($kunlar) {
 // hech narsa hisoblanmaydi, faqat chiziladi.
 $hisob = payroll::settle($ref);
 if ($hisob) {
-    echo $OUTPUT->heading(tz_s('st_title'), 4);
-    echo html_writer::div(tz_s('st_hint'), 'text-muted small mb-2');
+    echo html_writer::start_div('tz-dir-card');
+    echo html_writer::tag('h4', tz_s('st_title'), ['class' => 'tz-dir-cardtitle']);
+    echo html_writer::div(tz_s('st_hint'), 'tz-dir-sub mb-2');
 
     // Joriy oy bu jadvalda bo'lmasligi KUTILGAN holat: nachisleniya
     // buxgalteriyada oy yopilganda yoziladi. Tushuntirilmasa o'qituvchi
@@ -267,18 +307,21 @@ if ($hisob) {
             \core\output\notification::NOTIFY_INFO);
     }
 
-    $yashil = 'color:#1f7a3d;white-space:nowrap';
-    $qizil = 'color:#a4252a;white-space:nowrap';
+    // Qotib yozilgan rang qorong'i rejimda o'qilmaydi — tokenlardan olamiz
+    $yashil = 'color:var(--tz-good);white-space:nowrap';
+    $qizil = 'color:var(--tz-critical);white-space:nowrap';
+    // Holat chipi — bizning token qatlamimiz (Bootstrap `badge` emas):
+    // rang sayt temasiga moslashadi va matn har doim yonida turadi.
     $belgilar = [
-        'paid' => ['st_s_paid', 'badge badge-success'],
-        'over' => ['st_s_over', 'badge badge-success'],
-        'partial' => ['st_s_partial', 'badge badge-warning'],
-        'unpaid' => ['st_s_unpaid', 'badge badge-danger'],
-        'advance' => ['st_s_advance', 'badge badge-success'],
+        'paid' => ['st_s_paid', 'tz-dir-chip tz-dir-good'],
+        'over' => ['st_s_over', 'tz-dir-chip tz-dir-good'],
+        'partial' => ['st_s_partial', 'tz-dir-chip tz-dir-warning'],
+        'unpaid' => ['st_s_unpaid', 'tz-dir-chip tz-dir-critical'],
+        'advance' => ['st_s_advance', 'tz-dir-chip tz-dir-good'],
     ];
 
     $ht = new html_table();
-    $ht->attributes['class'] = 'generaltable';
+    $ht->attributes['class'] = 'tz-dir-table';
     $ht->head = [tz_s('st_month'), tz_s('st_salary'), tz_s('st_accrued'),
         tz_s('st_paid'), tz_s('st_remaining'), tz_s('st_status')];
     $ht->align = ['left', 'right', 'right', 'right', 'right', 'left'];
@@ -305,22 +348,22 @@ if ($hisob) {
             $qoldiq = html_writer::span('+' . payroll::pul(-$m->debt, $cur), '',
                 ['style' => $yashil]);
         } else {
-            $qoldiq = html_writer::span('0', 'text-muted');
+            $qoldiq = html_writer::span('0', 'tz-dir-sub');
         }
 
         $tolangan = html_writer::span(payroll::pul($m->paid, $cur), '', ['style' => $yashil]);
         if ($m->advance > 0.5) {
             $tolangan .= html_writer::div(
-                tz_s('st_unlinked', payroll::pul($m->advance, $cur)), 'text-muted small');
+                tz_s('st_unlinked', payroll::pul($m->advance, $cur)), 'tz-dir-sub');
         }
 
         [$kalit, $klass] = $belgilar[payroll::holat($m)];
 
         $ht->data[] = [
-            payroll::oy_yorlig($m->oy) . ' ' . html_writer::span(s($cur), 'text-muted small'),
+            payroll::oy_yorlig($m->oy) . ' ' . html_writer::span(s($cur), 'tz-dir-sub'),
             $m->oylik > 0.5
                 ? payroll::pul($m->oylik, $cur)
-                : html_writer::span('—', 'text-muted', ['title' => tz_s('st_nosalary')]),
+                : html_writer::span('—', 'tz-dir-sub', ['title' => tz_s('st_nosalary')]),
             payroll::pul($m->nach, $cur),
             $tolangan,
             $qoldiq,
@@ -333,11 +376,11 @@ if ($hisob) {
     foreach ($jami as $cur => $t) {
         $ht->data[] = [
             html_writer::tag('strong', tz_s('st_total'))
-                . ' ' . html_writer::span(s($cur), 'text-muted small'),
+                . ' ' . html_writer::span(s($cur), 'tz-dir-sub'),
             $t['oyn']
                 ? html_writer::tag('strong', payroll::pul($t['oysum'] / $t['oyn'], $cur))
-                    . html_writer::div(tz_s('st_average'), 'text-muted small')
-                : html_writer::span('—', 'text-muted'),
+                    . html_writer::div(tz_s('st_average'), 'tz-dir-sub')
+                : html_writer::span('—', 'tz-dir-sub'),
             html_writer::tag('strong', payroll::pul($t['nach'], $cur)),
             html_writer::tag('strong', payroll::pul($t['paid'], $cur), ['style' => $yashil]),
             html_writer::tag('strong',
@@ -348,19 +391,22 @@ if ($hisob) {
         ];
     }
 
-    echo html_writer::div(html_writer::table($ht), 'table-responsive');
+    echo html_writer::div(html_writer::table($ht), 'tz-dir-tablewrap');
+    echo html_writer::end_div();
 }
 
-echo html_writer::div(tz_s('pr_footnote'), 'text-muted small mt-4');
+echo html_writer::div(tz_s('pr_footnote'), 'tz-dir-sub mt-3');
 
 // ------------------------------------------------------------ admin ro'yxati
 if ($hammasi && $kim->id == $USER->id) {
-    echo $OUTPUT->heading(tz_s('pr_allstaff', payroll::oy_nomi($oy) . " $yil"), 4);
+    echo html_writer::start_div('tz-dir-card');
+    echo html_writer::tag('h4', tz_s('pr_allstaff', payroll::oy_nomi($oy) . " $yil"),
+        ['class' => 'tz-dir-cardtitle']);
     $barcha = payroll::all_for_month($yil, $oy);
     $at = new html_table();
     $at->head = [tz_s('pr_employee'), tz_s('pr_position'), tz_s('pr_worked'),
         tz_s('pr_bonus'), tz_s('pr_takehome'), tz_s('pr_linked')];
-    $at->attributes['class'] = 'generaltable';
+    $at->attributes['class'] = 'tz-dir-table';
     foreach ($barcha as $b) {
         $ism = $b->moodleuserid
             ? html_writer::link(new moodle_url($url, ['userid' => $b->moodleuserid,
@@ -376,7 +422,9 @@ if ($hammasi && $kim->id == $USER->id) {
             $b->moodleuserid ? '✓' : html_writer::span(tz_s('pr_notlinked'), 'text-danger'),
         ];
     }
-    echo html_writer::table($at);
+    echo html_writer::div(html_writer::table($at), 'tz-dir-tablewrap');
+    echo html_writer::end_div();
 }
 
+shell::plain_end();
 echo $OUTPUT->footer();

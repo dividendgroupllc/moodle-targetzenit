@@ -1023,6 +1023,13 @@ S = {
     ),
     "oq_navmine": ("My work", "Mening ishim", "Моя работа"),
     "oq_navschool": ("School", "Maktab", "Школа"),
+    "jurnal_class": ("Class", "Sinf", "Класс"),
+    "jurnal_term": ("Term", "Chorak", "Четверть"),
+    "jurnal_link": (
+        "Lessons",
+        "Darslar",
+        "Уроки",
+    ),
     "oq_all": ("All", "Hammasi", "Всё"),
     "oq_periodis": (
         "{$a->nom}: {$a->from} - {$a->to}",
@@ -1221,6 +1228,14 @@ S = {
         "Darsingiz haqida fidbek: {$a->kurs}, {$a->sana}",
         "Обратная связь о вашем уроке: {$a->kurs}, {$a->sana}",
     ),
+
+    # ------------------------------------------------------------ oylik sahifasi
+    "pr_calchint": (
+        "Read left to right: this is how the amount is built up.",
+        "Chapdan o'ngga o'qing: summa shu tartibda hosil bo'ladi.",
+        "Читайте слева направо: так формируется сумма.",
+    ),
+    "pr_ofnorm": ("of {$a} norm days", "norma {$a} kundan", "из {$a} нормо-дней"),
 
     # ------------------------------------------------- direktor paneli vazifalari
     "task_slotbuild": (

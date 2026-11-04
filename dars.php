@@ -101,12 +101,15 @@ echo html_writer::div(
     html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'today', 'date' => $date]),
         '← ' . get_string('timetable', 'local_targetzenit'),
         ['class' => 'btn btn-sm btn-outline-secondary mr-2']) .
+    // Nomi QOTIB YOZILGAN emas, til satridan: interfeys ingliz tilida
+    // bo'lganda bu yagona o'zbekcha tugma bo'lib qolgan edi.
+    //
+    // «Mening darslarim» tugmasi ATAYLAB YO'Q: u yuqori menyuda har
+    // sahifada turadi (`hook_callbacks::primary_extend`), bu yerda
+    // takrorlanishi qatorni behuda uzaytiradi.
     html_writer::link(new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
-        'Chorak jurnali', ['class' => 'btn btn-sm btn-outline-primary mr-2']) .
-    // Halqa yopiladi: panel darsga olib keladi, dars panelga qaytaradi.
-    html_writer::link(new moodle_url('/local/targetzenit/oqituvchi.php'),
-        get_string('oq_mypanel', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-secondary']),
+        get_string('jurnal_link', 'local_targetzenit'),
+        ['class' => 'btn btn-sm btn-outline-primary']),
     'mb-3'
 );
 
