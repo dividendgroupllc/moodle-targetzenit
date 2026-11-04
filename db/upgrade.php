@@ -455,5 +455,38 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026110310, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026110410) {
+
+        // --- Direktor fidbegi.
+        //
+        // Direktor darsni ko'rib, o'qituvchiga yozma izoh qoldiradi.
+        // O'qituvchi uni O'Z dars kokpitida ko'radi va bildirishnoma oladi.
+        //
+        // `visibility`: `teacher` — o'qituvchi ko'radi (STANDART, 6-tamoyil:
+        // yashirin baho ishonchni buzadi); `private` — ma'muriyat ichidagi
+        // qayd, ataylab tanlanadi.
+        $table = new xmldb_table('local_targetzenit_feedback');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('teacheruserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('authoruserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('kind', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'tavsiya');
+            $table->add_field('visibility', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'teacher');
+            $table->add_field('body', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'new');
+            $table->add_field('seenat', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('lessonid', XMLDB_INDEX_NOTUNIQUE, ['lessonid']);
+            $table->add_index('teacher_time', XMLDB_INDEX_NOTUNIQUE, ['teacheruserid', 'timecreated']);
+            $table->add_index('status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110410, 'local', 'targetzenit');
+    }
+
     return true;
 }

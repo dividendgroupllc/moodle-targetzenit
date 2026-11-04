@@ -168,6 +168,12 @@ if (get_config('local_targetzenit', 'audioenabled')) {
 // tahlil ramkasi o'zgarganda ikki sahifa boshqa-boshqa narsa ko'rsatardi.
 echo \local_targetzenit\output\tahlil::render($dars);
 
+// Direktor fidbegi — o'qituvchi O'Z darsida ko'radi. Yozish formasi
+// chiqmaydi: `givefeedback` ruxsati unda yo'q (fidbek::render o'zi
+// tekshiradi). Ochilishi bilan "ko'rildi" deb belgilanadi.
+echo \local_targetzenit\output\fidbek::render((int) $dars->id,
+    (int) ($dars->teacherid ?: $USER->id));
+
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'saqla', 'value' => 1]);

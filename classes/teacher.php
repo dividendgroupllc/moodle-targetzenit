@@ -418,6 +418,37 @@ class teacher {
         return has_capability('local/targetzenit:viewteachers', \context_system::instance());
     }
 
+    /**
+     * Yozuv lentasining guruh filtri — FAQAT shu odamning guruhlari.
+     *
+     * `dashboard::recording_filters()` butun maktabni qaytaradi (direktor
+     * uchun); o'qituvchiga esa o'zi dars o'tmagan sinflar ro'yxati keraksiz
+     * va u boshqa odamning qamrovini ko'rsatib qo'yadi.
+     *
+     * @return array [groupkey => groupname]
+     */
+    public static function record_groups(int $userid, string $from, string $to): array {
+        global $DB;
+
+        $rows = $DB->get_records_sql("
+            SELECT DISTINCT s.groupkey, s.groupname
+              FROM {local_targetzenit_audio} a
+              JOIN {local_targetzenit_lesson} l ON l.id = a.lessonid
+              JOIN {local_targetzenit_fact} f ON f.lessonid = l.id
+              JOIN {local_targetzenit_slot} s ON s.id = f.slotid
+             WHERE COALESCE(f.attributeduserid, l.teacherid) = :uid
+               AND l.lessondate >= :a AND l.lessondate <= :b
+               AND s.groupkey IS NOT NULL AND s.groupkey <> ''
+          ORDER BY s.groupname ASC",
+            ['uid' => $userid, 'a' => $from, 'b' => $to]);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(string) $r->groupkey] = (string) $r->groupname;
+        }
+        return $out;
+    }
+
     /** Shu odamda umuman dars bormi — menyuda havola ko'rsatishni hal qiladi. */
     public static function has_any(int $userid): bool {
         global $DB;

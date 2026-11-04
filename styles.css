@@ -602,3 +602,25 @@
 @media (prefers-reduced-motion: reduce) {
     .tz-rec-caret, .tz-dir-bar i, .tz-bar-ichi { transition: none; }
 }
+
+/* ---------------- Direktor fidbegi ---------------- */
+.tz-fb { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tz-line); }
+.tz-dir-card.tz-fb { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--tz-line); }
+.tz-fb-head { font-weight: 650; font-size: .92rem; margin-bottom: 8px; }
+.tz-fb-item { border-left: 3px solid var(--tz-line); padding: 8px 0 8px 11px;
+    margin-bottom: 10px; }
+.tz-fb-tavsiya { border-left-color: var(--tz-brand); }
+.tz-fb-ogohlantirish { border-left-color: var(--tz-serious); }
+.tz-fb-rahmat { border-left-color: var(--tz-good); }
+.tz-fb-meta { margin-bottom: 4px; font-size: .85rem; }
+.tz-fb-body { margin: 0; font-size: .9rem; line-height: 1.5; white-space: pre-line; }
+.tz-fb-form { margin-top: 10px; }
+.tz-fb-text { width: 100%; padding: 9px 11px; border: 1px solid var(--tz-line);
+    border-radius: 9px; background: var(--tz-card); color: var(--tz-ink);
+    font-size: .88rem; font-family: inherit; resize: vertical; }
+.tz-fb-text:focus { outline: 2px solid var(--tz-brand); outline-offset: -1px; }
+.tz-fb-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.tz-fb-tools select { padding: 5px 9px; border: 1px solid var(--tz-line);
+    border-radius: 8px; background: var(--tz-card); color: var(--tz-ink); font-size: .85rem; }
+.tz-fb-check { font-size: .84rem; color: var(--tz-ink-2); margin: 0;
+    display: flex; gap: 5px; align-items: center; cursor: help; }

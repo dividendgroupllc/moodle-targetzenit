@@ -981,6 +981,42 @@ bo'yicha nima holat va qaysi darsda nima yetishmayapti?".
 - «Reytinglar» jadvalidagi ism — o'sha odamning kartasiga.
 - `dars.php` dan panelga qaytish tugmasi (halqa yopiladi).
 
+### Yozuv lentasi — bitta chizuvchi, ikki qamrov (2026-11-04)
+
+O'qituvchi paneli «Dars yozuvlari» ko'rinishi direktordagi lentaning AYNI
+O'ZI. Chizuvchi `classes/output/lenta.php` ga ajratildi va ikki sahifa ham
+shundan yuradi:
+
+| Sahifa | Qamrov | O'qituvchi ustuni | Fidbek |
+|---|---|---|---|
+| `yozuvlar.php` | butun maktab, o'qituvchi filtri bilan | bor | yozish + o'qish |
+| `oqituvchi.php?view=yozuvlar` | **bitta odam**, o'qituvchi filtri YO'Q | yo'q (o'rniga sinf va fan) | faqat o'qish |
+
+**Lenta qatorlarni TANLAMAYDI** — qamrovni faqat `dashboard::recordings()`
+ga uzatilgan filtr hal qiladi va uni sahifa beradi. Shu sababli maxfiylik
+chizuvchida emas, sahifada ta'minlanadi:
+
+- `teacher` filtri `$userid` dan **serverda qotib** yoziladi, so'rov
+  parametridan olinmaydi;
+- `$userid` o'zi bo'lmasa, sahifaning o'zi `viewteachers` talab qiladi
+  (`teacher::korish_mumkinmi()`) — oddiy o'qituvchi URL ni qo'lda
+  o'zgartirib ham kira olmaydi;
+- `guruh` filtri `teacher::record_groups()` dan kelgan ro'yxat bilan
+  solishtiriladi — qo'lda yozilgan `gk` so'rovga tushmaydi;
+- audio faylning o'zi `lib.php` dagi `pluginfile` da himoyalangan: shu
+  kursda `teach` yoki tizim darajasida `viewanalysis` kerak;
+- darsga o'tish tugmasi ruxsatga qarab manzil tanlaydi — o'qituvchida
+  `viewanalysis` yo'q, shuning uchun u `dars_tahlil.php` ga emas, o'z
+  kursidagi `dars.php` kokpitiga o'tadi;
+- o'chirish tugmalari faqat `moodle/site:config` da: yozuv — o'qituvchi
+  haqidagi xulosaning DALILI, u o'z dalilini yo'q qila olmasligi kerak.
+
+**Qolgan bitta teshik (ataylab):** bitta kursda ikki o'qituvchi
+`editingteacher` bo'lsa, ikkisi ham o'sha kursdagi hamma yozuvni eshitadi —
+`pluginfile` kurs darajasida ishlaydi. Bu hamkorlikda dars o'tishda to'g'ri
+xatti-harakat; ajratish kerak bo'lsa, tekshiruv kursdan DARSGA
+(`_lesson.teacherid`) tushirilishi kerak.
+
 ### Hali qilinmagani
 
 - **Chorak xaritasi** (5.5 dagi guruh × kun issiqlik setkasi) — dars-dars

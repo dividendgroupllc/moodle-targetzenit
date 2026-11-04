@@ -980,6 +980,15 @@ S = {
         "Butun kuzatuv davrini ko'rsatish",
         "Показать весь период наблюдения",
     ),
+    "oq_tab_sum": ("Overview", "Umumiy hisob", "Общий итог"),
+    "oq_rec_sub": (
+        "Your own lesson recordings only. Click a row to open the audio and the "
+        "short analysis.",
+        "Faqat O'ZINGIZNING dars yozuvlaringiz. Ovoz va qisqa tahlilni ko'rish "
+        "uchun qatorni bosing.",
+        "Только ВАШИ записи уроков. Нажмите на строку, чтобы открыть аудио и "
+        "краткий анализ.",
+    ),
     "oq_all": ("All", "Hammasi", "Всё"),
     "oq_periodis": (
         "{$a->nom}: {$a->from} - {$a->to}",
@@ -1122,6 +1131,45 @@ S = {
     "oq_open": ("Open lesson", "Darsga o'tish", "Открыть урок"),
     "oq_fill": ("Fill in", "To'ldirish", "Заполнить"),
     "oq_opencard": ("Lesson card", "Dars kartasi", "Карточка урока"),
+
+    # ------------------------------------------------------- direktor fidbegi
+    "messageprovider:feedback": (
+        "Feedback from the director about your lesson",
+        "Darsingiz haqida direktor fidbegi",
+        "Обратная связь директора о вашем уроке",
+    ),
+    "fb_title": ("Director feedback", "Direktor fidbegi", "Обратная связь директора"),
+    "fb_none": ("No feedback for this lesson yet.", "Bu dars uchun hali fidbek yo'q.",
+                "По этому уроку обратной связи пока нет."),
+    "fb_placeholder": (
+        "What went well, and what is worth trying next time...",
+        "Nima yaxshi bo'ldi va keyingi safar nimani sinab ko'rish mumkin...",
+        "Что получилось хорошо и что стоит попробовать в следующий раз...",
+    ),
+    "fb_send": ("Send", "Yuborish", "Отправить"),
+    "fb_saved": ("The feedback was sent to the teacher.",
+                 "Fidbek o'qituvchiga yuborildi.",
+                 "Обратная связь отправлена учителю."),
+    "fb_kind_tavsiya": ("advice", "tavsiya", "совет"),
+    "fb_kind_ogohlantirish": ("warning", "ogohlantirish", "предупреждение"),
+    "fb_kind_rahmat": ("thanks", "rahmat", "благодарность"),
+    "fb_privatelab": ("admin note only", "faqat ma'muriy qayd", "только админ-заметка"),
+    "fb_privatehelp": (
+        "The teacher will NOT see this note and gets no notification. "
+        "Normally feedback is visible to the teacher — a hidden assessment "
+        "destroys trust.",
+        "O'qituvchi bu qaydni KO'RMAYDI va bildirishnoma olmaydi. Odatda fidbek "
+        "o'qituvchiga ko'rinadi — yashirin baho ishonchni buzadi.",
+        "Учитель НЕ увидит эту заметку и не получит уведомление. Обычно обратная "
+        "связь видна учителю — скрытая оценка разрушает доверие.",
+    ),
+    "fb_private": ("admin note", "ma'muriy qayd", "админ-заметка"),
+    "fb_seen": ("· read", "· o'qildi", "· прочитано"),
+    "fb_msgsubject": (
+        "Feedback about your lesson: {$a->kurs}, {$a->sana}",
+        "Darsingiz haqida fidbek: {$a->kurs}, {$a->sana}",
+        "Обратная связь о вашем уроке: {$a->kurs}, {$a->sana}",
+    ),
 
     # ------------------------------------------------- direktor paneli vazifalari
     "task_slotbuild": (

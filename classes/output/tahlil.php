@@ -242,10 +242,16 @@ class tahlil {
         // Qayta tahlil — FAQAT MA'MUR uchun.
         // O'qituvchi o'z darsining tahlilini qayta ishga tushira olmaydi: aks holda
         // natija yoqmaganda uni qayta-qayta "aylantirish" mumkin bo'lib qolardi.
+        // QAYTA TAHLIL — FAQAT SAYT MA'MURIGA (qaror 2026-11-04).
+        //
+        // Na o'qituvchi, na direktor: amal eski tahlil va transkript matnini
+        // USTIGA YOZADI. O'qituvchiga berilsa natija yoqmaganda qayta-qayta
+        // "aylantirish" mumkin bo'lardi; direktor esa kuzatuvchi — u o'zi
+        // baho qo'yadigan dalilni qayta yarata olmasligi kerak.
         if ($tugmalar
                 && in_array($tahlil['audio']->status, \local_targetzenit\audio::FAYLLI, true)
                 && \local_targetzenit\ai::enabled()
-                && has_capability('local/targetzenit:viewanalysis', \context_system::instance())) {
+                && has_capability('moodle/site:config', \context_system::instance())) {
             $h .= \html_writer::tag('button', '🔄 Qayta tahlil qilish',
                 ['type' => 'button', 'id' => 'tz-ai-again', 'class' => 'btn btn-sm btn-outline-primary mt-2']);
             $h .= \html_writer::tag('span', '', ['id' => 'tz-ai-again-holat', 'class' => 'ml-2 small']);

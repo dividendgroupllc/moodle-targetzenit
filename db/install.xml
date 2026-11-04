@@ -335,5 +335,28 @@
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_feedback" COMMENT="Direktor fidbegi: darsni ko'rib o'qituvchiga qoldirilgan yozma izoh.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="lessonid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="teacheruserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim haqida"/>
+        <FIELD NAME="authoruserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim yozdi"/>
+        <FIELD NAME="kind" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="tavsiya" SEQUENCE="false" COMMENT="tavsiya|ogohlantirish|rahmat"/>
+        <FIELD NAME="visibility" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="teacher" SEQUENCE="false" COMMENT="teacher|private"/>
+        <FIELD NAME="body" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="new" SEQUENCE="false" COMMENT="new|seen"/>
+        <FIELD NAME="seenat" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="lessonid" UNIQUE="false" FIELDS="lessonid"/>
+        <INDEX NAME="teacher_time" UNIQUE="false" FIELDS="teacheruserid, timecreated"/>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

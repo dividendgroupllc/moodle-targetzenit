@@ -14,6 +14,7 @@ require(__DIR__ . '/../../config.php');
 
 use local_targetzenit\ai;
 use local_targetzenit\audio;
+use local_targetzenit\output\fidbek;
 use local_targetzenit\output\shell;
 use local_targetzenit\output\tahlil;
 
@@ -46,6 +47,13 @@ if (!$lessonid && $slotid) {
         echo $OUTPUT->footer();
         exit;
     }
+}
+
+// Fidbek — chiqarishdan oldin (POST/Redirect/GET)
+if (fidbek::handle()) {
+    redirect(new moodle_url('/local/targetzenit/dars_tahlil.php', ['lessonid' => $lessonid]),
+        get_string('fb_saved', 'local_targetzenit'), null,
+        \core\output\notification::NOTIFY_SUCCESS);
 }
 
 $dars = $DB->get_record('local_targetzenit_lesson', ['id' => $lessonid], '*', MUST_EXIST);
@@ -185,6 +193,11 @@ if ($karta === '') {
 } else {
     echo $karta;
 }
+
+// Hisobot kimga yozilgan bo'lsa — fidbek ham o'shanga (vakant darsda tutor)
+$fb = $DB->get_field('local_targetzenit_fact', 'attributeduserid', ['lessonid' => $lessonid]);
+echo fidbek::render($lessonid, (int) ($fb ?: $dars->teacherid),
+    (new moodle_url('/local/targetzenit/dars_tahlil.php', ['lessonid' => $lessonid]))->out(false));
 
 shell::end();
 echo $OUTPUT->footer();
