@@ -548,6 +548,14 @@ S = {
     ),
 
     # ------------------------------------------- ilovadagi dars kokpiti
+    "app_pastdays": (
+        "Earlier days are listed below \u2014 tap one to grade a lesson you "
+        "missed.",
+        "Quyida oldingi kunlar ham bor \u2014 unutilgan darsni baholash uchun "
+        "kerakli kunni bosing.",
+        "Ниже перечислены предыдущие дни \u2014 нажмите на нужный, чтобы "
+        "выставить оценки за пропущенный урок.",
+    ),
     "app_savelesson": (
         "Save topic and homework",
         "Mavzu va uy vazifani saqlash",

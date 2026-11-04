@@ -68,6 +68,7 @@ $string['app_noterm_now'] = 'Bugun chorak oralig\'ida emas, shuning uchun jurnal
 $string['app_ok'] = 'Ilova bilan bog\'lanish ishlayapti.';
 $string['app_openweb'] = 'Brauzerda ochish';
 $string['app_openweb_lesson'] = 'To\'liq dars sahifasini ochish';
+$string['app_pastdays'] = 'Quyida oldingi kunlar ham bor — unutilgan darsni baholash uchun kerakli kunni bosing.';
 $string['app_recordhint'] = 'Yozuv brauzerda ochiladi: ilova plagin sahifasi ichidan mikrofonga kira olmaydi. O\'sha oynani ochiq qoldiring — bu yerdagi yo\'qlama va bahoga ta\'sir qilmaydi.';
 $string['app_recordweb'] = '🎙 Darsni yozib olish';
 $string['app_register'] = 'Davomat va baho';

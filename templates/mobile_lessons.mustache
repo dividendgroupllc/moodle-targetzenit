@@ -34,7 +34,6 @@
 }}
 <div style="padding:12px 12px 4px">
     <div style="font-weight:700">{{#str}}app_todaylessons, local_targetzenit{{/str}}</div>
-    <div style="font-size:12px;opacity:.7">{{ sana }}</div>
 </div>
 
 {{^ bor }}
@@ -44,10 +43,21 @@
 {{# bor }}
 <div style="padding:0 12px 8px;font-size:12px;opacity:.7">
     {{#str}}app_attendancehint, local_targetzenit{{/str}}
-    {{#str}}app_lessonsaved, local_targetzenit{{/str}}
+    {{#str}}app_pastdays, local_targetzenit{{/str}}
 </div>
 
-{{# darslar }}
+{{! SANA TANLASH: har o'quv kuni yig'iladigan blok, bugungisi ochiq.
+    Tanlovchi ro'yxat (select) sahifadan sahifaga o'tishni talab qilardi,
+    <details> esa hech narsaga bog'liq emas. O'qituvchi o'tgan kunni bir
+    bosishda ochib baholaydi. }}
+{{# kunlar }}
+<details {{# ochiq_blok }}open{{/ ochiq_blok }}
+         style="border-bottom:2px solid rgba(0,0,0,.2)">
+    <summary style="padding:12px;cursor:pointer;font-weight:700;background:rgba(0,0,0,.03)">
+        {{ sana }}{{# bugun }} · {{#str}}timetable_today, local_targetzenit{{/str}}{{/ bugun }}
+    </summary>
+
+{{# darslar }}{{# darslar }}
 <details {{# ochiq_blok }}open{{/ ochiq_blok }}
          style="border-bottom:1px solid rgba(0,0,0,.12)">
     <summary style="padding:12px;cursor:pointer;display:flex;gap:8px;align-items:baseline">
@@ -87,7 +97,6 @@
                 core-site-plugins-call-ws
                 name="local_targetzenit_mobile_save_lesson"
                 [params]="{lessonid: {{ lessonid }}, topic: CONTENT_OTHERDATA.tp_{{ lessonid }}, homework: CONTENT_OTHERDATA.hw_{{ lessonid }}}"
-                [preSets]="{typeExpected: 'object'}"
                 successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                 refreshOnSuccess="true">{{#str}}app_savelesson, local_targetzenit{{/str}}</ion-button>
         </div>
@@ -126,7 +135,6 @@
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'present', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: \'object\'}"
                     successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_present, local_targetzenit{{/str}}</ion-button>
                 <ion-button size="small" color="danger"
@@ -134,7 +142,6 @@
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'absent', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: \'object\'}"
                     successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_absent, local_targetzenit{{/str}}</ion-button>
                 <ion-button size="small" color="warning"
@@ -142,7 +149,6 @@
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'late', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: \'object\'}"
                     successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_late, local_targetzenit{{/str}}</ion-button>
                 <ion-button size="small" color="medium"
@@ -150,7 +156,6 @@
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'excused', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: \'object\'}"
                     successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_excused, local_targetzenit{{/str}}</ion-button>
             </div>
@@ -166,7 +171,6 @@
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: '{{# keldi }}present{{/ keldi }}{{# kelmadi }}absent{{/ kelmadi }}{{# kechikdi }}late{{/ kechikdi }}{{# sababli }}excused{{/ sababli }}', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: 'object'}"
                     successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}app_savegrade, local_targetzenit{{/str}}</ion-button>
             </ion-item>
@@ -175,4 +179,7 @@
     {{/ ruxsat }}
 </details>
 {{/ darslar }}
+
+</details>
+{{/ kunlar }}
 {{/ bor }}

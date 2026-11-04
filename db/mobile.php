@@ -114,6 +114,8 @@ $addons = [
             ['att_late', 'local_targetzenit'],
             ['att_excused', 'local_targetzenit'],
             ['app_savelesson', 'local_targetzenit'],
+            ['app_pastdays', 'local_targetzenit'],
+            ['timetable_today', 'local_targetzenit'],
             ['app_recordweb', 'local_targetzenit'],
             ['app_recordhint', 'local_targetzenit'],
             ['app_openweb_lesson', 'local_targetzenit'],

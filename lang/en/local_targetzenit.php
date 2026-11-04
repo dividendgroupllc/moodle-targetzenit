@@ -68,6 +68,7 @@ $string['app_noterm_now'] = 'Today is outside any term, so there is no journal t
 $string['app_ok'] = 'The app connection is working.';
 $string['app_openweb'] = 'Open in browser';
 $string['app_openweb_lesson'] = 'Open the full lesson page';
+$string['app_pastdays'] = 'Earlier days are listed below — tap one to grade a lesson you missed.';
 $string['app_recordhint'] = 'Recording opens in the browser: the app cannot access the microphone from inside a plugin page. Keep that window open — attendance and grades here are not affected.';
 $string['app_recordweb'] = '🎙 Record the lesson';
 $string['app_register'] = 'Attendance & grades';

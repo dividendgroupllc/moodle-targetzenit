@@ -160,16 +160,25 @@ class mobile {
      * O'qituvchi dars paytida telefonni ochadi va darhol o'z darsini topishi
      * kerak. Shuning uchun hafta emas, FAQAT bugun va faqat o'ziniki.
      */
+    /**
+     * Nechta o'quv kuni ko'rsatiladi (bugun + oldingilari).
+     *
+     * Har kun ichida darslar, har darsda o'quvchilar ro'yxati keladi —
+     * ya'ni sahifa hajmi shu songa ko'paytiriladi. 5 kun odatda 2 hafta
+     * ichidagi unutilgan yo'qlamani qoplaydi va telefon uchun og'ir
+     * bo'lmaydi.
+     */
+    const KUN_ORQAGA = 5;
+
     public static function lesson_view(array $args): array {
-        global $DB, $USER;
+        global $USER;
 
         $context = \context_system::instance();
         self::tekshir($context);
 
         $year = timetable::current_year();
-        $data = ['bor' => false, 'xabar' => '', 'darslar' => [],
-                 'maxgrade' => lesson::MAX_GRADE,
-                 'sana' => userdate(time(), get_string('strftimedaydate'))];
+        $data = ['bor' => false, 'xabar' => '', 'kunlar' => [],
+                 'maxgrade' => lesson::MAX_GRADE];
 
         $teacherkey = $year === '' ? '' : timetable::teacher_key_of($USER, $year);
         if ($teacherkey === '') {
@@ -177,131 +186,168 @@ class mobile {
             return self::javob('mobile_lessons', $data);
         }
 
-        $bugun = date('Y-m-d');
-        $dayno = (int) date('N');
         $rows = timetable::for_teacher($year, $teacherkey);
         $kurslar = timetable::course_ids(array_map(
             fn($r) => $r->courseidnumber, $rows));
+        $terms = timetable::terms($year);
+        $holidays = timetable::holidays($year);
 
-        // Har dars O'Z ICHIDA to'liq kokpit bilan keladi.
-        //
-        // NEGA ICHKARIDA, alohida sahifada emas: alohida sahifaga o'tish
-        // `core-site-plugins-new-content` direktivasiga tayanadi, u esa
-        // ilova versiyasiga bog'liq. Yig'iladigan blok (`<details>`)
-        // brauzerning o'z elementi — hamma joyda ishlaydi va bitta
-        // bosishda ochiladi.
-        $birinchi = true;
-        foreach ($rows as $r) {
-            if ((int) $r->dayno !== $dayno) {
+        // Bugundan ORQAGA qarab o'quv kunlarini yig'amiz: o'qituvchi kechagi
+        // yoki undan oldingi darsni ham baholay olishi kerak. Dam olish va
+        // bayram kunlari o'tkazib yuboriladi — ularda dars yo'q.
+        $sanalar = [];
+        $kun = 0;
+        while (count($sanalar) < self::KUN_ORQAGA && $kun < 30) {
+            $sana = date('Y-m-d', strtotime("-{$kun} days"));
+            $kun++;
+            if (!timetable::school_day($sana, $terms, $holidays)['ok']) {
                 continue;
             }
-            $cid = $kurslar[$r->courseidnumber] ?? 0;
-            if (!$cid) {
-                continue;
-            }
-            $cc = \context_course::instance($cid, IGNORE_MISSING);
-            if (!$cc) {
-                continue;
-            }
-
-            $vaqt = trim((string) $r->starttime);
-            if (!empty($r->endtime)) {
-                $vaqt .= ' – ' . $r->endtime;
-            }
-
-            $dars = [
-                'courseid' => $cid,
-                'lessonno' => (int) $r->lessonno,
-                'vaqt' => $vaqt,
-                'fan' => format_string($r->subjectname),
-                'guruh' => format_string((string) $r->groupname),
-                'xona' => format_string((string) $r->room),
-                'ochiq_blok' => $birinchi,
-                'ruxsat' => has_capability('local/targetzenit:teach', $cc),
-                'oquvchilar' => [],
-                'xabar' => '',
-            ];
-            $birinchi = false;
-
-            if (!$dars['ruxsat']) {
-                $dars['xabar'] = get_string('app_noteach', 'local_targetzenit');
-                $data['darslar'][] = $dars;
-                continue;
-            }
-
-            // Dars yozuvi shu yerda yaratiladi: baho saqlashda `lessonid`
-            // allaqachon mavjud bo'lishi kerak.
-            $yozuv = lesson::get_or_create($cid, $bugun, (int) $r->lessonno,
-                (int) $USER->id);
-            $dars['lessonid'] = (int) $yozuv->id;
-            $dars['mavzu'] = (string) $yozuv->topic;
-            $dars['uyvazifa'] = (string) $yozuv->homework;
-
-            // Ovoz yozish BRAUZERDA ochiladi: ilova plagin sahifasi ichidan
-            // mikrofonga kira olmaydi (MediaRecorder Ionic shabloni ichida
-            // ishlamaydi). Havola ilova ichidagi brauzerda avtomatik
-            // kirish bilan ochiladi.
-            $dars['audio_yoqilgan'] = (bool) get_config('local_targetzenit',
-                'audioenabled');
-            $dars['rec_url'] = (new \moodle_url('/local/targetzenit/rec.php',
-                ['lessonid' => $yozuv->id]))->out(false);
-            $dars['dars_url'] = (new \moodle_url('/local/targetzenit/dars.php',
-                ['courseid' => $cid, 'date' => $bugun,
-                 'lessonno' => (int) $r->lessonno]))->out(false);
-
-            $ovoz = \local_targetzenit\audio::get((int) $yozuv->id);
-            $dars['audio_bor'] = $ovoz && in_array($ovoz->status,
-                \local_targetzenit\audio::FAYLLI, true);
-            $dars['audio_xabar'] = $dars['audio_bor']
-                ? get_string('app_hasaudio', 'local_targetzenit',
-                    number_format($ovoz->filesize / 1048576, 1))
-                : '';
-
-            $oquvchilar = lesson::students($cc);
-            if (!$oquvchilar) {
-                $dars['xabar'] = get_string('app_nostudents', 'local_targetzenit');
-                $data['darslar'][] = $dars;
-                continue;
-            }
-
-            $yozuvlar = lesson::records((int) $yozuv->id);
-            foreach ($oquvchilar as $st) {
-                $rec = $yozuvlar[$st->id] ?? null;
-                $holat = $rec->attendance ?? 'present';
-                $dars['oquvchilar'][] = [
-                    'userid' => (int) $st->id,
-                    'ism' => fullname($st),
-                    'baho' => ($rec && $rec->grade !== null) ? (string) $rec->grade : '',
-                    'holat' => $holat,
-                    'keldi' => $holat === 'present',
-                    'kelmadi' => $holat === 'absent',
-                    'kechikdi' => $holat === 'late',
-                    'sababli' => $holat === 'excused',
-                ];
-            }
-            $data['darslar'][] = $dars;
+            $sanalar[] = $sana;
         }
 
-        if (!$data['darslar']) {
+        $birinchi_kun = true;
+        foreach ($sanalar as $sana) {
+            $dayno = (int) date('N', strtotime($sana));
+            $darslar = [];
+            $birinchi_dars = $birinchi_kun;
+
+            foreach ($rows as $r) {
+                if ((int) $r->dayno !== $dayno) {
+                    continue;
+                }
+                $dars = self::dars_bloki($r, $kurslar, $sana, $birinchi_dars);
+                if ($dars === null) {
+                    continue;
+                }
+                $darslar[] = $dars;
+                $birinchi_dars = false;
+            }
+
+            if (!$darslar) {
+                continue;
+            }
+            $data['kunlar'][] = [
+                'sana' => userdate(strtotime($sana), get_string('strftimedaydate')),
+                'bugun' => $sana === date('Y-m-d'),
+                'ochiq_blok' => $birinchi_kun,
+                'darslar' => $darslar,
+            ];
+            $birinchi_kun = false;
+        }
+
+        if (!$data['kunlar']) {
             $data['xabar'] = get_string('app_nolessontoday', 'local_targetzenit');
         } else {
             $data['bor'] = true;
         }
 
-        // Baho maydonlari qiymati `CONTENT_OTHERDATA` dan olinadi.
+        // Kiritish maydonlari qiymati `CONTENT_OTHERDATA` dan olinadi.
         $otherdata = [];
-        foreach ($data['darslar'] as $d) {
-            if (empty($d['lessonid'])) {
-                continue;
-            }
-            $otherdata['tp_' . $d['lessonid']] = $d['mavzu'] ?? '';
-            $otherdata['hw_' . $d['lessonid']] = $d['uyvazifa'] ?? '';
-            foreach ($d['oquvchilar'] as $o) {
-                $otherdata['gr_' . $d['lessonid'] . '_' . $o['userid']] = $o['baho'];
+        foreach ($data['kunlar'] as $k) {
+            foreach ($k['darslar'] as $d) {
+                if (empty($d['lessonid'])) {
+                    continue;
+                }
+                $otherdata['tp_' . $d['lessonid']] = $d['mavzu'] ?? '';
+                $otherdata['hw_' . $d['lessonid']] = $d['uyvazifa'] ?? '';
+                foreach ($d['oquvchilar'] as $o) {
+                    $otherdata['gr_' . $d['lessonid'] . '_' . $o['userid']] = $o['baho'];
+                }
             }
         }
 
         return self::javob('mobile_lessons', $data, $otherdata);
+    }
+
+    /**
+     * Bitta dars bloki: mavzu, uy vazifa, ovoz, o'quvchilar ro'yxati.
+     *
+     * Kurs topilmasa yoki kontekst yo'q bo'lsa null qaytaradi — bunday
+     * darsni ochib bo'lmaydi.
+     */
+    private static function dars_bloki(\stdClass $r, array $kurslar,
+                                       string $sana, bool $ochiq): ?array {
+        global $USER;
+
+        $cid = $kurslar[$r->courseidnumber] ?? 0;
+        if (!$cid) {
+            return null;
+        }
+        $cc = \context_course::instance($cid, IGNORE_MISSING);
+        if (!$cc) {
+            return null;
+        }
+
+        $vaqt = trim((string) $r->starttime);
+        if (!empty($r->endtime)) {
+            $vaqt .= ' – ' . $r->endtime;
+        }
+
+        $dars = [
+            'courseid' => $cid,
+            'lessonno' => (int) $r->lessonno,
+            'vaqt' => $vaqt,
+            'fan' => format_string($r->subjectname),
+            'guruh' => format_string((string) $r->groupname),
+            'xona' => format_string((string) $r->room),
+            'ochiq_blok' => $ochiq,
+            'ruxsat' => has_capability('local/targetzenit:teach', $cc),
+            'oquvchilar' => [],
+            'xabar' => '',
+        ];
+
+        if (!$dars['ruxsat']) {
+            $dars['xabar'] = get_string('app_noteach', 'local_targetzenit');
+            return $dars;
+        }
+
+        $yozuv = lesson::get_or_create($cid, $sana, (int) $r->lessonno,
+            (int) $USER->id);
+        $dars['lessonid'] = (int) $yozuv->id;
+        $dars['mavzu'] = (string) $yozuv->topic;
+        $dars['uyvazifa'] = (string) $yozuv->homework;
+
+        // Ovoz yozish BRAUZERDA ochiladi: ilova plagin sahifasi ichidan
+        // mikrofonga kira olmaydi (MediaRecorder u yerda ishlamaydi).
+        $dars['audio_yoqilgan'] = (bool) get_config('local_targetzenit',
+            'audioenabled');
+        $dars['rec_url'] = (new \moodle_url('/local/targetzenit/rec.php',
+            ['lessonid' => $yozuv->id]))->out(false);
+        $dars['dars_url'] = (new \moodle_url('/local/targetzenit/dars.php',
+            ['courseid' => $cid, 'date' => $sana,
+             'lessonno' => (int) $r->lessonno]))->out(false);
+
+        $ovoz = \local_targetzenit\audio::get((int) $yozuv->id);
+        $dars['audio_bor'] = $ovoz && in_array($ovoz->status,
+            \local_targetzenit\audio::FAYLLI, true);
+        $dars['audio_xabar'] = $dars['audio_bor']
+            ? get_string('app_hasaudio', 'local_targetzenit',
+                number_format($ovoz->filesize / 1048576, 1))
+            : '';
+
+        $oquvchilar = lesson::students($cc);
+        if (!$oquvchilar) {
+            $dars['xabar'] = get_string('app_nostudents', 'local_targetzenit');
+            return $dars;
+        }
+
+        $yozuvlar = lesson::records((int) $yozuv->id);
+        foreach ($oquvchilar as $st) {
+            $rec = $yozuvlar[$st->id] ?? null;
+            $holat = $rec->attendance ?? 'present';
+            $dars['oquvchilar'][] = [
+                'userid' => (int) $st->id,
+                'ism' => fullname($st),
+                'baho' => ($rec && $rec->grade !== null) ? (string) $rec->grade : '',
+                'holat' => $holat,
+                'keldi' => $holat === 'present',
+                'kelmadi' => $holat === 'absent',
+                'kechikdi' => $holat === 'late',
+                'sababli' => $holat === 'excused',
+            ];
+        }
+        return $dars;
     }
 
     // DIQQAT: alohida `lesson_cockpit()` metodi OLIB TASHLANDI. U
