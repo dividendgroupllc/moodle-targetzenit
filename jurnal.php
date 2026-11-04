@@ -26,7 +26,7 @@ $year = timetable::current_year();
 $terms = array_values(timetable::terms($year));
 if (!$terms) {
     echo $OUTPUT->header();
-    echo $OUTPUT->notification("Chorak sanalari topilmadi — Frappe'dan jadval va kalendar yuborilmagan.", 'warn');
+    echo $OUTPUT->notification(get_string('jr_noterms', 'local_targetzenit'), 'warn');
     echo $OUTPUT->footer();
     exit;
 }
@@ -64,16 +64,23 @@ if (optional_param('yukla', 0, PARAM_INT) && confirm_sesskey()) {
         try {
             $reja = journal::read_plan($vaqtinchalik);
             $n = journal::apply_plan($courseid, $darslar, $reja, (int) $USER->id, (bool) $overwrite);
-            $xabar = "Rejada {$n['reja']} mavzu, chorakda {$n['darslar']} dars. " .
-                "Yozildi: {$n['yozildi']}" . ($n['otkazildi'] ? ", tegilmadi (allaqachon to'ldirilgan): {$n['otkazildi']}" : '');
+            $xabar = get_string('jr_planresult', 'local_targetzenit', (object) [
+                'reja' => $n['reja'],
+                'darslar' => $n['darslar'],
+                'yozildi' => $n['yozildi'],
+                'otkazildi' => $n['otkazildi']
+                    ? get_string('jr_planskipped', 'local_targetzenit', $n['otkazildi'])
+                    : '',
+            ]);
             $turi = \core\output\notification::NOTIFY_SUCCESS;
         } catch (\Throwable $e) {
-            $xabar = 'Faylni o\'qib bo\'lmadi: ' . $e->getMessage();
+            $xabar = get_string('jr_filefailed', 'local_targetzenit',
+                $e->getMessage());
             $turi = \core\output\notification::NOTIFY_ERROR;
         }
         @unlink($vaqtinchalik);
     } else {
-        $xabar = 'Fayl tanlanmadi.';
+        $xabar = get_string('jr_nofile', 'local_targetzenit');
         $turi = \core\output\notification::NOTIFY_ERROR;
     }
     redirect(new moodle_url('/local/targetzenit/jurnal.php',
@@ -116,7 +123,9 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
         \local_targetzenit\gradebook::xato_yoz($e, "regrade kurs $courseid");
     }
 
-    $xabar = $xato ? "Saqlandi. {$xato} ta katak tushunarsiz bo'lgani uchun o'tkazib yuborildi." : 'Saqlandi';
+    $xabar = $xato
+        ? get_string('jr_savedskipped', 'local_targetzenit', $xato)
+        : get_string('jr_saved', 'local_targetzenit');
     redirect(new moodle_url('/local/targetzenit/jurnal.php',
         ['courseid' => $courseid, 'term' => $termidx]), $xabar, null,
         $xato ? \core\output\notification::NOTIFY_WARNING : \core\output\notification::NOTIFY_SUCCESS);
@@ -186,14 +195,14 @@ echo html_writer::end_div();
 echo html_writer::div(local_targetzenit_zoom_panel('jurnal'), 'mb-2');
 
 echo html_writer::div(
-    html_writer::tag('span', 'Katak: <b>bo\'sh</b> = keldi · <b>raqam</b> = baho (1–' . lesson::MAX_GRADE .
-        ') · <b>k</b> = kelmadi · <b>s</b> = sababli · <b>kech</b> = kechikdi',
+    html_writer::tag('span',
+        get_string('jr_celllegend', 'local_targetzenit', lesson::MAX_GRADE),
         ['class' => 'text-muted small']),
     'mb-3'
 );
 
 if (!$darslar) {
-    echo $OUTPUT->notification('Bu chorakda bu kurs uchun dars topilmadi (jadvalda yo\'q yoki chorak bo\'sh).', 'info');
+    echo $OUTPUT->notification(get_string('jr_nolessons', 'local_targetzenit'), 'info');
     echo $OUTPUT->footer();
     exit;
 }
@@ -256,7 +265,8 @@ foreach ($students as $s) {
     echo html_writer::tag('td',
         html_writer::link(
             new moodle_url('/local/targetzenit/baholarim.php', ['userid' => $s->id]),
-            fullname($s), ['title' => fullname($s) . " — baholari"]),
+            fullname($s),
+            ['title' => get_string('jr_studentgrades', 'local_targetzenit', fullname($s))]),
         ['class' => 'tz-col-ism']);
     foreach ($darslar as $l) {
         $dars = $darsyozuv[$l['key']] ?? null;
@@ -280,13 +290,14 @@ echo html_writer::end_div();
 
 // ---------------- O'NG: chorak mavzulari
 echo html_writer::start_div('tz-jurnal-mavzu');
-echo html_writer::tag('h5', 'Mavzular — ' . s($term->name));
+echo html_writer::tag('h5',
+    get_string('jr_topics', 'local_targetzenit', format_string($term->name)));
 echo html_writer::start_div('tz-mavzu-scroll', ['id' => 'tz-mavzu-scroll']);
 echo html_writer::start_tag('table', ['class' => 'generaltable tz-mavzu']);
 echo html_writer::tag('thead',
     html_writer::tag('tr',
-        html_writer::tag('th', 'Sana') .
-        html_writer::tag('th', 'Mavzu / uy vazifa')));
+        html_writer::tag('th', get_string('jr_date', 'local_targetzenit')) .
+        html_writer::tag('th', get_string('jr_topichw', 'local_targetzenit'))));
 echo html_writer::start_tag('tbody');
 foreach ($darslar as $i => $l) {
     $dars = $darsyozuv[$l['key']] ?? null;
@@ -299,12 +310,12 @@ foreach ($darslar as $i => $l) {
         html_writer::empty_tag('input', [
             'type' => 'text', 'name' => 'topic[' . journal::pkey($l) . ']',
             'value' => $dars->topic ?? '', 'class' => 'form-control form-control-sm mb-1',
-            'placeholder' => 'Mavzu',
+            'placeholder' => get_string('jr_topicph', 'local_targetzenit'),
         ]) .
         html_writer::empty_tag('input', [
             'type' => 'text', 'name' => 'homework[' . journal::pkey($l) . ']',
             'value' => $dars->homework ?? '', 'class' => 'form-control form-control-sm tz-hw-input',
-            'placeholder' => 'Uy vazifa',
+            'placeholder' => get_string('jr_hwph', 'local_targetzenit'),
         ]));
     echo html_writer::end_tag('tr');
 }
@@ -352,10 +363,9 @@ echo html_writer::end_tag('form');
 // ---------------- Excel yuklash
 echo html_writer::start_div('card mt-4');
 echo html_writer::start_div('card-body');
-echo html_writer::tag('h5', 'Chorak rejasini yuklash (Excel yoki CSV)');
+echo html_writer::tag('h5', get_string('jr_upload', 'local_targetzenit'));
 echo html_writer::tag('p',
-    'Ustunlar: <b>№ | Mavzu | Uy vazifa</b>. Sana yozilmaydi — mavzular shu chorakdagi ' .
-    'darslarga ketma-ket joylashadi (hozir ' . count($darslar) . ' ta dars bor).',
+    get_string('jr_uploadhint', 'local_targetzenit', count($darslar)),
     ['class' => 'text-muted small']);
 echo html_writer::start_tag('form', ['method' => 'post', 'enctype' => 'multipart/form-data',
     'action' => $PAGE->url->out(false)]);
@@ -366,9 +376,10 @@ echo html_writer::empty_tag('input', ['type' => 'file', 'name' => 'planfile',
     'accept' => '.xlsx,.xls,.csv', 'class' => 'form-control-file mb-2']);
 echo html_writer::div(
     html_writer::checkbox('overwrite', 1, false,
-        ' To\'ldirilgan mavzularning ustiga yozilsin (standart holatda tegilmaydi)'),
+        get_string('jr_overwrite', 'local_targetzenit')),
     'mb-2 small');
-echo html_writer::empty_tag('input', ['type' => 'submit', 'value' => 'Yuklash',
+echo html_writer::empty_tag('input', ['type' => 'submit',
+    'value' => get_string('jr_uploadbtn', 'local_targetzenit'),
     'class' => 'btn btn-secondary']);
 echo html_writer::end_tag('form');
 echo html_writer::end_div();

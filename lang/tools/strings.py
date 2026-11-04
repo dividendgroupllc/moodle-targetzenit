@@ -325,9 +325,230 @@ S = {
     "att_late": ("Late", "Kechikdi", "Опоздал"),
     "att_excused": ("Excused", "Sababli", "По уважительной"),
 
+    # ------------------------------------------ dars kokpiti (veb sahifa)
+    "ck_topicph": (
+        "Today's lesson topic",
+        "Bugungi dars mavzusi",
+        "Тема сегодняшнего урока",
+    ),
+    "ck_homeworkph": (
+        "Homework for the next lesson",
+        "Keyingi darsga uy vazifa",
+        "Домашнее задание к следующему уроку",
+    ),
+    "ck_nostudents": (
+        "No students are enrolled in this course.",
+        "Bu kursga o'quvchilar yozilmagan.",
+        "На этот курс не записаны ученики.",
+    ),
+    "ck_saved": ("Saved", "Saqlandi", "Сохранено"),
+    "ck_lessonno": ("Lesson {$a}", "{$a}-dars", "Урок {$a}"),
+    # Jurnal setkasidagi ustun sarlavhasi — joy tor, qisqa shakl.
+    "ck_lessonshort": ("L{$a}", "{$a}-d", "У{$a}"),
+    "ck_save": ("Save", "Saqlash", "Сохранить"),
+
+    # -------------------------------------------------- chorak jurnali (veb)
+    "jr_noterms": (
+        "Term dates not found \u2014 the timetable and calendar have not been "
+        "sent from Frappe.",
+        "Chorak sanalari topilmadi \u2014 Frappe'dan jadval va kalendar "
+        "yuborilmagan.",
+        "Даты четвертей не найдены \u2014 расписание и календарь не "
+        "отправлены из Frappe.",
+    ),
+    "jr_nolessons": (
+        "No lessons found for this course in this term (not in the timetable, "
+        "or the term is empty).",
+        "Bu chorakda bu kurs uchun dars topilmadi (jadvalda yo'q yoki chorak "
+        "bo'sh).",
+        "За эту четверть уроков по этому курсу не найдено (нет в расписании "
+        "или четверть пуста).",
+    ),
+    "jr_saved": ("Saved", "Saqlandi", "Сохранено"),
+    "jr_savedskipped": (
+        "Saved. {$a} cells were skipped because they could not be understood.",
+        "Saqlandi. {$a} ta katak tushunarsiz bo'lgani uchun o'tkazib yuborildi.",
+        "Сохранено. {$a} ячеек пропущено, так как их не удалось распознать.",
+    ),
+    "jr_nofile": ("No file was selected.", "Fayl tanlanmadi.", "Файл не выбран."),
+    "jr_studentgrades": ("{$a} \u2014 grades", "{$a} \u2014 baholari", "{$a} \u2014 оценки"),
+    "jr_topics": ("Topics \u2014 {$a}", "Mavzular \u2014 {$a}", "Темы \u2014 {$a}"),
+    "jr_date": ("Date", "Sana", "Дата"),
+    "jr_topichw": ("Topic / homework", "Mavzu / uy vazifa", "Тема / домашнее задание"),
+    "jr_topicph": ("Topic", "Mavzu", "Тема"),
+    "jr_hwph": ("Homework", "Uy vazifa", "Домашнее задание"),
+    "jr_upload": (
+        "Upload the term plan (Excel or CSV)",
+        "Chorak rejasini yuklash (Excel yoki CSV)",
+        "Загрузить план четверти (Excel или CSV)",
+    ),
+    "jr_uploadhint": (
+        "Columns: <b>No. | Topic | Homework</b>. Dates are not written \u2014 "
+        "topics are placed one after another onto this term's lessons "
+        "(currently {$a} lessons).",
+        "Ustunlar: <b>\u2116 | Mavzu | Uy vazifa</b>. Sana yozilmaydi \u2014 "
+        "mavzular shu chorakdagi darslarga ketma-ket joylashadi (hozir {$a} "
+        "ta dars bor).",
+        "Столбцы: <b>\u2116 | Тема | Домашнее задание</b>. Дата не "
+        "записывается \u2014 темы раскладываются подряд по урокам этой "
+        "четверти (сейчас уроков: {$a}).",
+    ),
+    "jr_overwrite": (
+        " Overwrite topics that are already filled in (left untouched by default)",
+        " To'ldirilgan mavzularning ustiga yozilsin (standart holatda tegilmaydi)",
+        " Перезаписывать уже заполненные темы (по умолчанию не трогаются)",
+    ),
+    "jr_uploadbtn": ("Upload", "Yuklash", "Загрузить"),
+    "jr_planresult": (
+        "{$a->reja} topics in the plan, {$a->darslar} lessons in the term. "
+        "Written: {$a->yozildi}{$a->otkazildi}",
+        "Rejada {$a->reja} mavzu, chorakda {$a->darslar} dars. "
+        "Yozildi: {$a->yozildi}{$a->otkazildi}",
+        "В плане тем: {$a->reja}, уроков в четверти: {$a->darslar}. "
+        "Записано: {$a->yozildi}{$a->otkazildi}",
+    ),
+    "jr_planskipped": (
+        ", left untouched (already filled in): {$a}",
+        ", tegilmadi (allaqachon to'ldirilgan): {$a}",
+        ", не тронуто (уже заполнено): {$a}",
+    ),
+    "jr_filefailed": (
+        "The file could not be read: {$a}",
+        "Faylni o'qib bo'lmadi: {$a}",
+        "Не удалось прочитать файл: {$a}",
+    ),
+    "jr_celllegend": (
+        "Cell: <b>empty</b> = present \u00b7 <b>number</b> = grade (1\u2013{$a}) "
+        "\u00b7 <b>k</b> = absent \u00b7 <b>s</b> = excused \u00b7 "
+        "<b>kech</b> = late",
+        "Katak: <b>bo'sh</b> = keldi \u00b7 <b>raqam</b> = baho (1\u2013{$a}) "
+        "\u00b7 <b>k</b> = kelmadi \u00b7 <b>s</b> = sababli \u00b7 "
+        "<b>kech</b> = kechikdi",
+        "Ячейка: <b>пусто</b> = присутствовал \u00b7 <b>число</b> = оценка "
+        "(1\u2013{$a}) \u00b7 <b>k</b> = отсутствовал \u00b7 "
+        "<b>s</b> = по уважительной \u00b7 <b>kech</b> = опоздал",
+    ),
+
+
+    # ------------------------------- AI tahlili: kategoriya va guruh nomlari
+    "ai_cat_clarity": ('Clarity of explanation', 'Tushuntirish aniqligi', 'Ясность объяснения'),
+    "ai_cat_activating": ('Student engagement', "O'quvchilar faolligi", 'Активность учеников'),
+    "ai_cat_topic_match": ('Match with the topic', 'Mavzuga muvofiqlik', 'Соответствие теме'),
+    "ai_cat_student_understanding": ('Level of student understanding', "O'quvchilar o'zlashtirish darajasi", 'Уровень усвоения учениками'),
+    "ai_cat_concept_development": ('Deepening of concepts', 'Tushunchani chuqurlashtirish', 'Углубление понятий'),
+    "ai_cat_strategies": ('Teaching learning strategies', "O'quv strategiyalarini o'rgatish", 'Обучение учебным стратегиям'),
+    "ai_cat_differentiation": ('Differentiated approach', 'Tabaqalashtirilgan yondashuv', 'Дифференцированный подход'),
+    "ai_cat_positive_climate": ('Positive climate', 'Ijobiy muhit', 'Позитивный климат'),
+    "ai_cat_negative_climate": ('Absence of negative climate', "Salbiy holatlarning yo'qligi", 'Отсутствие негатива'),
+    "ai_cat_teacher_sensitivity": ('Teacher sensitivity', "O'qituvchining sezgirligi", 'Чуткость учителя'),
+    "ai_cat_student_perspective": ('Regard for student perspectives', "O'quvchi fikriga e'tibor", 'Внимание к мнению учеников'),
+    "ai_cat_management": ('Behaviour management', 'Xulq-atvorni boshqarish', 'Управление поведением'),
+    "ai_cat_time_on_task": ('Productive use of time', 'Vaqtdan samarali foydalanish', 'Эффективное использование времени'),
+    "ai_cat_feedback_quality": ('Quality of feedback', 'Fikr-mulohaza sifati', 'Качество обратной связи'),
+    "ai_cat_language_modeling": ('Language modelling', 'Nutq namunasi va til boyligi', 'Речевой образец и богатство языка'),
+    "ai_grp_quality": ('Instructional quality', "Ta'lim sifati", 'Качество обучения'),
+    "ai_grp_emotional": ('Emotional support', "Emotsional qo'llab-quvvatlash", 'Эмоциональная поддержка'),
+    "ai_grp_organization": ('Classroom organization', 'Sinfni tashkil etish', 'Организация класса'),
+    "ai_grp_feedback": ('Feedback and language', 'Fikr-mulohaza va til', 'Обратная связь и язык'),
+
+    # ------------------------------------------------- yozuv oynasi (rec.php)
+    "rc_mic": ("Microphone:", "Mikrofon:", "Микрофон:"),
+    "rc_stop": (
+        "\u25a0 Stop and save",
+        "\u25a0 To'xtatish va saqlash",
+        "\u25a0 Остановить и сохранить",
+    ),
+    "rc_hint": (
+        "<b>Do not close this window.</b> While it is open you can take "
+        "attendance, enter grades and open the journal in the main window "
+        "\u2014 the recording continues.<br><br>"
+        "<b>If the internet drops, recording does NOT stop</b> \u2014 chunks "
+        "are queued and sent automatically when the connection returns; no "
+        "audio is lost.<br><br>"
+        "<b>Pause</b> resumes by itself after 30 seconds \u2014 so a "
+        "forgotten pause will not cost you the lesson.<br><br>"
+        "Audio is kept for {$a} days.",
+        "<b>Bu oynani yopmang.</b> U ochiq turganda asosiy oynada yo'qlama "
+        "qilish, baho qo'yish va jurnalni ochish mumkin \u2014 yozuv davom "
+        "etaveradi.<br><br>"
+        "<b>Internet uzilsa yozuv TO'XTAMAYDI</b> \u2014 bo'laklar navbatda "
+        "turadi va aloqa qaytishi bilan o'zi yuboriladi, ovoz "
+        "yo'qolmaydi.<br><br>"
+        "<b>Pauza</b> 30 soniyadan keyin o'zi davom etadi \u2014 unutib "
+        "qo'yilsa ham dars yozilmay qolmaydi.<br><br>"
+        "Audio {$a} kun saqlanadi.",
+        "<b>Не закрывайте это окно.</b> Пока оно открыто, в основном окне "
+        "можно отмечать посещаемость, ставить оценки и открывать журнал "
+        "\u2014 запись продолжается.<br><br>"
+        "<b>Если интернет пропадёт, запись НЕ остановится</b> \u2014 "
+        "фрагменты встанут в очередь и отправятся сами при возвращении "
+        "связи, звук не потеряется.<br><br>"
+        "<b>Пауза</b> сама возобновляется через 30 секунд \u2014 забытая "
+        "пауза не будет стоить вам урока.<br><br>"
+        "Аудио хранится {$a} дней.",
+    ),
+    "rc_exists": (
+        "\u2714 This lesson already has a recording ({$a} MB). Recording "
+        "again replaces it.",
+        "\u2714 Bu darsda yozuv bor ({$a} MB). Qaytadan yozsangiz eskisi "
+        "almashadi.",
+        "\u2714 У этого урока уже есть запись ({$a} МБ). Повторная запись "
+        "заменит её.",
+    ),
+
+    # ---------------------------------------------------- dars audiosi (veb)
+    "au_open": (
+        "\u25cf Recording is open \u2014 it continues in a separate window.",
+        "\u25cf Yozuv ochiq \u2014 alohida oynada davom etmoqda.",
+        "\u25cf Запись идёт \u2014 она продолжается в отдельном окне.",
+    ),
+    "au_record": (
+        "🎙 Record the lesson",
+        "🎙 Darsni yozib olish",
+        "🎙 Записать урок",
+    ),
+    "au_rerecord": (
+        "🎙 Record again",
+        "🎙 Qaytadan yozish",
+        "🎙 Записать заново",
+    ),
+    "au_deleted": (
+        "🎙 The audio was deleted because it expired "
+        "(the analysis text remains).",
+        "🎙 Audio muddati o'tgani uchun o'chirilgan "
+        "(tahlil matni qoldi).",
+        "🎙 Аудио удалено по истечении срока хранения "
+        "(текст анализа сохранён).",
+    ),
+    "au_windowhint": (
+        "Recording opens in a <b>separate window</b>. While it is open you can "
+        "take attendance, enter grades and go to the journal on this page "
+        "without interrupting the recording. Audio is kept for {$a} days.",
+        "Yozuv <b>alohida oynada</b> ochiladi \u2014 u ochiq turganda bu "
+        "sahifada yo'qlama qilish, baho qo'yish va jurnalga o'tish mumkin, "
+        "yozuv uzilmaydi. Audio {$a} kun saqlanadi.",
+        "Запись открывается в <b>отдельном окне</b>. Пока оно открыто, на "
+        "этой странице можно отмечать посещаемость, ставить оценки и "
+        "переходить в журнал \u2014 запись не прервётся. Аудио хранится "
+        "{$a} дней.",
+    ),
+    "au_analysed": (
+        "Analysed. The audio is kept for <b>{$a} more days</b> so that the "
+        "analysis can be compared against the original recording.",
+        "Tahlil qilingan. Ovoz yana <b>{$a} kun</b> saqlanadi \u2014 tahlil "
+        "qanchalik to'g'ri chiqqanini asl yozuv bilan solishtirish uchun.",
+        "Проанализировано. Аудио хранится ещё <b>{$a} дней</b>, чтобы можно "
+        "было сверить анализ с оригинальной записью.",
+    ),
+
     # ------------------------------------------- ilovadagi dars kokpiti
     "app_lesson": ("Lesson", "Dars", "Урок"),
     "app_todaylessons": ("Today's lessons", "Bugungi darslar", "Сегодняшние уроки"),
+    "app_register": (
+        "Attendance & grades",
+        "Davomat va baho",
+        "Посещаемость и оценки",
+    ),
     "app_nolessontoday": (
         "You have no lessons today.",
         "Bugun darsingiz yo'q.",

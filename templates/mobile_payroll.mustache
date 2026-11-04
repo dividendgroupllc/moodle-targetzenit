@@ -1,0 +1,186 @@
+{{!
+    @template local_targetzenit/mobile_payroll
+
+    Mening oyligim — veb sahifasining (oylik.php) ilovadagi aksi.
+
+    TUZILISH VEB BILAN BIR XIL va TARTIBI ham o'sha:
+      1) to'rtta plita  2) hisob zanjiri  3) kunma-kun davomat
+      4) oylar kesimida hisob-kitob
+
+    Jadvallar oddiy <table> bilan chizilgan, Ionic komponentlari bilan emas —
+    shunda ko'rinish veb bilan bir xil bo'ladi. Keng jadvallar yon tomonga
+    suriladi (sahifa emas, jadvalning o'zi).
+
+    Context variables required for this template:
+    * bor, xabar, oy, ochiq, ochiq_xabar
+    * plitalar - [{yorliq, qiymat, izoh, asosiy}]
+    * qadamlar - [{op, op_bor, yorliq, qiymat, turi}]
+    * kunlar_bor, kirish_bor, chiqish_bor, koef_yorliq
+    * kun_sarlavha - [{kun, hafta, dam}]
+    * kun_koef / kun_kirish / kun_chiqish - [{matn, bor, yoq}]
+    * hisob_bor, hisob - [{oy, valyuta, oylik, nach, paid, avans, qoldiq,
+                           qarz, ortiq, holat, yaxshi}]
+
+    Example context (json):
+    {
+        "bor": true, "xabar": "", "oy": "2026 October",
+        "ochiq": true, "ochiq_xabar": "The month is not closed yet.",
+        "plitalar": [{"yorliq": "Take-home pay", "qiymat": "4 250 000 so'm",
+                      "izoh": "", "asosiy": true}],
+        "qadamlar": [{"op": "", "op_bor": false, "yorliq": "Contract salary",
+                      "qiymat": "12 000 000 so'm", "turi": ""}],
+        "kunlar_bor": true, "kirish_bor": false, "chiqish_bor": false,
+        "koef_yorliq": "Coef.",
+        "kun_sarlavha": [{"kun": 1, "hafta": "Mon", "dam": false}],
+        "kun_koef": [{"matn": "1", "bor": true, "yoq": false}],
+        "kun_kirish": [{"matn": "·"}], "kun_chiqish": [{"matn": "·"}],
+        "hisob_bor": true,
+        "hisob": [{"oy": "2026 September", "valyuta": "UZS",
+                   "oylik": "12 000 000 so'm", "nach": "11 670 000 so'm",
+                   "paid": "11 670 000 so'm", "avans": "",
+                   "qoldiq": "0", "qarz": false, "ortiq": false,
+                   "holat": "Paid", "yaxshi": true}]
+    }
+}}
+{{^ bor }}
+    <ion-card><ion-card-content><p>{{ xabar }}</p></ion-card-content></ion-card>
+{{/ bor }}
+
+{{# bor }}
+<ion-card>
+    <ion-card-header>
+        <ion-card-title>{{ oy }}</ion-card-title>
+    </ion-card-header>
+    {{# ochiq }}
+    <ion-card-content>
+        <ion-note color="warning">{{ ochiq_xabar }}</ion-note>
+    </ion-card-content>
+    {{/ ochiq }}
+</ion-card>
+
+{{! 1) Plitalar — webdagi tz-dir-hero bloki }}
+<div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px">
+    {{# plitalar }}
+    <div style="flex:1 1 44%;min-width:140px;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px">
+        <div style="font-size:12px;opacity:.7">{{ yorliq }}</div>
+        <div style="font-weight:700;{{# asosiy }}font-size:20px{{/ asosiy }}{{^ asosiy }}font-size:16px{{/ asosiy }}">{{ qiymat }}</div>
+        {{# izoh }}<div style="font-size:11px;opacity:.6">{{ izoh }}</div>{{/ izoh }}
+    </div>
+    {{/ plitalar }}
+</div>
+
+{{! 2) Hisob zanjiri — chapdan o'ngga o'qiladigan formula }}
+<ion-card>
+    <ion-card-header>
+        <ion-card-title>{{#str}}pr_breakdown, local_targetzenit{{/str}}</ion-card-title>
+        <ion-card-subtitle>{{#str}}pr_calchint, local_targetzenit{{/str}}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content class="ion-no-padding">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+            {{# qadamlar }}
+            <tr>
+                <td style="width:24px;text-align:center;opacity:.6">{{# op_bor }}{{ op }}{{/ op_bor }}</td>
+                <td style="padding:4px 8px">{{ yorliq }}</td>
+                <td style="padding:4px 8px;text-align:right;white-space:nowrap;font-weight:600">{{ qiymat }}</td>
+            </tr>
+            {{/ qadamlar }}
+        </table>
+    </ion-card-content>
+</ion-card>
+
+{{! 3) Kunma-kun davomat — gorizontal, yon suriladi }}
+{{# kunlar_bor }}
+<ion-card>
+    <ion-card-header>
+        <ion-card-title>{{#str}}pr_days, local_targetzenit{{/str}}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content class="ion-no-padding">
+        <div style="overflow-x:auto;width:100%">
+            <table style="border-collapse:collapse;font-size:12px;white-space:nowrap">
+                <thead>
+                    <tr>
+                        <th style="padding:4px 8px"></th>
+                        {{# kun_sarlavha }}
+                        <th style="padding:2px 6px;{{# dam }}opacity:.5{{/ dam }}">
+                            {{ kun }}<div style="font-weight:400;font-size:10px">{{ hafta }}</div>
+                        </th>
+                        {{/ kun_sarlavha }}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding:4px 8px;font-weight:700">{{ koef_yorliq }}</td>
+                        {{# kun_koef }}
+                        <td style="padding:4px 6px;text-align:center{{# yoq }};color:#a4252a{{/ yoq }}{{# bor }};color:#1f7a3d;font-weight:700{{/ bor }}">{{ matn }}</td>
+                        {{/ kun_koef }}
+                    </tr>
+                    {{# kirish_bor }}
+                    <tr>
+                        <td style="padding:4px 8px;font-weight:700">{{#str}}pr_in, local_targetzenit{{/str}}</td>
+                        {{# kun_kirish }}
+                        <td style="padding:4px 6px;text-align:center">{{ matn }}</td>
+                        {{/ kun_kirish }}
+                    </tr>
+                    {{/ kirish_bor }}
+                    {{# chiqish_bor }}
+                    <tr>
+                        <td style="padding:4px 8px;font-weight:700">{{#str}}pr_out, local_targetzenit{{/str}}</td>
+                        {{# kun_chiqish }}
+                        <td style="padding:4px 6px;text-align:center">{{ matn }}</td>
+                        {{/ kun_chiqish }}
+                    </tr>
+                    {{/ chiqish_bor }}
+                </tbody>
+            </table>
+        </div>
+    </ion-card-content>
+</ion-card>
+{{/ kunlar_bor }}
+
+{{! 4) Oylar kesimida hisob-kitob }}
+{{# hisob_bor }}
+<ion-card>
+    <ion-card-header>
+        <ion-card-title>{{#str}}st_title, local_targetzenit{{/str}}</ion-card-title>
+        <ion-card-subtitle>{{#str}}st_hint, local_targetzenit{{/str}}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content class="ion-no-padding">
+        <div style="overflow-x:auto;width:100%">
+            <table style="border-collapse:collapse;font-size:12px;white-space:nowrap">
+                <thead>
+                    <tr>
+                        <th style="padding:4px 8px;text-align:left">{{#str}}st_month, local_targetzenit{{/str}}</th>
+                        <th style="padding:4px 8px;text-align:right">{{#str}}st_salary, local_targetzenit{{/str}}</th>
+                        <th style="padding:4px 8px;text-align:right">{{#str}}st_accrued, local_targetzenit{{/str}}</th>
+                        <th style="padding:4px 8px;text-align:right">{{#str}}st_paid, local_targetzenit{{/str}}</th>
+                        <th style="padding:4px 8px;text-align:right">{{#str}}st_remaining, local_targetzenit{{/str}}</th>
+                        <th style="padding:4px 8px;text-align:left">{{#str}}st_status, local_targetzenit{{/str}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{# hisob }}
+                    <tr>
+                        <td style="padding:4px 8px">{{ oy }} <small style="opacity:.6">{{ valyuta }}</small></td>
+                        <td style="padding:4px 8px;text-align:right">{{ oylik }}</td>
+                        <td style="padding:4px 8px;text-align:right">{{ nach }}</td>
+                        <td style="padding:4px 8px;text-align:right;color:#1f7a3d">
+                            {{ paid }}
+                            {{# avans }}<div style="font-size:10px;opacity:.6">{{ avans }}</div>{{/ avans }}
+                        </td>
+                        <td style="padding:4px 8px;text-align:right{{# qarz }};color:#a4252a{{/ qarz }}{{# ortiq }};color:#1f7a3d{{/ ortiq }}">{{ qoldiq }}</td>
+                        <td style="padding:4px 8px">
+                            <ion-badge color="{{# yaxshi }}success{{/ yaxshi }}{{^ yaxshi }}warning{{/ yaxshi }}">{{ holat }}</ion-badge>
+                        </td>
+                    </tr>
+                    {{/ hisob }}
+                </tbody>
+            </table>
+        </div>
+    </ion-card-content>
+</ion-card>
+{{/ hisob_bor }}
+
+<div style="padding:12px;font-size:12px;opacity:.6">
+    {{#str}}pr_footnote, local_targetzenit{{/str}}
+</div>
+{{/ bor }}

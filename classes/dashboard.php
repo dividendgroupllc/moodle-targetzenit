@@ -640,7 +640,7 @@ class dashboard {
                     if (!isset(ai::CATEGORIES[$kod]) || ($c['confidence'] ?? '') === 'low') {
                         continue;
                     }
-                    $k[] = ['nom' => ai::CATEGORIES[$kod]['nom'],
+                    $k[] = ['nom' => ai::cat_name($kod),
                             'ball' => (int) ($c['score'] ?? 0),
                             'delta' => (int) ($c['score'] ?? 0) - ai::CATEGORIES[$kod]['norm']];
                 }

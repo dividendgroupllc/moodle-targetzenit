@@ -367,8 +367,10 @@ class teacher {
             $bor = $xom[$kod] ?? null;
             $out[] = (object) [
                 'kod' => $kod,
-                'nom' => $k['nom'],
-                'guruh' => $k['guruh'],
+                // Nom va guruh TARJIMA bilan: ular ekranga chiqadi, shuning
+                // uchun massivdagi o'zbekcha qiymat emas, til satri olinadi.
+                'nom' => ai::cat_name($kod),
+                'guruh' => ai::grp_name($k['guruh']),
                 'vazn' => $k['vazn'],
                 'norma' => $k['norm'],
                 'avg' => $bor ? $bor['avg'] : null,

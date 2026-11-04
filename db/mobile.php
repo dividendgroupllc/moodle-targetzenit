@@ -20,7 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 $addons = [
     'local_targetzenit' => [
         'handlers' => [
-            'targetzenit' => [
+            'tzhub' => [
                 // Asosiy menyuda (pastdagi yoki yon menyuda) element bo'lib chiqadi.
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'main',
@@ -39,17 +39,17 @@ $addons = [
             // Dars kokpiti — bugungi darslar ro'yxati, undan o'quvchilar
             // ro'yxatiga o'tiladi. O'qituvchi uchun eng ko'p ishlatiladigan
             // panel, shuning uchun menyuda alohida turadi.
-            'lesson' => [
+            'tzregister' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'lesson_view',
                 'displaydata' => [
-                    'title' => 'app_todaylessons',
+                    'title' => 'app_register',
                     'icon' => 'fas-clipboard-check',
                     'class' => '',
                 ],
             ],
             // Choraklik baholar — o'quvchi x chorak jadvali.
-            'grades' => [
+            'tztermgrades' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'grades_view',
                 'displaydata' => [
@@ -61,7 +61,7 @@ $addons = [
             // Chorak jurnali — butun sinf bitta setkada. Moodle ilovasida
             // o'qituvchi uchun "Grader report" yo'q, shuning uchun bu yagona
             // yo'l.
-            'journal' => [
+            'tzjournal' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'journal_view',
                 'displaydata' => [
@@ -70,7 +70,20 @@ $addons = [
                     'class' => '',
                 ],
             ],
-            'timetable' => [
+            // Mening oyligim — veb sahifasining aksi, tuzilishi va tartibi
+            // o'sha. Faqat oylik ma'lumoti bor xodimga ko'rinadi (sahifaning
+            // o'zi tekshiradi, menyuda esa doim turadi: ilova menyuni
+            // foydalanuvchiga qarab yashira olmaydi).
+            'tzpayroll' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'payroll_view',
+                'displaydata' => [
+                    'title' => 'mypayroll',
+                    'icon' => 'fas-money-bill',
+                    'class' => '',
+                ],
+            ],
+            'tztimetable' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'timetable_view',
                 'displaydata' => [
@@ -97,6 +110,7 @@ $addons = [
             ['timetable_nolessons', 'local_targetzenit'],
             ['tt_noclass', 'local_targetzenit'],
             ['app_todaylessons', 'local_targetzenit'],
+            ['app_register', 'local_targetzenit'],
             ['app_nolessontoday', 'local_targetzenit'],
             ['app_lesson', 'local_targetzenit'],
             ['app_savegrade', 'local_targetzenit'],
@@ -117,6 +131,20 @@ $addons = [
             ['app_journal', 'local_targetzenit'],
             ['app_journalhint', 'local_targetzenit'],
             ['app_noterm_now', 'local_targetzenit'],
+            ['pr_breakdown', 'local_targetzenit'],
+            ['pr_calchint', 'local_targetzenit'],
+            ['pr_days', 'local_targetzenit'],
+            ['pr_in', 'local_targetzenit'],
+            ['pr_out', 'local_targetzenit'],
+            ['pr_footnote', 'local_targetzenit'],
+            ['st_title', 'local_targetzenit'],
+            ['st_hint', 'local_targetzenit'],
+            ['st_month', 'local_targetzenit'],
+            ['st_salary', 'local_targetzenit'],
+            ['st_accrued', 'local_targetzenit'],
+            ['st_paid', 'local_targetzenit'],
+            ['st_remaining', 'local_targetzenit'],
+            ['st_status', 'local_targetzenit'],
         ],
     ],
 ];

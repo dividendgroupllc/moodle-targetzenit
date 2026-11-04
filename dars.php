@@ -68,7 +68,8 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
     } catch (\Throwable $e) {
         \local_targetzenit\gradebook::xato_yoz($e, "regrade kurs $courseid");
     }
-    redirect($PAGE->url, 'Saqlandi', null, \core\output\notification::NOTIFY_SUCCESS);
+    redirect($PAGE->url, get_string('ck_saved', 'local_targetzenit'), null,
+        \core\output\notification::NOTIFY_SUCCESS);
 }
 
 // ------------------------------------------------------------------- FIDBEK
@@ -92,7 +93,9 @@ echo $OUTPUT->header();
 $sana_matni = userdate(strtotime($date), '%A, %d-%B %Y');
 echo html_writer::div(
     html_writer::tag('span', $sana_matni, ['class' => 'tz-dars-sana']) . ' · ' .
-    html_writer::tag('span', $lessonno . '-dars', ['class' => 'tz-dars-raqam']),
+    html_writer::tag('span',
+        get_string('ck_lessonno', 'local_targetzenit', $lessonno),
+        ['class' => 'tz-dars-raqam']),
     'tz-dars-bosh mb-2'
 );
 
@@ -132,7 +135,7 @@ if (get_config('local_targetzenit', 'audioenabled')) {
     echo html_writer::start_div('card-body');
 
     if ($yozuv && $yozuv->status === 'recording') {
-        echo html_writer::tag('div', '● Yozuv ochiq — alohida oynada davom etmoqda.',
+        echo html_writer::tag('div', get_string('au_open', 'local_targetzenit'),
             ['class' => 'text-danger font-weight-bold mb-2']);
     } else if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {
         $url = \local_targetzenit\audio::file_url((int) $dars->id, $context);
@@ -148,26 +151,23 @@ if (get_config('local_targetzenit', 'audioenabled')) {
         if ($yozuv->status === 'transcribed') {
             $qoldi = max(0, $kun - (int) floor((time() - $yozuv->timecreated) / DAYSECS));
             echo html_writer::tag('div',
-                "Tahlil qilingan. Ovoz yana <b>{$qoldi} kun</b> saqlanadi — tahlil " .
-                "qanchalik to'g'ri chiqqanini asl yozuv bilan solishtirish uchun.",
+                get_string('au_analysed', 'local_targetzenit', $qoldi),
                 ['class' => 'text-muted small mb-2']);
         }
     } else if ($yozuv && $yozuv->status === 'deleted') {
-        echo html_writer::tag('div', "🎙 Audio muddati o'tgani uchun o'chirilgan (tahlil matni qoldi).",
+        echo html_writer::tag('div', get_string('au_deleted', 'local_targetzenit'),
             ['class' => 'text-muted mb-2']);
     }
 
     $fayl_bor = $yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true);
     echo html_writer::tag('button',
-        $fayl_bor ? '🎙 Qaytadan yozish' : '🎙 Darsni yozib olish',
+        get_string($fayl_bor ? 'au_rerecord' : 'au_record', 'local_targetzenit'),
         ['type' => 'button', 'id' => 'tz-rec-open',
          'class' => $fayl_bor ? 'btn btn-outline-secondary' : 'btn btn-danger btn-lg',
          'data-url' => $recurl->out(false)]);
 
     echo html_writer::tag('div',
-        "Yozuv <b>alohida oynada</b> ochiladi — u ochiq turganda bu sahifada " .
-        "yo'qlama qilish, baho qo'yish va jurnalga o'tish mumkin, yozuv uzilmaydi. " .
-        "Audio {$kun} kun saqlanadi.",
+        get_string('au_windowhint', 'local_targetzenit', $kun),
         ['class' => 'text-muted small mt-2']);
 
     echo html_writer::end_div();
@@ -211,14 +211,14 @@ echo html_writer::label(get_string('topic', 'local_targetzenit'), 'tz-topic', tr
 echo html_writer::empty_tag('input', [
     'type' => 'text', 'id' => 'tz-topic', 'name' => 'topic',
     'value' => $dars->topic, 'class' => 'form-control mb-3',
-    'placeholder' => 'Bugungi dars mavzusi',
+    'placeholder' => get_string('ck_topicph', 'local_targetzenit'),
 ]);
 
 echo html_writer::label(get_string('homework', 'local_targetzenit'), 'tz-hw', true, ['class' => 'font-weight-bold']);
 echo html_writer::empty_tag('input', [
     'type' => 'text', 'id' => 'tz-hw', 'name' => 'homework',
     'value' => $dars->homework, 'class' => 'form-control',
-    'placeholder' => 'Keyingi darsga uy vazifa',
+    'placeholder' => get_string('ck_homeworkph', 'local_targetzenit'),
 ]);
 
 echo html_writer::end_div();
@@ -226,7 +226,7 @@ echo html_writer::end_div();
 
 // ------------------------------------------------- O'QUVCHILAR: YO'QLAMA+BAHO
 if (!$students) {
-    echo $OUTPUT->notification('Bu kursga o\'quvchilar yozilmagan.', 'warn');
+    echo $OUTPUT->notification(get_string('ck_nostudents', 'local_targetzenit'), 'warn');
 } else {
     $t = new html_table();
     $t->head = ['#', get_string('student', 'local_targetzenit'),
@@ -292,7 +292,9 @@ if ($jurnal['lessons'] && $students) {
     $head = [get_string('student', 'local_targetzenit')];
     foreach ($jurnal['lessons'] as $l) {
         $head[] = html_writer::div(userdate(strtotime($l->lessondate), '%d.%m'), 'tz-j-date') .
-            html_writer::div($l->lessonno . '-d', 'tz-meta');
+            html_writer::div(
+                get_string('ck_lessonshort', 'local_targetzenit', $l->lessonno),
+                'tz-meta');
     }
     $head[] = get_string('average', 'local_targetzenit');
     $t->head = $head;

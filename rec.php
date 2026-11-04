@@ -66,7 +66,8 @@ echo html_writer::tag('div',
 
 // Mikrofon tanlash — tashqi mikrofon ulanganda kerak bo'ladi
 echo html_writer::start_div('form-group hidden mb-3');
-echo html_writer::label('Mikrofon:', 'tz-audio-device', true, ['class' => 'small font-weight-bold']);
+echo html_writer::label(get_string('rc_mic', 'local_targetzenit'),
+    'tz-audio-device', true, ['class' => 'small font-weight-bold']);
 echo html_writer::tag('select', '',
     ['id' => 'tz-audio-device', 'class' => 'form-control form-control-sm']);
 echo html_writer::end_div();
@@ -75,25 +76,19 @@ echo html_writer::tag('button', '🎙 Yozishni boshlash',
     ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-danger btn-lg btn-block']);
 echo html_writer::tag('button', '⏸ Pauza',
     ['type' => 'button', 'id' => 'tz-audio-pause', 'class' => 'btn btn-warning btn-block hidden mt-2']);
-echo html_writer::tag('button', '■ To\'xtatish va saqlash',
+echo html_writer::tag('button', get_string('rc_stop', 'local_targetzenit'),
     ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-dark btn-lg btn-block hidden mt-2']);
 
 echo html_writer::tag('div', '', ['id' => 'tz-audio-holat', 'class' => 'tz-audio-holat my-3']);
 
 echo html_writer::tag('div',
-    "<b>Bu oynani yopmang.</b> U ochiq turganda asosiy oynada yo'qlama qilish, " .
-    "baho qo'yish va jurnalni ochish mumkin — yozuv davom etaveradi.<br><br>" .
-    "<b>Internet uzilsa yozuv TO'XTAMAYDI</b> — bo'laklar navbatda turadi va " .
-    "aloqa qaytishi bilan o'zi yuboriladi, ovoz yo'qolmaydi.<br><br>" .
-    "<b>Pauza</b> 30 soniyadan keyin o'zi davom etadi — unutib qo'yilsa ham " .
-    "dars yozilmay qolmaydi.<br><br>" .
-    "Audio {$kun} kun saqlanadi.",
+    get_string('rc_hint', 'local_targetzenit', $kun),
     ['class' => 'text-muted small']);
 
 if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {
     echo html_writer::tag('div',
-        '✔ Bu darsda yozuv bor (' . number_format($yozuv->filesize / 1048576, 1) . ' MB). ' .
-        'Qaytadan yozsangiz eskisi almashadi.',
+        get_string('rc_exists', 'local_targetzenit',
+            number_format($yozuv->filesize / 1048576, 1)),
         ['class' => 'alert alert-info mt-3 small']);
 }
 

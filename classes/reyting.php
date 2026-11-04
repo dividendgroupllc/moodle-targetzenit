@@ -200,7 +200,7 @@ class reyting {
                 // shkalada eng past, lekin normasi 35% — ya'ni +19, kuchli tomon.
                 'delta' => round($avg - ai::CATEGORIES[$kod]['norm'], 1),
                 'n' => (int) $r->soni,
-                'nom' => ai::CATEGORIES[$kod]['nom'],
+                'nom' => ai::cat_name($kod),
             ];
         }
         $rs->close();
@@ -341,7 +341,7 @@ class reyting {
             $avg = round((float) $r->ortacha, 1);
             $profil[] = [
                 'code' => $kod,
-                'nom' => ai::CATEGORIES[$kod]['nom'],
+                'nom' => ai::cat_name($kod),
                 'avg' => $avg,
                 'norm' => ai::CATEGORIES[$kod]['norm'],
                 'delta' => round($avg - ai::CATEGORIES[$kod]['norm'], 1),

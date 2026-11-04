@@ -46,29 +46,54 @@ class ai {
      * o'qituvchi o'zini muvaffaqiyatsiz deb his qiladi, aslida esa u xalqaro
      * o'rtacha darajada ishlayotgan bo'ladi.
      */
+    /**
+     * Kategoriya nomi foydalanuvchining tilida.
+     *
+     * `CATEGORIES` dagi `nom` o'zbekcha qotib yozilgan va u faqat zaxira:
+     * til satri topilmasa o'sha ishlatiladi.
+     */
+    public static function cat_name(string $kod): string {
+        $kalit = 'ai_cat_' . $kod;
+        $manager = get_string_manager();
+        if ($manager->string_exists($kalit, 'local_targetzenit')) {
+            return get_string($kalit, 'local_targetzenit');
+        }
+        return self::CATEGORIES[$kod]['nom'] ?? $kod;
+    }
+
+    /** Kategoriya guruhining nomi foydalanuvchining tilida. */
+    public static function grp_name(string $kod): string {
+        $kalit = 'ai_grp_' . $kod;
+        $manager = get_string_manager();
+        if ($manager->string_exists($kalit, 'local_targetzenit')) {
+            return get_string($kalit, 'local_targetzenit');
+        }
+        return $kod;
+    }
+
     const CATEGORIES = [
         // --- Ta'lim sifati (ICALT) ---
-        'clarity' => ['nom' => "Tushuntirish aniqligi", 'vazn' => 11, 'norm' => 65, 'guruh' => "Ta'lim sifati"],
-        'activating' => ['nom' => "O'quvchilar faolligi", 'vazn' => 11, 'norm' => 50, 'guruh' => "Ta'lim sifati"],
-        'topic_match' => ['nom' => "Mavzuga muvofiqlik", 'vazn' => 10, 'norm' => 80, 'guruh' => "Ta'lim sifati"],
-        'student_understanding' => ['nom' => "O'quvchilar o'zlashtirish darajasi", 'vazn' => 8, 'norm' => 60, 'guruh' => "Ta'lim sifati"],
-        'concept_development' => ['nom' => "Tushunchani chuqurlashtirish", 'vazn' => 5, 'norm' => 30, 'guruh' => "Ta'lim sifati"],
-        'strategies' => ['nom' => "O'quv strategiyalarini o'rgatish", 'vazn' => 5, 'norm' => 40, 'guruh' => "Ta'lim sifati"],
-        'differentiation' => ['nom' => "Tabaqalashtirilgan yondashuv", 'vazn' => 3, 'norm' => 35, 'guruh' => "Ta'lim sifati"],
+        'clarity' => ['nom' => "Tushuntirish aniqligi", 'vazn' => 11, 'norm' => 65, 'guruh' => 'quality'],
+        'activating' => ['nom' => "O'quvchilar faolligi", 'vazn' => 11, 'norm' => 50, 'guruh' => 'quality'],
+        'topic_match' => ['nom' => "Mavzuga muvofiqlik", 'vazn' => 10, 'norm' => 80, 'guruh' => 'quality'],
+        'student_understanding' => ['nom' => "O'quvchilar o'zlashtirish darajasi", 'vazn' => 8, 'norm' => 60, 'guruh' => 'quality'],
+        'concept_development' => ['nom' => "Tushunchani chuqurlashtirish", 'vazn' => 5, 'norm' => 30, 'guruh' => 'quality'],
+        'strategies' => ['nom' => "O'quv strategiyalarini o'rgatish", 'vazn' => 5, 'norm' => 40, 'guruh' => 'quality'],
+        'differentiation' => ['nom' => "Tabaqalashtirilgan yondashuv", 'vazn' => 3, 'norm' => 35, 'guruh' => 'quality'],
 
         // --- Emotsional qo'llab-quvvatlash (CLASS) ---
-        'positive_climate' => ['nom' => "Ijobiy muhit", 'vazn' => 7, 'norm' => 70, 'guruh' => "Emotsional qo'llab-quvvatlash"],
-        'negative_climate' => ['nom' => "Salbiy holatlarning yo'qligi", 'vazn' => 7, 'norm' => 85, 'guruh' => "Emotsional qo'llab-quvvatlash"],
-        'teacher_sensitivity' => ['nom' => "O'qituvchining sezgirligi", 'vazn' => 6, 'norm' => 65, 'guruh' => "Emotsional qo'llab-quvvatlash"],
-        'student_perspective' => ['nom' => "O'quvchi fikriga e'tibor", 'vazn' => 4, 'norm' => 45, 'guruh' => "Emotsional qo'llab-quvvatlash"],
+        'positive_climate' => ['nom' => "Ijobiy muhit", 'vazn' => 7, 'norm' => 70, 'guruh' => 'emotional'],
+        'negative_climate' => ['nom' => "Salbiy holatlarning yo'qligi", 'vazn' => 7, 'norm' => 85, 'guruh' => 'emotional'],
+        'teacher_sensitivity' => ['nom' => "O'qituvchining sezgirligi", 'vazn' => 6, 'norm' => 65, 'guruh' => 'emotional'],
+        'student_perspective' => ['nom' => "O'quvchi fikriga e'tibor", 'vazn' => 4, 'norm' => 45, 'guruh' => 'emotional'],
 
         // --- Sinfni tashkil etish (CLASS) ---
-        'management' => ['nom' => "Xulq-atvorni boshqarish", 'vazn' => 7, 'norm' => 67, 'guruh' => "Sinfni tashkil etish"],
-        'time_on_task' => ['nom' => "Vaqtdan samarali foydalanish", 'vazn' => 6, 'norm' => 70, 'guruh' => "Sinfni tashkil etish"],
+        'management' => ['nom' => "Xulq-atvorni boshqarish", 'vazn' => 7, 'norm' => 67, 'guruh' => 'organization'],
+        'time_on_task' => ['nom' => "Vaqtdan samarali foydalanish", 'vazn' => 6, 'norm' => 70, 'guruh' => 'organization'],
 
         // --- Fikr-mulohaza va til (CLASS) ---
-        'feedback_quality' => ['nom' => "Fikr-mulohaza sifati", 'vazn' => 7, 'norm' => 32, 'guruh' => "Fikr-mulohaza va til"],
-        'language_modeling' => ['nom' => "Nutq namunasi va til boyligi", 'vazn' => 3, 'norm' => 41, 'guruh' => "Fikr-mulohaza va til"],
+        'feedback_quality' => ['nom' => "Fikr-mulohaza sifati", 'vazn' => 7, 'norm' => 32, 'guruh' => 'feedback'],
+        'language_modeling' => ['nom' => "Nutq namunasi va til boyligi", 'vazn' => 3, 'norm' => 41, 'guruh' => 'feedback'],
     ];
 
     /** Vaznli xalqaro o'rtacha — "odatdagi dars" necha foiz oladi. */
@@ -577,7 +602,11 @@ class ai {
         if (!empty($javob['categories']) && is_array($javob['categories'])) {
             foreach ($javob['categories'] as &$c) {
                 $kod = $c['code'] ?? '';
-                $c['name'] = self::CATEGORIES[$kod]['nom'] ?? $kod;
+                // Nom ATAYLAB saqlanmaydi: JSON'ga yozilsa tahlil qilingan
+                // paytdagi til qotib qoladi va foydalanuvchi tilni
+                // o'zgartirganda ham o'zbekcha bo'lib qolaverardi. Ko'rsatish
+                // vaqtida `cat_name()` tarjima qiladi.
+                $c['name'] = self::cat_name($kod);
                 $c['weight'] = self::CATEGORIES[$kod]['vazn'] ?? 0;
                 $c['score'] = max(0, min(100, (int) ($c['score'] ?? 0)));
             }

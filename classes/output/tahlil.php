@@ -95,7 +95,9 @@ class tahlil {
             foreach ($d['categories'] as $c) {
                 $guruh = \local_targetzenit\ai::CATEGORIES[$c['code'] ?? '']['guruh'] ?? '';
                 if ($guruh && $guruh !== $joriy_guruh) {
-                    $h .= \html_writer::tag('div', s($guruh), ['class' => 'tz-cat-guruh']);
+                    $h .= \html_writer::tag('div',
+                        s(\local_targetzenit\ai::grp_name($guruh)),
+                        ['class' => 'tz-cat-guruh']);
                     $joriy_guruh = $guruh;
                 }
                 $ball = (int) ($c['score'] ?? 0);

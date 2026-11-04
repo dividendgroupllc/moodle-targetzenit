@@ -408,6 +408,158 @@ class mobile {
         return self::javob('mobile_grades', $data);
     }
 
+    /**
+     * Mening oyligim — veb sahifasining (`oylik.php`) ilovadagi aksi.
+     *
+     * TUZILISH VEB BILAN BIR XIL va tartibi ham o'sha:
+     *   1) to'rtta plita: qo'lga tegadigan, ishlagan, bonus, kelgan kun
+     *   2) hisob zanjiri (oylik ÷ norma = kun narxi × ishlangan + bonus
+     *      = hisoblandi − ushlanmalar = qo'lga)
+     *   3) kunma-kun davomat
+     *   4) oylar kesimida hisob-kitob
+     *
+     * Oy TANLOVI yo'q: eng yangi oy ko'rsatiladi, tarix esa 4-jadvalda
+     * baribir bor. Tanlov qo'yilsa sahifadan sahifaga o'tish kerak bo'lardi.
+     */
+    public static function payroll_view(array $args): array {
+        global $USER;
+
+        $context = \context_system::instance();
+        self::tekshir($context);
+
+        $data = ['bor' => false, 'xabar' => '', 'ochiq' => false];
+        $ref = payroll::ref_for((int) $USER->id);
+        if ($ref === '') {
+            $data['xabar'] = get_string('pr_noidnumber', 'local_targetzenit');
+            return self::javob('mobile_payroll', $data);
+        }
+
+        $rec = payroll::month($ref);
+        if (!$rec) {
+            $data['xabar'] = get_string('pr_nodata', 'local_targetzenit');
+            return self::javob('mobile_payroll', $data);
+        }
+
+        $soatbay = $rec->tolovturi === 'soat';
+        $birlik = get_string($soatbay ? 'pr_unit_hour' : 'pr_unit_day',
+            'local_targetzenit');
+        $kunbirlik = get_string('pr_unit_day', 'local_targetzenit');
+        $pul = fn($x) => payroll::pul($x, $rec->valyuta);
+        $t = fn($k, $a = null) => get_string($k, 'local_targetzenit', $a);
+
+        $data['bor'] = true;
+        $data['oy'] = payroll::oy_yorlig(sprintf('%04d-%02d', $rec->yil, $rec->oy));
+        $data['ochiq'] = $rec->holat !== 'Yopiq';
+        $data['ochiq_xabar'] = $t('pr_open_notice', userdate((int) $rec->timemodified));
+
+        // 1) Plitalar — veb bilan bir xil tartibda.
+        $data['plitalar'] = [
+            ['yorliq' => $t('pr_takehome'), 'qiymat' => $pul($rec->jami),
+             'izoh' => '', 'asosiy' => true],
+            ['yorliq' => $t($soatbay ? 'pr_workedhours' : 'pr_workeddays'),
+             'qiymat' => (float) $rec->ishlagan . ' ' . $birlik,
+             'izoh' => $soatbay ? '' : $t('pr_ofnorm', (int) $rec->normakun),
+             'asosiy' => false],
+            ['yorliq' => $t('pr_bonus'), 'qiymat' => $pul($rec->bonus),
+             'izoh' => '', 'asosiy' => false],
+            ['yorliq' => $t('pr_attended'),
+             'qiymat' => (int) $rec->kelgankun . ' ' . $kunbirlik,
+             'izoh' => '', 'asosiy' => false],
+        ];
+
+        // 2) Hisob zanjiri — operatorlar Frappe hisobi bilan bir xil.
+        if ($soatbay) {
+            $qadam = [
+                ['', $t('pr_hourrate'), $pul($rec->oylik), ''],
+                ['×', $t('pr_workedhours'), (float) $rec->ishlagan . ' ' . $birlik, ''],
+                ['+', $t('pr_bonus_penalty'), $pul($rec->bonus), ''],
+                ['=', $t('pr_gross'), $pul($rec->hisob), 'res'],
+            ];
+        } else {
+            $qadam = [
+                ['', $t('pr_salary'), $pul($rec->oylik), ''],
+                ['÷', $t('pr_normdays'), (int) $rec->normakun . ' ' . $birlik, ''],
+                ['=', $t('pr_dayrate'), $pul($rec->kunliknarx), 'res'],
+                ['×', $t('pr_workeddays'), (float) $rec->ishlagan . ' ' . $birlik, ''],
+                ['+', $t('pr_bonus_penalty'), $pul($rec->bonus), ''],
+                ['=', $t('pr_gross'), $pul($rec->hisob), 'res'],
+            ];
+        }
+        $qadam[] = ['−', $t('pr_tax'), $pul($rec->nalog), 'neg'];
+        $qadam[] = ['−', $t('pr_meals'), $pul($rec->pitaniya), 'neg'];
+        $qadam[] = ['=', $t('pr_takehome'), $pul($rec->jami), 'final'];
+
+        $data['qadamlar'] = array_map(fn($q) => [
+            'op' => $q[0], 'op_bor' => $q[0] !== '',
+            'yorliq' => $q[1], 'qiymat' => $q[2], 'turi' => $q[3],
+        ], $qadam);
+
+        // 3) Kunma-kun davomat — gorizontal, veb bilan bir xil.
+        $kunlar = payroll::days($rec);
+        $kirish_bor = false;
+        $chiqish_bor = false;
+        foreach ($kunlar as $k) {
+            if (trim((string) ($k['kirish'] ?? '')) !== '') {
+                $kirish_bor = true;
+            }
+            if (trim((string) ($k['chiqish'] ?? '')) !== '') {
+                $chiqish_bor = true;
+            }
+        }
+        $data['kunlar_bor'] = (bool) $kunlar;
+        $data['kirish_bor'] = $kirish_bor;
+        $data['chiqish_bor'] = $chiqish_bor;
+        $data['kun_sarlavha'] = [];
+        $data['kun_koef'] = [];
+        $data['kun_kirish'] = [];
+        $data['kun_chiqish'] = [];
+        $data['koef_yorliq'] = $t($soatbay ? 'pr_hours' : 'pr_koef');
+        foreach ($kunlar as $k) {
+            $kun = (int) ($k['kun'] ?? 0);
+            $vaqt = make_timestamp((int) $rec->yil, (int) $rec->oy, $kun ?: 1);
+            $data['kun_sarlavha'][] = [
+                'kun' => $kun,
+                'hafta' => userdate($vaqt, '%a'),
+                'dam' => in_array((int) date('w', $vaqt), [0, 6], true),
+            ];
+            $koef = $k['koef'] ?? null;
+            $data['kun_koef'][] = [
+                'matn' => $koef === null ? '—' : (string) (float) $koef,
+                'bor' => $koef !== null && (float) $koef > 0,
+                'yoq' => $koef !== null && (float) $koef <= 0,
+            ];
+            $data['kun_kirish'][] = ['matn' => ($k['kirish'] ?? '') ?: '·'];
+            $data['kun_chiqish'][] = ['matn' => ($k['chiqish'] ?? '') ?: '·'];
+        }
+
+        // 4) Oylar kesimida hisob-kitob.
+        $belgilar = ['paid' => 'st_s_paid', 'over' => 'st_s_over',
+            'partial' => 'st_s_partial', 'unpaid' => 'st_s_unpaid',
+            'advance' => 'st_s_advance'];
+        $data['hisob'] = [];
+        foreach (payroll::settle($ref) as $m) {
+            $data['hisob'][] = [
+                'oy' => payroll::oy_yorlig($m->oy),
+                'valyuta' => $m->valyuta,
+                'oylik' => $m->oylik > 0.5 ? payroll::pul($m->oylik, $m->valyuta) : '—',
+                'nach' => payroll::pul($m->nach, $m->valyuta),
+                'paid' => payroll::pul($m->paid, $m->valyuta),
+                'avans' => $m->advance > 0.5
+                    ? $t('st_unlinked', payroll::pul($m->advance, $m->valyuta)) : '',
+                'qoldiq' => $m->debt > 0.5
+                    ? payroll::pul($m->debt, $m->valyuta)
+                    : ($m->debt < -0.5 ? '+' . payroll::pul(-$m->debt, $m->valyuta) : '0'),
+                'qarz' => $m->debt > 0.5,
+                'ortiq' => $m->debt < -0.5,
+                'holat' => $t($belgilar[payroll::holat($m)]),
+                'yaxshi' => in_array(payroll::holat($m), ['paid', 'over', 'advance'], true),
+            ];
+        }
+        $data['hisob_bor'] = (bool) $data['hisob'];
+
+        return self::javob('mobile_payroll', $data);
+    }
+
     /** Chorak jurnalida bitta kursda ko'rsatiladigan eng ko'p dars soni. */
     const JURNAL_DARS = 20;
 
