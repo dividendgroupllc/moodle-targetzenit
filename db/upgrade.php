@@ -488,5 +488,20 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026110410, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026110420) {
+
+        // Fidbek zanjiri: o'qituvchi javob yoza oladi, direktor javobga javob.
+        // Dars bo'yicha bitta suhbat — qator ichidagi qisqa ko'rinish ham,
+        // kartadagi to'liq ko'rinish ham AYNI shu zanjirni ko'rsatadi.
+        $table = new xmldb_table('local_targetzenit_feedback');
+        $field = new xmldb_field('parentid', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0', 'lessonid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110420, 'local', 'targetzenit');
+    }
+
     return true;
 }

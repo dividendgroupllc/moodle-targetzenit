@@ -339,6 +339,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="lessonid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 = ildiz, aks holda javob"/>
         <FIELD NAME="teacheruserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim haqida"/>
         <FIELD NAME="authoruserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim yozdi"/>
         <FIELD NAME="kind" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="tavsiya" SEQUENCE="false" COMMENT="tavsiya|ogohlantirish|rahmat"/>

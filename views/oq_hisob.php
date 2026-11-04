@@ -22,7 +22,8 @@ if (!$hisob->jami) {
         echo html_writer::div(html_writer::link($url(['davr' => 'hammasi', 'page' => 0]),
             get_string('oq_tryall', 'local_targetzenit')), 'mb-3');
     }
-    echo html_writer::end_div();
+    echo html_writer::end_div();          // .tz-oq
+    \local_targetzenit\output\shell::end();
     echo $OUTPUT->footer();
     exit;
 }
@@ -320,6 +321,14 @@ if (!$list['rows']) {
                 : '');
         if (!$r->otgan) {
             $chips = ui::chip('none', get_string('dir_notyet', 'local_targetzenit'));
+        }
+        // Direktor fidbegi — shu yerda FAQAT belgisi turadi; suhbatning o'zi
+        // va javob yozish formasi «Dars yozuvlari» lentasida va dars
+        // kokpitida. Belgisiz o'qituvchi fidbek kelganini bilmay qolardi.
+        if ((int) $r->feedbackcount) {
+            $chips .= ui::chip('warning',
+                '💬 ' . (int) $r->feedbackcount,
+                get_string('fb_title', 'local_targetzenit'));
         }
         echo html_writer::tag('td', html_writer::div($chips, 'tz-oq-chips'));
 

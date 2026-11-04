@@ -29,6 +29,21 @@ class lesson {
 
     const MAX_GRADE = 10;
 
+    /**
+     * Yo'qlama belgisining tarjimasi.
+     *
+     * `ATTEND` dagi qiymatlar o'zbekcha qotib yozilgan va ular ichki
+     * tartib uchun qoladi (kalitlar bazada saqlanadi). Ko'rsatish esa
+     * til satrlari orqali — ilova va veb bir xil manbadan oladi.
+     */
+    public static function attend_label(string $kalit): string {
+        static $xarita = ['present' => 'att_present', 'absent' => 'att_absent',
+            'late' => 'att_late', 'excused' => 'att_excused'];
+        return isset($xarita[$kalit])
+            ? get_string($xarita[$kalit], 'local_targetzenit')
+            : (self::ATTEND[$kalit] ?? $kalit);
+    }
+
     /** Shu dars yozuvi; bo'lmasa yaratadi. */
     public static function get_or_create(int $courseid, string $date, int $lessonno, int $teacherid): \stdClass {
         global $DB;

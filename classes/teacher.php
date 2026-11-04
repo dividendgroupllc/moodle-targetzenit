@@ -239,6 +239,7 @@ class teacher {
                    f.attendancecount, f.gradecount, f.absentcount, f.latecount,
                    f.audiostatus, f.audioseconds, f.analysestatus, f.overallscore,
                    f.normdelta, f.lowconfcount, f.substituted, f.vacancy, f.latehours,
+                   f.feedbackcount,
                    CASE WHEN $otgan THEN 1 ELSE 0 END AS otgan,
                    CASE WHEN f.audiostatus IN ($yoz) THEN 1 ELSE 0 END AS yozuvbor,
                    l.topic, l.homework

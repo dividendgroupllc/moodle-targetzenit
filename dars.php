@@ -71,6 +71,19 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
     redirect($PAGE->url, 'Saqlandi', null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
+// ------------------------------------------------------------------- FIDBEK
+// O'qituvchi direktorning fidbegiga JAVOB yozadi — forma `output\fidbek`
+// da chiziladi, qabul qilish esa SHU YERDA bo'lishi kerak.
+//
+// NEGA ALOHIDA ESLATMA: forma avval shu sahifada chizilar edi-yu, hech kim
+// qabul qilmasdi — javob jim yo'qolardi. Sahifada ikki forma bor (fidbek va
+// jurnal), ikkisi ham shu URL ga yuboradi; `fblesson` bo'lsa — fidbek,
+// `saqla` bo'lsa — jurnal.
+if (\local_targetzenit\output\fidbek::handle()) {
+    redirect($PAGE->url, get_string('fb_saved', 'local_targetzenit'), null,
+        \core\output\notification::NOTIFY_SUCCESS);
+}
+
 $yozuvlar = lesson::records((int) $dars->id);
 
 echo $OUTPUT->header();
@@ -168,11 +181,13 @@ if (get_config('local_targetzenit', 'audioenabled')) {
 // tahlil ramkasi o'zgarganda ikki sahifa boshqa-boshqa narsa ko'rsatardi.
 echo \local_targetzenit\output\tahlil::render($dars);
 
-// Direktor fidbegi — o'qituvchi O'Z darsida ko'radi. Yozish formasi
-// chiqmaydi: `givefeedback` ruxsati unda yo'q (fidbek::render o'zi
-// tekshiradi). Ochilishi bilan "ko'rildi" deb belgilanadi.
+// Direktor fidbegi — o'qituvchi O'Z darsida ko'radi va JAVOB yozadi
+// (suhbat bir tomonlama bo'lmasligi kerak). Ohang va "maxfiy" belgisi unga
+// chiqmaydi: o'ziga ogohlantirish yozmaydi va javobini o'zidan yashira
+// olmaydi — buni `fidbek::render` o'zi hal qiladi.
+// Ochilishi bilan fidbek "ko'rildi" deb belgilanadi.
 echo \local_targetzenit\output\fidbek::render((int) $dars->id,
-    (int) ($dars->teacherid ?: $USER->id));
+    (int) ($dars->teacherid ?: $USER->id), $PAGE->url->out(false));
 
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
@@ -218,7 +233,8 @@ if (!$students) {
         $joriy = $y->attendance ?? 'present';
 
         $tugmalar = '';
-        foreach (lesson::ATTEND as $kalit => $nom) {
+        foreach (array_keys(lesson::ATTEND) as $kalit) {
+            $nom = lesson::attend_label($kalit);
             $id = "att-{$s->id}-{$kalit}";
             $tugmalar .= html_writer::empty_tag('input', [
                     'type' => 'radio', 'name' => "att[{$s->id}]", 'value' => $kalit,

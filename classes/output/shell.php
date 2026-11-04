@@ -28,7 +28,7 @@ class shell {
     }
 
     /**
-     * Yon panel + asosiy ustunni ochadi.
+     * Yon panel + asosiy ustunni ochadi — DIREKTOR menyusi bilan.
      *
      * @param string $active qaysi band faol: darslar|reyting|yozuvlar|tutorlar
      * @param string $title sarlavha (direktor panelida — salomlashuv)
@@ -37,10 +37,22 @@ class shell {
      */
     public static function start(string $active, string $title,
                                   string $sub = '', string $tools = ''): void {
-        global $SITE, $USER;
+        self::start_menu($active, $title, $sub, $tools, self::dir_menu());
+    }
 
-        $ctx = \context_system::instance();
-        $t = fn(string $k) => get_string($k, 'local_targetzenit');
+    /**
+     * Xuddi shu qobiq, lekin menyu CHAQIRUVCHIDAN keladi.
+     *
+     * NEGA KERAK: o'qituvchi paneli ham shu qobiqda ishlaydi (to'liq ekran,
+     * ekranga moslashgan maket allaqachon shu yerda), lekin unga direktor
+     * menyusini ko'rsatib bo'lmaydi — o'sha sahifalar `viewteachers` /
+     * `viewanalysis` talab qiladi va havolalar boshi berk yo'l bo'lardi.
+     *
+     * @param array $menu [['lab' => string|null, 'items' => [[kod, nom, moodle_url], ...]], ...]
+     */
+    public static function start_menu(string $active, string $title, string $sub,
+                                        string $tools, array $menu): void {
+        global $SITE, $USER;
 
         echo \html_writer::start_div('tz-dir');
         echo \html_writer::start_div('tz-dir-shell');
@@ -52,26 +64,13 @@ class shell {
             '← ' . format_string($SITE->shortname ?: $SITE->fullname),
             ['class' => 'tz-dir-back']);
 
-        echo \html_writer::div($t('dir_navmain'), 'tz-dir-navlab');
-        self::item($active, 'darslar', $t('dir_navlessons'),
-            new \moodle_url('/local/targetzenit/direktor.php', ['view' => 'darslar']));
-        self::item($active, 'reyting', $t('dir_navranks'),
-            new \moodle_url('/local/targetzenit/direktor.php', ['view' => 'reyting']));
-        self::item($active, 'yozuvlar', $t('recordings'),
-            new \moodle_url('/local/targetzenit/yozuvlar.php'));
-        // O'qituvchi paneli — reyting "kim pastda" ga javob beradi, bu esa
-        // "NEGA" ga: dars-dars ro'yxati va kategoriya profili.
-        self::item($active, 'oqituvchi', $t('oq_mypanel'),
-            new \moodle_url('/local/targetzenit/oqituvchi.php'));
-
-        echo \html_writer::div($t('dir_navmanage'), 'tz-dir-navlab');
-        self::item($active, 'tutorlar', $t('dir_tutors'),
-            new \moodle_url('/local/targetzenit/tutorlar.php'));
-        self::item($active, 'jadval', $t('timetable'),
-            new \moodle_url('/local/targetzenit/index.php'));
-        if (has_capability('moodle/site:config', $ctx)) {
-            self::item($active, 'sozlama', $t('dir_navsettings'),
-                new \moodle_url('/admin/settings.php', ['section' => 'local_targetzenit']));
+        foreach ($menu as $guruh) {
+            if (!empty($guruh['items']) && !empty($guruh['lab'])) {
+                echo \html_writer::div($guruh['lab'], 'tz-dir-navlab');
+            }
+            foreach ($guruh['items'] ?? [] as [$kod, $nom, $url]) {
+                self::item($active, $kod, $nom, $url);
+            }
         }
 
         echo \html_writer::div(
@@ -93,6 +92,75 @@ class shell {
             echo \html_writer::div($tools, 'tz-dir-tools');
         }
         echo \html_writer::end_div();
+    }
+
+    /** Direktor/zavuch menyusi. */
+    public static function dir_menu(): array {
+        $ctx = \context_system::instance();
+        $t = fn(string $k) => get_string($k, 'local_targetzenit');
+        $u = fn(string $fayl, array $p = []) =>
+            new \moodle_url('/local/targetzenit/' . $fayl, $p);
+
+        $asosiy = [
+            ['darslar', $t('dir_navlessons'), $u('direktor.php', ['view' => 'darslar'])],
+            ['reyting', $t('dir_navranks'), $u('direktor.php', ['view' => 'reyting'])],
+            ['yozuvlar', $t('recordings'), $u('yozuvlar.php')],
+            ['oqituvchi', $t('oq_mypanel'), $u('oqituvchi.php')],
+        ];
+        $boshqaruv = [
+            ['tutorlar', $t('dir_tutors'), $u('tutorlar.php')],
+            ['jadval', $t('timetable'), $u('index.php')],
+        ];
+        if (has_capability('moodle/site:config', $ctx)) {
+            $boshqaruv[] = ['sozlama', $t('dir_navsettings'),
+                new \moodle_url('/admin/settings.php', ['section' => 'local_targetzenit'])];
+        }
+
+        return [
+            ['lab' => $t('dir_navmain'), 'items' => $asosiy],
+            ['lab' => $t('dir_navmanage'), 'items' => $boshqaruv],
+        ];
+    }
+
+    /**
+     * O'QITUVCHI menyusi.
+     *
+     * Faqat shu odam ochishi mumkin bo'lgan sahifalar. Maktab bo'limi esa
+     * ruxsati borlarga (direktor o'z kartasini ochganda yo'l yo'qolmasligi
+     * kerak) — ruxsati yo'q odamga u umuman chizilmaydi.
+     *
+     * @param int $userid kartasi ko'rilayotgan odam (o'zi bo'lmasa havolada saqlanadi)
+     * @param bool $ozim o'z kartasimi
+     */
+    public static function oq_menu(int $userid, bool $ozim): array {
+        $ctx = \context_system::instance();
+        $t = fn(string $k) => get_string($k, 'local_targetzenit');
+        $qosh = $ozim ? [] : ['userid' => $userid];
+        $u = fn(string $fayl, array $p = []) =>
+            new \moodle_url('/local/targetzenit/' . $fayl, $p);
+
+        $mening = [
+            ['hisob', $t('oq_tab_sum'), $u('oqituvchi.php', ['view' => 'hisob'] + $qosh)],
+            ['yozuvlar', $t('recordings'), $u('oqituvchi.php', ['view' => 'yozuvlar'] + $qosh)],
+        ];
+        if ($ozim) {
+            // Boshqa odamning kartasida bu havolalar O'ZIMIZGA olib borardi —
+            // chalg'ituvchi, shuning uchun faqat o'z kartasida.
+            $mening[] = ['jadval', $t('timetable'), $u('index.php')];
+            if (\local_targetzenit\payroll::has_any((int) $userid)) {
+                $mening[] = ['oylik', $t('mypayroll'), $u('oylik.php')];
+            }
+        }
+
+        $menu = [['lab' => $t('oq_navmine'), 'items' => $mening]];
+
+        if (has_capability('local/targetzenit:viewteachers', $ctx)) {
+            $menu[] = ['lab' => $t('oq_navschool'), 'items' => [
+                ['darslar', $t('dir_navlessons'), $u('direktor.php', ['view' => 'darslar'])],
+                ['reyting', $t('dir_navranks'), $u('direktor.php', ['view' => 'reyting'])],
+            ]];
+        }
+        return $menu;
     }
 
     protected static function item(string $active, string $kod, string $nom,

@@ -220,8 +220,8 @@ if ($view === 'today') {
 } else if ($view === 'all') {
     // ----------------------------------------------------- UMUMIY (bir kun)
     $options = [];
-    foreach (timetable::DAYS as $d => $nom) {
-        $options[$d] = $nom;
+    foreach (array_keys(timetable::DAYS) as $d) {
+        $options[$d] = timetable::kun_nomi($d);
     }
     $select = new single_select(
         new moodle_url('/local/targetzenit/index.php', ['view' => 'all']),
@@ -343,7 +343,8 @@ if ($view === 'today') {
     $t = new html_table();
     $bugun = date('Y-m-d');
     $head = [get_string('lesson', 'local_targetzenit')];
-    foreach (timetable::DAYS as $d => $nom) {
+    foreach (array_keys(timetable::DAYS) as $d) {
+        $nom = timetable::kun_nomi($d);
         $sana = $hafta[$d];
         $kun = timetable::school_day($sana, $terms, $holidays);
         $label = html_writer::div($nom, 'tz-day') .
@@ -361,7 +362,7 @@ if ($view === 'today') {
 
     for ($i = 1; $i <= $maxles; $i++) {
         $qator = [html_writer::tag('strong', (string) $i)];
-        foreach (timetable::DAYS as $d => $nom) {
+        foreach (array_keys(timetable::DAYS) as $d) {
             $sana = $hafta[$d];
             $kun = timetable::school_day($sana, $terms, $holidays);
             if (!$kun['ok']) {

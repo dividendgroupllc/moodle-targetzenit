@@ -60,6 +60,14 @@ class lenta {
         $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
         $norma = ai::norm_overall();
         $syscontext = \context_system::instance();
+
+        // Qatordagi qisqa fidbek uchun oxirgi xabarlar — HAMMA qator uchun
+        // bitta so'rovda, aks holda sahifada 20 ta alohida so'rov bo'lardi.
+        $fidbeklar = $fidbekbor
+            ? \local_targetzenit\feedback::latest(
+                array_map(fn($r) => (int) $r->lessonid, $rows),
+                has_capability('local/targetzenit:viewprivatefeedback', $syscontext))
+            : [];
         $koranaliz = has_capability('local/targetzenit:viewanalysis', $syscontext);
 
         // Kurs konteksti qator-qator tekshiriladi, lekin KESHLANADI: bir
@@ -89,6 +97,11 @@ class lenta {
                'rec_colai', 'rec_colsummary']
             : ['dir_colgroup', 'rec_coltopic', 'rec_colwhen', 'rec_collength',
                'rec_colai', 'rec_colsummary'];
+        // Fidbek ustuni: kartani OCHMASDAN ham yozish/javob berish uchun.
+        // `colspan` quyida `count($ustun)` dan olinadi — o'zi to'g'rilanadi.
+        if ($fidbekbor) {
+            $ustun[] = 'fb_title';
+        }
 
         $h = html_writer::start_div('tz-dir-card');
         $h .= html_writer::start_div('tz-dir-tablewrap');
@@ -150,6 +163,14 @@ class lenta {
             $h .= html_writer::tag('td', html_writer::div(
                 s($qisqa . (\core_text::strlen($r->xulosa) > self::XULOSA ? '…' : '')) ?: '—',
                 'tz-rec-xulosa'));
+
+            // Fidbek: oldingi xabar KICHRAYTIRILGAN holatda + bir qatorli
+            // yozish maydoni. Kartadagi to'liq suhbat bilan BITTA zanjir.
+            if ($fidbekbor) {
+                $h .= html_writer::tag('td', fidbek::compactcell((int) $r->lessonid,
+                    (int) ($r->teacheruserid ?? 0), $fidbeklar[(int) $r->lessonid] ?? null,
+                    $url(['page' => $page])->out(false)), ['class' => 'tz-fb-td']);
+            }
 
             $h .= html_writer::end_tag('tr');
 
@@ -274,8 +295,13 @@ require([], function() {
                 if (a) { a.pause(); }
             }
         };
-        qator.addEventListener('click', ochish);
+        // Fidbek katagi ichida yozayotganda karta ochilib ketmasligi kerak
+        qator.addEventListener('click', function (e) {
+            if (e.target.closest('[data-tzstop]')) { return; }
+            ochish();
+        });
         qator.addEventListener('keydown', function (e) {
+            if (e.target.closest('[data-tzstop]')) { return; }
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ochish(); }
         });
     });

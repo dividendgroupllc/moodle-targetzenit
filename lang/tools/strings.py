@@ -385,6 +385,38 @@ S = {
         "разделе \"Сегодняшние уроки\".",
     ),
 
+    # ------------------------------------ ilovadagi chorak jurnali
+    "app_journal": ("Term journal", "Chorak jurnali", "Журнал четверти"),
+    "app_journalhint": (
+        "The whole class in one grid: rows are students, columns are lessons. "
+        "Scroll sideways to see more lessons. k = absent, s = excused, "
+        "kech = late.",
+        "Butun sinf bitta setkada: qatorlar \u2014 o'quvchilar, ustunlar "
+        "\u2014 darslar. Qolgan darslarni ko'rish uchun yon tomonga suring. "
+        "k \u2014 kelmadi, s \u2014 sababli, kech \u2014 kechikdi.",
+        "Весь класс в одной сетке: строки \u2014 ученики, столбцы \u2014 "
+        "уроки. Прокрутите вбок, чтобы увидеть остальные уроки. "
+        "k \u2014 отсутствовал, s \u2014 по уважительной, kech \u2014 опоздал.",
+    ),
+    "app_journalterm": ("Term: {$a}", "Chorak: {$a}", "Четверть: {$a}"),
+    "app_journallimit": (
+        "The last {$a} lessons are shown.",
+        "Oxirgi {$a} ta dars ko'rsatilgan.",
+        "Показаны последние {$a} уроков.",
+    ),
+    "app_noterm_now": (
+        "Today is outside any term, so there is no journal to show.",
+        "Bugun chorak oralig'ida emas, shuning uchun jurnal yo'q.",
+        "Сегодня вне учебной четверти, поэтому журнала нет.",
+    ),
+
+    "tt_weekend": ("Weekend", "Dam olish kuni", "Выходной"),
+    "tt_outofterm": (
+        "Outside the term (holiday)",
+        "Chorakdan tashqari (ta'til)",
+        "Вне четверти (каникулы)",
+    ),
+
     # --------------------------------------------------- jadval sahifasi
     "tt_noclass": (
         "Your class could not be determined — you are not enrolled in any "
@@ -989,6 +1021,8 @@ S = {
         "Только ВАШИ записи уроков. Нажмите на строку, чтобы открыть аудио и "
         "краткий анализ.",
     ),
+    "oq_navmine": ("My work", "Mening ishim", "Моя работа"),
+    "oq_navschool": ("School", "Maktab", "Школа"),
     "oq_all": ("All", "Hammasi", "Всё"),
     "oq_periodis": (
         "{$a->nom}: {$a->from} - {$a->to}",
@@ -1139,6 +1173,11 @@ S = {
         "Обратная связь директора о вашем уроке",
     ),
     "fb_title": ("Director feedback", "Direktor fidbegi", "Обратная связь директора"),
+    "fb_noreply": (
+        "You can only reply to feedback on your own lesson.",
+        "Javob faqat O'Z darsingizdagi fidbekka yozilishi mumkin.",
+        "Ответить можно только на отзыв по вашему собственному уроку.",
+    ),
     "fb_none": ("No feedback for this lesson yet.", "Bu dars uchun hali fidbek yo'q.",
                 "По этому уроку обратной связи пока нет."),
     "fb_placeholder": (
@@ -1153,6 +1192,8 @@ S = {
     "fb_kind_tavsiya": ("advice", "tavsiya", "совет"),
     "fb_kind_ogohlantirish": ("warning", "ogohlantirish", "предупреждение"),
     "fb_kind_rahmat": ("thanks", "rahmat", "благодарность"),
+    # `javob` — o'qituvchining javobi; tanlanmaydi, avtomatik qo'yiladi
+    "fb_kind_javob": ("reply", "javob", "ответ"),
     "fb_privatelab": ("admin note only", "faqat ma'muriy qayd", "только админ-заметка"),
     "fb_privatehelp": (
         "The teacher will NOT see this note and gets no notification. "
@@ -1163,6 +1204,16 @@ S = {
         "Учитель НЕ увидит эту заметку и не получит уведомление. Обычно обратная "
         "связь видна учителю — скрытая оценка разрушает доверие.",
     ),
+    "fb_reply": ("Reply", "Javob berish", "Ответить"),
+    "fb_replyph": (
+        "Your reply to the director...",
+        "Direktorga javobingiz...",
+        "Ваш ответ директору...",
+    ),
+    "fb_addshort": ("Write feedback...", "Fidbek yozing...", "Напишите отзыв..."),
+    "fb_replyshort": ("Reply...", "Javob...", "Ответить..."),
+    "fb_count": ("messages in this conversation", "shu suhbatdagi xabarlar soni",
+                 "сообщений в этом разговоре"),
     "fb_private": ("admin note", "ma'muriy qayd", "админ-заметка"),
     "fb_seen": ("· read", "· o'qildi", "· прочитано"),
     "fb_msgsubject": (

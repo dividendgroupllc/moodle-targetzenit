@@ -15,6 +15,22 @@ class timetable {
     /** Maktab dush-juma ishlaydi. */
     const DAYS = [1 => 'Dushanba', 2 => 'Seshanba', 3 => 'Chorshanba', 4 => 'Payshanba', 5 => 'Juma'];
 
+    /**
+     * Hafta kuni nomi foydalanuvchining tilida.
+     *
+     * `DAYS` dagi qiymatlar o'zbekcha qotib yozilgan va ular faqat ichki
+     * tartib uchun. Ko'rsatish uchun Moodle yadrosining `calendar`
+     * satrlari olinadi — ingliz/rus/o'zbek uchun tayyor, qayta tarjima
+     * yozilmaydi.
+     */
+    public static function kun_nomi(int $dayno): string {
+        static $kalit = [1 => 'monday', 2 => 'tuesday', 3 => 'wednesday',
+            4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'];
+        return isset($kalit[$dayno])
+            ? get_string($kalit[$dayno], 'calendar')
+            : (self::DAYS[$dayno] ?? (string) $dayno);
+    }
+
     /** Jadvalda mavjud oxirgi o'quv yili. */
     public static function current_year(): string {
         global $DB;
@@ -52,7 +68,8 @@ class timetable {
     public static function school_day(string $date, array $terms, array $holidays): array {
         $dow = (int) date('N', strtotime($date));
         if ($dow >= 6) {
-            return ['ok' => false, 'reason' => 'Dam olish kuni'];
+            return ['ok' => false,
+                'reason' => get_string('tt_weekend', 'local_targetzenit')];
         }
         if (isset($holidays[$date])) {
             return ['ok' => false, 'reason' => $holidays[$date]];
@@ -62,7 +79,8 @@ class timetable {
                 return ['ok' => true, 'reason' => $t->name];
             }
         }
-        return ['ok' => false, 'reason' => "Chorakdan tashqari (ta'til)"];
+        return ['ok' => false,
+            'reason' => get_string('tt_outofterm', 'local_targetzenit')];
     }
 
     /** Berilgan sana tushgan haftaning dushanba-juma sanalari: [dayno => 'YYYY-MM-DD'] */

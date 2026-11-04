@@ -16,6 +16,7 @@ require(__DIR__ . '/../../config.php');
 use local_targetzenit\ai;
 use local_targetzenit\dashboard;
 use local_targetzenit\output\fidbek;
+use local_targetzenit\output\shell;
 use local_targetzenit\output\ui;
 use local_targetzenit\teacher;
 use local_targetzenit\timetable;
@@ -59,11 +60,16 @@ $odam = $DB->get_record('user', ['id' => $userid],
 $PAGE->set_context($syscontext);
 $PAGE->set_url(new moodle_url('/local/targetzenit/oqituvchi.php',
     ['view' => $view] + ($ozim ? [] : ['userid' => $userid])));
-$PAGE->set_pagelayout('standard');
-$PAGE->set_title($ozim
+// To'liq ekran qobig'i — direktor paneli bilan AYNI BIR XIL (`output\shell`).
+//
+// NEGA `standard` EMAS: Boost konteynerida maket qisilib qolardi va yon
+// panelsiz o'qituvchi ko'rinishlar orasida o'tadigan tugmani topa olmasdi.
+// Qobiq allaqachon ekranga moslashgan (yon panel `clamp()` bilan torayadi,
+// 860px dan pastda gorizontal menyuga aylanadi) — shuning uchun maketni
+// qaytadan yozish kerak emas, menyu esa `shell::oq_menu()` dan keladi.
+shell::setup($PAGE, $ozim
     ? get_string('oq_mypanel', 'local_targetzenit')
     : get_string('oq_card', 'local_targetzenit'));
-$PAGE->set_heading($PAGE->title);
 
 $year = timetable::current_year();
 
@@ -113,13 +119,10 @@ $hisob = teacher::summary($userid, $davr);
 $sanoq = teacher::counts($userid, $davr);
 $norma = ai::norm_overall();
 
-echo html_writer::start_div('tz-dir tz-oq');
-
-// ====================================================== SARLAVHA
+// ====================================================== SARLAVHA (qobiqda)
 $ism = dashboard::ism($odam->firstname, $odam->lastname);
 $yuklama = teacher::load($userid, $year);
 
-$ong = html_writer::tag('h1', s($ism), ['class' => 'tz-dir-h1']);
 $meta = [];
 if ($yuklama && trim((string) $yuklama->subjects) !== '') {
     $meta[] = $yuklama->subjects;
@@ -130,35 +133,35 @@ if ($yuklama && (int) $yuklama->lessonsweek > 0) {
 if ($odam->idnumber !== '') {
     $meta[] = $odam->idnumber;
 }
-if ($meta) {
-    $ong .= html_writer::div(s(implode(' · ', $meta)), 'tz-dir-sub');
-}
-
-echo html_writer::start_div('tz-dir-head');
-echo html_writer::div(ui::av($ism) . html_writer::div($ong), 'tz-oq-ident');
 
 // Davr tanlagichi FAQAT hisob ko'rinishida: yozuvlar lentasi sana
 // oralig'i bilan ishlaydi (direktordagi lenta bilan bir xil) va ikki xil
 // vaqt tanlagichi bir ekranda chalg'itadi.
+$vositalar = '';
 if ($view === 'hisob') {
-    echo html_writer::start_div('tz-dir-tools');
-    echo html_writer::start_div('tz-dir-tabs');
+    $vositalar = html_writer::start_div('tz-dir-tabs');
     foreach (teacher::periods() as $k => $str) {
-        echo html_writer::link($url(['davr' => $k, 'page' => 0]),
+        $vositalar .= html_writer::link($url(['davr' => $k, 'page' => 0]),
             get_string($str, 'local_targetzenit'),
             ['class' => 'tz-dir-tab' . ($davrkod === $k ? ' tz-on' : '')]);
     }
-    echo html_writer::end_div();
-    echo html_writer::end_div();
+    $vositalar .= html_writer::end_div();
 }
-echo html_writer::end_div();
+
+shell::start_menu($view, ui::av($ism) . s($ism), s(implode(' · ', $meta)),
+    $vositalar, shell::oq_menu($userid, $ozim));
+
+echo html_writer::start_div('tz-oq');
 
 // ====================================================== KO'RINISH TANLASH
-echo html_writer::start_div('tz-dir-tabs mb-3');
+// Yon panelda ham bor, lekin sahifaning o'zida HAM turadi: 860px dan
+// pastda yon panel gorizontal menyuga aylanib yuqoriga chiqadi va unda
+// faol band ko'zga unchalik tashlanmaydi.
+echo html_writer::start_div('tz-oq-switch');
 foreach (['hisob' => 'oq_tab_sum', 'yozuvlar' => 'recordings'] as $k => $str) {
     echo html_writer::link($url(['view' => $k, 'page' => 0]),
         get_string($str, 'local_targetzenit'),
-        ['class' => 'tz-dir-tab' . ($view === $k ? ' tz-on' : '')]);
+        ['class' => 'tz-oq-sw' . ($view === $k ? ' tz-on' : '')]);
 }
 echo html_writer::end_div();
 
@@ -183,7 +186,7 @@ if (!$ozim) {
     echo html_writer::div(html_writer::link(
         new moodle_url('/local/targetzenit/direktor.php', ['view' => 'reyting']),
         '← ' . get_string('dir_navranks', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-secondary']), 'mb-3');
+        ['class' => 'btn btn-sm btn-outline-secondary']), 'mb-2');
 }
 
 // Ko'rinishlar alohida fayllarda — har biri `MOODLE_INTERNAL` bilan
@@ -194,5 +197,6 @@ if ($view === 'yozuvlar') {
     require(__DIR__ . '/views/oq_hisob.php');
 }
 
-echo html_writer::end_div();   // .tz-dir
+echo html_writer::end_div();   // .tz-oq
+shell::end();
 echo $OUTPUT->footer();

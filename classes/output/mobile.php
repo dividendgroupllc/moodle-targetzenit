@@ -408,6 +408,126 @@ class mobile {
         return self::javob('mobile_grades', $data);
     }
 
+    /** Chorak jurnalida bitta kursda ko'rsatiladigan eng ko'p dars soni. */
+    const JURNAL_DARS = 20;
+
+    /**
+     * Chorak jurnali — butun sinf bitta setkada.
+     *
+     * NEGA KERAK: Moodle ilovasida o'qituvchi uchun "Grader report" YO'Q —
+     * ilova baholarni faqat foydalanuvchining O'Z baholari sifatida
+     * ko'rsatadi. Butun sinfni bir ekranda ko'rish faqat shu yerda mumkin.
+     *
+     * Setka yon tomonga suriladi. Darslar soni {@see self::JURNAL_DARS} bilan
+     * cheklangan (eng YANGILARI): chorak oxirida 60 ta ustun bo'lib ketadi va
+     * telefonda u ishlamaydi. To'liq jurnal veb'da qoladi.
+     */
+    public static function journal_view(array $args): array {
+        global $DB, $USER;
+
+        $context = \context_system::instance();
+        self::tekshir($context);
+
+        $year = timetable::current_year();
+        $data = ['bor' => false, 'xabar' => '', 'chorak' => '', 'kurslar' => [],
+                 'cheklov' => ''];
+
+        $teacherkey = $year === '' ? '' : timetable::teacher_key_of($USER, $year);
+        if ($teacherkey === '') {
+            $data['xabar'] = get_string('app_nocourses', 'local_targetzenit');
+            return self::javob('mobile_journal', $data);
+        }
+
+        // Joriy chorak — bugungi sana qaysi oraliqqa tushsa.
+        $bugun = date('Y-m-d');
+        $chorak = null;
+        foreach (timetable::terms($year) as $t) {
+            if ($bugun >= $t->startdate && $bugun <= $t->enddate) {
+                $chorak = $t;
+                break;
+            }
+        }
+        if (!$chorak) {
+            $data['xabar'] = get_string('app_noterm_now', 'local_targetzenit');
+            return self::javob('mobile_journal', $data);
+        }
+        $data['chorak'] = get_string('app_journalterm', 'local_targetzenit',
+            format_string($chorak->name));
+
+        $rows = timetable::for_teacher($year, $teacherkey);
+        $kurslar = timetable::course_ids(
+            array_unique(array_map(fn($r) => $r->courseidnumber, $rows)));
+
+        foreach ($kurslar as $courseid) {
+            $cc = \context_course::instance((int) $courseid, IGNORE_MISSING);
+            if (!$cc || !has_capability('local/targetzenit:teach', $cc)) {
+                continue;
+            }
+            $oquvchilar = lesson::students($cc);
+            if (!$oquvchilar) {
+                continue;
+            }
+
+            // Shu chorakdagi darslar, sana bo'yicha. Ko'p bo'lsa eng
+            // YANGILARI olinadi — o'qituvchiga oxirgi darslar kerak.
+            $darslar = $DB->get_records_select('local_targetzenit_lesson',
+                'courseid = :cid AND lessondate >= :a AND lessondate <= :b',
+                ['cid' => $courseid, 'a' => $chorak->startdate, 'b' => $chorak->enddate],
+                'lessondate ASC, lessonno ASC', 'id, lessondate, lessonno');
+            if (!$darslar) {
+                continue;
+            }
+            if (count($darslar) > self::JURNAL_DARS) {
+                $darslar = array_slice($darslar, -self::JURNAL_DARS, null, true);
+                $data['cheklov'] = get_string('app_journallimit',
+                    'local_targetzenit', self::JURNAL_DARS);
+            }
+
+            $kataklar = journal::cells(array_keys($darslar));
+
+            $sarlavha = [];
+            foreach ($darslar as $d) {
+                $sarlavha[] = ['belgi' => userdate(strtotime($d->lessondate), '%d.%m')];
+            }
+
+            $qatorlar = [];
+            foreach ($oquvchilar as $st) {
+                $uzani = $kataklar[(int) $st->id] ?? [];
+                $hujayralar = [];
+                foreach ($darslar as $lessonid => $d) {
+                    $rec = $uzani[$lessonid] ?? null;
+                    $matn = journal::cell_text($rec);
+                    $hujayralar[] = [
+                        'matn' => $matn === '' ? '·' : $matn,
+                        // Baho emas, yo'qlama belgisi bo'lsa boshqa rangda.
+                        'yoq' => $rec && ($rec->grade === null || $rec->grade === '')
+                                 && $rec->attendance !== 'present',
+                    ];
+                }
+                $ortacha = lesson::average($uzani);
+                $qatorlar[] = [
+                    'ism' => fullname($st),
+                    'hujayralar' => $hujayralar,
+                    'ortacha' => $ortacha === null ? '—' : (string) $ortacha,
+                ];
+            }
+
+            $data['kurslar'][] = [
+                'nomi' => format_string($DB->get_field('course', 'fullname',
+                    ['id' => $courseid])),
+                'sarlavha' => $sarlavha,
+                'oquvchilar' => $qatorlar,
+            ];
+        }
+
+        if (!$data['kurslar']) {
+            $data['xabar'] = get_string('app_nogradesyet', 'local_targetzenit');
+        } else {
+            $data['bor'] = true;
+        }
+        return self::javob('mobile_journal', $data);
+    }
+
     /** Ilova kutadigan javob shakli — har metodda takrorlanmasligi uchun. */
     private static function javob(string $shablon, array $data,
                                   array $otherdata = []): array {

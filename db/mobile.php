@@ -58,6 +58,18 @@ $addons = [
                     'class' => '',
                 ],
             ],
+            // Chorak jurnali — butun sinf bitta setkada. Moodle ilovasida
+            // o'qituvchi uchun "Grader report" yo'q, shuning uchun bu yagona
+            // yo'l.
+            'journal' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'journal_view',
+                'displaydata' => [
+                    'title' => 'app_journal',
+                    'icon' => 'fas-th',
+                    'class' => '',
+                ],
+            ],
             'timetable' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'timetable_view',
@@ -102,6 +114,9 @@ $addons = [
             ['app_nocourses', 'local_targetzenit'],
             ['app_nogradesyet', 'local_targetzenit'],
             ['app_termaverages', 'local_targetzenit'],
+            ['app_journal', 'local_targetzenit'],
+            ['app_journalhint', 'local_targetzenit'],
+            ['app_noterm_now', 'local_targetzenit'],
         ],
     ],
 ];

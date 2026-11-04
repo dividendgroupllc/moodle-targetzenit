@@ -477,15 +477,37 @@
 /* ======================================================================
    O'QITUVCHI PANELI (oqituvchi.php)
 
-   Direktor paneli `embedded` maketda o'z yon paneli bilan ishlaydi;
-   o'qituvchi paneli esa `standard` maketda — o'qituvchi Moodle navigatsiyasi
-   bilan yuradi va kursga/jurnalga qaytib turadi. Shuning uchun `.tz-oq`
-   yon panel va to'liq ekran qoidalarini MEROS QILMAYDI, faqat kartalar,
-   plitalar va chiplarni qayta ishlatadi.
+   `output\shell` qobig'i ICHIDA yashaydi — direktor paneli bilan ayni bir
+   maket: `embedded` layout, to'liq ekran, yon panel `clamp()` bilan torayadi
+   va 860px dan pastda gorizontal menyuga aylanadi. Shuning uchun bu yerda
+   faqat O'QITUVCHIGA XOS bloklar bor; kenglik, yon panel va breakpointlar
+   qobiqning qoidalaridan meros bo'lib keladi.
    ====================================================================== */
+.tz-oq { width: 100%; }
 .tz-oq .tz-dir-hero { margin-bottom: 14px; }
-.tz-oq-ident { display: flex; align-items: center; gap: 12px; }
-.tz-oq-ident .tz-dir-av { width: 42px; height: 42px; font-size: 1rem; flex: 0 0 42px; }
+
+/* Sarlavhadagi avatar — qobiqning h2 si ichida turadi */
+.tz-dir-hello .tz-dir-av { width: 38px; height: 38px; font-size: .95rem;
+    flex: 0 0 38px; margin-right: 10px; vertical-align: -9px; }
+
+/* ---------------- ko'rinish tanlagichi ----------------
+   Yon paneldagi band YETARLI EMAS edi: 860px dan pastda yon panel yuqoriga
+   chiqib gorizontal menyuga aylanadi va faol band ko'zga tashlanmaydi.
+   Shuning uchun sahifaning o'zida ham katta, aniq segmentli tanlagich. */
+.tz-oq-switch { display: flex; gap: 0; margin-bottom: 16px; flex-wrap: wrap;
+    border: 1px solid var(--tz-line); border-radius: 11px; overflow: hidden;
+    background: var(--tz-card); width: fit-content; max-width: 100%; }
+.tz-oq-sw { padding: 10px 20px; font-size: .92rem; font-weight: 600;
+    color: var(--tz-ink-2); text-decoration: none; background: var(--tz-card);
+    border-right: 1px solid var(--tz-line); white-space: nowrap; }
+.tz-oq-sw:last-child { border-right: 0; }
+.tz-oq-sw:hover { text-decoration: none; color: var(--tz-ink); background: var(--tz-bg); }
+.tz-oq-sw.tz-on { background: var(--tz-brand); color: #fff; }
+.tz-oq-sw:focus-visible { outline: 2px solid var(--tz-brand); outline-offset: -2px; }
+@media (max-width: 520px) {
+    .tz-oq-switch { width: 100%; }
+    .tz-oq-sw { flex: 1 1 0; text-align: center; padding: 10px 12px; }
+}
 
 /* ---------------- majburiy vazifalar (meter qatori) ---------------- */
 .tz-oq-meters { display: grid; gap: 12px 18px; margin-top: 10px;
@@ -624,3 +646,55 @@
     border-radius: 8px; background: var(--tz-card); color: var(--tz-ink); font-size: .85rem; }
 .tz-fb-check { font-size: .84rem; color: var(--tz-ink-2); margin: 0;
     display: flex; gap: 5px; align-items: center; cursor: help; }
+
+/* ---------------- o'qituvchi paneli: kichik ekranlar ----------------
+   Jadval `overflow-x: auto` ichida, ya'ni hech narsa yo'qolmaydi. Lekin
+   telefonda gorizontal skroll noqulay, shuning uchun ENG KAM ma'lumotli
+   ustunlar yashiriladi — ularning mazmuni darsga o'tish tugmasi orqasida
+   baribir to'liq ko'rinadi. */
+@media (max-width: 860px) {
+    .tz-oq-chips { max-width: none; }
+    .tz-oq-prof .tz-cat-guruh { margin-top: 10px; }
+}
+@media (max-width: 760px) {
+    /* «Mavzu va uy vazifa» — chiplar baribir bor-yo'qligini ko'rsatadi */
+    .tz-oq-table th:nth-child(3), .tz-oq-table td:nth-child(3) { display: none; }
+}
+@media (max-width: 480px) {
+    /* AI ball ustuni — dars kartasida to'liq ko'rinadi */
+    .tz-oq-table th:nth-child(5), .tz-oq-table td:nth-child(5) { display: none; }
+    .tz-oq-meters { grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+    .tz-oq-scale { font-size: .66rem; }
+}
+
+/* --------- Fidbek: qator ichidagi qisqa ko'rinish --------- */
+.tz-fb-td { min-width: 230px; max-width: 320px; vertical-align: top; }
+.tz-fb-cell { display: flex; flex-direction: column; gap: 4px; }
+.tz-fb-cmeta { display: flex; align-items: center; gap: 6px; }
+.tz-fb-count { display: inline-flex; min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 9px; background: var(--tz-brand-soft); color: var(--tz-brand);
+    font-size: .7rem; font-weight: 700; align-items: center; justify-content: center; }
+/* Oldingi xabar KICHRAYTIRILGAN: ikki qator, keyin kesiladi.
+   To'liq matn `title` da va kartada. */
+.tz-fb-ctext { font-size: .8rem; line-height: 1.35; color: var(--tz-ink-2);
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden; }
+.tz-fb-cform { display: flex; gap: 4px; margin: 2px 0 0; }
+.tz-fb-cform input[type="text"] { flex: 1 1 auto; min-width: 0;
+    padding: 5px 9px; border: 1px solid var(--tz-line); border-radius: 8px;
+    background: var(--tz-card); color: var(--tz-ink); font-size: .8rem; }
+.tz-fb-cform input[type="text"]:focus { outline: 2px solid var(--tz-brand); outline-offset: -1px; }
+.tz-fb-csend { flex: 0 0 auto; padding: 4px 9px; border: 1px solid var(--tz-brand);
+    border-radius: 8px; background: var(--tz-brand); color: #fff;
+    font-size: .8rem; line-height: 1.2; cursor: pointer; }
+.tz-fb-csend:hover { filter: brightness(1.08); }
+
+/* Javob xabari zanjirda surilib turadi */
+.tz-fb-javob { margin-left: 18px; border-left-color: var(--tz-brand); }
+.tz-fb-javob .tz-fb-body { color: var(--tz-ink-2); }
+
+@media (max-width: 1100px) { .tz-fb-td { min-width: 190px; } }
+@media (max-width: 680px) {
+    /* Telefonda fidbek ustuni yashiriladi — u ochilgan kartada to'liq bor */
+    .tz-rec th:nth-child(7), .tz-rec td:nth-child(7) { display: none; }
+}

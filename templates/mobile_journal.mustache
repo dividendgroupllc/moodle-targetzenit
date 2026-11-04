@@ -1,0 +1,85 @@
+{{!
+    @template local_targetzenit/mobile_journal
+
+    Chorak jurnali — butun sinf bitta setkada (mobil ilova).
+
+    Moodle ilovasida o'qituvchi uchun "Grader report" yo'q, shuning uchun
+    butun sinfni bir ekranda ko'rishning yagona yo'li shu.
+
+    Setka YON TOMONGA suriladi: o'quvchi ismi ustuni joyida qoladi, darslar
+    esa suriladi. Shuning uchun oddiy <table> ishlatilgan — <ion-grid> yon
+    surishni qo'llab-quvvatlamaydi.
+
+    Context variables required for this template:
+    * bor - ko'rsatadigan narsa bormi
+    * xabar - bo'lmasa sabab
+    * chorak - joriy chorak nomi
+    * cheklov - darslar soni cheklanganmi haqida eslatma
+    * kurslar - [{nomi, sarlavha, oquvchilar}]
+    * sarlavha - [{belgi}] dars sanalari
+    * oquvchilar - [{ism, ortacha, hujayralar}]
+    * hujayralar - [{matn, yoq}]
+
+    Example context (json):
+    {
+        "bor": true, "xabar": "", "chorak": "Chorak: 2-chorak", "cheklov": "",
+        "kurslar": [{
+            "nomi": "8 A(full) — ROBOTICS",
+            "sarlavha": [{"belgi": "03.11"}, {"belgi": "05.11"}],
+            "oquvchilar": [{"ism": "Ali Valiyev", "ortacha": "8.5",
+                "hujayralar": [{"matn": "9", "yoq": false},
+                               {"matn": "k", "yoq": true}]}]
+        }]
+    }
+}}
+{{^ bor }}
+    <ion-card>
+        <ion-card-content><p>{{ xabar }}</p></ion-card-content>
+    </ion-card>
+{{/ bor }}
+
+{{# bor }}
+<ion-card>
+    <ion-card-header>
+        <ion-card-subtitle>{{ chorak }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+        <p>{{#str}}app_journalhint, local_targetzenit{{/str}}</p>
+        {{# cheklov }}<p><small>{{ cheklov }}</small></p>{{/ cheklov }}
+    </ion-card-content>
+</ion-card>
+
+{{# kurslar }}
+<ion-card>
+    <ion-card-header>
+        <ion-card-title class="ion-text-wrap">{{ nomi }}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content class="ion-no-padding">
+        <div style="overflow-x:auto;width:100%">
+            <table style="border-collapse:collapse;font-size:12px;white-space:nowrap">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:4px 8px;position:sticky;left:0;background:inherit"></th>
+                        {{# sarlavha }}
+                        <th style="padding:4px 6px;font-weight:600">{{ belgi }}</th>
+                        {{/ sarlavha }}
+                        <th style="padding:4px 8px;font-weight:600">&#8721;</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{# oquvchilar }}
+                    <tr>
+                        <td style="text-align:left;padding:4px 8px;position:sticky;left:0;background:inherit">{{ ism }}</td>
+                        {{# hujayralar }}
+                        <td style="text-align:center;padding:4px 6px{{# yoq }};opacity:.6{{/ yoq }}">{{ matn }}</td>
+                        {{/ hujayralar }}
+                        <td style="text-align:center;padding:4px 8px;font-weight:700">{{ ortacha }}</td>
+                    </tr>
+                    {{/ oquvchilar }}
+                </tbody>
+            </table>
+        </div>
+    </ion-card-content>
+</ion-card>
+{{/ kurslar }}
+{{/ bor }}

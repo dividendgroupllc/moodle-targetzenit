@@ -1017,6 +1017,62 @@ chizuvchida emas, sahifada ta'minlanadi:
 xatti-harakat; ajratish kerak bo'lsa, tekshiruv kursdan DARSGA
 (`_lesson.teacherid`) tushirilishi kerak.
 
+### To'liq ekran qobig'i va ko'rinishlar orasida o'tish (2026-11-04)
+
+Birinchi urinishda o'qituvchi paneli `standard` maketda edi va **ko'rinishlar
+orasida o'tadigan ko'rinadigan tugmasi yo'q edi** — foydalanuvchi «Dars
+yozuvlari» lentasiga yeta olmadi. Ikki o'zgarish qilindi:
+
+1. **Qobiq umumiylashtirildi.** `shell::start()` endi `shell::start_menu()`
+   ustiga o'ralgan: menyu CHAQIRUVCHIDAN keladi. Direktor menyusi
+   `shell::dir_menu()`, o'qituvchi menyusi `shell::oq_menu()` da.
+   O'qituvchiga direktor menyusini ko'rsatib bo'lmaydi — o'sha sahifalar
+   `viewteachers`/`viewanalysis` talab qiladi va havolalar boshi berk yo'l
+   bo'lardi. «Maktab» bo'limi faqat ruxsati borlarga chiziladi.
+2. **Sahifada ham katta segmentli tanlagich** (`.tz-oq-switch`) qo'yildi.
+   Yon paneldagi band yetarli emas: 860px dan pastda yon panel yuqoriga
+   chiqib gorizontal menyuga aylanadi va faol band ko'zga tashlanmaydi.
+
+Natijada o'qituvchi paneli direktor paneli bilan **ayni bir maket**:
+`embedded` layout, butun ekran, yon panel `clamp(180px, 16vw, 240px)`,
+breakpointlar 1100 / 860 / 680 / 520 / 480 / 420px, bosma va
+`prefers-reduced-motion` qoidalari — hammasi qobiqdan meros.
+
+Telefonda dars-dars jadvalining eng kam ma'lumotli ustunlari yashiriladi
+(«Mavzu va uy vazifa» ≤760px, «AI ball» ≤480px) — mazmuni darsga o'tish
+tugmasi orqasida to'liq qoladi, ya'ni ma'lumot yo'qolmaydi.
+
+### Fidbek o'qituvchi tomonida: ko'rish + JAVOB (2026-11-04)
+
+Fidbek zanjiri ikki tomonga ochildi — `feedback::add()` o'qituvchi o'zi
+yozganini aniqlaydi va `kind='javob'`, `visibility='teacher'` qilib qo'yadi
+(ohang va maxfiylik tanlanmaydi: o'qituvchi o'ziga ogohlantirish yozmaydi va
+javobini o'zidan yashira olmaydi). Bildirishnoma teskari yo'nalishda —
+`parentid` orqali javob berilayotgan odamga.
+
+O'qituvchi fidbekni va javob formasini uch joyda ko'radi:
+
+| Joy | Ko'rinish |
+|---|---|
+| `oqituvchi.php?view=yozuvlar` | lenta qatoridagi qisqa katak + ochilgan kartadagi to'liq suhbat |
+| `dars.php` (kokpit) | to'liq suhbat + javob formasi |
+| `oqituvchi.php?view=hisob` | dars qatorida 💬 N belgisi (suhbatning o'zi emas) |
+
+**Tuzatilgan ikki nuqson:**
+
+1. `dars.php` fidbek blokini chizardi, lekin `fidbek::handle()` ni
+   CHAQIRMASDI — o'qituvchining javobi jim yo'qolardi. Sahifada ikki forma
+   bor va ikkisi ham bir URL ga yuboradi: `fblesson` bo'lsa fidbek,
+   `saqla` bo'lsa jurnal. Endi POST/Redirect/GET bilan ishlaydi.
+2. `handle()` da "o'zi yozdi" sharti faqat `fbteacher == $USER->id` edi —
+   ya'ni o'z id sini qo'yib BEGONA darsga fidbek qatori yozish mumkin edi
+   (`_fact.feedbackcount` ham o'sha darsda o'sardi). Endi
+   `feedback::javob_mumkinmi()` tekshiradi: dars shu odamga yozilganmi
+   (fakt yoki jurnal bo'yicha) yoki unga murojaat qilingan fidbek bormi.
+
+Qoida: forma ko'rinmasligi HIMOYA EMAS. Fidbek bo'yicha hamma tekshiruv
+`handle()` da — so'rovni qo'lda yuborish mumkin.
+
 ### Hali qilinmagani
 
 - **Chorak xaritasi** (5.5 dagi guruh × kun issiqlik setkasi) — dars-dars
