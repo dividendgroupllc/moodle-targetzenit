@@ -54,4 +54,13 @@ $functions = [
         'ajax'        => true,
         'services'    => [MOODLE_OFFICIAL_MOBILE_SERVICE],
     ],
+    'local_targetzenit_mobile_save_lesson' => [
+        'classname'   => 'local_targetzenit\\external\\mobile_save_lesson',
+        'methodname'  => 'execute',
+        'description' => "Mobil ilovadan dars mavzusi va uy vazifasini saqlash",
+        'type'        => 'write',
+        'capabilities' => 'local/targetzenit:teach',
+        'ajax'        => true,
+        'services'    => [MOODLE_OFFICIAL_MOBILE_SERVICE],
+    ],
 ];

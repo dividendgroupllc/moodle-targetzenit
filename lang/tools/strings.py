@@ -548,6 +548,37 @@ S = {
     ),
 
     # ------------------------------------------- ilovadagi dars kokpiti
+    "app_savelesson": (
+        "Save topic and homework",
+        "Mavzu va uy vazifani saqlash",
+        "Сохранить тему и домашнее задание",
+    ),
+    "app_recordweb": (
+        "\U0001F399 Record the lesson",
+        "\U0001F399 Darsni yozib olish",
+        "\U0001F399 Записать урок",
+    ),
+    "app_recordhint": (
+        "Recording opens in the browser: the app cannot access the microphone "
+        "from inside a plugin page. Keep that window open \u2014 attendance "
+        "and grades here are not affected.",
+        "Yozuv brauzerda ochiladi: ilova plagin sahifasi ichidan mikrofonga "
+        "kira olmaydi. O'sha oynani ochiq qoldiring \u2014 bu yerdagi "
+        "yo'qlama va bahoga ta'sir qilmaydi.",
+        "Запись открывается в браузере: приложение не может обратиться к "
+        "микрофону со страницы плагина. Оставьте то окно открытым \u2014 на "
+        "посещаемость и оценки здесь это не влияет.",
+    ),
+    "app_hasaudio": (
+        "\u2714 This lesson has a recording ({$a} MB)",
+        "\u2714 Bu darsda yozuv bor ({$a} MB)",
+        "\u2714 У этого урока есть запись ({$a} МБ)",
+    ),
+    "app_openweb_lesson": (
+        "Open the full lesson page",
+        "To'liq dars sahifasini ochish",
+        "Открыть полную страницу урока",
+    ),
     "app_lesson": ("Lesson", "Dars", "Урок"),
     "app_todaylessons": ("Today's lessons", "Bugungi darslar", "Сегодняшние уроки"),
     "app_register": (

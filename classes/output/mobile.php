@@ -234,6 +234,28 @@ class mobile {
             $yozuv = lesson::get_or_create($cid, $bugun, (int) $r->lessonno,
                 (int) $USER->id);
             $dars['lessonid'] = (int) $yozuv->id;
+            $dars['mavzu'] = (string) $yozuv->topic;
+            $dars['uyvazifa'] = (string) $yozuv->homework;
+
+            // Ovoz yozish BRAUZERDA ochiladi: ilova plagin sahifasi ichidan
+            // mikrofonga kira olmaydi (MediaRecorder Ionic shabloni ichida
+            // ishlamaydi). Havola ilova ichidagi brauzerda avtomatik
+            // kirish bilan ochiladi.
+            $dars['audio_yoqilgan'] = (bool) get_config('local_targetzenit',
+                'audioenabled');
+            $dars['rec_url'] = (new \moodle_url('/local/targetzenit/rec.php',
+                ['lessonid' => $yozuv->id]))->out(false);
+            $dars['dars_url'] = (new \moodle_url('/local/targetzenit/dars.php',
+                ['courseid' => $cid, 'date' => $bugun,
+                 'lessonno' => (int) $r->lessonno]))->out(false);
+
+            $ovoz = \local_targetzenit\audio::get((int) $yozuv->id);
+            $dars['audio_bor'] = $ovoz && in_array($ovoz->status,
+                \local_targetzenit\audio::FAYLLI, true);
+            $dars['audio_xabar'] = $dars['audio_bor']
+                ? get_string('app_hasaudio', 'local_targetzenit',
+                    number_format($ovoz->filesize / 1048576, 1))
+                : '';
 
             $oquvchilar = lesson::students($cc);
             if (!$oquvchilar) {
@@ -269,6 +291,11 @@ class mobile {
         // Baho maydonlari qiymati `CONTENT_OTHERDATA` dan olinadi.
         $otherdata = [];
         foreach ($data['darslar'] as $d) {
+            if (empty($d['lessonid'])) {
+                continue;
+            }
+            $otherdata['tp_' . $d['lessonid']] = $d['mavzu'] ?? '';
+            $otherdata['hw_' . $d['lessonid']] = $d['uyvazifa'] ?? '';
             foreach ($d['oquvchilar'] as $o) {
                 $otherdata['gr_' . $d['lessonid'] . '_' . $o['userid']] = $o['baho'];
             }

@@ -66,6 +66,56 @@
     {{# ruxsat }}
         {{# xabar }}<div style="padding:0 12px 12px">{{ xabar }}</div>{{/ xabar }}
 
+        {{! Mavzu va uy vazifa — webdagi kokpitdagi kabi, dars sahifasining
+            birinchi bloki. Uy vazifa Moodle'da topshiriq bo'lib ochiladi. }}
+        <div style="padding:0 12px 10px">
+            <ion-item lines="none" class="ion-no-padding">
+                <ion-label position="stacked">{{#str}}topic, local_targetzenit{{/str}}</ion-label>
+                <ion-input type="text"
+                           placeholder="{{#str}}ck_topicph, local_targetzenit{{/str}}"
+                           [(ngModel)]="CONTENT_OTHERDATA.tp_{{ lessonid }}"
+                           name="tp_{{ lessonid }}"></ion-input>
+            </ion-item>
+            <ion-item lines="none" class="ion-no-padding">
+                <ion-label position="stacked">{{#str}}homework, local_targetzenit{{/str}}</ion-label>
+                <ion-input type="text"
+                           placeholder="{{#str}}ck_homeworkph, local_targetzenit{{/str}}"
+                           [(ngModel)]="CONTENT_OTHERDATA.hw_{{ lessonid }}"
+                           name="hw_{{ lessonid }}"></ion-input>
+            </ion-item>
+            <ion-button expand="block" size="small" class="ion-margin-top"
+                core-site-plugins-call-ws
+                name="local_targetzenit_mobile_save_lesson"
+                [params]="{lessonid: {{ lessonid }}, topic: CONTENT_OTHERDATA.tp_{{ lessonid }}, homework: CONTENT_OTHERDATA.hw_{{ lessonid }}}"
+                [preSets]="{typeExpected: 'object'}"
+                successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
+                refreshOnSuccess="true">{{#str}}app_savelesson, local_targetzenit{{/str}}</ion-button>
+        </div>
+
+        {{! Dars ovozi. Yozishning o'zi BRAUZERDA ochiladi — ilova plagin
+            sahifasi ichidan mikrofonga kira olmaydi. }}
+        {{# audio_yoqilgan }}
+        <div style="padding:0 12px 10px">
+            {{# audio_bor }}
+            <div style="font-size:12px;color:#1f7a3d;margin-bottom:4px">{{ audio_xabar }}</div>
+            {{/ audio_bor }}
+            <ion-button expand="block" size="small" color="danger"
+                        core-link="true" [href]="'{{ rec_url }}'">
+                {{#str}}app_recordweb, local_targetzenit{{/str}}
+            </ion-button>
+            <div style="font-size:11px;opacity:.6;margin-top:4px">
+                {{#str}}app_recordhint, local_targetzenit{{/str}}
+            </div>
+        </div>
+        {{/ audio_yoqilgan }}
+
+        <div style="padding:0 12px 10px">
+            <ion-button expand="block" size="small" fill="outline"
+                        core-link="true" [href]="'{{ dars_url }}'">
+                {{#str}}app_openweb_lesson, local_targetzenit{{/str}}
+            </ion-button>
+        </div>
+
         {{# oquvchilar }}
         <div style="padding:8px 12px;border-top:1px solid rgba(0,0,0,.06)">
             <div style="font-weight:600;margin-bottom:4px">{{ ism }}</div>
@@ -76,28 +126,32 @@
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'present', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: 'object'}"
+                    [preSets]="{typeExpected: \'object\'}"
+                    successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_present, local_targetzenit{{/str}}</ion-button>
                 <ion-button size="small" color="danger"
                     fill="{{# kelmadi }}solid{{/ kelmadi }}{{^ kelmadi }}outline{{/ kelmadi }}"
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'absent', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: 'object'}"
+                    [preSets]="{typeExpected: \'object\'}"
+                    successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_absent, local_targetzenit{{/str}}</ion-button>
                 <ion-button size="small" color="warning"
                     fill="{{# kechikdi }}solid{{/ kechikdi }}{{^ kechikdi }}outline{{/ kechikdi }}"
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'late', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: 'object'}"
+                    [preSets]="{typeExpected: \'object\'}"
+                    successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_late, local_targetzenit{{/str}}</ion-button>
                 <ion-button size="small" color="medium"
                     fill="{{# sababli }}solid{{/ sababli }}{{^ sababli }}outline{{/ sababli }}"
                     core-site-plugins-call-ws
                     name="local_targetzenit_mobile_save_record"
                     [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'excused', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
-                    [preSets]="{typeExpected: 'object'}"
+                    [preSets]="{typeExpected: \'object\'}"
+                    successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
                     refreshOnSuccess="true">{{#str}}att_excused, local_targetzenit{{/str}}</ion-button>
             </div>
 
