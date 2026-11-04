@@ -20,25 +20,14 @@ defined('MOODLE_INTERNAL') || die();
 $addons = [
     'local_targetzenit' => [
         'handlers' => [
-            'tzhub' => [
-                // Asosiy menyuda (pastdagi yoki yon menyuda) element bo'lib chiqadi.
-                'delegate' => 'CoreMainMenuDelegate',
-                'method' => 'main',
-                'displaydata' => [
-                    'title' => 'app_title',
-                    'icon' => 'fas-school',
-                    'class' => '',
-                ],
-            ],
-            // Dars jadvali — alohida menyu elementi.
-            //
-            // NEGA ALOHIDA, asosiy paneldan havola emas: menyu elementi
-            // ishlashi KAFOLATLANGAN, shablon ichidan boshqa panelga o'tish
-            // esa ilova versiyasiga bog'liq direktivaga tayanadi. Eng ko'p
-            // ishlatiladigan panelni noaniqlikka qo'yish to'g'ri bo'lmaydi.
-            // Dars kokpiti — bugungi darslar ro'yxati, undan o'quvchilar
-            // ro'yxatiga o'tiladi. O'qituvchi uchun eng ko'p ishlatiladigan
-            // panel, shuning uchun menyuda alohida turadi.
+            // DIQQAT: "tzhub" (umumiy sahifa) OLIB TASHLANDI. U 0-bosqichda
+            // ilova qatlami ishlayotganini tekshirish uchun qo'yilgan edi va
+            // ichida veb sahifalarga havolalar bor edi. Endi har panel
+            // alohida element bo'lib turibdi, ya'ni u faqat menyuni
+            // to'ldirib turardi: ilova sig'magan elementlarni "More" ichiga
+            // yashiradi, shuning uchun har ortiqcha element qolganlarini
+            // topishni qiyinlashtiradi. Metod (`mobile::main`) kodda qoldi —
+            // kerak bo'lsa qaytarish oson.
             'tzregister' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'lesson_view',
