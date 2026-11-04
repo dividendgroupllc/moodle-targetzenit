@@ -134,6 +134,19 @@ $kataklar = journal::cells($lessonids);
 
 echo $OUTPUT->header();
 
+// Qaytish yo'li — chorak jurnali boshi berk ko'cha bo'lib qolmasin.
+// `Lessons` shu kursning JORIY kuniga emas, umuman bugungi darslarga olib
+// boradi: o'qituvchi jurnaldan chiqqanda odatda keyingi darsiga o'tadi.
+echo html_writer::div(
+    html_writer::link(new moodle_url('/local/targetzenit/index.php',
+        ['view' => 'today', 'date' => date('Y-m-d')]),
+        '← ' . get_string('lessons_link', 'local_targetzenit'),
+        ['class' => 'btn btn-sm btn-outline-secondary mr-2'])
+    . html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'week']),
+        get_string('timetable', 'local_targetzenit'),
+        ['class' => 'btn btn-sm btn-outline-secondary']),
+    'mb-3');
+
 // ------------------------------------------------- SINF VA CHORAK TANLASH
 // Ikkalasi bitta qatorda: o'qituvchi jurnalni ochganda birinchi qiladigan
 // ishi — "qaysi sinf, qaysi chorak" ni to'g'rilash.

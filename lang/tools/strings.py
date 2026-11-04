@@ -78,7 +78,6 @@ S = {
     # -------------------------------------------------------- dars jadvali
     "timetable": ("Timetable", "Dars jadvali", "Расписание"),
     "timetable_my": ("My timetable", "Mening jadvalim", "Моё расписание"),
-    "timetable_today": ("Today", "Bugun", "Сегодня"),
     "timetable_week": ("Week", "Hafta", "Неделя"),
     "timetable_all": ("Whole school", "Umumiy jadval", "Общее расписание"),
     "timetable_empty": ("No timetable found.", "Jadval topilmadi.", "Расписание не найдено."),
@@ -1026,9 +1025,18 @@ S = {
     "jurnal_class": ("Class", "Sinf", "Класс"),
     "jurnal_term": ("Term", "Chorak", "Четверть"),
     "jurnal_link": (
-        "Lessons",
-        "Darslar",
-        "Уроки",
+        "Full journal",
+        "To'liq jurnal",
+        "Полный журнал",
+    ),
+    "lessons_link": ("Lessons", "Darslar", "Уроки"),
+    "tt_colaction": ("Lesson", "Dars", "Урок"),
+    "tt_record": ("Record", "Yozib olish", "Записать"),
+    "tt_recorded": ("Recorded", "Yozilgan", "Записано"),
+    "tt_missing": (
+        "not yet: {$a}",
+        "hali yo'q: {$a}",
+        "ещё нет: {$a}",
     ),
     "oq_all": ("All", "Hammasi", "Всё"),
     "oq_periodis": (

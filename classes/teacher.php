@@ -259,6 +259,47 @@ class teacher {
     }
 
     /**
+     * Bir kundagi darslarning JURNAL HOLATI — jadvalning "bugun"
+     * ko'rinishidagi amal tugmalari uchun.
+     *
+     * Kalit: "{courseid}:{lessonno}" — jadval qatorida aynan shu ikkisi bor.
+     *
+     * NEGA `_slot`/`_fact` EMAS: fakt rejalashtirilgan vazifa bilan quriladi
+     * va bugungi dars uchun hali qator bo'lmasligi mumkin. Jurnal yozuvi esa
+     * o'qituvchi dars sahifasini ochishi bilan paydo bo'ladi — tugma holati
+     * aynan shunga bog'liq.
+     *
+     * @return array [kalit => stdClass{lessonid, topic, audiostatus, duration, yozuvlar}]
+     */
+    public static function day_state(string $date, array $courseids): array {
+        global $DB;
+
+        $courseids = array_values(array_unique(array_filter($courseids)));
+        if (!$courseids) {
+            return [];
+        }
+        list($in, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $params['d'] = $date;
+
+        $rows = $DB->get_records_sql("
+            SELECT l.id AS lessonid, l.courseid, l.lessonno, l.topic, l.homework,
+                   a.status AS audiostatus, a.duration,
+                   (SELECT COUNT(1) FROM {local_targetzenit_record} r
+                     WHERE r.lessonid = l.id) AS yozuvlar
+              FROM {local_targetzenit_lesson} l
+         LEFT JOIN {local_targetzenit_audio} a ON a.lessonid = l.id
+             WHERE l.lessondate = :d AND l.courseid $in", $params);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $r->yozuvbor = in_array((string) $r->audiostatus,
+                ['ready', 'transcribed', 'deleted'], true);
+            $out[(int) $r->courseid . ':' . (int) $r->lessonno] = $r;
+        }
+        return $out;
+    }
+
+    /**
      * Guruh × fan kesimi — "qaysi sinfda qanday ishlayapman".
      *
      * @return array qatorlar: guruh, fan, darslar, bajarilgan, ball, n

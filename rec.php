@@ -10,14 +10,42 @@ require(__DIR__ . '/../../config.php');
 
 require_login();   // avval kirish — baza so'rovi undan keyin
 
-$lessonid = required_param('lessonid', PARAM_INT);
+// Ikki xil kirish yo'li:
+//   lessonid=N                      — dars sahifasidan (jurnal yozuvi bor)
+//   courseid=N&date=..&lessonno=N   — jadvalning "bugun" ro'yxatidan
+//
+// NEGA IKKINCHISI KERAK: jadvalda hali ochilmagan darsning `_lesson` yozuvi
+// yo'q, ya'ni `lessonid` ham yo'q. Avval dars sahifasiga kirib, keyin yozuvni
+// ochish kerak edi — dars boshlanayotgan paytda ikki bosqich. Endi jadvaldagi
+// tugma to'g'ridan-to'g'ri shu yerga olib keladi va yozuv o'sha zahoti
+// boshlanadi. Jurnal yozuvi `get_or_create()` bilan shu yerda tug'iladi —
+// yaratish mantig'i YAGONA joyda qoladi.
+$lessonid = optional_param('lessonid', 0, PARAM_INT);
+$courseid = optional_param('courseid', 0, PARAM_INT);
+$date = optional_param('date', '', PARAM_TEXT);
+$lessonno = optional_param('lessonno', 0, PARAM_INT);
 
-$dars = $DB->get_record('local_targetzenit_lesson', ['id' => $lessonid], '*', MUST_EXIST);
-$course = get_course($dars->courseid);
-require_login($course);
+if ($lessonid) {
+    $dars = $DB->get_record('local_targetzenit_lesson', ['id' => $lessonid], '*', MUST_EXIST);
+    $course = get_course($dars->courseid);
+    require_login($course);
+    $context = context_course::instance($course->id);
+    require_capability('local/targetzenit:teach', $context);
+} else {
+    if (!$courseid || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $lessonno < 1) {
+        throw new moodle_exception('invalidparameter', 'debug');
+    }
+    $course = get_course($courseid);
+    require_login($course);
+    $context = context_course::instance($course->id);
+    // RUXSAT AVVAL: `get_or_create()` baza yozuvi yaratadi, ya'ni tekshiruvdan
+    // oldin chaqirilsa begona odam ham qator tug'dira olardi.
+    require_capability('local/targetzenit:teach', $context);
 
-$context = context_course::instance($course->id);
-require_capability('local/targetzenit:teach', $context);
+    $dars = \local_targetzenit\lesson::get_or_create($courseid, $date, $lessonno,
+        (int) $USER->id);
+    $lessonid = (int) $dars->id;
+}
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/rec.php', ['lessonid' => $lessonid]));

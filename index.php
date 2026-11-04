@@ -129,7 +129,10 @@ $mk = function($v, $label, $extra = []) use ($view) {
     return html_writer::link($url, $label, ['class' => $cls . ' mr-1 mb-2']);
 };
 $tabs[] = $mk('week', get_string('timetable_week', 'local_targetzenit'));
-$tabs[] = $mk('today', get_string('timetable_today', 'local_targetzenit'));
+// Yorliq nomi «Lessons» — boshqa sahifalardagi tugmalar ham shu nom bilan
+// shu yerga olib keladi. Bir manzilning ikki nomi bo'lishi chalg'itadi,
+// shuning uchun «Today» emas: sana tanlagich baribir pastda turibdi.
+$tabs[] = $mk('today', get_string('lessons_link', 'local_targetzenit'));
 if ($canviewall) {
     $tabs[] = $mk('all', get_string('timetable_all', 'local_targetzenit'));
 }
@@ -188,23 +191,116 @@ if ($view === 'today') {
         if (!$bugun) {
             echo $OUTPUT->notification(get_string('timetable_nolessons', 'local_targetzenit'), 'info');
         } else {
+            // O'qituvchiga amal ustuni: yozib olish va darsga kirish.
+            //
+            // NEGA SHU YERDA: bu sahifa o'qituvchining kundalik boshlanish
+            // nuqtasi — jadvaldan "bugun" ga kiradi va shu yerdan darsni
+            // boshlaydi. Avval har dars uchun fan nomini bosib kirish,
+            // keyin ichkaridan yozuvni ochish kerak edi: ikki bosqich,
+            // dars boshlanayotgan paytda esa har bosqich qimmat.
+            $amalbor = $isteacherview;
+            $holat = [];
+            if ($amalbor) {
+                $cids = [];
+                foreach ($bugun as $r) {
+                    $cid = $courseids[$r->courseidnumber] ?? 0;
+                    if ($cid) {
+                        $cids[] = $cid;
+                    }
+                }
+                $holat = \local_targetzenit\teacher::day_state($date, $cids);
+            }
+
             $t = new html_table();
             $t->head = ['#', get_string('time'), get_string('subject', 'local_targetzenit'),
                 $isteacherview ? get_string('group', 'local_targetzenit') : get_string('teacher', 'local_targetzenit'),
                 get_string('room', 'local_targetzenit')];
+            if ($amalbor) {
+                $t->head[] = get_string('tt_colaction', 'local_targetzenit');
+            }
             $t->attributes['class'] = 'generaltable tz-today';
             foreach ($bugun as $r) {
-                $t->data[] = [
+                $qator = [
                     $r->lessonno,
                     s($r->starttime) . ($r->endtime ? ' – ' . s($r->endtime) : ''),
                     $fan($r, $date),
                     $ikkinchi_qator($r),
                     s($r->room),
                 ];
+
+                if ($amalbor) {
+                    $cid = $courseids[$r->courseidnumber] ?? 0;
+                    if (!$cid) {
+                        // Kurs Moodle'da yo'q — havola qo'yilsa boshi berk yo'l
+                        $qator[] = html_writer::tag('span', '—', ['class' => 'text-muted']);
+                    } else {
+                        $h = $holat[$cid . ':' . (int) $r->lessonno] ?? null;
+                        $p = ['courseid' => $cid, 'date' => $date,
+                              'lessonno' => (int) $r->lessonno];
+
+                        // Yozuv tugmasi TO'G'RIDAN-TO'G'RI yozuv oynasiga.
+                        // Jurnal yozuvi (`_lesson`) kerak bo'lsa `rec.php`
+                        // o'zi yaratadi.
+                        //
+                        // Havola ODDIY havola bo'lib qoladi: JS pastda uni
+                        // kichik oynada ochadi, lekin JS ishlamasa ham tugma
+                        // ishlaydi. Oyna foydalanuvchi BOSGANIDA ochiladi,
+                        // ya'ni brauzer uni popup deb to'smaydi.
+                        $yozilgan = $h && $h->yozuvbor;
+                        $amal = html_writer::link(
+                            new moodle_url('/local/targetzenit/rec.php', $p),
+                            ($yozilgan ? '✓ ' : '🎙 ')
+                            . get_string($yozilgan ? 'tt_recorded' : 'tt_record',
+                                'local_targetzenit'),
+                            ['class' => 'btn btn-sm ' . ($yozilgan
+                                ? 'btn-outline-success' : 'btn-danger') . ' mr-1 tz-recbtn',
+                             'target' => '_blank', 'rel' => 'noopener']);
+
+                        $amal .= html_writer::link(
+                            new moodle_url('/local/targetzenit/dars.php', $p),
+                            get_string('oq_open', 'local_targetzenit'),
+                            ['class' => 'btn btn-sm btn-outline-secondary']);
+
+                        // Nima yetishmayotgani — qisqa belgi
+                        $yetmas = [];
+                        if (!$h || trim((string) $h->topic) === '') {
+                            $yetmas[] = get_string('oq_c_topic', 'local_targetzenit');
+                        }
+                        if (!$h || !(int) $h->yozuvlar) {
+                            $yetmas[] = get_string('oq_c_att', 'local_targetzenit');
+                        }
+                        if (!$yozilgan) {
+                            $yetmas[] = get_string('oq_c_rec', 'local_targetzenit');
+                        }
+                        if ($yetmas) {
+                            $amal .= html_writer::div(
+                                get_string('tt_missing', 'local_targetzenit',
+                                    implode(', ', $yetmas)),
+                                'text-muted small mt-1');
+                        }
+                        $qator[] = $amal;
+                    }
+                }
+                $t->data[] = $qator;
             }
             echo html_writer::table($t);
         }
     }
+    // Yozuv havolalarini kichik oynada ochish (dars sahifasidagi bilan bir xil
+    // o'lcham). Oyna foydalanuvchi bosganda ochilgani uchun to'silmaydi;
+    // `window.open` muvaffaqiyatsiz bo'lsa havola odatdagidek ochiladi.
+    $PAGE->requires->js_amd_inline("
+        require([], function() {
+            document.querySelectorAll('.tz-recbtn').forEach(function (a) {
+                a.addEventListener('click', function (e) {
+                    var w = window.open(a.href, 'tzrec',
+                        'width=420,height=460,menubar=no,toolbar=no,location=no');
+                    if (w) { e.preventDefault(); w.focus(); }
+                });
+            });
+        });
+    ");
+
     $next = date('Y-m-d', strtotime($date . ' +1 day'));
     $prev = date('Y-m-d', strtotime($date . ' -1 day'));
     echo html_writer::div(

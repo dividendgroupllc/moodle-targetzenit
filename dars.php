@@ -96,17 +96,24 @@ echo html_writer::div(
     'tz-dars-bosh mb-2'
 );
 
-// Jadvalga qaytish havolasi
+// Uchta aniq yo'nalish, har biri BOSHQA savolga javob beradi:
+//   Timetable  — butun hafta, qaysi kuni nima bor
+//   Lessons    — SHU KUNNING darslari (yozib olish tugmalari bilan)
+//   Full journal — butun chorak: hamma o'quvchi, hamma dars, baholar setkasi
+//
+// Nomlar QOTIB YOZILGAN emas, til satridan: interfeys ingliz tilida
+// bo'lganda «Chorak jurnali» yagona o'zbekcha tugma bo'lib qolgan edi.
+//
+// «Mening darslarim» ATAYLAB YO'Q: u yuqori menyuda har sahifada turadi
+// (`hook_callbacks::primary_extend`), bu yerda takrorlanishi ortiqcha.
 echo html_writer::div(
-    html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'today', 'date' => $date]),
+    html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'week']),
         '← ' . get_string('timetable', 'local_targetzenit'),
         ['class' => 'btn btn-sm btn-outline-secondary mr-2']) .
-    // Nomi QOTIB YOZILGAN emas, til satridan: interfeys ingliz tilida
-    // bo'lganda bu yagona o'zbekcha tugma bo'lib qolgan edi.
-    //
-    // «Mening darslarim» tugmasi ATAYLAB YO'Q: u yuqori menyuda har
-    // sahifada turadi (`hook_callbacks::primary_extend`), bu yerda
-    // takrorlanishi qatorni behuda uzaytiradi.
+    html_writer::link(new moodle_url('/local/targetzenit/index.php',
+        ['view' => 'today', 'date' => $date]),
+        get_string('lessons_link', 'local_targetzenit'),
+        ['class' => 'btn btn-sm btn-outline-secondary mr-2']) .
     html_writer::link(new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
         get_string('jurnal_link', 'local_targetzenit'),
         ['class' => 'btn btn-sm btn-outline-primary']),
