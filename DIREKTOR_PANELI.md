@@ -974,9 +974,17 @@ bo'yicha nima holat va qaysi darsda nima yetishmayapti?".
 
 ### Kirish nuqtalari
 
-- Chap menyu: «Mening darslarim» — `_fact.attributeduserid` da yozuvi bor
-  odamga ko'rinadi (`teacher::has_any()`), ya'ni o'rnini bosgan odam ham
-  ko'radi, dars o'tmaydigan xodim esa ko'rmaydi.
+- **Yuqori (primary) menyu: «Mening darslarim»** — har sahifada turadi.
+  Avval faqat `lib.php` dagi `extend_navigation` (chap menyu) orqali
+  qo'shilgan edi va Boost chap menyuni hamma sahifada ko'rsatmagani uchun
+  havola faqat kurs/dars sahifasiga kirgandan keyin paydo bo'lardi — xuddi
+  «Direktor paneli» bilan bo'lgan xato (2026-10-29). Plagin menyu
+  elementlari ichida BIRINCHI turadi: Boost sig'maganini "More" ga
+  yashiradi, boshidagi element yashirinmaydi.
+  Chap menyudagi nusxa ham qoldirildi (ikkinchi, barqaror yo'l).
+  Shart ikkisida ham bir xil — `teacher::has_any()`: `_fact.attributeduserid`
+  da yozuvi bor odamga ko'rinadi, ya'ni o'rnini bosgan odam ham ko'radi,
+  dars o'tmaydigan xodim esa ko'rmaydi.
 - Direktor qobig'i (`classes/output/shell.php`) yon paneli.
 - «Reytinglar» jadvalidagi ism — o'sha odamning kartasiga.
 - `dars.php` dan panelga qaytish tugmasi (halqa yopiladi).

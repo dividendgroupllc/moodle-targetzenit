@@ -40,6 +40,30 @@ class hook_callbacks {
             );
         }
 
+        // "MENING DARSLARIM" — o'qituvchining kundalik kirish nuqtasi.
+        //
+        // NEGA YUQORIDA: `lib.php` dagi `extend_navigation` nusxasi CHAP
+        // menyuga tushadi, Boost esa chap menyuni hamma sahifada
+        // ko'rsatmaydi — natijada havola faqat kurs/dars sahifasiga
+        // kirgandan keyin paydo bo'lardi. Yuqori menyu har sahifada turadi.
+        //
+        // NEGA JADVALDAN OLDIN: Boost sig'magan elementlarni "More"
+        // ro'yxatiga yashiradi; ro'yxatning boshida turgan element
+        // yashirinmaydi. O'qituvchi uchun eng ko'p ochiladigani shu.
+        //
+        // Shart: shu odamga YOZILGAN darsi bor. O'quvchi, ota-ona va dars
+        // o'tmaydigan xodimda bunday yozuv bo'lmaydi, ya'ni havola ham
+        // chiqmaydi.
+        if (teacher::has_any((int) $USER->id)) {
+            $nav->add(
+                get_string('oq_mypanel', 'local_targetzenit'),
+                '/local/targetzenit/oqituvchi.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzoqituvchi'
+            );
+        }
+
         $nav->add(
             get_string('timetable', 'local_targetzenit'),
             '/local/targetzenit/index.php',
