@@ -161,13 +161,14 @@ class mobile {
      * kerak. Shuning uchun hafta emas, FAQAT bugun va faqat o'ziniki.
      */
     public static function lesson_view(array $args): array {
-        global $USER;
+        global $DB, $USER;
 
         $context = \context_system::instance();
         self::tekshir($context);
 
         $year = timetable::current_year();
         $data = ['bor' => false, 'xabar' => '', 'darslar' => [],
+                 'maxgrade' => lesson::MAX_GRADE,
                  'sana' => userdate(time(), get_string('strftimedaydate'))];
 
         $teacherkey = $year === '' ? '' : timetable::teacher_key_of($USER, $year);
@@ -182,27 +183,81 @@ class mobile {
         $kurslar = timetable::course_ids(array_map(
             fn($r) => $r->courseidnumber, $rows));
 
+        // Har dars O'Z ICHIDA to'liq kokpit bilan keladi.
+        //
+        // NEGA ICHKARIDA, alohida sahifada emas: alohida sahifaga o'tish
+        // `core-site-plugins-new-content` direktivasiga tayanadi, u esa
+        // ilova versiyasiga bog'liq. Yig'iladigan blok (`<details>`)
+        // brauzerning o'z elementi — hamma joyda ishlaydi va bitta
+        // bosishda ochiladi.
+        $birinchi = true;
         foreach ($rows as $r) {
             if ((int) $r->dayno !== $dayno) {
                 continue;
             }
             $cid = $kurslar[$r->courseidnumber] ?? 0;
             if (!$cid) {
-                continue;             // kursi topilmagan dars — ochib bo'lmaydi
+                continue;
             }
+            $cc = \context_course::instance($cid, IGNORE_MISSING);
+            if (!$cc) {
+                continue;
+            }
+
             $vaqt = trim((string) $r->starttime);
             if (!empty($r->endtime)) {
                 $vaqt .= ' – ' . $r->endtime;
             }
-            $data['darslar'][] = [
+
+            $dars = [
                 'courseid' => $cid,
-                'date' => $bugun,
                 'lessonno' => (int) $r->lessonno,
                 'vaqt' => $vaqt,
                 'fan' => format_string($r->subjectname),
                 'guruh' => format_string((string) $r->groupname),
                 'xona' => format_string((string) $r->room),
+                'ochiq_blok' => $birinchi,
+                'ruxsat' => has_capability('local/targetzenit:teach', $cc),
+                'oquvchilar' => [],
+                'xabar' => '',
             ];
+            $birinchi = false;
+
+            if (!$dars['ruxsat']) {
+                $dars['xabar'] = get_string('app_noteach', 'local_targetzenit');
+                $data['darslar'][] = $dars;
+                continue;
+            }
+
+            // Dars yozuvi shu yerda yaratiladi: baho saqlashda `lessonid`
+            // allaqachon mavjud bo'lishi kerak.
+            $yozuv = lesson::get_or_create($cid, $bugun, (int) $r->lessonno,
+                (int) $USER->id);
+            $dars['lessonid'] = (int) $yozuv->id;
+
+            $oquvchilar = lesson::students($cc);
+            if (!$oquvchilar) {
+                $dars['xabar'] = get_string('app_nostudents', 'local_targetzenit');
+                $data['darslar'][] = $dars;
+                continue;
+            }
+
+            $yozuvlar = lesson::records((int) $yozuv->id);
+            foreach ($oquvchilar as $st) {
+                $rec = $yozuvlar[$st->id] ?? null;
+                $holat = $rec->attendance ?? 'present';
+                $dars['oquvchilar'][] = [
+                    'userid' => (int) $st->id,
+                    'ism' => fullname($st),
+                    'baho' => ($rec && $rec->grade !== null) ? (string) $rec->grade : '',
+                    'holat' => $holat,
+                    'keldi' => $holat === 'present',
+                    'kelmadi' => $holat === 'absent',
+                    'kechikdi' => $holat === 'late',
+                    'sababli' => $holat === 'excused',
+                ];
+            }
+            $data['darslar'][] = $dars;
         }
 
         if (!$data['darslar']) {
@@ -210,81 +265,23 @@ class mobile {
         } else {
             $data['bor'] = true;
         }
-        return self::javob('mobile_lessons', $data);
-    }
 
-    /**
-     * Dars kokpiti — o'quvchilar ro'yxati, yo'qlama va baho.
-     *
-     * YOZISH shablon ichidagi `core-site-plugins-call-ws` tugmalari orqali
-     * `local_targetzenit_mobile_save_record` ga boradi. Yo'qlama bitta
-     * bosishda saqlanadi (dars paytida eng tez-tez qilinadigan amal), baho
-     * esa kiritilib, yonidagi tugma bilan.
-     */
-    public static function lesson_cockpit(array $args): array {
-        global $USER;
-
-        $courseid = (int) ($args['courseid'] ?? 0);
-        $sana = (string) ($args['date'] ?? date('Y-m-d'));
-        $lessonno = (int) ($args['lessonno'] ?? 1);
-
-        $course = get_course($courseid);
-        $context = \context_course::instance($courseid);
-        self::tekshir($context);
-
-        $data = [
-            'kurs' => format_string($course->fullname),
-            'sana' => userdate(strtotime($sana), get_string('strftimedaydate')),
-            'lessonno' => $lessonno,
-            'maxgrade' => lesson::MAX_GRADE,
-            'ruxsat' => has_capability('local/targetzenit:teach', $context),
-            'oquvchilar' => [],
-            'xabar' => '',
-        ];
-
-        if (!$data['ruxsat']) {
-            $data['xabar'] = get_string('app_noteach', 'local_targetzenit');
-            return self::javob('mobile_cockpit', $data);
-        }
-
-        // Dars yozuvi shu yerda yaratiladi: o'qituvchi kokpitni ochgan
-        // paytda mavjud bo'lishi kerak, aks holda birinchi saqlashda
-        // `lessonid` bo'lmaydi.
-        $dars = lesson::get_or_create($courseid, $sana, $lessonno, (int) $USER->id);
-        $data['lessonid'] = (int) $dars->id;
-        $data['mavzu'] = (string) $dars->topic;
-
-        $oquvchilar = lesson::students($context);
-        if (!$oquvchilar) {
-            $data['xabar'] = get_string('app_nostudents', 'local_targetzenit');
-            return self::javob('mobile_cockpit', $data);
-        }
-
-        $yozuvlar = lesson::records((int) $dars->id);
+        // Baho maydonlari qiymati `CONTENT_OTHERDATA` dan olinadi.
         $otherdata = [];
-        foreach ($oquvchilar as $st) {
-            $rec = $yozuvlar[$st->id] ?? null;
-            $holat = $rec->attendance ?? 'present';
-            $baho = ($rec && $rec->grade !== null) ? (string) $rec->grade : '';
-
-            $data['oquvchilar'][] = [
-                'userid' => (int) $st->id,
-                'ism' => fullname($st),
-                'holat' => $holat,
-                'baho' => $baho,
-                // Shablonda `{{# keldi }}` kabi ishlatish uchun — mustache'da
-                // tenglikni tekshirib bo'lmaydi.
-                'keldi' => $holat === 'present',
-                'kelmadi' => $holat === 'absent',
-                'kechikdi' => $holat === 'late',
-                'sababli' => $holat === 'excused',
-            ];
-            // Ilova input qiymatlarini `CONTENT_OTHERDATA` dan oladi.
-            $otherdata['gr_' . $st->id] = $baho;
+        foreach ($data['darslar'] as $d) {
+            foreach ($d['oquvchilar'] as $o) {
+                $otherdata['gr_' . $d['lessonid'] . '_' . $o['userid']] = $o['baho'];
+            }
         }
 
-        return self::javob('mobile_cockpit', $data, $otherdata);
+        return self::javob('mobile_lessons', $data, $otherdata);
     }
+
+    // DIQQAT: alohida `lesson_cockpit()` metodi OLIB TASHLANDI. U
+    // `core-site-plugins-new-content` orqali ochilardi, ya'ni ilova
+    // versiyasiga bog'liq edi. Endi kokpit `lesson_view()` ning o'zida,
+    // har dars ichida yig'iladigan blok bo'lib keladi — hech qanday
+    // navigatsiya kerak emas.
 
     /**
      * Choraklik baholar — o'qituvchi uchun umumiy jadval.
@@ -395,6 +392,8 @@ class mobile {
             $data['kurslar'][] = [
                 'nomi' => format_string($DB->get_field('course', 'fullname',
                     ['id' => $courseid])),
+                // Birinchi kurs ochiq boshlanadi, qolganlari yig'ilgan.
+                'birinchi' => empty($data['kurslar']),
                 'bor' => (bool) $qatorlar,
                 'oquvchilar' => $qatorlar,
             ];
@@ -411,15 +410,14 @@ class mobile {
     /**
      * Mening oyligim — veb sahifasining (`oylik.php`) ilovadagi aksi.
      *
-     * TUZILISH VEB BILAN BIR XIL va tartibi ham o'sha:
-     *   1) to'rtta plita: qo'lga tegadigan, ishlagan, bonus, kelgan kun
-     *   2) hisob zanjiri (oylik ÷ norma = kun narxi × ishlangan + bonus
-     *      = hisoblandi − ushlanmalar = qo'lga)
-     *   3) kunma-kun davomat
+     * TUZILISH VA TARTIB VEB BILAN BIR XIL:
+     *   1) to'rtta plita  2) hisob zanjiri  3) kunma-kun davomat
      *   4) oylar kesimida hisob-kitob
      *
-     * Oy TANLOVI yo'q: eng yangi oy ko'rsatiladi, tarix esa 4-jadvalda
-     * baribir bor. Tanlov qo'yilsa sahifadan sahifaga o'tish kerak bo'lardi.
+     * HAMMA OY ko'rsatiladi, eng yangisidan boshlab. Oy TANLOVI qo'yilmadi:
+     * u sahifadan sahifaga o'tishni talab qiladi. O'rniga har oy yig'iladigan
+     * blok (`<details>`) — filtr vazifasini bajaradi va hech qanday ilova
+     * direktivasiga bog'liq emas.
      */
     public static function payroll_view(array $args): array {
         global $USER;
@@ -427,33 +425,79 @@ class mobile {
         $context = \context_system::instance();
         self::tekshir($context);
 
-        $data = ['bor' => false, 'xabar' => '', 'ochiq' => false];
+        $data = ['bor' => false, 'xabar' => '', 'oylar' => [], 'hisob' => [],
+                 'hisob_bor' => false];
+
         $ref = payroll::ref_for((int) $USER->id);
         if ($ref === '') {
             $data['xabar'] = get_string('pr_noidnumber', 'local_targetzenit');
             return self::javob('mobile_payroll', $data);
         }
 
-        $rec = payroll::month($ref);
-        if (!$rec) {
+        $birinchi = true;
+        foreach (payroll::months($ref) as $qisqa) {
+            $rec = payroll::month($ref, (int) $qisqa->yil, (int) $qisqa->oy);
+            if (!$rec) {
+                continue;
+            }
+            $data['oylar'][] = self::oylik_oyi($rec, $birinchi);
+            $birinchi = false;
+        }
+
+        if (!$data['oylar']) {
             $data['xabar'] = get_string('pr_nodata', 'local_targetzenit');
             return self::javob('mobile_payroll', $data);
         }
-
-        $soatbay = $rec->tolovturi === 'soat';
-        $birlik = get_string($soatbay ? 'pr_unit_hour' : 'pr_unit_day',
-            'local_targetzenit');
-        $kunbirlik = get_string('pr_unit_day', 'local_targetzenit');
-        $pul = fn($x) => payroll::pul($x, $rec->valyuta);
-        $t = fn($k, $a = null) => get_string($k, 'local_targetzenit', $a);
-
         $data['bor'] = true;
-        $data['oy'] = payroll::oy_yorlig(sprintf('%04d-%02d', $rec->yil, $rec->oy));
-        $data['ochiq'] = $rec->holat !== 'Yopiq';
-        $data['ochiq_xabar'] = $t('pr_open_notice', userdate((int) $rec->timemodified));
 
-        // 1) Plitalar — veb bilan bir xil tartibda.
-        $data['plitalar'] = [
+        $belgilar = ['paid' => 'st_s_paid', 'over' => 'st_s_over',
+            'partial' => 'st_s_partial', 'unpaid' => 'st_s_unpaid',
+            'advance' => 'st_s_advance'];
+        foreach (payroll::settle($ref) as $m) {
+            $data['hisob'][] = [
+                'oy' => payroll::oy_yorlig($m->oy),
+                'valyuta' => $m->valyuta,
+                'oylik' => $m->oylik > 0.5 ? payroll::pul($m->oylik, $m->valyuta) : '—',
+                'nach' => payroll::pul($m->nach, $m->valyuta),
+                'paid' => payroll::pul($m->paid, $m->valyuta),
+                'avans' => $m->advance > 0.5
+                    ? get_string('st_unlinked', 'local_targetzenit',
+                        payroll::pul($m->advance, $m->valyuta))
+                    : '',
+                'qoldiq' => $m->debt > 0.5
+                    ? payroll::pul($m->debt, $m->valyuta)
+                    : ($m->debt < -0.5 ? '+' . payroll::pul(-$m->debt, $m->valyuta) : '0'),
+                'qarz' => $m->debt > 0.5,
+                'ortiq' => $m->debt < -0.5,
+                'holat' => get_string($belgilar[payroll::holat($m)], 'local_targetzenit'),
+                'yaxshi' => in_array(payroll::holat($m), ['paid', 'over', 'advance'], true),
+            ];
+        }
+        $data['hisob_bor'] = (bool) $data['hisob'];
+
+        return self::javob('mobile_payroll', $data);
+    }
+
+    /**
+     * Bitta oyning to'liq tafsiloti — plitalar, hisob zanjiri, kunma-kun.
+     * Tuzilish va tartib veb sahifasidagi bilan bir xil.
+     */
+    private static function oylik_oyi(\stdClass $rec, bool $ochiq_boshlansin): array {
+        $soatbay = $rec->tolovturi === 'soat';
+        $t = fn($k, $a = null) => get_string($k, 'local_targetzenit', $a);
+        $birlik = $t($soatbay ? 'pr_unit_hour' : 'pr_unit_day');
+        $pul = fn($x) => payroll::pul($x, $rec->valyuta);
+
+        $oy = [
+            'oy' => payroll::oy_yorlig(sprintf('%04d-%02d', $rec->yil, $rec->oy)),
+            'jami' => $pul($rec->jami),
+            'ochiq_blok' => $ochiq_boshlansin,
+            'ochiq' => $rec->holat !== 'Yopiq',
+            'ochiq_xabar' => $t('pr_open_notice', userdate((int) $rec->timemodified)),
+            'koef_yorliq' => $t($soatbay ? 'pr_hours' : 'pr_koef'),
+        ];
+
+        $oy['plitalar'] = [
             ['yorliq' => $t('pr_takehome'), 'qiymat' => $pul($rec->jami),
              'izoh' => '', 'asosiy' => true],
             ['yorliq' => $t($soatbay ? 'pr_workedhours' : 'pr_workeddays'),
@@ -463,11 +507,10 @@ class mobile {
             ['yorliq' => $t('pr_bonus'), 'qiymat' => $pul($rec->bonus),
              'izoh' => '', 'asosiy' => false],
             ['yorliq' => $t('pr_attended'),
-             'qiymat' => (int) $rec->kelgankun . ' ' . $kunbirlik,
+             'qiymat' => (int) $rec->kelgankun . ' ' . $t('pr_unit_day'),
              'izoh' => '', 'asosiy' => false],
         ];
 
-        // 2) Hisob zanjiri — operatorlar Frappe hisobi bilan bir xil.
         if ($soatbay) {
             $qadam = [
                 ['', $t('pr_hourrate'), $pul($rec->oylik), ''],
@@ -489,75 +532,44 @@ class mobile {
         $qadam[] = ['−', $t('pr_meals'), $pul($rec->pitaniya), 'neg'];
         $qadam[] = ['=', $t('pr_takehome'), $pul($rec->jami), 'final'];
 
-        $data['qadamlar'] = array_map(fn($q) => [
+        $oy['qadamlar'] = array_map(fn($q) => [
             'op' => $q[0], 'op_bor' => $q[0] !== '',
             'yorliq' => $q[1], 'qiymat' => $q[2], 'turi' => $q[3],
         ], $qadam);
 
-        // 3) Kunma-kun davomat — gorizontal, veb bilan bir xil.
         $kunlar = payroll::days($rec);
-        $kirish_bor = false;
-        $chiqish_bor = false;
+        $oy['kunlar_bor'] = (bool) $kunlar;
+        $oy['kirish_bor'] = false;
+        $oy['chiqish_bor'] = false;
+        $oy['kun_sarlavha'] = [];
+        $oy['kun_koef'] = [];
+        $oy['kun_kirish'] = [];
+        $oy['kun_chiqish'] = [];
         foreach ($kunlar as $k) {
             if (trim((string) ($k['kirish'] ?? '')) !== '') {
-                $kirish_bor = true;
+                $oy['kirish_bor'] = true;
             }
             if (trim((string) ($k['chiqish'] ?? '')) !== '') {
-                $chiqish_bor = true;
+                $oy['chiqish_bor'] = true;
             }
-        }
-        $data['kunlar_bor'] = (bool) $kunlar;
-        $data['kirish_bor'] = $kirish_bor;
-        $data['chiqish_bor'] = $chiqish_bor;
-        $data['kun_sarlavha'] = [];
-        $data['kun_koef'] = [];
-        $data['kun_kirish'] = [];
-        $data['kun_chiqish'] = [];
-        $data['koef_yorliq'] = $t($soatbay ? 'pr_hours' : 'pr_koef');
-        foreach ($kunlar as $k) {
             $kun = (int) ($k['kun'] ?? 0);
             $vaqt = make_timestamp((int) $rec->yil, (int) $rec->oy, $kun ?: 1);
-            $data['kun_sarlavha'][] = [
+            $oy['kun_sarlavha'][] = [
                 'kun' => $kun,
                 'hafta' => userdate($vaqt, '%a'),
                 'dam' => in_array((int) date('w', $vaqt), [0, 6], true),
             ];
             $koef = $k['koef'] ?? null;
-            $data['kun_koef'][] = [
+            $oy['kun_koef'][] = [
                 'matn' => $koef === null ? '—' : (string) (float) $koef,
                 'bor' => $koef !== null && (float) $koef > 0,
                 'yoq' => $koef !== null && (float) $koef <= 0,
             ];
-            $data['kun_kirish'][] = ['matn' => ($k['kirish'] ?? '') ?: '·'];
-            $data['kun_chiqish'][] = ['matn' => ($k['chiqish'] ?? '') ?: '·'];
+            $oy['kun_kirish'][] = ['matn' => ($k['kirish'] ?? '') ?: '·'];
+            $oy['kun_chiqish'][] = ['matn' => ($k['chiqish'] ?? '') ?: '·'];
         }
 
-        // 4) Oylar kesimida hisob-kitob.
-        $belgilar = ['paid' => 'st_s_paid', 'over' => 'st_s_over',
-            'partial' => 'st_s_partial', 'unpaid' => 'st_s_unpaid',
-            'advance' => 'st_s_advance'];
-        $data['hisob'] = [];
-        foreach (payroll::settle($ref) as $m) {
-            $data['hisob'][] = [
-                'oy' => payroll::oy_yorlig($m->oy),
-                'valyuta' => $m->valyuta,
-                'oylik' => $m->oylik > 0.5 ? payroll::pul($m->oylik, $m->valyuta) : '—',
-                'nach' => payroll::pul($m->nach, $m->valyuta),
-                'paid' => payroll::pul($m->paid, $m->valyuta),
-                'avans' => $m->advance > 0.5
-                    ? $t('st_unlinked', payroll::pul($m->advance, $m->valyuta)) : '',
-                'qoldiq' => $m->debt > 0.5
-                    ? payroll::pul($m->debt, $m->valyuta)
-                    : ($m->debt < -0.5 ? '+' . payroll::pul(-$m->debt, $m->valyuta) : '0'),
-                'qarz' => $m->debt > 0.5,
-                'ortiq' => $m->debt < -0.5,
-                'holat' => $t($belgilar[payroll::holat($m)]),
-                'yaxshi' => in_array(payroll::holat($m), ['paid', 'over', 'advance'], true),
-            ];
-        }
-        $data['hisob_bor'] = (bool) $data['hisob'];
-
-        return self::javob('mobile_payroll', $data);
+        return $oy;
     }
 
     /** Chorak jurnalida bitta kursda ko'rsatiladigan eng ko'p dars soni. */
@@ -667,6 +679,7 @@ class mobile {
             $data['kurslar'][] = [
                 'nomi' => format_string($DB->get_field('course', 'fullname',
                     ['id' => $courseid])),
+                'birinchi' => empty($data['kurslar']),
                 'sarlavha' => $sarlavha,
                 'oquvchilar' => $qatorlar,
             ];

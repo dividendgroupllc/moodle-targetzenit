@@ -43,12 +43,12 @@
     </ion-card-content>
 </ion-card>
 
+{{! Har kurs yig'iladigan blok — filtr vazifasini bajaradi. }}
 {{# kurslar }}
-<ion-card>
-    <ion-card-header>
-        <ion-card-title class="ion-text-wrap">{{ nomi }}</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
+<details {{# birinchi }}open{{/ birinchi }}
+         style="border-bottom:1px solid rgba(0,0,0,.12)">
+    <summary style="padding:12px;cursor:pointer;font-weight:700">{{ nomi }}</summary>
+    <div style="padding:0 8px 12px">
         {{^ bor }}
             <p>{{#str}}app_nogradesyet, local_targetzenit{{/str}}</p>
         {{/ bor }}
@@ -84,7 +84,7 @@
             {{/ oquvchilar }}
         </ion-grid>
         {{/ bor }}
-    </ion-card-content>
-</ion-card>
+    </div>
+</details>
 {{/ kurslar }}
 {{/ bor }}

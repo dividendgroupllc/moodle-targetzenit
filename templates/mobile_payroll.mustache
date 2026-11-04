@@ -12,7 +12,9 @@
     suriladi (sahifa emas, jadvalning o'zi).
 
     Context variables required for this template:
-    * bor, xabar, oy, ochiq, ochiq_xabar
+    * bor, xabar
+    * oylar - har oy: {oy, jami, ochiq_blok, ochiq, ochiq_xabar, koef_yorliq,
+                       plitalar, qadamlar, kunlar_bor, kun_* }
     * plitalar - [{yorliq, qiymat, izoh, asosiy}]
     * qadamlar - [{op, op_bor, yorliq, qiymat, turi}]
     * kunlar_bor, kirish_bor, chiqish_bor, koef_yorliq
@@ -47,35 +49,36 @@
 {{/ bor }}
 
 {{# bor }}
-<ion-card>
-    <ion-card-header>
-        <ion-card-title>{{ oy }}</ion-card-title>
-    </ion-card-header>
+{{! Har oy yig'iladigan blok. <details> — brauzerning O'Z elementi,
+    hech qanday kutubxonaga bog'liq emas va ilovada ishonchli ishlaydi.
+    Faqat birinchi (eng yangi) oy ochiq turadi. }}
+{{# oylar }}
+<details {{# ochiq_blok }}open{{/ ochiq_blok }}
+         style="border-bottom:1px solid rgba(0,0,0,.12)">
+    <summary style="padding:12px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;gap:8px">
+        <span>{{ oy }}</span>
+        <span>{{ jami }}</span>
+    </summary>
+
     {{# ochiq }}
-    <ion-card-content>
-        <ion-note color="warning">{{ ochiq_xabar }}</ion-note>
-    </ion-card-content>
+    <div style="padding:0 12px 8px;font-size:12px;opacity:.7">{{ ochiq_xabar }}</div>
     {{/ ochiq }}
-</ion-card>
 
-{{! 1) Plitalar — webdagi tz-dir-hero bloki }}
-<div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px">
-    {{# plitalar }}
-    <div style="flex:1 1 44%;min-width:140px;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px">
-        <div style="font-size:12px;opacity:.7">{{ yorliq }}</div>
-        <div style="font-weight:700;{{# asosiy }}font-size:20px{{/ asosiy }}{{^ asosiy }}font-size:16px{{/ asosiy }}">{{ qiymat }}</div>
-        {{# izoh }}<div style="font-size:11px;opacity:.6">{{ izoh }}</div>{{/ izoh }}
+    {{! 1) Plitalar — webdagi tz-dir-hero bloki }}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px">
+        {{# plitalar }}
+        <div style="flex:1 1 44%;min-width:140px;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px">
+            <div style="font-size:12px;opacity:.7">{{ yorliq }}</div>
+            <div style="font-weight:700;{{# asosiy }}font-size:20px{{/ asosiy }}{{^ asosiy }}font-size:16px{{/ asosiy }}">{{ qiymat }}</div>
+            {{# izoh }}<div style="font-size:11px;opacity:.6">{{ izoh }}</div>{{/ izoh }}
+        </div>
+        {{/ plitalar }}
     </div>
-    {{/ plitalar }}
-</div>
 
-{{! 2) Hisob zanjiri — chapdan o'ngga o'qiladigan formula }}
-<ion-card>
-    <ion-card-header>
-        <ion-card-title>{{#str}}pr_breakdown, local_targetzenit{{/str}}</ion-card-title>
-        <ion-card-subtitle>{{#str}}pr_calchint, local_targetzenit{{/str}}</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content class="ion-no-padding">
+    {{! 2) Hisob zanjiri }}
+    <div style="padding:0 8px 8px">
+        <div style="font-weight:700;padding:4px 4px">{{#str}}pr_breakdown, local_targetzenit{{/str}}</div>
+        <div style="font-size:12px;opacity:.6;padding:0 4px 6px">{{#str}}pr_calchint, local_targetzenit{{/str}}</div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
             {{# qadamlar }}
             <tr>
@@ -85,16 +88,12 @@
             </tr>
             {{/ qadamlar }}
         </table>
-    </ion-card-content>
-</ion-card>
+    </div>
 
-{{! 3) Kunma-kun davomat — gorizontal, yon suriladi }}
-{{# kunlar_bor }}
-<ion-card>
-    <ion-card-header>
-        <ion-card-title>{{#str}}pr_days, local_targetzenit{{/str}}</ion-card-title>
-    </ion-card-header>
-    <ion-card-content class="ion-no-padding">
+    {{! 3) Kunma-kun davomat — gorizontal, yon suriladi }}
+    {{# kunlar_bor }}
+    <div style="padding:0 8px 12px">
+        <div style="font-weight:700;padding:4px">{{#str}}pr_days, local_targetzenit{{/str}}</div>
         <div style="overflow-x:auto;width:100%">
             <table style="border-collapse:collapse;font-size:12px;white-space:nowrap">
                 <thead>
@@ -117,25 +116,22 @@
                     {{# kirish_bor }}
                     <tr>
                         <td style="padding:4px 8px;font-weight:700">{{#str}}pr_in, local_targetzenit{{/str}}</td>
-                        {{# kun_kirish }}
-                        <td style="padding:4px 6px;text-align:center">{{ matn }}</td>
-                        {{/ kun_kirish }}
+                        {{# kun_kirish }}<td style="padding:4px 6px;text-align:center">{{ matn }}</td>{{/ kun_kirish }}
                     </tr>
                     {{/ kirish_bor }}
                     {{# chiqish_bor }}
                     <tr>
                         <td style="padding:4px 8px;font-weight:700">{{#str}}pr_out, local_targetzenit{{/str}}</td>
-                        {{# kun_chiqish }}
-                        <td style="padding:4px 6px;text-align:center">{{ matn }}</td>
-                        {{/ kun_chiqish }}
+                        {{# kun_chiqish }}<td style="padding:4px 6px;text-align:center">{{ matn }}</td>{{/ kun_chiqish }}
                     </tr>
                     {{/ chiqish_bor }}
                 </tbody>
             </table>
         </div>
-    </ion-card-content>
-</ion-card>
-{{/ kunlar_bor }}
+    </div>
+    {{/ kunlar_bor }}
+</details>
+{{/ oylar }}
 
 {{! 4) Oylar kesimida hisob-kitob }}
 {{# hisob_bor }}

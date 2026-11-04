@@ -1,55 +1,124 @@
 {{!
     @template local_targetzenit/mobile_lessons
 
-    Bugungi darslar — dars kokpitiga kirish nuqtasi (mobil ilova).
+    Bugungi darslar + dars kokpiti — bitta sahifada (mobil ilova).
 
-    Har element `core-site-plugins-new-content` bilan kokpitni ochadi: ilova
-    shu plaginning boshqa metodini chaqirib, natijani yangi sahifada
-    ko'rsatadi.
+    HAR DARS YIG'ILADIGAN BLOK (<details>) va ichida to'liq kokpit turadi:
+    o'quvchilar ro'yxati, yo'qlama tugmalari va baho maydoni.
+
+    NEGA ALOHIDA SAHIFA EMAS: boshqa sahifaga o'tish
+    `core-site-plugins-new-content` direktivasiga tayanadi, u esa ilova
+    versiyasiga bog'liq. <details> — brauzerning o'z elementi, hamma joyda
+    ishlaydi.
+
+    Yo'qlama BITTA BOSISHDA saqlanadi (dars paytida eng tez-tez qilinadigan
+    amal), baho esa kiritilib yonidagi tugma bilan.
 
     Context variables required for this template:
-    * bor - bugun dars bormi
-    * sana - bugungi sana (o'qiladigan ko'rinishda)
-    * xabar - dars bo'lmasa sabab
-    * darslar - [{courseid, date, lessonno, vaqt, fan, guruh, xona}]
+    * bor, xabar, sana, maxgrade
+    * darslar - [{courseid, lessonid, lessonno, vaqt, fan, guruh, xona,
+                  ochiq_blok, ruxsat, xabar, oquvchilar}]
+    * oquvchilar - [{userid, ism, baho, keldi, kelmadi, kechikdi, sababli}]
 
     Example context (json):
     {
-        "bor": true, "sana": "3 November 2026", "xabar": "",
-        "darslar": [{"courseid": 12, "date": "2026-11-03", "lessonno": 2,
-                     "vaqt": "09:20 – 10:05", "fan": "ROBOTICS",
-                     "guruh": "8 A(full)", "xona": "204"}]
+        "bor": true, "xabar": "", "sana": "4 November 2026", "maxgrade": 10,
+        "darslar": [{"courseid": 12, "lessonid": 41, "lessonno": 2,
+            "vaqt": "09:20 – 10:05", "fan": "ROBOTICS",
+            "guruh": "8 A(full)", "xona": "204",
+            "ochiq_blok": true, "ruxsat": true, "xabar": "",
+            "oquvchilar": [{"userid": 120, "ism": "Ali Valiyev", "baho": "9",
+                "keldi": true, "kelmadi": false,
+                "kechikdi": false, "sababli": false}]}]
     }
 }}
-<ion-list-header>
-    <ion-label>
-        {{#str}}app_todaylessons, local_targetzenit{{/str}}
-        <p>{{ sana }}</p>
-    </ion-label>
-</ion-list-header>
+<div style="padding:12px 12px 4px">
+    <div style="font-weight:700">{{#str}}app_todaylessons, local_targetzenit{{/str}}</div>
+    <div style="font-size:12px;opacity:.7">{{ sana }}</div>
+</div>
 
 {{^ bor }}
-    <ion-card>
-        <ion-card-content><p>{{ xabar }}</p></ion-card-content>
-    </ion-card>
+    <ion-card><ion-card-content><p>{{ xabar }}</p></ion-card-content></ion-card>
 {{/ bor }}
 
 {{# bor }}
-<ion-list>
-    {{# darslar }}
-    <ion-item button="true" detail="true"
-              core-site-plugins-new-content
-              component="local_targetzenit"
-              method="lesson_cockpit"
-              [args]="{courseid: {{ courseid }}, date: '{{ date }}', lessonno: {{ lessonno }}}"
-              title="{{ fan }}">
-        <ion-badge slot="start">{{ lessonno }}</ion-badge>
-        <ion-label class="ion-text-wrap">
-            <p class="item-heading">{{ fan }}</p>
-            <p>{{ guruh }}{{# xona }} · {{ xona }}{{/ xona }}</p>
-        </ion-label>
-        {{# vaqt }}<ion-note slot="end">{{ vaqt }}</ion-note>{{/ vaqt }}
-    </ion-item>
-    {{/ darslar }}
-</ion-list>
+<div style="padding:0 12px 8px;font-size:12px;opacity:.7">
+    {{#str}}app_attendancehint, local_targetzenit{{/str}}
+    {{#str}}app_lessonsaved, local_targetzenit{{/str}}
+</div>
+
+{{# darslar }}
+<details {{# ochiq_blok }}open{{/ ochiq_blok }}
+         style="border-bottom:1px solid rgba(0,0,0,.12)">
+    <summary style="padding:12px;cursor:pointer;display:flex;gap:8px;align-items:baseline">
+        <ion-badge>{{ lessonno }}</ion-badge>
+        <span style="flex:1">
+            <span style="font-weight:700">{{ fan }}</span>
+            <span style="display:block;font-size:12px;opacity:.7">{{ guruh }}{{# xona }} · {{ xona }}{{/ xona }}</span>
+        </span>
+        <span style="font-size:12px;opacity:.7;white-space:nowrap">{{ vaqt }}</span>
+    </summary>
+
+    {{^ ruxsat }}
+        <div style="padding:0 12px 12px;color:#a4252a">{{ xabar }}</div>
+    {{/ ruxsat }}
+
+    {{# ruxsat }}
+        {{# xabar }}<div style="padding:0 12px 12px">{{ xabar }}</div>{{/ xabar }}
+
+        {{# oquvchilar }}
+        <div style="padding:8px 12px;border-top:1px solid rgba(0,0,0,.06)">
+            <div style="font-weight:600;margin-bottom:4px">{{ ism }}</div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+                <ion-button size="small"
+                    fill="{{# keldi }}solid{{/ keldi }}{{^ keldi }}outline{{/ keldi }}"
+                    core-site-plugins-call-ws
+                    name="local_targetzenit_mobile_save_record"
+                    [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'present', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
+                    [preSets]="{typeExpected: 'object'}"
+                    refreshOnSuccess="true">{{#str}}att_present, local_targetzenit{{/str}}</ion-button>
+                <ion-button size="small" color="danger"
+                    fill="{{# kelmadi }}solid{{/ kelmadi }}{{^ kelmadi }}outline{{/ kelmadi }}"
+                    core-site-plugins-call-ws
+                    name="local_targetzenit_mobile_save_record"
+                    [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'absent', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
+                    [preSets]="{typeExpected: 'object'}"
+                    refreshOnSuccess="true">{{#str}}att_absent, local_targetzenit{{/str}}</ion-button>
+                <ion-button size="small" color="warning"
+                    fill="{{# kechikdi }}solid{{/ kechikdi }}{{^ kechikdi }}outline{{/ kechikdi }}"
+                    core-site-plugins-call-ws
+                    name="local_targetzenit_mobile_save_record"
+                    [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'late', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
+                    [preSets]="{typeExpected: 'object'}"
+                    refreshOnSuccess="true">{{#str}}att_late, local_targetzenit{{/str}}</ion-button>
+                <ion-button size="small" color="medium"
+                    fill="{{# sababli }}solid{{/ sababli }}{{^ sababli }}outline{{/ sababli }}"
+                    core-site-plugins-call-ws
+                    name="local_targetzenit_mobile_save_record"
+                    [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: 'excused', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
+                    [preSets]="{typeExpected: 'object'}"
+                    refreshOnSuccess="true">{{#str}}att_excused, local_targetzenit{{/str}}</ion-button>
+            </div>
+
+            <ion-item lines="none" class="ion-no-padding">
+                <ion-label position="stacked">
+                    {{#str}}grade, local_targetzenit{{/str}} (1–{{ maxgrade }})
+                </ion-label>
+                <ion-input type="number" min="1" max="{{ maxgrade }}"
+                           [(ngModel)]="CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}"
+                           name="gr_{{ lessonid }}_{{ userid }}"></ion-input>
+                <ion-button slot="end" size="small"
+                    core-site-plugins-call-ws
+                    name="local_targetzenit_mobile_save_record"
+                    [params]="{lessonid: {{ lessonid }}, userid: {{ userid }}, attendance: '{{# keldi }}present{{/ keldi }}{{# kelmadi }}absent{{/ kelmadi }}{{# kechikdi }}late{{/ kechikdi }}{{# sababli }}excused{{/ sababli }}', grade: CONTENT_OTHERDATA.gr_{{ lessonid }}_{{ userid }}}"
+                    [preSets]="{typeExpected: 'object'}"
+                    successMessage="{{#str}}app_saved, local_targetzenit{{/str}}"
+                    refreshOnSuccess="true">{{#str}}app_savegrade, local_targetzenit{{/str}}</ion-button>
+            </ion-item>
+        </div>
+        {{/ oquvchilar }}
+    {{/ ruxsat }}
+</details>
+{{/ darslar }}
 {{/ bor }}

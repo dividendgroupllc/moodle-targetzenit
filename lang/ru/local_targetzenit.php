@@ -263,9 +263,11 @@ $string['jr_celllegend'] = 'Ячейка: <b>пусто</b> = присутств
 $string['jr_date'] = 'Дата';
 $string['jr_filefailed'] = 'Не удалось прочитать файл: {$a}';
 $string['jr_hwph'] = 'Домашнее задание';
+$string['jr_lessonshort'] = '№{$a}';
 $string['jr_nofile'] = 'Файл не выбран.';
 $string['jr_nolessons'] = 'За эту четверть уроков по этому курсу не найдено (нет в расписании или четверть пуста).';
 $string['jr_noterms'] = 'Даты четвертей не найдены — расписание и календарь не отправлены из Frappe.';
+$string['jr_offschedule'] = 'Нет в расписании, но запись в журнале есть.';
 $string['jr_overwrite'] = ' Перезаписывать уже заполненные темы (по умолчанию не трогаются)';
 $string['jr_planresult'] = 'В плане тем: {$a->reja}, уроков в четверти: {$a->darslar}. Записано: {$a->yozildi}{$a->otkazildi}';
 $string['jr_planskipped'] = ', не тронуто (уже заполнено): {$a}';

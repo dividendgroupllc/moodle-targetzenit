@@ -263,9 +263,11 @@ $string['jr_celllegend'] = 'Cell: <b>empty</b> = present · <b>number</b> = grad
 $string['jr_date'] = 'Date';
 $string['jr_filefailed'] = 'The file could not be read: {$a}';
 $string['jr_hwph'] = 'Homework';
+$string['jr_lessonshort'] = '#{$a}';
 $string['jr_nofile'] = 'No file was selected.';
 $string['jr_nolessons'] = 'No lessons found for this course in this term (not in the timetable, or the term is empty).';
 $string['jr_noterms'] = 'Term dates not found — the timetable and calendar have not been sent from Frappe.';
+$string['jr_offschedule'] = 'Not in the timetable, but a journal record exists.';
 $string['jr_overwrite'] = ' Overwrite topics that are already filled in (left untouched by default)';
 $string['jr_planresult'] = '{$a->reja} topics in the plan, {$a->darslar} lessons in the term. Written: {$a->yozildi}{$a->otkazildi}';
 $string['jr_planskipped'] = ', left untouched (already filled in): {$a}';

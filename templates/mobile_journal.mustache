@@ -49,12 +49,13 @@
     </ion-card-content>
 </ion-card>
 
+{{! Har kurs yig'iladigan blok — filtr vazifasini bajaradi. Birinchisi
+    ochiq, qolganlari bir bosishda ochiladi. }}
 {{# kurslar }}
-<ion-card>
-    <ion-card-header>
-        <ion-card-title class="ion-text-wrap">{{ nomi }}</ion-card-title>
-    </ion-card-header>
-    <ion-card-content class="ion-no-padding">
+<details {{# birinchi }}open{{/ birinchi }}
+         style="border-bottom:1px solid rgba(0,0,0,.12)">
+    <summary style="padding:12px;cursor:pointer;font-weight:700">{{ nomi }}</summary>
+    <div>
         <div style="overflow-x:auto;width:100%">
             <table style="border-collapse:collapse;font-size:12px;white-space:nowrap">
                 <thead>
@@ -79,7 +80,7 @@
                 </tbody>
             </table>
         </div>
-    </ion-card-content>
-</ion-card>
+    </div>
+</details>
 {{/ kurslar }}
 {{/ bor }}

@@ -370,6 +370,12 @@ S = {
         "Saqlandi. {$a} ta katak tushunarsiz bo'lgani uchun o'tkazib yuborildi.",
         "Сохранено. {$a} ячеек пропущено, так как их не удалось распознать.",
     ),
+    "jr_lessonshort": ("#{$a}", "{$a}-d", "№{$a}"),
+    "jr_offschedule": (
+        "Not in the timetable, but a journal record exists.",
+        "Jadvalda yo'q, lekin jurnalda yozuv bor.",
+        "Нет в расписании, но запись в журнале есть.",
+    ),
     "jr_nofile": ("No file was selected.", "Fayl tanlanmadi.", "Файл не выбран."),
     "jr_studentgrades": ("{$a} \u2014 grades", "{$a} \u2014 baholari", "{$a} \u2014 оценки"),
     "jr_topics": ("Topics \u2014 {$a}", "Mavzular \u2014 {$a}", "Темы \u2014 {$a}"),

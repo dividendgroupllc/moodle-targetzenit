@@ -241,16 +241,20 @@ echo html_writer::start_tag('table', ['class' => 'generaltable tz-jgrid']);
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr');
 echo html_writer::tag('th', '#', ['class' => 'tz-col-n']);
-echo html_writer::tag('th', "O'quvchi", ['class' => 'tz-col-ism']);
+echo html_writer::tag('th', get_string('student', 'local_targetzenit'),
+    ['class' => 'tz-col-ism']);
 foreach ($darslar as $l) {
     $sana = userdate(strtotime($l['date']), '%d.%m');
     $bu = ($l['key'] === $bugungi_kalit);
     $tashqari = !empty($l['jadvaldan_tashqari']);
     echo html_writer::tag('th',
         html_writer::div($sana, 'tz-j-date') .
-        html_writer::div($l['lessonno'] . '-d' . ($tashqari ? ' *' : ''), 'tz-meta'),
+        html_writer::div(
+            get_string('jr_lessonshort', 'local_targetzenit', $l['lessonno'])
+            . ($tashqari ? ' *' : ''), 'tz-meta'),
         ['class' => 'tz-col-kun' . ($bu ? ' tz-bugun-col' : '') . ($tashqari ? ' tz-tashqari' : ''),
-         'title' => $tashqari ? "Jadvalda yo'q, lekin yozuv bor" : ''] +
+         'title' => $tashqari
+             ? get_string('jr_offschedule', 'local_targetzenit') : ''] +
         ($bu ? ['id' => 'tz-bugun-ustun'] : []));
 }
 echo html_writer::end_tag('tr');
@@ -301,7 +305,8 @@ echo html_writer::tag('thead',
 echo html_writer::start_tag('tbody');
 foreach ($darslar as $i => $l) {
     $dars = $darsyozuv[$l['key']] ?? null;
-    $sana = userdate(strtotime($l['date']), '%d.%m') . ' · ' . $l['lessonno'] . '-d';
+    $sana = userdate(strtotime($l['date']), '%d.%m') . ' · '
+        . get_string('jr_lessonshort', 'local_targetzenit', $l['lessonno']);
     $bu = ($l['key'] === $bugungi_kalit);
     echo html_writer::start_tag('tr',
         ['class' => $bu ? 'tz-bugun-qator' : ''] + ($bu ? ['id' => 'tz-bugun-mavzu'] : []));

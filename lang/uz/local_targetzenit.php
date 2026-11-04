@@ -263,9 +263,11 @@ $string['jr_celllegend'] = 'Katak: <b>bo\'sh</b> = keldi · <b>raqam</b> = baho 
 $string['jr_date'] = 'Sana';
 $string['jr_filefailed'] = 'Faylni o\'qib bo\'lmadi: {$a}';
 $string['jr_hwph'] = 'Uy vazifa';
+$string['jr_lessonshort'] = '{$a}-d';
 $string['jr_nofile'] = 'Fayl tanlanmadi.';
 $string['jr_nolessons'] = 'Bu chorakda bu kurs uchun dars topilmadi (jadvalda yo\'q yoki chorak bo\'sh).';
 $string['jr_noterms'] = 'Chorak sanalari topilmadi — Frappe\'dan jadval va kalendar yuborilmagan.';
+$string['jr_offschedule'] = 'Jadvalda yo\'q, lekin jurnalda yozuv bor.';
 $string['jr_overwrite'] = ' To\'ldirilgan mavzularning ustiga yozilsin (standart holatda tegilmaydi)';
 $string['jr_planresult'] = 'Rejada {$a->reja} mavzu, chorakda {$a->darslar} dars. Yozildi: {$a->yozildi}{$a->otkazildi}';
 $string['jr_planskipped'] = ', tegilmadi (allaqachon to\'ldirilgan): {$a}';
