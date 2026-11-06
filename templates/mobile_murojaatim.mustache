@@ -1,0 +1,94 @@
+{{!
+    @template local_targetzenit/mobile_murojaatim
+
+    MUROJAATIM — o'quvchi akkauntidagi panel. OTA-ONA shuni o'qiydi: Moodle'da
+    ota-ona akkaunti yo'q (faqat Student/Instructor/Employee sinxronlanadi),
+    shuning uchun ota-ona bolasining logini bilan kiradi.
+
+    Ko'rinadi: shikoyat matni VA rahbariyat javobi (2026-11-04 qarori).
+    Rahbarlarning ichki kommentlari ko'rinmaydi.
+
+    Javobi kelgan murojaat OCHIQ turadi — ota-ona ro'yxatni varaqlab "javob
+    bormi" deb qidirib yurmasligi kerak. Ochganda «ko'rdim» yuboriladi:
+    rahbar javob yetib borganini biladi.
+
+    Context variables required for this template:
+    * bor, xabar
+    * murojaatlar - [{id, turi, kategoriya, sana, matn, javobbor, qarorturi,
+                      qaror, qarorvaqti, ochiq_blok, kordim}]
+
+    Example context (json):
+    {
+        "bor": true, "xabar": "",
+        "murojaatlar": [{"id": 7, "turi": "Shikoyat",
+            "kategoriya": "Ta'lim sifati", "sana": "3.11.2026",
+            "matn": "Matematika o'qituvchisi almashtirilsin",
+            "javobbor": true, "qarorturi": "Hal qilindi",
+            "qaror": "Eski o'qituvchi qaytarildi, 10-noyabrdan darsga kiradi",
+            "qarorvaqti": "4.11.2026 09:15",
+            "ochiq_blok": true, "kordim": false}]
+    }
+}}
+<div style="padding:12px 12px 4px">
+    <div style="font-weight:700">{{#str}}mur_mine, local_targetzenit{{/str}}</div>
+</div>
+
+{{^ bor }}
+    <ion-card><ion-card-content><p>{{ xabar }}</p></ion-card-content></ion-card>
+{{/ bor }}
+
+{{# bor }}
+{{# murojaatlar }}
+<details {{# ochiq_blok }}open{{/ ochiq_blok }}
+         style="border-bottom:1px solid rgba(0,0,0,.12)">
+    <summary style="padding:12px;cursor:pointer">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <ion-badge color="medium">{{ turi }}</ion-badge>
+            {{# javobbor }}<ion-badge color="success">{{#str}}mur_answer, local_targetzenit{{/str}}</ion-badge>{{/ javobbor }}
+            {{^ javobbor }}<ion-badge color="warning">{{#str}}mur_waiting, local_targetzenit{{/str}}</ion-badge>{{/ javobbor }}
+            <span style="flex:1"></span>
+            <span style="font-size:11px;opacity:.7">{{ sana }}</span>
+        </div>
+        <div style="font-size:13px;margin-top:4px">{{ matn }}</div>
+        <div style="font-size:11px;opacity:.6;margin-top:2px">{{ kategoriya }}</div>
+    </summary>
+
+    <div style="padding:0 12px 10px">
+        <div style="font-size:11px;opacity:.7;text-transform:uppercase">{{#str}}mur_said, local_targetzenit{{/str}}</div>
+        <div style="background:rgba(0,0,0,.04);border-left:3px solid #1a5bb8;border-radius:8px;padding:10px;white-space:pre-wrap">{{ matn }}</div>
+    </div>
+
+    {{# javobbor }}
+    <div style="padding:0 12px 10px">
+        <div style="font-size:11px;opacity:.7;text-transform:uppercase">{{#str}}mur_answer, local_targetzenit{{/str}}: {{ qarorturi }}</div>
+        <div style="background:#e9f7ee;border:1px solid #1f7a3d;border-radius:8px;padding:10px;white-space:pre-wrap">{{ qaror }}</div>
+        <div style="font-size:11px;opacity:.6;margin-top:3px">{{ qarorvaqti }}</div>
+    </div>
+
+    {{! «O'qidim» — rahbar javob yetib borganini biladi. Belgilanganidan
+        keyin tugma o'rniga tasdiq turadi. }}
+    {{^ kordim }}
+    <div style="padding:0 12px 12px">
+        <ion-button expand="block" size="small" fill="outline"
+            core-site-plugins-call-ws
+            name="local_targetzenit_mobile_murojaat"
+            [params]="{murojaatid: {{ id }}, amal: 'kordim'}"
+            successMessage="{{#str}}mur_saved, local_targetzenit{{/str}}"
+            refreshOnSuccess="true">{{#str}}mur_parentseen, local_targetzenit{{/str}}</ion-button>
+    </div>
+    {{/ kordim }}
+    {{# kordim }}
+    <div style="padding:0 12px 12px;font-size:12px;color:#1f7a3d">
+        {{#str}}mur_parentseen, local_targetzenit{{/str}}
+    </div>
+    {{/ kordim }}
+    {{/ javobbor }}
+
+    {{^ javobbor }}
+    <div style="margin:0 12px 12px;padding:8px 10px;border-radius:8px;background:#fdf3e0;color:#8a5a0b;font-size:12.5px">
+        {{#str}}mur_waiting, local_targetzenit{{/str}}
+    </div>
+    {{/ javobbor }}
+</details>
+{{/ murojaatlar }}
+{{/ bor }}

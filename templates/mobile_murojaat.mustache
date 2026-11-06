@@ -1,0 +1,230 @@
+{{!
+    @template local_targetzenit/mobile_murojaat
+
+    Ota-ona murojaatlari — RAHBAR paneli (mobil ilova).
+
+    Har murojaat yig'iladigan blok (<details>) va ichida to'liq karta:
+    ota-ona gapi, kim qachon gaplashdi, izohlar, izoh yozish va QAROR
+    formasi. Alohida sahifaga o'tish YO'Q: navigatsiya
+    `core-site-plugins-new-content` direktivasiga tayanadi, uning ishlashi
+    ilova versiyasiga bog'liq. <details> — brauzerning o'z elementi.
+
+    Veb sahifa (murojaat.php) ham AYNI shu tuzilishda — ikki ko'rinish
+    bir-biriga mos tushadi.
+
+    Context variables required for this template:
+    * bor, xabar
+    * stats - [{lab, val}]
+    * murojaatlar - [{id, turi, yonalish, holat, yopiq, muhim, korilmagan,
+                      kategoriya, oquvchi, sinf, otaona, telefon, menejer,
+                      suhbat, matn, masul, menda, akkauntsiz, muddat,
+                      kechikdi, qarorturi, qaror, qarorkim, otaonakordi,
+                      izohlar, qarorlar, boshqa, web_url,
+                      qarzsumma, qarzholat, qarzkechikish,
+                      suhbatbor, suhbatlar, boshqabor, boshqalari}]
+
+    Example context (json):
+    {
+        "bor": true, "xabar": "",
+        "stats": [{"lab": "Ochiq murojaat", "val": 3}],
+        "murojaatlar": [{"id": 7, "turi": "Shikoyat", "yonalish": "Direktor",
+            "holat": "Yangi", "yopiq": false, "muhim": true,
+            "korilmagan": true, "kategoriya": "Ta'lim sifati",
+            "oquvchi": "Ali Valiyev", "sinf": "8 A(full)",
+            "otaona": "Valiyev Botir", "telefon": "998901234567",
+            "menejer": "Iroda", "suhbat": "3.11.2026 14:20",
+            "matn": "Matematika o'qituvchisi almashtirilsin",
+            "masul": "Biriktirilmagan", "menda": false, "akkauntsiz": false,
+            "muddat": "1 kun qoldi", "kechikdi": false,
+            "qarorturi": "", "qaror": "", "qarorkim": "", "otaonakordi": "",
+            "izohlar": [{"ism": "Iroda", "vaqt": "3.11 14:25",
+                         "turi": "holat", "body": "Sotuv bo'limidan keldi"}],
+            "qarorlar": [{"nomi": "Hal qilindi"}],
+            "boshqa": "CEO",
+            "web_url": "https://moodle/local/targetzenit/murojaat.php?ochiq=7"}]
+    }
+}}
+<div style="padding:12px 12px 4px">
+    <div style="font-weight:700">{{#str}}mur_panel, local_targetzenit{{/str}}</div>
+</div>
+
+{{^ bor }}
+    <ion-card><ion-card-content><p>{{ xabar }}</p></ion-card-content></ion-card>
+{{/ bor }}
+
+{{# bor }}
+{{! Plitalar — rahbar bir qarashda holatni ko'radi }}
+<div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px">
+{{# stats }}
+    <div style="flex:1 1 40%;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:8px 10px">
+        <div style="font-size:11px;opacity:.7">{{ lab }}</div>
+        <div style="font-size:20px;font-weight:700">{{ val }}</div>
+    </div>
+{{/ stats }}
+</div>
+
+{{# murojaatlar }}
+<details style="border-bottom:1px solid rgba(0,0,0,.12)">
+    <summary style="padding:12px;cursor:pointer">
+        <div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap">
+            <ion-badge {{# kechikdi }}color="danger"{{/ kechikdi }}>{{ turi }}</ion-badge>
+            <ion-badge color="medium">{{ yonalish }}</ion-badge>
+            {{# muhim }}<ion-badge color="danger">!</ion-badge>{{/ muhim }}
+            {{# korilmagan }}<ion-badge color="warning">{{#str}}mur_notseen, local_targetzenit{{/str}}</ion-badge>{{/ korilmagan }}
+            <span style="flex:1"></span>
+            <span style="font-size:11px;opacity:.7;white-space:nowrap">{{ muddat }}</span>
+        </div>
+        <div style="font-weight:700;margin-top:4px">{{ oquvchi }}{{# sinf }} · {{ sinf }}{{/ sinf }}</div>
+        <div style="font-size:12.5px;opacity:.8;margin-top:2px">{{ matn }}</div>
+        <div style="font-size:11px;opacity:.6;margin-top:2px">{{ kategoriya }} · {{ holat }}</div>
+    </summary>
+
+    {{! --- ota-ona gapi: rahbar SHUNI o'qiydi --- }}
+    <div style="padding:0 12px 10px">
+        <div style="font-size:11px;opacity:.7;text-transform:uppercase">{{#str}}mur_said, local_targetzenit{{/str}}</div>
+        <div style="background:rgba(0,0,0,.04);border-left:3px solid #1a5bb8;border-radius:8px;padding:10px;white-space:pre-wrap">{{ matn }}</div>
+    </div>
+
+    {{! --- kim qachon gaplashdi --- }}
+    <div style="padding:0 12px 10px;font-size:12.5px">
+        <div><span style="opacity:.6">{{#str}}mur_who, local_targetzenit{{/str}}:</span> {{ otaona }}{{# telefon }} · {{ telefon }}{{/ telefon }}</div>
+        <div><span style="opacity:.6">{{#str}}mur_manager, local_targetzenit{{/str}}:</span> {{ menejer }}</div>
+        <div><span style="opacity:.6">{{#str}}mur_talked, local_targetzenit{{/str}}:</span> {{ suhbat }}</div>
+        <div><span style="opacity:.6">{{#str}}mur_owner, local_targetzenit{{/str}}:</span> {{ masul }}</div>
+        {{! Qarz — chegirma yoki bo'lib to'lash haqidagi qaror shunga bog'liq }}
+        <div><span style="opacity:.6">{{#str}}mur_debt, local_targetzenit{{/str}}:</span>
+            {{# qarzsumma }}<b style="color:#a4252a">{{ qarzsumma }}</b>
+                {{# qarzkechikish }}<span style="opacity:.6"> {{ qarzkechikish }}</span>{{/ qarzkechikish }}
+                {{# qarzholat }}<span style="opacity:.6"> · {{ qarzholat }}</span>{{/ qarzholat }}
+            {{/ qarzsumma }}
+            {{^ qarzsumma }}<span style="color:#1f7a3d">{{#str}}mur_nodebt, local_targetzenit{{/str}}</span>{{/ qarzsumma }}
+        </div>
+    </div>
+
+    {{! O'quvchining Moodle akkaunti yo'q bo'lsa javob ilovaga YETMAYDI —
+        rahbar buni qaror yozishdan OLDIN bilishi kerak. }}
+    {{# akkauntsiz }}
+    <div style="margin:0 12px 10px;padding:8px 10px;border-radius:8px;background:#fdf3e0;color:#8a5a0b;font-size:12px">
+        {{#str}}mur_noaccount, local_targetzenit{{/str}}
+    </div>
+    {{/ akkauntsiz }}
+
+    {{! --- qaror bor: ota-onaga yetib bordimi --- }}
+    {{# qarorturi }}
+    <div style="padding:0 12px 10px">
+        <div style="font-size:11px;opacity:.7;text-transform:uppercase">{{#str}}mur_answer, local_targetzenit{{/str}}: {{ qarorturi }}</div>
+        <div style="background:#e9f7ee;border:1px solid #1f7a3d;border-radius:8px;padding:10px;white-space:pre-wrap">{{ qaror }}</div>
+        <div style="font-size:11px;opacity:.6;margin-top:3px">{{ qarorkim }}</div>
+        {{# otaonakordi }}
+        <div style="font-size:11px;color:#1f7a3d;margin-top:2px">{{#str}}mur_parentseen, local_targetzenit{{/str}} · {{ otaonakordi }}</div>
+        {{/ otaonakordi }}
+        {{^ otaonakordi }}
+        <div style="font-size:11px;color:#a4252a;margin-top:2px">{{#str}}mur_parentnotseen, local_targetzenit{{/str}}</div>
+        {{/ otaonakordi }}
+    </div>
+    {{/ qarorturi }}
+
+    {{! --- izohlar zanjiri --- }}
+    {{# izohlar }}
+    <div style="padding:6px 12px;border-top:1px solid rgba(0,0,0,.06)">
+        <div style="font-size:11px;opacity:.6">{{ ism }} · {{ vaqt }} · {{ turi }}</div>
+        <div style="font-size:13px;white-space:pre-wrap">{{ body }}</div>
+    </div>
+    {{/ izohlar }}
+
+    {{! --- sotuv bilan aloqa tarixi: "kim qachon gaplashdi".
+        Yig'iladigan blok ichida — asosiy ekranni to'ldirmasligi uchun,
+        lekin veb sahifadagi bilan AYNI ma'lumot. }}
+    {{# suhbatbor }}
+    <details style="margin:0 12px 8px;border:1px solid rgba(0,0,0,.12);border-radius:8px">
+        <summary style="padding:8px 10px;cursor:pointer;font-size:12.5px;font-weight:600">
+            {{#str}}mur_salestalks, local_targetzenit{{/str}}
+        </summary>
+        <div style="padding:0 10px 8px;font-size:11px;opacity:.6">
+            {{#str}}mur_salestalkshint, local_targetzenit{{/str}}
+        </div>
+        {{# suhbatlar }}
+        <div style="padding:6px 10px;border-top:1px solid rgba(0,0,0,.06)">
+            <div style="font-size:11px;opacity:.65">{{ vaqt }} · {{ menejer }}</div>
+            <div style="font-size:12.5px">{{ natija }}</div>
+            {{# izoh }}<div style="font-size:12.5px;opacity:.85;white-space:pre-wrap">{{ izoh }}</div>{{/ izoh }}
+        </div>
+        {{/ suhbatlar }}
+    </details>
+    {{/ suhbatbor }}
+
+    {{! --- shu o'quvchining boshqa murojaatlari: takrorlanayotgan masalami --- }}
+    {{# boshqabor }}
+    <details style="margin:0 12px 8px;border:1px solid rgba(0,0,0,.12);border-radius:8px">
+        <summary style="padding:8px 10px;cursor:pointer;font-size:12.5px;font-weight:600">
+            {{#str}}mur_others, local_targetzenit{{/str}}
+        </summary>
+        {{# boshqalari }}
+        <div style="padding:6px 10px;border-top:1px solid rgba(0,0,0,.06)">
+            <div style="font-size:11px;opacity:.65">{{ sana }} · {{ holat }}
+                {{# qarorturi }} · {{ qarorturi }}{{/ qarorturi }}</div>
+            <div style="font-size:12.5px"><b>{{ nomi }}</b></div>
+            <div style="font-size:12px;opacity:.8">{{ matn }}</div>
+        </div>
+        {{/ boshqalari }}
+    </details>
+    {{/ boshqabor }}
+
+    {{! --- izoh yozish: ichki, ota-ona ko'rmaydi --- }}
+    {{^ yopiq }}
+    <div style="padding:8px 12px">
+        <ion-item>
+            <ion-label position="stacked">{{#str}}mur_comment, local_targetzenit{{/str}}</ion-label>
+            <ion-textarea rows="2" [(ngModel)]="CONTENT_OTHERDATA.iz_{{ id }}"
+                placeholder="{{#str}}mur_commenthint, local_targetzenit{{/str}}"></ion-textarea>
+        </ion-item>
+        <ion-button expand="block" size="small" fill="outline" class="ion-margin-top"
+            core-site-plugins-call-ws
+            name="local_targetzenit_mobile_murojaat"
+            [params]="{murojaatid: {{ id }}, amal: 'izoh', matn: CONTENT_OTHERDATA.iz_{{ id }}}"
+            successMessage="{{#str}}mur_saved, local_targetzenit{{/str}}"
+            refreshOnSuccess="true">{{#str}}mur_addcomment, local_targetzenit{{/str}}</ion-button>
+    </div>
+
+    {{! --- QAROR: ota-ona SHU matnni o'qiydi --- }}
+    {{^ qarorturi }}
+    <div style="padding:0 12px 12px">
+        <div style="font-size:11px;opacity:.7">{{#str}}mur_decisionhint, local_targetzenit{{/str}}</div>
+        <ion-item>
+            <ion-label position="stacked">{{#str}}mur_decision, local_targetzenit{{/str}}</ion-label>
+            <ion-select [(ngModel)]="CONTENT_OTHERDATA.qt_{{ id }}" interface="popover">
+                {{# qarorlar }}<ion-select-option value="{{ nomi }}">{{ nomi }}</ion-select-option>{{/ qarorlar }}
+            </ion-select>
+        </ion-item>
+        <ion-item>
+            <ion-textarea rows="3" [(ngModel)]="CONTENT_OTHERDATA.qm_{{ id }}"
+                placeholder="{{#str}}mur_decision, local_targetzenit{{/str}}"></ion-textarea>
+        </ion-item>
+        <ion-button expand="block" size="small" color="success" class="ion-margin-top"
+            core-site-plugins-call-ws
+            name="local_targetzenit_mobile_murojaat"
+            [params]="{murojaatid: {{ id }}, amal: 'qaror', qarorturi: CONTENT_OTHERDATA.qt_{{ id }}, matn: CONTENT_OTHERDATA.qm_{{ id }}}"
+            successMessage="{{#str}}mur_saved, local_targetzenit{{/str}}"
+            refreshOnSuccess="true">{{#str}}mur_decide, local_targetzenit{{/str}}</ion-button>
+        <div style="font-size:11px;opacity:.6;margin-top:4px">{{#str}}mur_irrelevanthint, local_targetzenit{{/str}}</div>
+    </div>
+    {{/ qarorturi }}
+
+    {{! --- biriktirish va uzatish --- }}
+    <div style="padding:0 12px 12px;display:flex;gap:6px;flex-wrap:wrap">
+        {{^ menda }}
+        <ion-button size="small" fill="outline"
+            core-site-plugins-call-ws
+            name="local_targetzenit_mobile_murojaat"
+            [params]="{murojaatid: {{ id }}, amal: 'olish'}"
+            successMessage="{{#str}}mur_saved, local_targetzenit{{/str}}"
+            refreshOnSuccess="true">{{#str}}mur_takeit, local_targetzenit{{/str}}</ion-button>
+        {{/ menda }}
+        <ion-button size="small" fill="clear" core-link="true" [href]="'{{ web_url }}'">
+            {{#str}}mur_openweb, local_targetzenit{{/str}}
+        </ion-button>
+    </div>
+    {{/ yopiq }}
+</details>
+{{/ murojaatlar }}
+{{/ bor }}

@@ -45,6 +45,33 @@ $functions = [
     // ro'yxatga qo'shilishi SHART — ilova uni to'g'ridan-to'g'ri chaqiradi.
     // `services` da `moodle_mobile_app` ko'rsatilgani uchun u servisga
     // AVTOMATIK qo'shiladi (Frappe funksiyalaridan farqi shunda).
+    'local_targetzenit_push_murojaat' => [
+        'classname'   => 'local_targetzenit\\external\\push_murojaat',
+        'methodname'  => 'execute',
+        'description' => "Frappe'dan ota-ona murojaatlarini (shikoyat/taklif) qabul qiladi",
+        'type'        => 'write',
+        'capabilities' => 'local/targetzenit:push',
+        'ajax'        => false,
+    ],
+    // Moodle -> Frappe: rahbar qarorlarini Frappe SO'RAB OLADI (investor
+    // paneli, sotuv nazorati va qarzdorlik panelida ko'rsatish uchun).
+    'local_targetzenit_get_murojaat' => [
+        'classname'   => 'local_targetzenit\\external\\get_murojaat',
+        'methodname'  => 'execute',
+        'description' => "Murojaat holati va rahbar qarorlarini Frappega beradi",
+        'type'        => 'read',
+        'capabilities' => 'local/targetzenit:push',
+        'ajax'        => false,
+    ],
+    // Mobil ilovadan murojaat ustida ishlash (komment, qaror, ko'rdim).
+    'local_targetzenit_mobile_murojaat' => [
+        'classname'   => 'local_targetzenit\\external\\mobile_murojaat',
+        'methodname'  => 'execute',
+        'description' => "Mobil ilovadan murojaatga izoh, qaror va ko'rildi belgisi",
+        'type'        => 'write',
+        'ajax'        => true,
+        'services'    => [MOODLE_OFFICIAL_MOBILE_SERVICE],
+    ],
     'local_targetzenit_mobile_save_record' => [
         'classname'   => 'local_targetzenit\\external\\mobile_save_record',
         'methodname'  => 'execute',

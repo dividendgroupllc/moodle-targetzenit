@@ -16,6 +16,7 @@ namespace local_targetzenit\output;
 
 use local_targetzenit\journal;
 use local_targetzenit\lesson;
+use local_targetzenit\murojaat;
 use local_targetzenit\payroll;
 use local_targetzenit\timetable;
 
@@ -767,6 +768,145 @@ class mobile {
     }
 
     /** Ilova kutadigan javob shakli — har metodda takrorlanmasligi uchun. */
+
+    // ====================================================== MUROJAATLAR
+    // Ota-ona shikoyat/taklifi. Ikki panel: rahbar (ko'radi, izoh, qaror) va
+    // o'quvchi/ota-ona (shikoyat matni + javob).
+    //
+    // Ma'lumot mantig'i `classes/murojaat.php` da — veb sahifa ham AYNI shu
+    // metodlardan o'tadi, ya'ni ilovada boshqa qoida paydo bo'lmaydi.
+    // Tuzilish ham veb sahifa bilan bir xil: har murojaat yig'iladigan blok
+    // (`<details>`), izoh va qaror o'sha blok ichida.
+
+    /** Rahbar paneli (CEO / direktor / zavuch). */
+    public static function murojaat_view(array $args): array {
+        global $USER;
+
+        $context = \context_system::instance();
+        self::tekshir($context);
+
+        $holat = isset($args['holat']) ? (string) $args['holat'] : 'ochiq';
+        $data = ['bor' => false, 'xabar' => '', 'murojaatlar' => [], 'stats' => []];
+
+        if (!murojaat::yonalishlar($context)) {
+            $data['xabar'] = get_string('mur_noaccess', 'local_targetzenit');
+            return self::javob('mobile_murojaat', $data);
+        }
+
+        $rows = murojaat::royxat($holat);
+        $st = murojaat::stats();
+        $data['stats'] = [
+            ['lab' => get_string('mur_k_open', 'local_targetzenit'), 'val' => $st['ochiq']],
+            ['lab' => get_string('mur_k_unseen', 'local_targetzenit'), 'val' => $st['korilmagan']],
+            ['lab' => get_string('mur_k_overdue', 'local_targetzenit'), 'val' => $st['muddati']],
+            ['lab' => get_string('mur_k_mine', 'local_targetzenit'), 'val' => $st['menda']],
+        ];
+
+        if (!$rows) {
+            $data['xabar'] = get_string('mur_empty', 'local_targetzenit');
+            return self::javob('mobile_murojaat', $data);
+        }
+
+        $otherdata = [];
+        foreach ($rows as $m) {
+            [$mkod, $mkun] = murojaat::muddat($m);
+            $izohlar = [];
+            foreach (murojaat::izohlar((int) $m->id) as $i) {
+                $izohlar[] = [
+                    'ism' => $i->ism,
+                    'vaqt' => userdate($i->timecreated, get_string('strftimedatetimeshort')),
+                    'turi' => $i->turi,
+                    'body' => $i->body,
+                ];
+            }
+            $data['murojaatlar'][] = [
+                'id' => (int) $m->id,
+                'turi' => $m->turi,
+                'yonalish' => $m->yonalish,
+                'holat' => $m->holat,
+                'yopiq' => $m->holat === 'Yopildi',
+                'muhim' => $m->muhimlik === 'Yuqori',
+                'korilmagan' => !$m->korildivaqti,
+                'kategoriya' => $m->kategoriya ?: get_string('mur_nocat', 'local_targetzenit'),
+                'oquvchi' => $m->studentname ?: ($m->payername ?: '—'),
+                'sinf' => $m->sinf,
+                'otaona' => $m->payername,
+                'telefon' => $m->payerphone,
+                'menejer' => $m->managername ?: '—',
+                'suhbat' => $m->suhbatvaqti
+                    ? userdate($m->suhbatvaqti, get_string('strftimedatetimeshort')) : '—',
+                'matn' => $m->matn,
+                'masul' => $m->masuluserid
+                    ? murojaat::ism((int) $m->masuluserid)
+                    : get_string('mur_noowner', 'local_targetzenit'),
+                'menda' => (int) $m->masuluserid === (int) $USER->id,
+                'akkauntsiz' => !$m->studentuserid,
+                'muddat' => $mkod === 'kechikdi'
+                        ? get_string('mur_overdue', 'local_targetzenit', $mkun)
+                        : ($mkod === 'bugun' ? get_string('mur_duetoday', 'local_targetzenit')
+                        : ($mkod === 'bor' ? get_string('mur_duein', 'local_targetzenit', $mkun) : '')),
+                'kechikdi' => $mkod === 'kechikdi',
+                'qarorturi' => $m->qarorturi,
+                'qaror' => $m->qaror,
+                'qarorkim' => $m->qarorkim ? murojaat::ism((int) $m->qarorkim) : '',
+                'otaonakordi' => $m->otaonakordi
+                    ? userdate($m->otaonakordi, get_string('strftimedatetimeshort')) : '',
+                'izohlar' => $izohlar,
+                'qarorlar' => array_map(fn($q) => ['nomi' => $q], murojaat::QARORLAR),
+                'boshqa' => $m->yonalish === 'CEO' ? 'Direktor' : 'CEO',
+                'web_url' => (new \moodle_url('/local/targetzenit/murojaat.php',
+                    ['ochiq' => $m->id]))->out(false),
+            ];
+            // ngModel boshlang'ich qiymatlari: har murojaat uchun alohida
+            // kalit (dars kokpitidagi `tp_`/`hw_` bilan bir xil naqsh).
+            $otherdata['iz_' . $m->id] = '';
+            $otherdata['qm_' . $m->id] = '';
+            $otherdata['qt_' . $m->id] = murojaat::QARORLAR[0];
+        }
+        $data['bor'] = true;
+        return self::javob('mobile_murojaat', $data, $otherdata);
+    }
+
+    /**
+     * O'quvchi akkauntidagi panel — OTA-ONA shuni o'qiydi (Moodle'da ota-ona
+     * akkaunti yo'q, u bolasining logini bilan kiradi).
+     */
+    public static function murojaatim_view(array $args): array {
+        global $USER;
+
+        $context = \context_system::instance();
+        self::tekshir($context);
+
+        $data = ['bor' => false, 'xabar' => '', 'murojaatlar' => []];
+        $rows = murojaat::meniki((int) $USER->id);
+        if (!$rows) {
+            $data['xabar'] = get_string('mur_emptymine', 'local_targetzenit');
+            return self::javob('mobile_murojaatim', $data);
+        }
+
+        foreach ($rows as $m) {
+            $javobbor = (bool) $m->qarorvaqti;
+            $data['murojaatlar'][] = [
+                'id' => (int) $m->id,
+                'turi' => $m->turi,
+                'kategoriya' => $m->kategoriya ?: get_string('mur_nocat', 'local_targetzenit'),
+                'sana' => userdate($m->ochilgan, get_string('strftimedateshort')),
+                'matn' => $m->matn,
+                'javobbor' => $javobbor,
+                'qarorturi' => $m->qarorturi,
+                'qaror' => $m->qaror,
+                'qarorvaqti' => $javobbor
+                    ? userdate($m->qarorvaqti, get_string('strftimedatetimeshort')) : '',
+                // Javob kelgani ochiq turadi: ota-ona uzun ro'yxatni
+                // varaqlab "javob bormi" deb qidirib yurmasligi kerak
+                'ochiq_blok' => $javobbor && !$m->otaonakordi,
+                'kordim' => (bool) $m->otaonakordi,
+            ];
+        }
+        $data['bor'] = true;
+        return self::javob('mobile_murojaatim', $data);
+    }
+
     private static function javob(string $shablon, array $data,
                                   array $otherdata = []): array {
         global $OUTPUT;

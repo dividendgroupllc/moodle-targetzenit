@@ -81,4 +81,24 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    // MUROJAATLAR: ota-ona shikoyat/taklifi (MUROJAAT_ARXITEKTURA.md 4-bo'lim).
+    //
+    // `archetypes` ATAYLAB BO'SH: ikkisi ham hech kimga avtomatik tushmaydi,
+    // admin qo'lda rolga biriktiradi. `manager` arxetipiga bog'lasak CEO ham
+    // direktor murojaatlarini ko'rar edi va yo'nalish ajratishning ma'nosi
+    // qolmasdi. Sayt admini (is_siteadmin) ikkisini ham ko'radi.
+    'local/targetzenit:murojaatceo' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [],
+    ],
+
+    // Direktor VA ZAVUCH shu ruxsat bilan yuradi — o'quv-tarbiya masalalari
+    // ikkisining ham ishi (direktor paneli qamrovi bilan bir xil mantiq).
+    'local/targetzenit:murojaatdirektor' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [],
+    ],
 ];

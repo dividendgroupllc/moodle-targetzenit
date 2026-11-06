@@ -755,3 +755,50 @@
     .tz-pr-val { font-size: .95rem; }
     .tz-pr-op { padding: 0 5px; font-size: 1rem; }
 }
+
+/* ===== MUROJAATLAR (ota-ona shikoyat/taklifi) =====
+   Direktor panelining o'z elementlari (tz-dir-*) qayta ishlatiladi —
+   bu yerda faqat murojaatga xos bloklar. */
+.tz-mur { padding: 0 0 40px; }
+.tz-mur-tiles { margin-bottom: 14px; }
+
+/* Kategoriya kesimi: qaysi masala ko'p takrorlanyapti */
+.tz-mur-kesrow { display: grid; grid-template-columns: minmax(130px, 1.2fr) 2fr auto;
+  gap: 10px; align-items: center; padding: 3px 0; font-size: 13px; }
+.tz-mur-kesbar { height: 8px; background: rgba(0,0,0,.07); border-radius: 999px; overflow: hidden; }
+.tz-mur-kesbar i { display: block; height: 100%; background: #1a5bb8; border-radius: 999px; }
+.tz-mur-kesson { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+
+/* Murojaat bloki — yig'iladigan. Veb va mobil ilovada bir xil tuzilish. */
+.tz-mur-blok { background: #fff; border: 1px solid rgba(0,0,0,.1); border-radius: 12px;
+  margin-bottom: 10px; overflow: hidden; }
+.tz-mur-blok[open] { box-shadow: 0 2px 10px rgba(0,0,0,.07); }
+.tz-mur-sum { padding: 10px 14px; cursor: pointer; list-style: none; }
+.tz-mur-sum::-webkit-details-marker { display: none; }
+.tz-mur-ism { font-weight: 700; font-size: 15px; }
+.tz-mur-qisqa { font-size: 13px; opacity: .8; margin: 2px 0 4px; }
+.tz-mur-sec { padding: 10px 14px; border-top: 1px solid rgba(0,0,0,.06); }
+.tz-mur-quote { background: rgba(0,0,0,.03); border-left: 3px solid #1a5bb8;
+  border-radius: 8px; padding: 10px 12px; font-size: 14.5px; line-height: 1.55;
+  white-space: pre-wrap; }
+.tz-mur-yechim { background: #e9f7ee; border: 1px solid #1f7a3d; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+.tz-mur-ogoh { margin: 10px 14px; padding: 8px 12px; border-radius: 8px;
+  background: #fdf3e0; border: 1px solid #d98f1a; color: #8a5a0b; font-size: 13px; }
+.tz-mur-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px; padding: 10px 14px; border-top: 1px solid rgba(0,0,0,.06); font-size: 13px; }
+.tz-mur-metaitem .tz-dir-lab { display: block; font-size: 11px; }
+
+/* Ota-ona ko'rinishi — bir ustun, kengligi o'qish uchun cheklangan */
+.tz-mur-parent { max-width: 760px; margin: 0 auto; }
+
+[data-theme="dark"] .tz-mur-blok, .theme-dark .tz-mur-blok { background: #1b2230; }
+
+/* Murojaat: kategoriya kesimi endi havola — bosilsa ro'yxat filtrlanadi */
+.tz-mur-kesrow { color: inherit; text-decoration: none; }
+.tz-mur-kesrow:hover { background: rgba(0,0,0,.04); border-radius: 6px; text-decoration: none; }
+/* Boshqa murojaatlar qatori */
+.tz-mur-boshqa { display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 5px 6px; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 12.5px;
+  color: inherit; text-decoration: none; }
+.tz-mur-boshqa:hover { background: rgba(0,0,0,.04); text-decoration: none; }

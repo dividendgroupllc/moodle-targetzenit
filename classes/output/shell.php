@@ -104,6 +104,7 @@ class shell {
         $asosiy = [
             ['darslar', $t('dir_navlessons'), $u('direktor.php', ['view' => 'darslar'])],
             ['reyting', $t('dir_navranks'), $u('direktor.php', ['view' => 'reyting'])],
+            ['murojaat', $t('mur_nav'), $u('murojaat.php')],
             ['yozuvlar', $t('recordings'), $u('yozuvlar.php')],
             ['oqituvchi', $t('oq_mypanel'), $u('oqituvchi.php')],
         ];

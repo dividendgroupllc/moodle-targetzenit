@@ -359,5 +359,89 @@
         <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_murojaat" COMMENT="Ota-ona murojaati (shikoyat/taklif/muammo). MANBA maydonlari Frappe'dan keladi, YURITISH maydonlari (holat, qaror) Moodle'da yoziladi — MUROJAAT_ARXITEKTURA.md 1-bo'lim.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="frappename" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" COMMENT="Frappe Murojaat.name (MR-YYYY-#####) — yagona ko'prik"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="Shikoyat" SEQUENCE="false" COMMENT="Shikoyat|Taklif|Muammo|So'rov"/>
+        <FIELD NAME="kategoriya" TYPE="char" LENGTH="150" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="yonalish" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="CEO" SEQUENCE="false" COMMENT="CEO|Direktor — ruxsat shu bo'yicha tekshiriladi"/>
+        <FIELD NAME="muhimlik" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="O'rta" SEQUENCE="false"/>
+        <FIELD NAME="matn" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Ota-ona nima dedi"/>
+        <FIELD NAME="studentuserid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Moodle user.id; 0 = akkaunt topilmadi"/>
+        <FIELD NAME="studentidnumber" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Frappe Student.name"/>
+        <FIELD NAME="studentname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="sinf" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="payername" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="payerphone" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="manageruserid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Gaplashgan menejer (Moodle user.id)"/>
+        <FIELD NAME="manageridnumber" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Frappe Employee.name"/>
+        <FIELD NAME="managername" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="manba" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="Menejer | AI qo'ng'iroq tahlili | ..."/>
+        <FIELD NAME="qarzsumma" TYPE="number" LENGTH="18" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Ochiq qarz (Frappe hisoblaydi) — rahbar qaror oldidan ko'radi"/>
+        <FIELD NAME="qarzholat" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Qarz ishining ishlov holati"/>
+        <FIELD NAME="qarzkechikish" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="Kechikish oralig'i (1-30, 31-60, ...)"/>
+        <FIELD NAME="suhbatvaqti" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="ochilgan" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="slasana" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Javob muddati"/>
+        <FIELD NAME="holat" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="Yangi" SEQUENCE="false" COMMENT="Yangi|Ko'rib chiqilmoqda|Yopildi — MOODLE egasi"/>
+        <FIELD NAME="masuluserid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Mas'ul rahbar (Moodle user.id)"/>
+        <FIELD NAME="korildikim" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="korildivaqti" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="qarorturi" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="Hal qilindi|Inobatga olindi|Keyinroq ko'riladi|Rad etildi|Ahamiyatsiz"/>
+        <FIELD NAME="qaror" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Qanday hal qilindi — ota-ona shuni o'qiydi"/>
+        <FIELD NAME="qarorkim" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="qarorvaqti" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="otaonakordi" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Ota-ona javobni ilovada ko'rgan vaqti"/>
+        <FIELD NAME="yopilganvaqti" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Frappe shu maydon bo'yicha o'zgarganlarini so'rab oladi"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="frappename" UNIQUE="true" FIELDS="frappename"/>
+        <INDEX NAME="yonalish_holat" UNIQUE="false" FIELDS="yonalish, holat"/>
+        <INDEX NAME="studentuserid" UNIQUE="false" FIELDS="studentuserid"/>
+        <INDEX NAME="masuluserid" UNIQUE="false" FIELDS="masuluserid"/>
+        <INDEX NAME="timemodified" UNIQUE="false" FIELDS="timemodified"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_murojaat_izoh" COMMENT="Murojaat izohlari (timeline). `korinish` ota-ona ko'rishini belgilaydi — ichki kommentlar unga ko'rinmaydi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="murojaatid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Kim yozdi; 0 = tizim"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="komment" SEQUENCE="false" COMMENT="komment|holat|qaror|javob"/>
+        <FIELD NAME="korinish" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="rahbar" SEQUENCE="false" COMMENT="rahbar|otaona"/>
+        <FIELD NAME="body" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="murojaat_time" UNIQUE="false" FIELDS="murojaatid, timecreated"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_murojaat_suhbat" COMMENT="Sotuv bo'limining shu o'quvchi bo'yicha aloqa tarixi (Frappe Aloqa Yozuvi nusxasi). Rahbar «kim qachon gaplashgan» ni ko'rmasa, ota-onaga ikkinchi marta bir xil javob beriladi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="murojaatid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="vaqt" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="menejer" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="kanal" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="Qo'ng'iroq | SMS | Telegram | Yuzma-yuz"/>
+        <FIELD NAME="natija" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Aloqa natijasi: Gaplashildi | Javob yo'q | ..."/>
+        <FIELD NAME="suhbatnatija" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Suhbat natijasi: Va'da berdi | E'tiroz-nizo | ..."/>
+        <FIELD NAME="izoh" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="murojaat_vaqt" UNIQUE="false" FIELDS="murojaatid, vaqt"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

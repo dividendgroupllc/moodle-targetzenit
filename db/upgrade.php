@@ -503,5 +503,105 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026110420, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026110500) {
+
+        // MUROJAATLAR: ota-ona shikoyat/taklifi. Manba Frappe'dan keladi,
+        // yuritish (holat, qaror) Moodle'da — MUROJAAT_ARXITEKTURA.md.
+        $table = new xmldb_table('local_targetzenit_murojaat');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('frappename', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'Shikoyat');
+            $table->add_field('kategoriya', XMLDB_TYPE_CHAR, '150', null, null, null, null);
+            $table->add_field('yonalish', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'CEO');
+            $table->add_field('muhimlik', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, "O'rta");
+            $table->add_field('matn', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $table->add_field('studentuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('studentidnumber', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('studentname', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('sinf', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('payername', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('payerphone', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $table->add_field('manageruserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('manageridnumber', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('managername', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('manba', XMLDB_TYPE_CHAR, '50', null, null, null, null);
+            $table->add_field('suhbatvaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('ochilgan', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('slasana', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('holat', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'Yangi');
+            $table->add_field('masuluserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('korildikim', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('korildivaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('qarorturi', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $table->add_field('qaror', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('qarorkim', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('qarorvaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('otaonakordi', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('yopilganvaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('frappename', XMLDB_INDEX_UNIQUE, ['frappename']);
+            $table->add_index('yonalish_holat', XMLDB_INDEX_NOTUNIQUE, ['yonalish', 'holat']);
+            $table->add_index('studentuserid', XMLDB_INDEX_NOTUNIQUE, ['studentuserid']);
+            $table->add_index('masuluserid', XMLDB_INDEX_NOTUNIQUE, ['masuluserid']);
+            $table->add_index('timemodified', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_targetzenit_murojaat_izoh');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('murojaatid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'komment');
+            $table->add_field('korinish', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'rahbar');
+            $table->add_field('body', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('murojaat_time', XMLDB_INDEX_NOTUNIQUE, ['murojaatid', 'timecreated']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110500, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026110600) {
+
+        // Murojaat kartasiga QARZ konteksti: rahbar qaror qabul qilishdan
+        // oldin "bu oilada qarz bormi" degan savolga javob ko'rishi kerak.
+        $table = new xmldb_table('local_targetzenit_murojaat');
+        foreach ([
+            ['qarzsumma', XMLDB_TYPE_NUMBER, '18,2', '0'],
+            ['qarzholat', XMLDB_TYPE_CHAR, '64', null],
+            ['qarzkechikish', XMLDB_TYPE_CHAR, '32', null],
+        ] as [$nom, $turi, $uzunlik, $default]) {
+            $field = new xmldb_field($nom, $turi, $uzunlik, null,
+                $default === null ? null : XMLDB_NOTNULL, null, $default);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        // Sotuv bo'limining aloqa tarixi — "kim qachon gaplashdi".
+        $table = new xmldb_table('local_targetzenit_murojaat_suhbat');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('murojaatid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('vaqt', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('menejer', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('kanal', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $table->add_field('natija', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('suhbatnatija', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('izoh', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('murojaat_vaqt', XMLDB_INDEX_NOTUNIQUE, ['murojaatid', 'vaqt']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110600, 'local', 'targetzenit');
+    }
+
     return true;
 }

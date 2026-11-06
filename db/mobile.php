@@ -72,6 +72,32 @@ $addons = [
                     'class' => '',
                 ],
             ],
+            // MUROJAATLAR — rahbar paneli (CEO / direktor / zavuch).
+            // Menyuda HAMMAGA turadi: ilova menyuni foydalanuvchiga qarab
+            // yashira olmaydi, shuning uchun ruxsatni sahifaning o'zi
+            // tekshiradi va ruxsatsizga tushunarli xabar chiqaradi
+            // (oylik paneli bilan bir xil naqsh).
+            'tzmurojaat' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'murojaat_view',
+                'displaydata' => [
+                    'title' => 'app_murojaat',
+                    'icon' => 'fas-comment-dots',
+                    'class' => '',
+                ],
+            ],
+            // MUROJAATIM — o'quvchi akkauntidagi ko'rinish. OTA-ONA shuni
+            // o'qiydi: Moodle'da ota-ona akkaunti yo'q, u bolasining logini
+            // bilan kiradi.
+            'tzmurojaatim' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'murojaatim_view',
+                'displaydata' => [
+                    'title' => 'app_murojaatim',
+                    'icon' => 'fas-envelope-open-text',
+                    'class' => '',
+                ],
+            ],
             'tztimetable' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'timetable_view',
@@ -115,7 +141,7 @@ $addons = [
             ['att_excused', 'local_targetzenit'],
             ['app_savelesson', 'local_targetzenit'],
             ['app_pastdays', 'local_targetzenit'],
-            ['timetable_today', 'local_targetzenit'],
+            ['dir_today', 'local_targetzenit'],
             ['app_recordweb', 'local_targetzenit'],
             ['app_recordhint', 'local_targetzenit'],
             ['app_openweb_lesson', 'local_targetzenit'],
@@ -142,6 +168,46 @@ $addons = [
             ['st_paid', 'local_targetzenit'],
             ['st_remaining', 'local_targetzenit'],
             ['st_status', 'local_targetzenit'],
+            // --- murojaatlar (rahbar paneli va ota-ona ko'rinishi)
+            ['app_murojaat', 'local_targetzenit'],
+            ['app_murojaatim', 'local_targetzenit'],
+            ['mur_panel', 'local_targetzenit'],
+            ['mur_mine', 'local_targetzenit'],
+            ['mur_noaccess', 'local_targetzenit'],
+            ['mur_empty', 'local_targetzenit'],
+            ['mur_emptymine', 'local_targetzenit'],
+            ['mur_said', 'local_targetzenit'],
+            ['mur_answer', 'local_targetzenit'],
+            ['mur_waiting', 'local_targetzenit'],
+            ['mur_who', 'local_targetzenit'],
+            ['mur_manager', 'local_targetzenit'],
+            ['mur_talked', 'local_targetzenit'],
+            ['mur_cat', 'local_targetzenit'],
+            ['mur_nocat', 'local_targetzenit'],
+            ['mur_owner', 'local_targetzenit'],
+            ['mur_noowner', 'local_targetzenit'],
+            ['mur_takeit', 'local_targetzenit'],
+            ['mur_notseen', 'local_targetzenit'],
+            ['mur_parentseen', 'local_targetzenit'],
+            ['mur_parentnotseen', 'local_targetzenit'],
+            ['mur_comment', 'local_targetzenit'],
+            ['mur_comments', 'local_targetzenit'],
+            ['mur_addcomment', 'local_targetzenit'],
+            ['mur_commenthint', 'local_targetzenit'],
+            ['mur_decision', 'local_targetzenit'],
+            ['mur_decide', 'local_targetzenit'],
+            ['mur_decisionhint', 'local_targetzenit'],
+            ['mur_irrelevanthint', 'local_targetzenit'],
+            ['mur_noaccount', 'local_targetzenit'],
+            ['mur_duetoday', 'local_targetzenit'],
+            ['mur_duein', 'local_targetzenit'],
+            ['mur_overdue', 'local_targetzenit'],
+            ['mur_saved', 'local_targetzenit'],
+            ['mur_openweb', 'local_targetzenit'],
+            ['mur_k_open', 'local_targetzenit'],
+            ['mur_k_unseen', 'local_targetzenit'],
+            ['mur_k_overdue', 'local_targetzenit'],
+            ['mur_k_mine', 'local_targetzenit'],
         ],
     ],
 ];
