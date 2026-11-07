@@ -40,6 +40,41 @@ function local_targetzenit_extend_navigation(global_navigation $navigation) {
         $navigation->add_node($dir);
     }
 
+    // MUROJAATLAR — CEO, direktor va zavuch uchun.
+    //
+    // NEGA ALOHIDA YORLIQ: sahifa direktor panelining yon menyusida ham bor,
+    // lekin CEO direktor paneliga KIRA OLMAYDI (`viewteachers` ruxsati unda
+    // yo'q). Yorliqsiz u manzilni qo'lda yozishi kerak edi — 2026-11-07 da
+    // shu muammo chiqdi.
+    if (\local_targetzenit\murojaat::rahbarmi()) {
+        $mur = navigation_node::create(
+            get_string('mur_panel', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/murojaat.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzmurojaat',
+            new pix_icon('i/flagged', '')
+        );
+        $mur->showinflatnavigation = true;
+        $navigation->add_node($mur);
+    }
+
+    // "Murojaatim" — o'quvchi (ota-ona) o'z murojaatiga javobni shu yerdan
+    // ko'radi. Faqat murojaati BO'LGANLARGA: hamma o'quvchining menyusini
+    // bo'sh sahifa bilan to'ldirishning ma'nosi yo'q.
+    if (\local_targetzenit\murojaat::meniki((int) $USER->id, 1)) {
+        $mm = navigation_node::create(
+            get_string('mur_mine', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/murojaatim.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzmurojaatim',
+            new pix_icon('i/notifications', '')
+        );
+        $mm->showinflatnavigation = true;
+        $navigation->add_node($mm);
+    }
+
     // "Mening darslarim" — o'qituvchining o'z paneli.
     //
     // Shart: shu odamga YOZILGAN darsi bor. `_fact.attributeduserid` bo'yicha
