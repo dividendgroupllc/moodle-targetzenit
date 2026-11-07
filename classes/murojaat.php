@@ -260,7 +260,18 @@ class murojaat {
            ORDER BY kategoriya", $p);
     }
 
-    /** Kategoriya kesimi — qaysi masala ko'p takrorlanyapti. */
+    /**
+     * Kategoriya kesimi — qaysi masala ko'p takrorlanyapti.
+     *
+     * DIQQAT — POSTGRESQL: guruhlash FAQAT ustun bo'yicha ketadi, parametrli
+     * ifoda bo'yicha emas. Avval
+     * `GROUP BY COALESCE(NULLIF(kategoriya, ''), :yoq2)` yozilgan edi va
+     * MySQL'da ishlardi; PostgreSQL esa SELECT'dagi `$1` va GROUP BY'dagi
+     * `$3` parametrlarini BOSHQA ifoda deb hisoblab «column must appear in
+     * the GROUP BY clause» xatosi bilan butun sahifani yiqitardi
+     * (2026-11-07, prodda topildi). Yorliq («Kategoriya yo'q») endi PHP
+     * tomonda qo'yiladi — guruhlashga hech qanday parametr kirmaydi.
+     */
     public static function kesim(int $limit = 12): array {
         global $DB;
         $yonalishlar = self::yonalishlar();
@@ -268,15 +279,32 @@ class murojaat {
             return [];
         }
         [$ysql, $p] = $DB->get_in_or_equal($yonalishlar, SQL_PARAMS_NAMED, 'yo');
-        $sql = "SELECT COALESCE(NULLIF(kategoriya, ''), :yoq) nomi,
+        $sql = "SELECT kategoriya,
                        COUNT(*) soni,
                        SUM(CASE WHEN holat <> 'Yopildi' THEN 1 ELSE 0 END) ochiq
                   FROM {local_targetzenit_murojaat}
                  WHERE yonalish $ysql
-              GROUP BY COALESCE(NULLIF(kategoriya, ''), :yoq2)
-              ORDER BY soni DESC";
-        $p['yoq'] = $p['yoq2'] = get_string('mur_nocat', 'local_targetzenit');
-        return array_values($DB->get_records_sql($sql, $p, 0, $limit));
+              GROUP BY kategoriya";
+
+        // `get_records_sql` ishlatilmaydi: kalit kategoriya bo'lardi va
+        // NULL bilan '' bitta kalitga tushib, qator yo'qolardi.
+        $yoq = get_string('mur_nocat', 'local_targetzenit');
+        $yigma = [];
+        $rs = $DB->get_recordset_sql($sql, $p);
+        foreach ($rs as $r) {
+            $nomi = ($r->kategoriya === null || trim((string) $r->kategoriya) === '')
+                ? $yoq : $r->kategoriya;
+            if (!isset($yigma[$nomi])) {
+                $yigma[$nomi] = (object) ['nomi' => $nomi, 'soni' => 0, 'ochiq' => 0];
+            }
+            $yigma[$nomi]->soni += (int) $r->soni;
+            $yigma[$nomi]->ochiq += (int) $r->ochiq;
+        }
+        $rs->close();
+
+        $yigma = array_values($yigma);
+        usort($yigma, fn($a, $b) => $b->soni <=> $a->soni);
+        return array_slice($yigma, 0, $limit);
     }
 
     /**

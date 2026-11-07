@@ -46,33 +46,16 @@ function local_targetzenit_extend_navigation(global_navigation $navigation) {
     // lekin CEO direktor paneliga KIRA OLMAYDI (`viewteachers` ruxsati unda
     // yo'q). Yorliqsiz u manzilni qo'lda yozishi kerak edi — 2026-11-07 da
     // shu muammo chiqdi.
-    if (\local_targetzenit\murojaat::rahbarmi()) {
-        $mur = navigation_node::create(
-            get_string('mur_panel', 'local_targetzenit'),
-            new moodle_url('/local/targetzenit/murojaat.php'),
-            navigation_node::TYPE_CUSTOM,
-            null,
-            'tzmurojaat',
-            new pix_icon('i/flagged', '')
-        );
-        $mur->showinflatnavigation = true;
-        $navigation->add_node($mur);
-    }
-
-    // "Murojaatim" — o'quvchi (ota-ona) o'z murojaatiga javobni shu yerdan
-    // ko'radi. Faqat murojaati BO'LGANLARGA: hamma o'quvchining menyusini
-    // bo'sh sahifa bilan to'ldirishning ma'nosi yo'q.
-    if (\local_targetzenit\murojaat::meniki((int) $USER->id, 1)) {
-        $mm = navigation_node::create(
-            get_string('mur_mine', 'local_targetzenit'),
-            new moodle_url('/local/targetzenit/murojaatim.php'),
-            navigation_node::TYPE_CUSTOM,
-            null,
-            'tzmurojaatim',
-            new pix_icon('i/notifications', '')
-        );
-        $mm->showinflatnavigation = true;
-        $navigation->add_node($mm);
+    // DIQQAT — TRY/CATCH: bu ilgak HAR SAHIFADA ishlaydi. Murojaat
+    // modulida baza muammosi bo'lsa (jadval yo'q, yangilanish yarim
+    // qolgan) va u ushlanmasa, BUTUN sayt "Error reading from database"
+    // bo'lib qoladi — bitta modulning nuqsoni hamma narsani to'xtatmasligi
+    // kerak. Xato jurnalga yoziladi, menyu esa shunchaki yorliqsiz qoladi.
+    try {
+        local_targetzenit_murojaat_nav($navigation, $USER);
+    } catch (Throwable $e) {
+        debugging('local_targetzenit murojaat navigatsiyasi: ' . $e->getMessage(),
+            DEBUG_DEVELOPER);
     }
 
     // "Mening darslarim" — o'qituvchining o'z paneli.
@@ -269,4 +252,42 @@ function local_targetzenit_comment_permissions(stdClass $params) {
         || has_capability('local/targetzenit:viewteachers', context_system::instance());
 
     return ['post' => $post, 'view' => $view];
+}
+
+
+/**
+ * Murojaat yorliqlari (rahbar paneli va ota-ona ko'rinishi).
+ *
+ * Alohida funksiya: `extend_navigation` uni try/catch ichida chaqiradi —
+ * modul nuqsoni butun saytni to'xtatmasligi uchun.
+ */
+function local_targetzenit_murojaat_nav(global_navigation $navigation, stdClass $user): void {
+    if (\local_targetzenit\murojaat::rahbarmi()) {
+        $mur = navigation_node::create(
+            get_string('mur_panel', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/murojaat.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzmurojaat',
+            new pix_icon('i/flagged', '')
+        );
+        $mur->showinflatnavigation = true;
+        $navigation->add_node($mur);
+    }
+
+    // "Murojaatim" — o'quvchi (ota-ona) o'z murojaatiga javobni shu yerdan
+    // ko'radi. Faqat murojaati BO'LGANLARGA: hamma o'quvchining menyusini
+    // bo'sh sahifa bilan to'ldirishning ma'nosi yo'q.
+    if (\local_targetzenit\murojaat::meniki((int) $user->id, 1)) {
+        $mm = navigation_node::create(
+            get_string('mur_mine', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/murojaatim.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzmurojaatim',
+            new pix_icon('i/notifications', '')
+        );
+        $mm->showinflatnavigation = true;
+        $navigation->add_node($mm);
+    }
 }
