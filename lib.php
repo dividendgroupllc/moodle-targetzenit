@@ -59,6 +59,24 @@ function local_targetzenit_extend_navigation(global_navigation $navigation) {
         $navigation->add_node($oq);
     }
 
+    // "O'qituvchilar sharhi" — o'quvchining (ota-onaning) o'z sahifasi.
+    //
+    // Shart: shu o'quvchi haqida OCHIQ sharh bor. Yo'q bo'lsa havola
+    // chiqmaydi — bo'sh sahifa savol tug'diradi. Bildirishnomadagi havola
+    // ham shu sahifaga olib boradi, ya'ni menyu ikkinchi, barqaror yo'l.
+    if (\local_targetzenit\sharh::has_any((int) $USER->id)) {
+        $sh = navigation_node::create(
+            get_string('sh_mine', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/sharhlarim.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzsharhlarim',
+            new pix_icon('i/comment', '')
+        );
+        $sh->showinflatnavigation = true;
+        $navigation->add_node($sh);
+    }
+
     // "Mening oyligim" — chap menyuda (dashbordda ham ko'rinadi).
     //
     // NEGA SHU YERDA HAM: yuqori (primary) menyuga qo'yilgan edi, lekin Boost
@@ -167,4 +185,53 @@ function local_targetzenit_zoom_panel(string $kalit): string {
         ]);
     }
     return html_writer::div($html, 'tz-zoom', ['id' => 'tz-zoom']);
+}
+
+/**
+ * MOODLE COMMENT QUYI TIZIMI — parametr tekshiruvi.
+ *
+ * MAJBURIY: `core_comment\manager::validate()` plagin chaqiruvini standart
+ * qiymat **false** bilan so'raydi va javob `false` bo'lsa
+ * `invalidcommentparam` xatosini otadi. Ya'ni bu funksiya yozilmasa
+ * `can_post()` ning o'zi ishlamaydi.
+ *
+ * Faqat o'zimizning maydonimizga ruxsat beramiz: comment quyi tizimi
+ * umumiy, `commentarea` ni tekshirmasak begona AJAX so'rovi bizning
+ * nomimizdan yozib ketishi mumkin.
+ */
+function local_targetzenit_comment_validate(stdClass $params) {
+    if (($params->commentarea ?? '') !== \local_targetzenit\sharh::AREA) {
+        return false;
+    }
+    // `itemid` = o'quvchining user.id, kontekst esa KURS (guruh + fan).
+    if (empty($params->itemid) || empty($params->context)) {
+        return false;
+    }
+    return (int) $params->context->contextlevel === CONTEXT_COURSE;
+}
+
+/**
+ * MOODLE COMMENT QUYI TIZIMI — kim yozadi, kim o'qiydi.
+ *
+ * DIQQAT: Moodle javobni o'zining `moodle/comment:post` / `:view`
+ * ruxsatlari bilan VA amali bilan birlashtiradi. `moodle/comment:post`
+ * esa kurs kontekstida O'QUVCHIDA HAM bor (core arxetipi), shuning uchun
+ * yozishni `local/targetzenit:teach` ga qattiq bog'laymiz — aks holda
+ * o'quvchi o'zi haqida sharh yozib qo'yardi.
+ *
+ * Ko'rish: dars o'tadigan o'qituvchi, SHU o'quvchining o'zi (itemid) va
+ * butun maktabni ko'rish huquqi borlar (direktor/zavuch).
+ */
+function local_targetzenit_comment_permissions(stdClass $params) {
+    global $USER;
+
+    if (($params->commentarea ?? '') !== \local_targetzenit\sharh::AREA) {
+        return ['post' => false, 'view' => false];
+    }
+    $post = has_capability('local/targetzenit:teach', $params->context);
+    $view = $post
+        || (int) $USER->id === (int) $params->itemid
+        || has_capability('local/targetzenit:viewteachers', context_system::instance());
+
+    return ['post' => $post, 'view' => $view];
 }

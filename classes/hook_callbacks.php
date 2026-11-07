@@ -79,6 +79,21 @@ class hook_callbacks {
             'tzgrades'
         );
 
+        // "O'qituvchilar sharhi" — o'quvchining (ota-onaning) sahifasi.
+        //
+        // Shart: shu odam haqida OCHIQ sharh bor. Xodimda bunday qator
+        // bo'lmaydi, shuning uchun havola unda chiqmaydi. Baholardan KEYIN
+        // turadi: ota-ona avval bahoni ko'radi, keyin izohni o'qiydi.
+        if (sharh::has_any((int) $USER->id)) {
+            $nav->add(
+                get_string('sh_mine', 'local_targetzenit'),
+                '/local/targetzenit/sharhlarim.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzsharhlarim'
+            );
+        }
+
         // "Mening oyligim" — faqat oylik ma'lumoti BOR odamga. O'quvchi va
         // ota-onada bunday qator bo'lmaydi, shuning uchun havola ham chiqmaydi.
         if (payroll::has_any((int) $USER->id)) {

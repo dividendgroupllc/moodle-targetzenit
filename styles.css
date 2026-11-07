@@ -802,3 +802,123 @@
   padding: 5px 6px; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 12.5px;
   color: inherit; text-decoration: none; }
 .tz-mur-boshqa:hover { background: rgba(0,0,0,.04); text-decoration: none; }
+
+/* ======================================================================
+   O'QUVCHI SHARHI (sharh.php / sharhlar.php / sharhlarim.php)
+   ======================================================================
+   NEGA TOKENLAR SHU YERDA HAM: o'qituvchi va direktor sahifalari `.tz-dir`
+   qobig'i ichida yuradi va tokenlarni o'shandan oladi, lekin O'QUVCHI
+   sahifasi (`sharhlarim.php`) `standard` layoutda, `.tz-dir` dan TASHQARIDA.
+   Tokenlar faqat `.tz-dir` da e'lon qilinsa, u yerda hamma rang
+   aniqlanmagan bo'lib qolardi (`.tz-mur-*` shu sababli ranglarni qotirib
+   yozgan — bu esa qorong'i rejimda o'qilmaydi). Qiymatlar `.tz-dir`
+   bilan AYNI; ichma-ich tushganda qayta e'lon zarar qilmaydi. */
+.tz-sh {
+    --tz-brand:      var(--mds-bg-interactive-primary-default, #0f6cbf);
+    --tz-brand-soft: var(--mds-bg-feedback-primary-subtle, #e7f0f9);
+    --tz-bg:         var(--mds-bg-surface-subtle, #f8f9fa);
+    --tz-card:       var(--mds-bg-surface-default, #ffffff);
+    --tz-line:       var(--mds-border-default, #dee2e6);
+    --tz-ink:        var(--mds-text-default, #1d2125);
+    --tz-ink-2:      #6a737b;
+    --tz-good:       #0ca30c;
+    --tz-warning:    #fab219;
+    --tz-warning-bg: #fdf4de;
+    color: var(--tz-ink);
+}
+:root[data-bs-theme="dark"] .tz-sh,
+.tz-sh[data-bs-theme="dark"] {
+    --tz-brand-soft: #16304a;
+    --tz-ink-2:      #adb5bd;
+    --tz-warning-bg: #332603;
+}
+
+/* ---------------- qidiruv (sarlavha yonida) ---------------- */
+.tz-sh-search { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tz-sh-search input[type="search"] { min-width: 190px; }
+
+/* Guruh (kurs) tanlagichi — kurs ko'p bo'lsa o'rab tushadi, qisilmaydi */
+.tz-sh-tabs { flex-wrap: wrap; row-gap: 6px; }
+
+/* ---------------- o'quvchilar jadvali ---------------- */
+.tz-sh-name { font-weight: 600; color: inherit; }
+.tz-sh-table td { vertical-align: top; }
+/* Oxirgi sharh + yozish maydoni eng keng ustun: matn shu yerda o'qiladi */
+.tz-sh-lastcell { min-width: 280px; width: 55%; }
+.tz-sh-actcell { white-space: nowrap; text-align: right; }
+.tz-sh-open > td { background: var(--tz-brand-soft); }
+
+/* ---------------- katakdagi qisqa ko'rinish ---------------- */
+.tz-sh-cell { display: flex; flex-direction: column; gap: 4px; }
+.tz-sh-cmeta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    font-size: .78rem; color: var(--tz-ink-2); }
+.tz-sh-count { display: inline-flex; min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 9px; background: var(--tz-brand-soft); color: var(--tz-brand);
+    font-size: .7rem; font-weight: 700; align-items: center; justify-content: center; }
+/* Oldingi sharh KICHRAYTIRILGAN: ikki qator, keyin kesiladi.
+   To'liq matn `title` da va ochilgan kartada. */
+.tz-sh-ctext { font-size: .82rem; line-height: 1.35; color: var(--tz-ink-2);
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden; }
+.tz-sh-fulltext { font-size: .85rem; line-height: 1.45; white-space: pre-wrap;
+    max-width: 520px; }
+.tz-sh-textcell { min-width: 240px; }
+
+/* ---------------- yozish formalari ---------------- */
+.tz-sh-cform { display: flex; gap: 4px; margin: 2px 0 0; }
+.tz-sh-cform input[type="text"] { flex: 1 1 auto; min-width: 0;
+    padding: 5px 9px; border: 1px solid var(--tz-line); border-radius: 8px;
+    background: var(--tz-card); color: var(--tz-ink); font-size: .8rem; }
+.tz-sh-cform input[type="text"]:focus { outline: 2px solid var(--tz-brand);
+    outline-offset: -1px; }
+.tz-sh-csend { flex: 0 0 auto; padding: 4px 9px; border: 1px solid var(--tz-brand);
+    border-radius: 8px; background: var(--tz-brand); color: #fff;
+    font-size: .8rem; line-height: 1.2; cursor: pointer; }
+.tz-sh-csend:hover { filter: brightness(1.08); }
+
+.tz-sh-form { margin-top: 10px; }
+.tz-sh-text { width: 100%; padding: 8px 10px; border: 1px solid var(--tz-line);
+    border-radius: 10px; background: var(--tz-card); color: var(--tz-ink);
+    font-size: .88rem; line-height: 1.45; resize: vertical; }
+.tz-sh-text:focus { outline: 2px solid var(--tz-brand); outline-offset: -1px; }
+.tz-sh-tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin-top: 7px; }
+.tz-sh-check { display: inline-flex; gap: 6px; align-items: center; margin: 0;
+    font-size: .82rem; color: var(--tz-ink-2); cursor: pointer; }
+
+/* ---------------- sharh zanjiri ---------------- */
+.tz-sh-list { display: flex; flex-direction: column; gap: 2px; }
+.tz-sh-item { border-left: 3px solid var(--tz-brand); padding: 8px 0 8px 11px; }
+/* Maxfiy qayd KO'ZGA TASHLANIB turishi kerak: o'qituvchi uni o'quvchiga
+   ketadigan sharh deb o'ylab yozib qo'ymasligi uchun. */
+.tz-sh-maxfiy { border-left-color: var(--tz-warning);
+    background: var(--tz-warning-bg); border-radius: 0 8px 8px 0; }
+.tz-sh-meta { display: flex; gap: 7px; align-items: center; flex-wrap: wrap;
+    font-size: .8rem; margin-bottom: 3px; }
+.tz-sh-body { margin: 0; font-size: .9rem; line-height: 1.5; white-space: pre-wrap; }
+
+/* Ochilgan qator kartasi */
+.tz-sh-detail > td { background: var(--tz-bg); }
+.tz-sh-card { padding: 10px 12px; background: var(--tz-card);
+    border: 1px solid var(--tz-line); border-radius: 10px; max-width: 760px; }
+
+/* ---------------- o'quvchi (ota-ona) ko'rinishi ---------------- */
+/* Bir ustun, kengligi O'QISH uchun cheklangan — uzun matn ekran bo'ylab
+   cho'zilsa ko'z qatorni yo'qotadi. */
+.tz-sh-parent { max-width: 760px; margin: 0 auto; }
+.tz-sh-pblok { background: var(--tz-card); border: 1px solid var(--tz-line);
+    border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.tz-sh-psum { padding: 10px 14px; cursor: pointer; list-style: none; }
+.tz-sh-psum::-webkit-details-marker { display: none; }
+.tz-sh-pcourse { font-weight: 700; font-size: .98rem; }
+.tz-sh-pblok .tz-sh-list { padding: 4px 14px 12px; }
+
+/* Telefon: o'quvchilar jadvalidagi SON ustuni yashiriladi — oxirgi sharh
+   katagida soni baribir ko'rinadi, ya'ni ma'lumot yo'qolmaydi.
+   Direktor lentasining birorta ustuni yashirilmaydi: oltitasi ham savolga
+   javob beradi (qachon · kim · qayerda · kim haqida · nima · o'qidimi),
+   shuning uchun u `tz-dir-tablewrap` ichida gorizontal suriladi. */
+@media (max-width: 680px) {
+    .tz-sh-table th:nth-child(2), .tz-sh-table td:nth-child(2) { display: none; }
+    .tz-sh-lastcell { min-width: 180px; }
+}

@@ -509,7 +509,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         // yuritish (holat, qaror) Moodle'da — MUROJAAT_ARXITEKTURA.md.
         $table = new xmldb_table('local_targetzenit_murojaat');
         if (!$dbman->table_exists($table)) {
-            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
             $table->add_field('frappename', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null);
             $table->add_field('turi', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'Shikoyat');
             $table->add_field('kategoriya', XMLDB_TYPE_CHAR, '150', null, null, null, null);
@@ -552,7 +552,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
 
         $table = new xmldb_table('local_targetzenit_murojaat_izoh');
         if (!$dbman->table_exists($table)) {
-            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
             $table->add_field('murojaatid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
             $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
             $table->add_field('turi', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'komment');
@@ -587,7 +587,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         // Sotuv bo'limining aloqa tarixi — "kim qachon gaplashdi".
         $table = new xmldb_table('local_targetzenit_murojaat_suhbat');
         if (!$dbman->table_exists($table)) {
-            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
             $table->add_field('murojaatid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
             $table->add_field('vaqt', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
             $table->add_field('menejer', XMLDB_TYPE_CHAR, '255', null, null, null, null);
@@ -601,6 +601,87 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026110600, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026110610) {
+
+        // O'QUVCHI SHARHI — o'qituvchining o'quvchi haqidagi yozma izohi.
+        //
+        // MATN BU JADVALDA EMAS: u Moodle'ning standart `{comments}` jadvalida
+        // yotadi (`component=local_targetzenit`, `commentarea=studentreview`,
+        // `itemid` = o'quvchi `user.id`, `contextid` = kurs konteksti). Shu
+        // jadval faqat holat (o'quvchi ko'rdimi, maxfiymi) va indeksli filtr
+        // uchun — matn ikki joyda saqlansa ular bir-biridan ajralib ketadi.
+        $table = new xmldb_table('local_targetzenit_sharh');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('commentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('studentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('authorid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('visibility', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'ochiq');
+            $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'new');
+            $table->add_field('seenat', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            // `commentid` UNIQUE: bitta commentga ikki holat qatori bo'lmaydi.
+            $table->add_index('commentid', XMLDB_INDEX_UNIQUE, ['commentid']);
+            $table->add_index('student_time', XMLDB_INDEX_NOTUNIQUE, ['studentid', 'timecreated']);
+            $table->add_index('course_student', XMLDB_INDEX_NOTUNIQUE, ['courseid', 'studentid']);
+            $table->add_index('author_time', XMLDB_INDEX_NOTUNIQUE, ['authorid', 'timecreated']);
+            $table->add_index('status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110610, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026110620) {
+        global $CFG;
+
+        // NUQSON TUZATISH (2026-11-06): murojaat va sharh jadvallari yaratilganda `id`
+        // maydoniga AUTO_INCREMENT belgisi qo'yilmagan edi — `XMLDB_SEQUENCE`
+        // `add_field()` ning 6-argumenti, u esa noto'g'ri joyga berilgan edi.
+        // Oqibati: birinchi yozuv id=0 bilan tushadi, ikkinchisi "duplicate
+        // key" bilan yiqiladi, ya'ni modul birinchi murojaatdayoq ishlamaydi.
+        //
+        // Yuqoridagi yaratish bloki tuzatildi, lekin u ALLAQACHON o'tgan
+        // saytda qayta ishlamaydi (savepoint saqlangan). Shuning uchun bu
+        // yerda mavjud jadval tekshiriladi: `id` sequence bo'lmasa va jadval
+        // BO'SH bo'lsa — o'chirib, to'g'ri tuzilma bilan qayta yaratiladi.
+        // Bo'sh bo'lmasa tegilmaydi va ogohlantirish yoziladi: ma'lumotni
+        // jimgina o'chirish mumkin emas.
+        $tuzatiladi = [
+            'local_targetzenit_murojaat',
+            'local_targetzenit_murojaat_izoh',
+            'local_targetzenit_murojaat_suhbat',
+            'local_targetzenit_sharh',
+        ];
+        foreach ($tuzatiladi as $nom) {
+            $table = new xmldb_table($nom);
+            if (!$dbman->table_exists($table)) {
+                continue;       // hali yaratilmagan — to'g'ri blok yaratadi
+            }
+            $ustunlar = $DB->get_columns($nom, false);
+            if (!empty($ustunlar['id']->auto_increment)) {
+                continue;       // joyida
+            }
+            if ($DB->count_records($nom) > 0) {
+                // Ma'lumot bor — o'chirib bo'lmaydi, ma'mur qo'lda hal qiladi
+                debugging("local_targetzenit: {$nom}.id AUTO_INCREMENT emas va "
+                    . "jadvalda ma'lumot bor — qo'lda tuzatish kerak", DEBUG_DEVELOPER);
+                continue;
+            }
+            // O'chirib, `install.xml` dagi TO'G'RI tuzilma bilan tiklaymiz.
+            // Yaratish bloklari yuqorida qolgan (savepoint o'tgan), shuning
+            // uchun ularni qayta ishga tushirib bo'lmaydi — install.xml esa
+            // tuzilmaning yagona ishonchli manbai.
+            $dbman->drop_table($table);
+            $dbman->install_one_table_from_xmldb_file(
+                $CFG->dirroot . '/local/targetzenit/db/install.xml', $nom);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110620, 'local', 'targetzenit');
     }
 
     return true;

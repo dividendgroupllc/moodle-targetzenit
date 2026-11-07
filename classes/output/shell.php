@@ -106,6 +106,7 @@ class shell {
             ['reyting', $t('dir_navranks'), $u('direktor.php', ['view' => 'reyting'])],
             ['murojaat', $t('mur_nav'), $u('murojaat.php')],
             ['yozuvlar', $t('recordings'), $u('yozuvlar.php')],
+            ['sharhlar', $t('sh_navall'), $u('sharhlar.php')],
             ['oqituvchi', $t('oq_mypanel'), $u('oqituvchi.php')],
         ];
         $boshqaruv = [
@@ -148,6 +149,10 @@ class shell {
             // Boshqa odamning kartasida bu havolalar O'ZIMIZGA olib borardi —
             // chalg'ituvchi, shuning uchun faqat o'z kartasida.
             $mening[] = ['jadval', $t('timetable'), $u('index.php')];
+            // «O'quvchilar sharhi» — OYLIKDAN OLDIN (foydalanuvchi talabi
+            // 2026-11-06): oylik oyda bir ochiladi, sharh esa o'quv ishining
+            // qismi va menyuda dars narsalari yonida turishi kerak.
+            $mening[] = ['sharh', $t('sh_nav'), $u('sharh.php')];
             if (\local_targetzenit\payroll::has_any((int) $userid)) {
                 $mening[] = ['oylik', $t('mypayroll'), $u('oylik.php')];
             }

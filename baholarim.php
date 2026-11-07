@@ -93,6 +93,27 @@ echo html_writer::div(
     'mb-3'
 );
 
+// O'QITUVCHILAR SHARHI — ikkinchi, barqaror kirish nuqtasi.
+//
+// Bildirishnoma va yuqori menyu allaqachon bor, lekin ota-ona bolasining
+// holatini aynan shu sahifadan qidiradi: baho ko'ringan joyda «o'qituvchi
+// nima deb yozgan» savoli tug'iladi. O'qilmaganlar soni ko'rsatiladi —
+// havola e'tiborni o'ziga tortishi kerak.
+if (\local_targetzenit\sharh::has_any((int) $userid)) {
+    $shokilmagan = \local_targetzenit\sharh::unseen((int) $userid);
+    echo html_writer::div(
+        html_writer::link(
+            new moodle_url('/local/targetzenit/sharhlarim.php',
+                ($userid == $USER->id) ? [] : ['userid' => $userid]),
+            get_string('sh_mine', 'local_targetzenit')
+            . ($shokilmagan ? ' (' . $shokilmagan . ')' : ''),
+            ['class' => 'btn btn-sm '
+                . ($shokilmagan ? 'btn-primary' : 'btn-outline-primary') . ' mr-2'])
+        . html_writer::tag('span', get_string('sh_minehint', 'local_targetzenit'),
+            ['class' => 'text-muted small']),
+        'mb-3');
+}
+
 $fanlar = student_view::grades((int) $userid, $term->startdate, $term->enddate);
 
 if (!$fanlar) {

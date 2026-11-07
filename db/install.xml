@@ -443,5 +443,28 @@
         <INDEX NAME="murojaat_vaqt" UNIQUE="false" FIELDS="murojaatid, vaqt"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_sharh" COMMENT="O'qituvchining o'quvchi haqidagi sharhi. MATN BU YERDA SAQLANMAYDI — u Moodle'ning standart {comments} jadvalida (component=local_targetzenit, commentarea=studentreview, itemid=o'quvchi user.id, contextid=kurs konteksti). Bu jadval faqat holat va indeksli filtr uchun.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="commentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="{comments}.id — matnning yagona manbasi"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kurs = guruh + fan"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim haqida"/>
+        <FIELD NAME="authorid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim yozdi"/>
+        <FIELD NAME="visibility" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="ochiq" SEQUENCE="false" COMMENT="ochiq = o'quvchi ko'radi va bildirishnoma oladi | maxfiy = faqat xodim"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="new" SEQUENCE="false" COMMENT="new|seen — o'quvchi o'qidimi"/>
+        <FIELD NAME="seenat" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="commentid" UNIQUE="true" FIELDS="commentid"/>
+        <INDEX NAME="student_time" UNIQUE="false" FIELDS="studentid, timecreated"/>
+        <INDEX NAME="course_student" UNIQUE="false" FIELDS="courseid, studentid"/>
+        <INDEX NAME="author_time" UNIQUE="false" FIELDS="authorid, timecreated"/>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

@@ -1717,6 +1717,144 @@ S = {
         "Повторяющаяся проблема?",
     ),
 
+    # ------------------------------------------------- o'quvchi sharhi (sharh.php)
+    "sh_nav": ("Student reviews", "O'quvchilar sharhi", "Отзывы об учениках"),
+    "sh_navall": ("All student reviews", "Barcha sharhlar", "Все отзывы"),
+    "sh_mine": ("Teachers' reviews", "O'qituvchilar sharhi", "Отзывы учителей"),
+    "sh_hint": (
+        "A short written review of each student — the student and the parent see it",
+        "Har bir o'quvchi haqida qisqa yozma sharh — o'quvchi va ota-ona ko'radi",
+        "Краткий письменный отзыв о каждом ученике — его видят ученик и родитель",
+    ),
+    "sh_minehint": (
+        "What the teachers wrote about your studies",
+        "O'qituvchilar o'qishingiz haqida nima deb yozgan",
+        "Что учителя написали о вашей учёбе",
+    ),
+    "sh_allhint": (
+        "Who wrote what about which student, and whether the student has read it",
+        "Kim qaysi o'quvchiga nima deb yozdi va o'quvchi o'qidimi",
+        "Кто что написал о каком ученике и прочитал ли ученик",
+    ),
+    "sh_student": ("Student", "O'quvchi", "Ученик"),
+    "sh_students": ("Students", "O'quvchilar", "Ученики"),
+    "sh_teacher": ("Teacher", "O'qituvchi", "Учитель"),
+    "sh_teachers": ("Teachers", "O'qituvchilar", "Учителя"),
+    "sh_group": ("Group", "Guruh", "Группа"),
+    "sh_groupsubject": ("Group and subject", "Guruh va fan", "Группа и предмет"),
+    "sh_count": ("Reviews", "Sharhlar", "Отзывы"),
+    "sh_last": ("Latest review and new entry", "Oxirgi sharh va yangi yozuv",
+                "Последний отзыв и новая запись"),
+    "sh_text": ("Review", "Sharh", "Отзыв"),
+    "sh_when": ("When", "Qachon", "Когда"),
+    "sh_state": ("Status", "Holat", "Состояние"),
+    "sh_total": ("Reviews", "Sharhlar", "Отзывы"),
+    "sh_written": ("Reviewed", "Sharh yozilgan", "С отзывом"),
+    "sh_ofstudents": ("of {$a} students", "{$a} o'quvchidan", "из {$a} учеников"),
+    "sh_missing": ("Not yet reviewed", "Hali yozilmagan", "Пока без отзыва"),
+    "sh_missinghint": (
+        "No review written for these students yet",
+        "Bu o'quvchilar haqida hali sharh yo'q",
+        "Об этих учениках отзыва ещё нет",
+    ),
+    "sh_covered": ("Students covered", "Qamrab olingan o'quvchi", "Охвачено учеников"),
+    "sh_coveredhint": (
+        "Distinct students mentioned in this period",
+        "Shu davrda sharh yozilgan turli o'quvchilar",
+        "Разные ученики с отзывом за период",
+    ),
+    "sh_unseen": ("Not read yet", "O'qilmagan", "Не прочитано"),
+    "sh_unseenhint": (
+        "The student has not opened the review",
+        "O'quvchi sharhni ochmagan",
+        "Ученик не открыл отзыв",
+    ),
+    "sh_privates": ("Internal notes", "Maxfiy qaydlar", "Служебные заметки"),
+    "sh_privateshint": (
+        "Not sent to the student",
+        "O'quvchiga yuborilmaydi",
+        "Ученику не отправляются",
+    ),
+    "sh_none": ("No review yet", "Hali sharh yo'q", "Отзыва пока нет"),
+    "sh_emptyall": (
+        "No reviews match these filters",
+        "Bu filtrlarga mos sharh topilmadi",
+        "По этим фильтрам отзывов не найдено",
+    ),
+    "sh_emptymine": (
+        "No reviews from teachers yet",
+        "O'qituvchilardan hali sharh yo'q",
+        "Отзывов от учителей пока нет",
+    ),
+    "sh_nocourses": (
+        "You have no courses where you can write reviews. Reviews are written "
+        "in a course you teach — check that you are enrolled as a teacher.",
+        "Sharh yozadigan kursingiz yo'q. Sharh siz dars o'tadigan kursda "
+        "yoziladi — o'qituvchi sifatida yozilganingizni tekshirib ko'ring.",
+        "У вас нет курсов, где можно писать отзывы. Отзыв пишется в курсе, "
+        "где вы преподаёте — проверьте, записаны ли вы как учитель.",
+    ),
+    "sh_noenrolled": (
+        "No students enrolled in this course",
+        "Bu kursga o'quvchi yozilmagan",
+        "В этот курс ученики не записаны",
+    ),
+    "sh_nomatch": ("No student matches the search", "Qidiruvga mos o'quvchi yo'q",
+                   "По поиску ученик не найден"),
+    "sh_notstudent": (
+        "This person is not a student of this course",
+        "Bu odam shu kursning o'quvchisi emas",
+        "Этот человек не является учеником данного курса",
+    ),
+    "sh_about": ("Reviews about {$a}", "{$a} haqida sharhlar", "Отзывы о {$a}"),
+    "sh_countof": ("{$a} review(s)", "{$a} ta sharh", "Отзывов: {$a}"),
+    "sh_placeholder": (
+        "How is the student doing: what they manage, what to work on, what to "
+        "tell the parent",
+        "O'quvchi qanday o'qiyapti: nimani uddalaydi, nimani mustahkamlash "
+        "kerak, ota-onaga nima aytiladi",
+        "Как учится ученик: что получается, что подтянуть, что сказать родителю",
+    ),
+    "sh_addshort": ("Short review…", "Qisqa sharh…", "Короткий отзыв…"),
+    "sh_send": ("Save the review", "Sharhni saqlash", "Сохранить отзыв"),
+    "sh_saved": ("The review has been saved", "Sharh saqlandi", "Отзыв сохранён"),
+    "sh_count_title": ("Number of reviews", "Sharhlar soni", "Количество отзывов"),
+    "sh_openrow": ("Open", "Ochish", "Открыть"),
+    "sh_openfull": ("Full text", "To'liq matn", "Полный текст"),
+    "sh_close": ("Close", "Yopish", "Закрыть"),
+    "sh_search": ("Search", "Qidirish", "Искать"),
+    "sh_searchph": ("First or last name", "Ism yoki familiya", "Имя или фамилия"),
+    "sh_clear": ("Clear", "Tozalash", "Очистить"),
+    "sh_allteachers": ("All teachers", "Hamma o'qituvchi", "Все учителя"),
+    "sh_allgroups": ("All groups", "Hamma guruh", "Все группы"),
+    "sh_onlyunseen": ("Only unread", "Faqat o'qilmaganlar", "Только непрочитанные"),
+    "sh_seen": ("Read", "O'qildi", "Прочитано"),
+    "sh_notseen": ("Not read", "O'qilmagan", "Не прочитано"),
+    "sh_private": ("Internal", "Maxfiy", "Служебная"),
+    "sh_privatelab": (
+        "Internal note — the student does not see it",
+        "Maxfiy qayd — o'quvchi ko'rmaydi",
+        "Служебная заметка — ученик не видит",
+    ),
+    "sh_privatehelp": (
+        "An internal note is visible only to staff and no notification is sent. "
+        "By default a review goes to the student and the parent.",
+        "Maxfiy qaydni faqat xodim ko'radi va bildirishnoma yuborilmaydi. "
+        "Standart holda sharh o'quvchi va ota-onaga boradi.",
+        "Служебную заметку видят только сотрудники, уведомление не отправляется. "
+        "По умолчанию отзыв идёт ученику и родителю.",
+    ),
+    "sh_msgsubject": (
+        "A new teacher review: {$a}",
+        "O'qituvchidan yangi sharh: {$a}",
+        "Новый отзыв учителя: {$a}",
+    ),
+    "messageprovider:sharh": (
+        "Teacher review about a student",
+        "O'qituvchining o'quvchi haqidagi sharhi",
+        "Отзыв учителя об ученике",
+    ),
+
     "app_murojaat": ("Parent issues", "Murojaatlar", "Обращения"),
     "app_murojaatim": ("My issues", "Murojaatlarim", "Мои обращения"),
 
