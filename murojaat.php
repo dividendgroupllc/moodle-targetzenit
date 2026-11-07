@@ -89,9 +89,10 @@ $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
 $u = fn(array $p = []) => new moodle_url('/local/targetzenit/murojaat.php', $p);
 
 echo html_writer::start_div('tz-mur');
-echo html_writer::tag('h1', $t('mur_panel') . ' '
-    . html_writer::tag('span', implode(' · ', $yonalishlar), ['class' => 'tz-dir-sub']),
-    ['class' => 'tz-dir-h1']);
+echo html_writer::div(
+    html_writer::tag('h1', $t('mur_panel'))
+    . html_writer::tag('span', implode(' · ', $yonalishlar), ['class' => 'tz-mur-kim']),
+    'tz-mur-bosh');
 
 // ---- plitalar
 // DIQQAT: `tz-dir-tile` / `tz-dir-two` ISHLATILMAYDI — ular direktor
@@ -133,8 +134,8 @@ if ($kesim) {
             ['class' => 'tz-mur-kesrow']);
     }
     echo html_writer::div(
-        html_writer::div($t('mur_repeat'), 'tz-dir-cardtitle') . $qatorlar,
-        'tz-dir-card');
+        html_writer::div($t('mur_repeat'), 'tz-dir-lab') . $qatorlar,
+        'tz-mur-kesim');
 }
 
 // ---- filtr chiplari
@@ -154,10 +155,10 @@ $tanlagich = function (string $nom, string $joriy, array $variantlar, string $bo
         $opt .= html_writer::tag('option', s($yorliq), array_merge(
             ['value' => $qiymat], (string) $qiymat === $joriy ? ['selected' => 'selected'] : []));
     }
-    return html_writer::tag('select', $opt, ['name' => $nom, 'class' => 'tz-dir-chip']);
+    return html_writer::tag('select', $opt, ['name' => $nom]);
 };
 
-echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'tz-dir-filters']);
+echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'tz-mur-filtr']);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'holat', 'value' => $holat]);
 echo $tanlagich('turi', $fturi,
     array_combine(murojaat::turlar(), murojaat::turlar()), $t('mur_f_alltypes'));
@@ -169,11 +170,11 @@ foreach (murojaat::masullar() as $ms) {
 }
 echo $tanlagich('masul', $fmasul, $masullar, $t('mur_f_allowners'));
 echo html_writer::empty_tag('input', ['type' => 'search', 'name' => 'q',
-    'value' => $qidiruv, 'placeholder' => $t('mur_search'), 'class' => 'tz-dir-search']);
-echo html_writer::tag('button', $t('mur_apply'), ['type' => 'submit', 'class' => 'tz-dir-chip']);
+    'value' => $qidiruv, 'placeholder' => $t('mur_search')]);
+echo html_writer::tag('button', $t('mur_apply'), ['type' => 'submit', 'class' => 'tz-mur-btn']);
 if ($fturi || $fkat || $fmasul || $qidiruv) {
     echo html_writer::link($u(['holat' => $holat]), $t('mur_clear'),
-        ['class' => 'tz-dir-chip']);
+        ['class' => 'tz-mur-btn tz-mur-btn2']);
 }
 echo html_writer::end_tag('form');
 
@@ -232,29 +233,34 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar,
     [$mkod, $mkun] = murojaat::muddat($m);
     $qisqa = fn($v) => userdate($v, get_string('strftimedatetimeshort'));
 
-    // --- sarlavha
-    $chips = html_writer::tag('span', s($m->turi), ['class' => 'tz-mur-pill']);
-    $chips .= html_writer::tag('span', s($m->yonalish), ['class' => 'tz-mur-pill']);
-    $chips .= html_writer::tag('span', s($m->holat),
-        ['class' => 'tz-mur-pill ' . ($yopiq ? 'tz-mur-p-ok' : 'tz-mur-p-warn')]);
-    if ($m->muhimlik === 'Yuqori' && !$yopiq) {
-        $chips .= html_writer::tag('span', s($m->muhimlik), ['class' => 'tz-mur-pill tz-mur-p-bad']);
-    }
-    if (!$m->korildivaqti) {
-        $chips .= html_writer::tag('span', $t('mur_notseen'), ['class' => 'tz-mur-pill tz-mur-p-bad']);
-    }
+    // --- sarlavha yorliqlari
+    //
+    // DIZAYN QOIDASI: qatorda 3-4 tadan ortiq yorliq bo'lsa ko'z ularni
+    // o'qimay, shunchaki «rangli shovqin» deb o'tkazib yuboradi. Shuning
+    // uchun: tur + yo'nalish + holat doimiy, shoshilinchlikdan esa FAQAT
+    // BITTASI — eng muhimi (kechikish ko'rilmaganlikdan ustun, chunki
+    // kechikkan murojaat allaqachon ko'rilgan bo'lishi ham mumkin).
+    // Qolgan signal chap chekkadagi rangli chiziqda.
+    $pill = fn(string $matn, string $cls = '') => html_writer::tag('span', s($matn),
+        ['class' => 'tz-mur-pill' . ($cls ? ' ' . $cls : '')]);
+
+    $chips = $pill($m->turi) . $pill($m->yonalish);
+    $chips .= $pill($m->holat, $yopiq ? 'tz-mur-p-ok' : '');
+
     if ($mkod === 'kechikdi') {
-        $chips .= html_writer::tag('span', $t('mur_overdue', $mkun), ['class' => 'tz-mur-pill tz-mur-p-bad']);
+        $chips .= $pill($t('mur_overdue', $mkun), 'tz-mur-p-bad');
+    } else if (!$m->korildivaqti) {
+        $chips .= $pill($t('mur_notseen'), 'tz-mur-p-warn');
     } else if ($mkod === 'bugun') {
-        $chips .= html_writer::tag('span', $t('mur_duetoday'), ['class' => 'tz-mur-pill tz-mur-p-warn']);
-    } else if ($mkod === 'bor') {
-        $chips .= html_writer::tag('span', $t('mur_duein', $mkun), ['class' => 'tz-mur-pill']);
+        $chips .= $pill($t('mur_duetoday'), 'tz-mur-p-warn');
     }
-    // Mas'ul ro'yxat qatorida ko'rinsin — "kim biriktirilgan" nazoratning
-    // asosiy savoli (Frappe panelida ham shunday)
-    $chips .= html_writer::tag('span',
-        $m->masuluserid ? s($ism((int) $m->masuluserid)) : $t('mur_noowner'),
-        ['class' => 'tz-mur-pill' . ($m->masuluserid ? '' : ' tz-mur-p-warn')]);
+    if ($m->muhimlik === 'Yuqori' && !$yopiq) {
+        $chips .= $pill($m->muhimlik, 'tz-mur-p-bad');
+    }
+    // Mas'ul — nazoratning asosiy savoli, lekin bo'g'iq ko'rinishda
+    $chips .= $pill(
+        $m->masuluserid ? $ism((int) $m->masuluserid) : $t('mur_noowner'),
+        $m->masuluserid ? '' : 'tz-mur-p-warn');
 
     $sarlavha = html_writer::tag('summary',
         html_writer::div(s($m->studentname ?: $m->payername ?: '—')
@@ -356,8 +362,16 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar,
         $out .= html_writer::div($amallar, 'tz-dir-actions');
     }
 
+    // Chap chiziq — shoshilinchlik: kechikkan qizil, ko'rilmagan sariq,
+    // yopilgan yashil. Rangni butun kartaga yoyish ro'yxatni «hammasi
+    // shoshilinch» qilib ko'rsatardi.
+    $chiziq = $yopiq ? ' tz-mur-b-ok'
+        : ($mkod === 'kechikdi' ? ' tz-mur-b-bad'
+            : (!$m->korildivaqti ? ' tz-mur-b-warn' : ''));
+
     return html_writer::tag('details', $sarlavha . $out,
-        ['class' => 'tz-mur-blok'] + ((int) $ochiq === (int) $m->id ? ['open' => 'open'] : []));
+        ['class' => 'tz-mur-blok' . $chiziq]
+        + ((int) $ochiq === (int) $m->id ? ['open' => 'open'] : []));
 }
 
 /** Sotuv bo'limi bilan aloqa tarixi (Frappe'dan ko'chirilgan nusxa). */
