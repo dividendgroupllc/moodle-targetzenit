@@ -637,52 +637,131 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
     }
 
     if ($oldversion < 2026110620) {
-        global $CFG;
 
-        // NUQSON TUZATISH (2026-11-06): murojaat va sharh jadvallari yaratilganda `id`
-        // maydoniga AUTO_INCREMENT belgisi qo'yilmagan edi — `XMLDB_SEQUENCE`
-        // `add_field()` ning 6-argumenti, u esa noto'g'ri joyga berilgan edi.
-        // Oqibati: birinchi yozuv id=0 bilan tushadi, ikkinchisi "duplicate
-        // key" bilan yiqiladi, ya'ni modul birinchi murojaatdayoq ishlamaydi.
+        // NUQSON TUZATISH (2026-11-06/07): murojaat jadvallari yaratilganda
+        // `id` ga AUTO_INCREMENT belgisi qo'yilmagan edi (`XMLDB_SEQUENCE`
+        // `add_field()` ning 6-argumenti). Oqibati: birinchi yozuv id=0,
+        // ikkinchisi "duplicate key" — modul birinchi murojaatdayoq sinadi.
         //
-        // Yuqoridagi yaratish bloki tuzatildi, lekin u ALLAQACHON o'tgan
+        // Yaratish bloklari yuqorida tuzatildi, lekin ular ALLAQACHON o'tgan
         // saytda qayta ishlamaydi (savepoint saqlangan). Shuning uchun bu
-        // yerda mavjud jadval tekshiriladi: `id` sequence bo'lmasa va jadval
-        // BO'SH bo'lsa — o'chirib, to'g'ri tuzilma bilan qayta yaratiladi.
-        // Bo'sh bo'lmasa tegilmaydi va ogohlantirish yoziladi: ma'lumotni
-        // jimgina o'chirish mumkin emas.
-        $tuzatiladi = [
-            'local_targetzenit_murojaat',
-            'local_targetzenit_murojaat_izoh',
-            'local_targetzenit_murojaat_suhbat',
-            'local_targetzenit_sharh',
-        ];
-        foreach ($tuzatiladi as $nom) {
+        // yerda mavjud jadval tekshiriladi va kerak bo'lsa qayta quriladi.
+        //
+        // DIQQAT — `install_one_table_from_xmldb_file()` ISHLATILMAYDI:
+        // u BUTUN `install.xml` ni tekshiradi va fayldagi istalgan nuqson
+        // (masalan takroriy jadval nomi) yangilanishni to'xtatadi. 2026-11-07
+        // da aynan shunday bo'ldi. Ta'riflar shu yerda, inline.
+        foreach (['local_targetzenit_murojaat',
+                  'local_targetzenit_murojaat_izoh',
+                  'local_targetzenit_murojaat_suhbat'] as $nom) {
             $table = new xmldb_table($nom);
-            if (!$dbman->table_exists($table)) {
-                continue;       // hali yaratilmagan — to'g'ri blok yaratadi
+
+            if ($dbman->table_exists($table)) {
+                $ustunlar = $DB->get_columns($nom, false);
+                if (!empty($ustunlar['id']->auto_increment)) {
+                    continue;                   // joyida
+                }
+                if ($DB->count_records($nom) > 0) {
+                    // Ma'lumot bor — jimgina o'chirib bo'lmaydi
+                    debugging("local_targetzenit: {$nom}.id AUTO_INCREMENT emas "
+                        . "va jadvalda ma'lumot bor — qo'lda tuzatish kerak",
+                        DEBUG_DEVELOPER);
+                    continue;
+                }
+                $dbman->drop_table($table);
             }
-            $ustunlar = $DB->get_columns($nom, false);
-            if (!empty($ustunlar['id']->auto_increment)) {
-                continue;       // joyida
-            }
-            if ($DB->count_records($nom) > 0) {
-                // Ma'lumot bor — o'chirib bo'lmaydi, ma'mur qo'lda hal qiladi
-                debugging("local_targetzenit: {$nom}.id AUTO_INCREMENT emas va "
-                    . "jadvalda ma'lumot bor — qo'lda tuzatish kerak", DEBUG_DEVELOPER);
-                continue;
-            }
-            // O'chirib, `install.xml` dagi TO'G'RI tuzilma bilan tiklaymiz.
-            // Yaratish bloklari yuqorida qolgan (savepoint o'tgan), shuning
-            // uchun ularni qayta ishga tushirib bo'lmaydi — install.xml esa
-            // tuzilmaning yagona ishonchli manbai.
-            $dbman->drop_table($table);
-            $dbman->install_one_table_from_xmldb_file(
-                $CFG->dirroot . '/local/targetzenit/db/install.xml', $nom);
+
+            $dbman->create_table(local_targetzenit_murojaat_jadval($nom));
         }
 
         upgrade_plugin_savepoint(true, 2026110620, 'local', 'targetzenit');
     }
 
     return true;
+}
+
+/**
+ * Murojaat jadvallarining ta'rifi (yagona manba).
+ *
+ * `install.xml` bilan bir xil bo'lishi SHART: yangi o'rnatish o'sha fayldan,
+ * mavjud sayt esa shu funksiyadan quriladi.
+ *
+ * @param string $nom jadval nomi
+ * @return xmldb_table
+ */
+function local_targetzenit_murojaat_jadval(string $nom): xmldb_table {
+    $t = new xmldb_table($nom);
+
+    switch ($nom) {
+        case 'local_targetzenit_murojaat':
+            $t->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $t->add_field('frappename', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null);
+            $t->add_field('turi', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'Shikoyat');
+            $t->add_field('kategoriya', XMLDB_TYPE_CHAR, '150', null, null, null, null);
+            $t->add_field('yonalish', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'CEO');
+            $t->add_field('muhimlik', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, "O'rta");
+            $t->add_field('matn', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $t->add_field('studentuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('studentidnumber', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $t->add_field('studentname', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $t->add_field('sinf', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $t->add_field('payername', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $t->add_field('payerphone', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $t->add_field('manageruserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('manageridnumber', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $t->add_field('managername', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $t->add_field('manba', XMLDB_TYPE_CHAR, '50', null, null, null, null);
+            $t->add_field('qarzsumma', XMLDB_TYPE_NUMBER, '18, 2', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('qarzholat', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $t->add_field('qarzkechikish', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $t->add_field('suhbatvaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('ochilgan', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('slasana', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('holat', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'Yangi');
+            $t->add_field('masuluserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('korildikim', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('korildivaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('qarorturi', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $t->add_field('qaror', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $t->add_field('qarorkim', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('qarorvaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('otaonakordi', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('yopilganvaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $t->add_index('frappename', XMLDB_INDEX_UNIQUE, ['frappename']);
+            $t->add_index('yonalish_holat', XMLDB_INDEX_NOTUNIQUE, ['yonalish', 'holat']);
+            $t->add_index('studentuserid', XMLDB_INDEX_NOTUNIQUE, ['studentuserid']);
+            $t->add_index('masuluserid', XMLDB_INDEX_NOTUNIQUE, ['masuluserid']);
+            $t->add_index('timemodified', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
+            return $t;
+
+        case 'local_targetzenit_murojaat_izoh':
+            $t->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $t->add_field('murojaatid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $t->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('turi', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'komment');
+            $t->add_field('korinish', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'rahbar');
+            $t->add_field('body', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $t->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $t->add_index('murojaat_time', XMLDB_INDEX_NOTUNIQUE, ['murojaatid', 'timecreated']);
+            return $t;
+
+        case 'local_targetzenit_murojaat_suhbat':
+            $t->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $t->add_field('murojaatid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $t->add_field('vaqt', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $t->add_field('menejer', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $t->add_field('kanal', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $t->add_field('natija', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $t->add_field('suhbatnatija', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $t->add_field('izoh', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $t->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $t->add_index('murojaat_vaqt', XMLDB_INDEX_NOTUNIQUE, ['murojaatid', 'vaqt']);
+            return $t;
+    }
+
+    throw new coding_exception('Noma\'lum murojaat jadvali: ' . $nom);
 }

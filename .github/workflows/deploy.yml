@@ -34,6 +34,24 @@ jobs:
           grep -q "component = 'local_targetzenit'" version.php || { echo "::error::component nomi noto'g'ri"; exit 1; }
           grep -qE '\$plugin->version\s*=\s*[0-9]{10}' version.php || { echo "::error::version raqami YYYYMMDDXX formatida emas"; exit 1; }
 
+      - name: XMLDB fayl tekshiruvi
+        # PHP lint `install.xml` ni ko'rmaydi: XML sintaktik to'g'ri bo'lsa ham
+        # Moodle uni yuklaganda rad etishi mumkin (takroriy jadval nomi, uzun
+        # nom...). Bunda BUTUN saytning yangilanishi to'xtaydi — 2026-11-07 da
+        # shunday bo'ldi, shuning uchun to'siq qo'shildi.
+        run: python3 scripts/xmldb_check.py db/install.xml
+
+      - name: Eskirgan Moodle konstantalari
+        # `MESSAGE_DEFAULT_LOGGEDIN/LOGGEDOFF` Moodle 3.6 da olib tashlangan.
+        # PHP lint tutmaydi — xato faqat yangilanish paytida chiqadi va butun
+        # saytni to'xtatadi (2026-11-06 da ikki deploy shu sababdan yiqildi).
+        run: |
+          if grep -rn "MESSAGE_DEFAULT_LOGGEDIN\|MESSAGE_DEFAULT_LOGGEDOFF" --include="*.php" . | grep -v "^\./scripts/" | grep -v "//"; then
+            echo "::error::Eskirgan konstanta ishlatilgan — MESSAGE_DEFAULT_ENABLED ishlating"
+            exit 1
+          fi
+          echo "Eskirgan konstanta yo'q"
+
       - name: Versiya oshirilganmi (eng muhim tekshiruv)
         # Moodle plaginni FAQAT version raqami oshganda yangilaydi. Oshirilmasa
         # kod serverga tushadi-yu, Moodle eski kodni keshda ushlab qolaveradi —
