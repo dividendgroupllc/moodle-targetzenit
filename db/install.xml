@@ -384,6 +384,7 @@
         <INDEX NAME="frappename" UNIQUE="true" FIELDS="frappename"/>
         <INDEX NAME="yonalish_holat" UNIQUE="false" FIELDS="yonalish, holat"/>
         <INDEX NAME="studentuserid" UNIQUE="false" FIELDS="studentuserid"/>
+        <INDEX NAME="studentidnumber" UNIQUE="false" FIELDS="studentidnumber"/>
         <INDEX NAME="masuluserid" UNIQUE="false" FIELDS="masuluserid"/>
         <INDEX NAME="timemodified" UNIQUE="false" FIELDS="timemodified"/>
       </INDEXES>

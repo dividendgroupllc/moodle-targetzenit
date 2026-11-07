@@ -677,6 +677,21 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026110620, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026110760) {
+
+        // TEZLIK: `studentidnumber` bo'yicha qidiruv indekssiz edi —
+        // "shu o'quvchining boshqa murojaatlari" va ota-ona ko'rinishi
+        // har safar butun jadvalni o'qirdi (2026-11-07 tezlik tekshiruvi).
+        $table = new xmldb_table('local_targetzenit_murojaat');
+        $index = new xmldb_index('studentidnumber', XMLDB_INDEX_NOTUNIQUE,
+            ['studentidnumber']);
+        if ($dbman->table_exists($table) && !$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110760, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

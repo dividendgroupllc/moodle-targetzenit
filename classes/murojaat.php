@@ -504,6 +504,21 @@ class murojaat {
             ['studentuserid' => $userid], 'ochilgan DESC', '*', 0, $limit));
     }
 
+    /**
+     * Shu foydalanuvchida murojaat BORMI — faqat tekshiruv.
+     *
+     * TEZLIK: navigatsiya ilgagi HAR SAHIFADA ishlaydi. Avval shu joyda
+     * `meniki()` chaqirilardi, ya'ni har sahifada `SELECT *` bilan butun
+     * qator (TEXT maydonlar bilan birga) o'qilardi va saralanardi.
+     * `record_exists` esa indeksdan nariga o'tmaydi — Moodle sezilarli
+     * sekinlashgandi (2026-11-07 foydalanuvchi shikoyati).
+     */
+    public static function meniki_bormi(int $userid): bool {
+        global $DB;
+        return $DB->record_exists('local_targetzenit_murojaat',
+            ['studentuserid' => $userid]);
+    }
+
     /** Ota-ona javobni ko'rdi — rahbar "yetib bordimi" ni biladi. */
     public static function otaona_kordi(\stdClass $m, int $userid): void {
         global $DB;
@@ -558,6 +573,114 @@ class murojaat {
             return ['kechikdi', abs($kun)];
         }
         return $kun === 0 ? ['bugun', 0] : ['bor', $kun];
+    }
+
+    // ============================================ GURUHLAB O'QISH (tezlik)
+    //
+    // Ro'yxatda 15 murojaat bo'lsa, har biri uchun alohida so'rov yuborish
+    // 100 dan ortiq so'rov degani. Quyidagi metodlar hammasini BITTA
+    // so'rovda oladi — PostgreSQL uchun ayniqsa muhim: har so'rov alohida
+    // reja tuzilishi va tarmoq aylanishi.
+
+    /** user.id -> to'liq ism. Bitta so'rov. */
+    public static function ismlar(array $userids): array {
+        global $DB;
+
+        $userids = array_values(array_unique(array_filter(array_map('intval', $userids))));
+        if (!$userids) {
+            return [];
+        }
+        [$sql, $p] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'u');
+        $maydonlar = 'id, firstname, lastname, firstnamephonetic, lastnamephonetic, '
+            . 'middlename, alternatename, idnumber';
+        $out = [];
+        foreach ($DB->get_records_select('user', "id $sql", $p, '', $maydonlar) as $u) {
+            $out[(int) $u->id] = $u;
+        }
+        return $out;
+    }
+
+    /** murojaatid -> izohlar. Bitta so'rov + ismlar uchun yana bitta. */
+    public static function izohlar_koplab(array $ids): array {
+        global $DB;
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (!$ids) {
+            return [];
+        }
+        [$sql, $p] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'm');
+        $rows = $DB->get_records_select('local_targetzenit_murojaat_izoh',
+            "murojaatid $sql", $p, 'murojaatid, timecreated ASC');
+        $ismlar = self::ismlar(array_map(fn($r) => (int) $r->userid, $rows));
+        $tizim = get_string('mur_system', 'local_targetzenit');
+
+        $out = array_fill_keys($ids, []);
+        foreach ($rows as $r) {
+            $u = $ismlar[(int) $r->userid] ?? null;
+            $r->ism = $u ? fullname($u) : $tizim;
+            $out[(int) $r->murojaatid][] = $r;
+        }
+        return $out;
+    }
+
+    /** murojaatid -> suhbatlar. Bitta so'rov. */
+    public static function suhbatlar_koplab(array $ids): array {
+        global $DB;
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (!$ids) {
+            return [];
+        }
+        [$sql, $p] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'm');
+        $rows = $DB->get_records_select('local_targetzenit_murojaat_suhbat',
+            "murojaatid $sql", $p, 'murojaatid, vaqt DESC');
+        $out = array_fill_keys($ids, []);
+        foreach ($rows as $r) {
+            $out[(int) $r->murojaatid][] = $r;
+        }
+        return $out;
+    }
+
+    /**
+     * murojaatid -> shu o'quvchining BOSHQA murojaatlari. Bitta so'rov.
+     *
+     * Ro'yxatdagi hamma o'quvchi bo'yicha bir marta o'qiladi, keyin PHP
+     * tomonda taqsimlanadi.
+     */
+    public static function boshqalari_koplab(array $murojaatlar, int $limit = 10): array {
+        global $DB;
+
+        $studentlar = [];
+        foreach ($murojaatlar as $m) {
+            if ($m->studentidnumber) {
+                $studentlar[$m->studentidnumber] = true;
+            }
+        }
+        $out = array_fill_keys(array_map(fn($m) => (int) $m->id, $murojaatlar), []);
+        if (!$studentlar) {
+            return $out;
+        }
+        [$sql, $p] = $DB->get_in_or_equal(array_keys($studentlar), SQL_PARAMS_NAMED, 's');
+        $hammasi = $DB->get_records_select('local_targetzenit_murojaat',
+            "studentidnumber $sql", $p, 'ochilgan DESC',
+            'id, studentidnumber, turi, kategoriya, holat, qarorturi, ochilgan, matn');
+
+        foreach ($murojaatlar as $m) {
+            if (!$m->studentidnumber) {
+                continue;
+            }
+            $qator = [];
+            foreach ($hammasi as $x) {
+                if ($x->studentidnumber === $m->studentidnumber && (int) $x->id !== (int) $m->id) {
+                    $qator[] = $x;
+                    if (count($qator) >= $limit) {
+                        break;
+                    }
+                }
+            }
+            $out[(int) $m->id] = $qator;
+        }
+        return $out;
     }
 
     /** Foydalanuvchi ismi (0 bo'lsa chiziqcha). */

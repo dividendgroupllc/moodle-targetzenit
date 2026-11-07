@@ -760,7 +760,6 @@
    Direktor panelining o'z elementlari (tz-dir-*) qayta ishlatiladi —
    bu yerda faqat murojaatga xos bloklar. */
 .tz-mur { padding: 0 0 40px; }
-.tz-mur-tiles { margin-bottom: 14px; }
 
 /* Kategoriya kesimi: qaysi masala ko'p takrorlanyapti */
 .tz-mur-kesrow { display: grid; grid-template-columns: minmax(130px, 1.2fr) 2fr auto;
@@ -922,3 +921,45 @@
     .tz-sh-table th:nth-child(2), .tz-sh-table td:nth-child(2) { display: none; }
     .tz-sh-lastcell { min-width: 180px; }
 }
+
+/* ===== Murojaat paneli: O'Z ko'rsatkich va yorliqlari =====
+   DIQQAT: direktor panelining `tz-dir-tile` / `tz-dir-qchip` klasslari
+   QARZGA OLINMAYDI. Ular boshqa maqsad uchun: `tz-dir-tile` — ikki katta
+   karta (katta shrift, keng padding), `tz-dir-qchip` esa navbat qatoridagi
+   155px li USTUN. Murojaat panelida 7 ta kichik ko'rsatkich va kichkina
+   belgilar kerak — qarzga olinganda sahifa yoyilib ketgan edi
+   (2026-11-07 da prodda ko'rindi). */
+
+/* Ko'rsatkichlar: kichik kartalar qatori, joyiga qarab o'zi joylashadi */
+.tz-mur-tiles { display: grid; gap: 10px; margin-bottom: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); }
+.tz-mur-tile { background: var(--tz-card, #fff); border: 1px solid var(--tz-line, #e3e8f0);
+  border-radius: 11px; padding: 9px 12px; }
+.tz-mur-lab { font-size: .7rem; text-transform: uppercase; letter-spacing: .3px;
+  color: var(--tz-ink-2, #5d6676); font-weight: 600; }
+.tz-mur-num { font-size: 1.45rem; font-weight: 700; line-height: 1.15; margin-top: 1px; }
+.tz-mur-tile.tz-mur-warn { background: #fdf3e0; border-color: #d98f1a; }
+.tz-mur-tile.tz-mur-warn .tz-mur-num { color: #8a5a0b; }
+.tz-mur-tile.tz-mur-bad { background: #fbeae9; border-color: #d8443c; }
+.tz-mur-tile.tz-mur-bad .tz-mur-num { color: #b93129; }
+.tz-mur-tile.tz-mur-ok { background: #e9f7ee; border-color: #1f7a3d; }
+.tz-mur-tile.tz-mur-ok .tz-mur-num { color: #0b7f3f; }
+
+/* Belgilar — kichik, qator ichida yonma-yon */
+.tz-mur-pills { display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+  margin-top: 5px; }
+.tz-mur-pill { display: inline-block; padding: 1px 8px; border-radius: 999px;
+  font-size: .68rem; font-weight: 600; white-space: nowrap; line-height: 1.6;
+  background: var(--tz-card-2, #eef1f6); color: var(--tz-ink-2, #5d6676);
+  border: 1px solid var(--tz-line, #e3e8f0); }
+.tz-mur-pill.tz-mur-p-bad { background: #fbeae9; color: #b93129; border-color: #d8443c; }
+.tz-mur-pill.tz-mur-p-warn { background: #fdf3e0; color: #8a5a0b; border-color: #d98f1a; }
+.tz-mur-pill.tz-mur-p-ok { background: #e9f7ee; color: #0b7f3f; border-color: #1f7a3d; }
+
+/* Ro'yxat qatori: sarlavha ixcham, matn ikki qatorga qisqaradi */
+.tz-mur-ism { font-weight: 700; font-size: .95rem; }
+.tz-mur-qisqa { font-size: .82rem; opacity: .8; margin: 2px 0 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; }
+
+[data-theme="dark"] .tz-mur-tile, .theme-dark .tz-mur-tile { background: #1b2230; }

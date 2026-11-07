@@ -94,23 +94,26 @@ echo html_writer::tag('h1', $t('mur_panel') . ' '
     ['class' => 'tz-dir-h1']);
 
 // ---- plitalar
+// DIQQAT: `tz-dir-tile` / `tz-dir-two` ISHLATILMAYDI — ular direktor
+// panelidagi IKKI katta karta uchun (katta shrift, keng padding). Bu yerda
+// 7 ta kichik ko'rsatkich kerak, shuning uchun o'z klasslari.
 $plita = function (string $lab, $val, string $cls = '') {
     return html_writer::div(
-        html_writer::div($lab, 'tz-dir-lab') . html_writer::div($val, 'tz-dir-num'),
-        'tz-dir-tile ' . $cls);
+        html_writer::div($lab, 'tz-mur-lab') . html_writer::div($val, 'tz-mur-num'),
+        'tz-mur-tile ' . $cls);
 };
 echo html_writer::div(
     $plita($t('mur_k_open'), $stats['ochiq'])
     . $plita($t('mur_k_unseen'), $stats['korilmagan'],
-        $stats['korilmagan'] ? 'tz-dir-warning' : '')
+        $stats['korilmagan'] ? 'tz-mur-warn' : '')
     . $plita($t('mur_k_overdue'), $stats['muddati'],
-        $stats['muddati'] ? 'tz-dir-serious' : '')
+        $stats['muddati'] ? 'tz-mur-bad' : '')
     . $plita($t('mur_k_unassigned'), $stats['biriktirilmagan'],
-        $stats['biriktirilmagan'] ? 'tz-dir-warning' : '')
+        $stats['biriktirilmagan'] ? 'tz-mur-warn' : '')
     . $plita($t('mur_k_mine'), $stats['menda'])
-    . $plita($t('mur_k_closedmonth'), $stats['oyyopildi'], 'tz-dir-good')
+    . $plita($t('mur_k_closedmonth'), $stats['oyyopildi'], 'tz-mur-ok')
     . $plita($t('mur_k_avgdays'), $stats['ortkun'] . ' ' . $t('mur_days')),
-    'tz-dir-two tz-mur-tiles');
+    'tz-mur-tiles');
 
 // ---- kategoriya kesimi: bitta murojaatni yopish emas, SABABNI yo'q qilish
 if ($kesim) {
@@ -178,8 +181,22 @@ echo html_writer::end_tag('form');
 if (!$rows) {
     echo html_writer::div($t('mur_empty'), 'tz-dir-none');
 } else {
+    // TEZLIK: izohlar, suhbatlar, boshqa murojaatlar va ismlar HAMMASI
+    // oldindan, bitta-bittadan so'rov bilan olinadi. Avval har blok ichida
+    // alohida o'qilardi — 15 qatorli ro'yxat 100 dan ortiq so'rov berardi.
+    $idlar = array_map(fn($x) => (int) $x->id, $rows);
+    $oldindan = [
+        'izohlar' => murojaat::izohlar_koplab($idlar),
+        'suhbatlar' => murojaat::suhbatlar_koplab($idlar),
+        'boshqalari' => murojaat::boshqalari_koplab($rows),
+        'ismlar' => murojaat::ismlar(array_merge(
+            array_map(fn($x) => (int) $x->masuluserid, $rows),
+            array_map(fn($x) => (int) $x->korildikim, $rows),
+            array_map(fn($x) => (int) $x->qarorkim, $rows)
+        )),
+    ];
     foreach ($rows as $m) {
-        echo tz_murojaat_blok($m, $ochiq, $holatlar);
+        echo tz_murojaat_blok($m, $ochiq, $holatlar, $oldindan);
     }
 }
 
@@ -197,8 +214,18 @@ echo $OUTPUT->footer();
  *
  * Alohida funksiya (klass emas): bu CHIZISH, ma'lumot mantig'i emas.
  */
-function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
+function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar,
+                           array $oldindan = []): string {
     global $USER;
+
+    // Ism oldindan o'qilgan ro'yxatdan; bo'lmasa (yakka chaqiruv) bazadan
+    $ism = function (int $userid) use ($oldindan): string {
+        if (!$userid) {
+            return '—';
+        }
+        $u = $oldindan['ismlar'][$userid] ?? null;
+        return $u ? fullname($u) : murojaat::ism($userid);
+    };
 
     $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
     $yopiq = $m->holat === 'Yopildi';
@@ -206,35 +233,35 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
     $qisqa = fn($v) => userdate($v, get_string('strftimedatetimeshort'));
 
     // --- sarlavha
-    $chips = html_writer::tag('span', s($m->turi), ['class' => 'tz-dir-qchip']);
-    $chips .= html_writer::tag('span', s($m->yonalish), ['class' => 'tz-dir-qchip']);
+    $chips = html_writer::tag('span', s($m->turi), ['class' => 'tz-mur-pill']);
+    $chips .= html_writer::tag('span', s($m->yonalish), ['class' => 'tz-mur-pill']);
     $chips .= html_writer::tag('span', s($m->holat),
-        ['class' => 'tz-dir-qchip ' . ($yopiq ? 'tz-dir-good' : 'tz-dir-warning')]);
+        ['class' => 'tz-mur-pill ' . ($yopiq ? 'tz-mur-p-ok' : 'tz-mur-p-warn')]);
     if ($m->muhimlik === 'Yuqori' && !$yopiq) {
-        $chips .= html_writer::tag('span', s($m->muhimlik), ['class' => 'tz-dir-qchip tz-dir-serious']);
+        $chips .= html_writer::tag('span', s($m->muhimlik), ['class' => 'tz-mur-pill tz-mur-p-bad']);
     }
     if (!$m->korildivaqti) {
-        $chips .= html_writer::tag('span', $t('mur_notseen'), ['class' => 'tz-dir-qchip tz-dir-serious']);
+        $chips .= html_writer::tag('span', $t('mur_notseen'), ['class' => 'tz-mur-pill tz-mur-p-bad']);
     }
     if ($mkod === 'kechikdi') {
-        $chips .= html_writer::tag('span', $t('mur_overdue', $mkun), ['class' => 'tz-dir-qchip tz-dir-serious']);
+        $chips .= html_writer::tag('span', $t('mur_overdue', $mkun), ['class' => 'tz-mur-pill tz-mur-p-bad']);
     } else if ($mkod === 'bugun') {
-        $chips .= html_writer::tag('span', $t('mur_duetoday'), ['class' => 'tz-dir-qchip tz-dir-warning']);
+        $chips .= html_writer::tag('span', $t('mur_duetoday'), ['class' => 'tz-mur-pill tz-mur-p-warn']);
     } else if ($mkod === 'bor') {
-        $chips .= html_writer::tag('span', $t('mur_duein', $mkun), ['class' => 'tz-dir-qchip']);
+        $chips .= html_writer::tag('span', $t('mur_duein', $mkun), ['class' => 'tz-mur-pill']);
     }
     // Mas'ul ro'yxat qatorida ko'rinsin — "kim biriktirilgan" nazoratning
     // asosiy savoli (Frappe panelida ham shunday)
     $chips .= html_writer::tag('span',
-        $m->masuluserid ? s(murojaat::ism((int) $m->masuluserid)) : $t('mur_noowner'),
-        ['class' => 'tz-dir-qchip' . ($m->masuluserid ? '' : ' tz-dir-warning')]);
+        $m->masuluserid ? s($ism((int) $m->masuluserid)) : $t('mur_noowner'),
+        ['class' => 'tz-mur-pill' . ($m->masuluserid ? '' : ' tz-mur-p-warn')]);
 
     $sarlavha = html_writer::tag('summary',
         html_writer::div(s($m->studentname ?: $m->payername ?: '—')
             . ($m->sinf ? html_writer::tag('span', ' · ' . s($m->sinf), ['class' => 'tz-dir-sub']) : ''),
             'tz-mur-ism')
         . html_writer::div(s(shorten_text($m->matn, 160)), 'tz-mur-qisqa')
-        . html_writer::div($chips, 'tz-dir-chips'),
+        . html_writer::div($chips, 'tz-mur-pills'),
         ['class' => 'tz-mur-sum']);
 
     // --- ota-ona gapi
@@ -250,7 +277,7 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
         $t('mur_talked') => $m->suhbatvaqti ? $qisqa($m->suhbatvaqti) : '—',
         $t('mur_cat') => s($m->kategoriya ?: $t('mur_nocat')),
         $t('mur_source') => s($m->manba ?: '—'),
-        $t('mur_owner') => $m->masuluserid ? s(murojaat::ism((int) $m->masuluserid)) : $t('mur_noowner'),
+        $t('mur_owner') => $m->masuluserid ? s($ism((int) $m->masuluserid)) : $t('mur_noowner'),
     ];
     // Qarz — rahbar qaror qabul qilishdan oldin ko'rishi kerak: chegirma yoki
     // bo'lib to'lash haqidagi qaror oilaning qarzi bilan bog'liq
@@ -263,7 +290,7 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
         $meta[$t('mur_debt')] = html_writer::tag('span', $t('mur_nodebt'), ['class' => 'tz-dir-t-pos']);
     }
     if ($m->korildivaqti) {
-        $meta[$t('mur_seen')] = s(murojaat::ism((int) $m->korildikim)) . ' · ' . $qisqa($m->korildivaqti);
+        $meta[$t('mur_seen')] = s($ism((int) $m->korildikim)) . ' · ' . $qisqa($m->korildivaqti);
     }
     $metahtml = '';
     foreach ($meta as $lab => $val) {
@@ -282,7 +309,7 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
     if ($m->qarorturi) {
         $javob = html_writer::div($t('mur_answer') . ': ' . s($m->qarorturi), 'tz-dir-lab')
             . html_writer::div(format_text((string) $m->qaror, FORMAT_PLAIN), 'tz-mur-yechim')
-            . html_writer::div(s(murojaat::ism((int) $m->qarorkim)) . ' · '
+            . html_writer::div(s($ism((int) $m->qarorkim)) . ' · '
                 . $qisqa($m->qarorvaqti), 'tz-dir-sub')
             . html_writer::div($m->otaonakordi
                 ? $t('mur_parentseen') . ' · ' . $qisqa($m->otaonakordi)
@@ -295,7 +322,7 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
 
     // --- izohlar
     $ihtml = '';
-    foreach (murojaat::izohlar((int) $m->id) as $i) {
+    foreach (($oldindan['izohlar'][(int) $m->id] ?? murojaat::izohlar((int) $m->id)) as $i) {
         $ihtml .= html_writer::div(
             html_writer::div(s($i->ism) . ' · ' . $qisqa($i->timecreated)
                 . ' · ' . s($i->turi), 'tz-dir-sub')
@@ -308,10 +335,11 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
         'tz-mur-sec');
 
     // --- sotuv bilan aloqa tarixi: "kim qachon gaplashdi"
-    $out .= tz_murojaat_suhbatlar($m);
+    $out .= tz_murojaat_suhbatlar($m, $oldindan['suhbatlar'][(int) $m->id] ?? null);
 
     // --- shu o'quvchining boshqa murojaatlari
-    $out .= tz_murojaat_boshqalari($m, $holatlar);
+    $out .= tz_murojaat_boshqalari($m, $holatlar,
+        $oldindan['boshqalari'][(int) $m->id] ?? null);
 
     // --- qo'shimcha amallar
     if (!$yopiq) {
@@ -333,9 +361,9 @@ function tz_murojaat_blok(stdClass $m, int $ochiq, array $holatlar): string {
 }
 
 /** Sotuv bo'limi bilan aloqa tarixi (Frappe'dan ko'chirilgan nusxa). */
-function tz_murojaat_suhbatlar(stdClass $m): string {
+function tz_murojaat_suhbatlar(stdClass $m, ?array $oldindan = null): string {
     $t = fn(string $k) => get_string($k, 'local_targetzenit');
-    $rows = murojaat::suhbatlar((int) $m->id);
+    $rows = $oldindan ?? murojaat::suhbatlar((int) $m->id);
     if (!$rows) {
         return '';
     }
@@ -364,9 +392,10 @@ function tz_murojaat_suhbatlar(stdClass $m): string {
 }
 
 /** Shu o'quvchining boshqa murojaatlari — takrorlanayotgan masalami? */
-function tz_murojaat_boshqalari(stdClass $m, array $holatlar): string {
+function tz_murojaat_boshqalari(stdClass $m, array $holatlar,
+                                 ?array $oldindan = null): string {
     $t = fn(string $k) => get_string($k, 'local_targetzenit');
-    $rows = murojaat::boshqalari($m);
+    $rows = $oldindan ?? murojaat::boshqalari($m);
     if (!$rows) {
         return '';
     }
@@ -377,11 +406,11 @@ function tz_murojaat_boshqalari(stdClass $m, array $holatlar): string {
                 array_merge($holatlar, ['holat' => '', 'ochiq' => $r->id])),
             html_writer::tag('span', userdate($r->ochilgan, get_string('strftimedateshort')),
                 ['class' => 'tz-dir-sub'])
-            . html_writer::tag('span', s($r->holat), ['class' => 'tz-dir-qchip'])
+            . html_writer::tag('span', s($r->holat), ['class' => 'tz-mur-pill'])
             . html_writer::tag('span', s($r->kategoriya ?: $r->turi))
             . html_writer::tag('span', s(shorten_text($r->matn, 70)), ['class' => 'tz-dir-sub'])
             . ($r->qarorturi
-                ? html_writer::tag('span', s($r->qarorturi), ['class' => 'tz-dir-qchip tz-dir-good'])
+                ? html_writer::tag('span', s($r->qarorturi), ['class' => 'tz-mur-pill tz-mur-p-ok'])
                 : ''),
             ['class' => 'tz-mur-boshqa']);
     }

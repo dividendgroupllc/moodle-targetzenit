@@ -174,6 +174,15 @@ class push_murojaat extends external_api {
         if (!is_array($qatorlar)) {
             return;
         }
+
+        // O'ZGARMAGAN BO'LSA TEGMAYMIZ. Sinxron har 15 daqiqada ishlaydi va
+        // suhbat tarixi odatda o'zgarmaydi; har safar o'chirib qayta yozish
+        // PostgreSQL'da o'lik qatorlar to'plab, autovacuum'ni bekorga
+        // yurgizadi (2026-11-07 tezlik tekshiruvi).
+        if (self::suhbat_imzosi($qatorlar) === self::mavjud_imzo($murojaatid)) {
+            return;
+        }
+
         $DB->delete_records('local_targetzenit_murojaat_suhbat',
             ['murojaatid' => $murojaatid]);
         foreach ($qatorlar as $q) {
@@ -190,6 +199,45 @@ class push_murojaat extends external_api {
                 'izoh' => (string) ($q['izoh'] ?? ''),
             ]);
         }
+    }
+
+    /** Kelgan suhbatlar ro'yxatining imzosi (solishtirish uchun). */
+    protected static function suhbat_imzosi(array $qatorlar): string {
+        $sodda = [];
+        foreach ($qatorlar as $q) {
+            if (!is_array($q)) {
+                continue;
+            }
+            $sodda[] = [
+                (int) ($q['vaqt'] ?? 0),
+                (string) ($q['menejer'] ?? ''),
+                (string) ($q['kanal'] ?? ''),
+                (string) ($q['natija'] ?? ''),
+                (string) ($q['suhbatnatija'] ?? ''),
+                (string) ($q['izoh'] ?? ''),
+            ];
+        }
+        return md5(json_encode($sodda));
+    }
+
+    /** Bazadagi suhbatlarning o'sha formatdagi imzosi. */
+    protected static function mavjud_imzo(int $murojaatid): string {
+        global $DB;
+
+        $rows = $DB->get_records('local_targetzenit_murojaat_suhbat',
+            ['murojaatid' => $murojaatid], 'vaqt DESC');
+        $qatorlar = [];
+        foreach ($rows as $r) {
+            $qatorlar[] = [
+                'vaqt' => (int) $r->vaqt,
+                'menejer' => (string) $r->menejer,
+                'kanal' => (string) $r->kanal,
+                'natija' => (string) $r->natija,
+                'suhbatnatija' => (string) $r->suhbatnatija,
+                'izoh' => (string) $r->izoh,
+            ];
+        }
+        return self::suhbat_imzosi($qatorlar);
     }
 
     /** idnumber -> Moodle user.id. Bir nechta bo'lsa birinchisi (idnumber unique). */

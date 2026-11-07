@@ -262,7 +262,25 @@ function local_targetzenit_comment_permissions(stdClass $params) {
  * modul nuqsoni butun saytni to'xtatmasligi uchun.
  */
 function local_targetzenit_murojaat_nav(global_navigation $navigation, stdClass $user): void {
-    if (\local_targetzenit\murojaat::rahbarmi()) {
+    // TEZLIK: bu ilgak HAR SAHIFADA ishlaydi, shuning uchun natija sessiyada
+    // saqlanadi — har sahifada baza so'rovi yuborilmaydi. TTL qo'yilgan:
+    // o'quvchiga birinchi murojaat kelganda yorliq 10 daqiqada o'zi paydo
+    // bo'ladi, chiqib-kirish talab qilinmaydi. (Javob kelganda ota-ona
+    // Moodle bildirishnomasini ham oladi — u yerda to'g'ridan-to'g'ri
+    // havola bor, ya'ni yorliq kechiksa ham xabar yo'qolmaydi.)
+    global $SESSION;
+
+    $kesh = $SESSION->tz_murojaat_nav ?? null;
+    if (!is_array($kesh) || ($kesh['vaqt'] ?? 0) < time() - 600) {
+        $kesh = [
+            'vaqt' => time(),
+            'rahbar' => \local_targetzenit\murojaat::rahbarmi(),
+            'oquvchi' => \local_targetzenit\murojaat::meniki_bormi((int) $user->id),
+        ];
+        $SESSION->tz_murojaat_nav = $kesh;
+    }
+
+    if ($kesh['rahbar']) {
         $mur = navigation_node::create(
             get_string('mur_panel', 'local_targetzenit'),
             new moodle_url('/local/targetzenit/murojaat.php'),
@@ -278,7 +296,7 @@ function local_targetzenit_murojaat_nav(global_navigation $navigation, stdClass 
     // "Murojaatim" — o'quvchi (ota-ona) o'z murojaatiga javobni shu yerdan
     // ko'radi. Faqat murojaati BO'LGANLARGA: hamma o'quvchining menyusini
     // bo'sh sahifa bilan to'ldirishning ma'nosi yo'q.
-    if (\local_targetzenit\murojaat::meniki((int) $user->id, 1)) {
+    if ($kesh['oquvchi']) {
         $mm = navigation_node::create(
             get_string('mur_mine', 'local_targetzenit'),
             new moodle_url('/local/targetzenit/murojaatim.php'),

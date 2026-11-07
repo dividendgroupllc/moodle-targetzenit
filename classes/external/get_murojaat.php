@@ -48,25 +48,39 @@ class get_murojaat extends external_api {
             'timemodified > :since', ['since' => (int) $params['since']],
             'timemodified ASC', '*', 0, $limit);
 
+        // TEZLIK: ismlar va izoh sonlari GURUHLAB o'qiladi. Avval har qator
+        // uchun alohida so'rov ketardi (ism x2, idnumber, count) — 200
+        // qatorda 800 so'rov, va bu har 15 daqiqada takrorlanardi.
+        $ismlar = \local_targetzenit\murojaat::ismlar(array_merge(
+            array_map(fn($r) => (int) $r->masuluserid, $rows),
+            array_map(fn($r) => (int) $r->qarorkim, $rows)
+        ));
+        $izohsoni = self::izoh_sonlari(array_map(fn($r) => (int) $r->id, $rows));
+
+        $nom = function (int $userid) use ($ismlar): string {
+            $u = $ismlar[$userid] ?? null;
+            return $u ? fullname($u) : '—';
+        };
+
         $out = [];
         $oxirgi = (int) $params['since'];
         foreach ($rows as $r) {
             $oxirgi = max($oxirgi, (int) $r->timemodified);
+            $masul = $ismlar[(int) $r->masuluserid] ?? null;
             $out[] = [
                 'frappename' => (string) $r->frappename,
                 'holat' => (string) $r->holat,
                 'yonalish' => (string) $r->yonalish,
-                'masul' => self::idnumber_by_userid((int) $r->masuluserid),
-                'masulism' => \local_targetzenit\murojaat::ism((int) $r->masuluserid),
+                'masul' => (string) ($masul->idnumber ?? ''),
+                'masulism' => $nom((int) $r->masuluserid),
                 'korildivaqti' => (int) $r->korildivaqti,
                 'qarorturi' => (string) ($r->qarorturi ?? ''),
                 'qaror' => (string) ($r->qaror ?? ''),
-                'qarorism' => \local_targetzenit\murojaat::ism((int) $r->qarorkim),
+                'qarorism' => $nom((int) $r->qarorkim),
                 'qarorvaqti' => (int) $r->qarorvaqti,
                 'otaonakordi' => (int) $r->otaonakordi,
                 'yopilganvaqti' => (int) $r->yopilganvaqti,
-                'izohsoni' => (int) $DB->count_records('local_targetzenit_murojaat_izoh',
-                    ['murojaatid' => $r->id]),
+                'izohsoni' => $izohsoni[(int) $r->id] ?? 0,
                 'timemodified' => (int) $r->timemodified,
             ];
         }
@@ -79,13 +93,26 @@ class get_murojaat extends external_api {
         ];
     }
 
-    /** Moodle user.id -> idnumber (Frappe Employee.name). */
-    protected static function idnumber_by_userid(int $userid): string {
+    /** murojaatid -> izohlar soni. Bitta so'rov. */
+    protected static function izoh_sonlari(array $ids): array {
         global $DB;
-        if (!$userid) {
-            return '';
+
+        $ids = array_values(array_unique(array_filter($ids)));
+        if (!$ids) {
+            return [];
         }
-        return (string) ($DB->get_field('user', 'idnumber', ['id' => $userid]) ?: '');
+        [$sql, $p] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'm');
+        $out = [];
+        $rs = $DB->get_recordset_sql(
+            "SELECT murojaatid, COUNT(*) soni
+               FROM {local_targetzenit_murojaat_izoh}
+              WHERE murojaatid $sql
+           GROUP BY murojaatid", $p);
+        foreach ($rs as $r) {
+            $out[(int) $r->murojaatid] = (int) $r->soni;
+        }
+        $rs->close();
+        return $out;
     }
 
     public static function execute_returns(): external_single_structure {
