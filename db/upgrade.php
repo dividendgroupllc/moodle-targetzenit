@@ -692,6 +692,190 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026110760, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026110830) {
+
+        // O'QUV REJA (KTP) mavzulari — Frappe'dan keladi, slotlarga shu
+        // yerda biriktiriladi (dars sanalari faqat Moodle'da ma'lum).
+        $table = new xmldb_table('local_targetzenit_mavzu');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('academicyear', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('subjectkey', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('groupkey', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('chorak', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('tartib', XMLDB_TYPE_INTEGER, '5', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('bolim', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('mavzu', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $table->add_field('soat', XMLDB_TYPE_INTEGER, '3', null, XMLDB_NOTNULL, null, '1');
+            $table->add_field('darsturi', XMLDB_TYPE_CHAR, '50', null, null, null, null);
+            $table->add_field('frappereja', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('yil_fan_guruh', XMLDB_INDEX_NOTUNIQUE,
+                ['academicyear', 'subjectkey', 'groupkey']);
+            $table->add_index('tartib', XMLDB_INDEX_NOTUNIQUE,
+                ['academicyear', 'subjectkey', 'groupkey', 'chorak', 'tartib']);
+            $dbman->create_table($table);
+        }
+
+        // Slotga rejadagi mavzu. `_lesson.topic` ga YOZILMAYDI: u qator
+        // faqat o'qituvchi dars o'tgandan keyin paydo bo'ladi va «o'tildi»
+        // ma'nosini anglatadi — rejani u yerga yozish faktni buzardi.
+        $table = new xmldb_table('local_targetzenit_slot');
+        foreach ([['mavzu', XMLDB_TYPE_TEXT, null, null],
+                  ['mavzuid', XMLDB_TYPE_INTEGER, '10', '0']] as [$nom, $turi, $uzunlik, $dflt]) {
+            $field = new xmldb_field($nom, $turi, $uzunlik, null,
+                $dflt === null ? null : XMLDB_NOTNULL, null, $dflt);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026110830, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026110840) {
+
+        // ============================================ BAHOLASH (FB/BSB/CHSB)
+        // BAHOLASH_ARXITEKTURA.md — O'zbekiston nizomi bo'yicha 100 ballik
+        // chorak: FB 10 + BSB/LI 50 + CHSB 40.
+
+        // --- Summativ baholash = e-kundalikdagi jurnal ustuni
+        $table = new xmldb_table('local_targetzenit_exam');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'CHSB');
+            $table->add_field('academicyear', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('termname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('subjectkey', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('gradelevel', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('shakli', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'qogoz');
+            $table->add_field('examdate', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('starttime', XMLDB_TYPE_CHAR, '5', null, null, null, null);
+            $table->add_field('room', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+            $table->add_field('duration', XMLDB_TYPE_INTEGER, '5', null, XMLDB_NOTNULL, null, '45');
+            $table->add_field('maxscore', XMLDB_TYPE_INTEGER, '5', null, XMLDB_NOTNULL, null, '100');
+            $table->add_field('randomcount', XMLDB_TYPE_INTEGER, '5', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('qbankcmid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('qcategoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('retro', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'qoralama');
+            $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('year_term', XMLDB_INDEX_NOTUNIQUE, ['academicyear', 'termname']);
+            $table->add_index('subject_level', XMLDB_INDEX_NOTUNIQUE, ['subjectkey', 'gradelevel']);
+            $table->add_index('examdate', XMLDB_INDEX_NOTUNIQUE, ['examdate']);
+            $table->add_index('turi', XMLDB_INDEX_NOTUNIQUE, ['turi']);
+            $dbman->create_table($table);
+        }
+
+        // --- Imtihon jadvali qatori (har guruh uchun sana/vaqt/xona)
+        $table = new xmldb_table('local_targetzenit_exam_sitting');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('examid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('groupkey', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('groupname', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('examdate', XMLDB_TYPE_CHAR, '10', null, null, null, null);
+            $table->add_field('starttime', XMLDB_TYPE_CHAR, '5', null, null, null, null);
+            $table->add_field('room', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+            $table->add_field('quizcmid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'kutilmoqda');
+            $table->add_field('xato', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('timegenerated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            // Bitta baholash bitta kursga BIR MARTA tushadi
+            $table->add_index('exam_course', XMLDB_INDEX_UNIQUE, ['examid', 'courseid']);
+            $table->add_index('courseid', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+            $dbman->create_table($table);
+        }
+
+        // --- O'quvchi natijasi
+        $table = new xmldb_table('local_targetzenit_exam_result');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('examid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('sittingid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('studentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('score', XMLDB_TYPE_NUMBER, '7,2', null, null, null, null);
+            $table->add_field('holat', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'ishladi');
+            $table->add_field('retake', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('capped', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('rawscore', XMLDB_TYPE_NUMBER, '7,2', null, null, null, null);
+            $table->add_field('enteredby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('exam_student', XMLDB_INDEX_UNIQUE, ['examid', 'studentid']);
+            $table->add_index('sittingid', XMLDB_INDEX_NOTUNIQUE, ['sittingid']);
+            $table->add_index('student_course', XMLDB_INDEX_NOTUNIQUE, ['studentid', 'courseid']);
+            $dbman->create_table($table);
+        }
+
+        // --- Chorak yakuni
+        //
+        // TUZOQ (2026-10-29 da yiqilganmiz): Postgres'da qo'shma indeks
+        // chegarasi 333 belgi / 999 bayt. Tabiiy kalit (student+course+
+        // academicyear 50 + termname 255) chegaradan oshadi, shuning uchun
+        // unikal kalit `termkey` = md5 hash ustiga qo'yiladi.
+        $table = new xmldb_table('local_targetzenit_term_score');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('studentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('academicyear', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('termname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('termkey', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('fb', XMLDB_TYPE_NUMBER, '6,2', null, null, null, null);
+            $table->add_field('bsb', XMLDB_TYPE_NUMBER, '6,2', null, null, null, null);
+            $table->add_field('chsb', XMLDB_TYPE_NUMBER, '6,2', null, null, null, null);
+            $table->add_field('total', XMLDB_TYPE_INTEGER, '5', null, null, null, null);
+            $table->add_field('baho', XMLDB_TYPE_INTEGER, '2', null, null, null, null);
+            $table->add_field('parts', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+            $table->add_field('divisor', XMLDB_TYPE_INTEGER, '5', null, null, null, null);
+            $table->add_field('frozen', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('termkey', XMLDB_INDEX_UNIQUE, ['termkey']);
+            $table->add_index('course_term', XMLDB_INDEX_NOTUNIQUE, ['courseid', 'termname']);
+            $table->add_index('studentid', XMLDB_INDEX_NOTUNIQUE, ['studentid']);
+            $table->add_index('frozen', XMLDB_INDEX_NOTUNIQUE, ['frozen']);
+            $dbman->create_table($table);
+        }
+
+        // --- Baho o'zgarishlari tarixi (e-kundalik talabi: 72 soatlik oyna)
+        //
+        // NEGA HOZIR, 10-bosqichda emas: o'tgan chorakni kiritish paytidagi
+        // tuzatishlar izsiz qolmasligi kerak — tarixni keyin orqaga tiklab
+        // bo'lmaydi.
+        $table = new xmldb_table('local_targetzenit_grade_log');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, null, true);
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'fb');
+            $table->add_field('recordid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('studentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('oldvalue', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('newvalue', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('reason', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('approvedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('latehours', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('turi_record', XMLDB_INDEX_NOTUNIQUE, ['turi', 'recordid']);
+            $table->add_index('student_time', XMLDB_INDEX_NOTUNIQUE, ['studentid', 'timecreated']);
+            $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026110840, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

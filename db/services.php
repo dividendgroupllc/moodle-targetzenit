@@ -45,6 +45,16 @@ $functions = [
     // ro'yxatga qo'shilishi SHART — ilova uni to'g'ridan-to'g'ri chaqiradi.
     // `services` da `moodle_mobile_app` ko'rsatilgani uchun u servisga
     // AVTOMATIK qo'shiladi (Frappe funksiyalaridan farqi shunda).
+    // O'quv reja (KTP) mavzulari: Frappe yuboradi, Moodle dars jadvaliga
+    // biriktiradi (sanalar va bayramlar faqat Moodle'da ma'lum).
+    'local_targetzenit_push_mavzular' => [
+        'classname'   => 'local_targetzenit\\external\\push_mavzular',
+        'methodname'  => 'execute',
+        'description' => "Frappe'dan o'quv reja mavzularini qabul qiladi va darslarga biriktiradi",
+        'type'        => 'write',
+        'capabilities' => 'local/targetzenit:push',
+        'ajax'        => false,
+    ],
     'local_targetzenit_push_murojaat' => [
         'classname'   => 'local_targetzenit\\external\\push_murojaat',
         'methodname'  => 'execute',

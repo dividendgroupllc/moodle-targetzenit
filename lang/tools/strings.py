@@ -1855,6 +1855,104 @@ S = {
         "Отзыв учителя об ученике",
     ),
 
+    # ------------------------------------------- baholash (FB/BSB/LI/CHSB)
+    "targetzenit:manageexams": (
+        "Organise summative assessments (BSB / CHSB / project work)",
+        "Summativ baholashni tashkil qilish (BSB / CHSB / loyiha ishi)",
+        "Организовывать суммативное оценивание (BSB / CHSB / проектная работа)",
+    ),
+    "targetzenit:gradeexam": (
+        "Enter summative assessment scores in own course",
+        "O'z kursida summativ baholash ballini kiritish",
+        "Вводить баллы суммативного оценивания в своём курсе",
+    ),
+    "targetzenit:viewexamresults": (
+        "View summative assessment results across the school",
+        "Butun maktab bo'yicha summativ baholash natijalarini ko'rish",
+        "Просматривать результаты суммативного оценивания по всей школе",
+    ),
+
+    "bh_nav": ("Assessment", "Baholash", "Оценивание"),
+    "bh_navall": ("All assessments", "Barcha baholashlar", "Все оценивания"),
+    "bh_turi_BSB": ("BSB (unit)", "BSB (bob)", "BSB (раздел)"),
+    "bh_turi_CHSB": ("CHSB (quarter)", "CHSB (chorak)", "CHSB (четверть)"),
+    "bh_turi_LI": ("Project work", "Loyiha ishi", "Проектная работа"),
+    "bh_shakli_onlayn": ("Online", "Onlayn", "Онлайн"),
+    "bh_shakli_qogoz": ("On paper", "Qog'ozda", "На бумаге"),
+    "bh_holat_ishladi": ("Sat the test", "Ishladi", "Выполнял"),
+    "bh_holat_uzrli": ("Absent, excused", "Uzrli sababli yo'q", "Отсутствовал по уважительной причине"),
+    "bh_holat_uzrsiz": ("Absent, unexcused", "Uzrsiz yo'q", "Отсутствовал без причины"),
+    "bh_holat_chetlashtirildi": ("Removed for misconduct", "Tartibbuzarlik uchun chetlashtirildi",
+                                 "Отстранён за нарушение"),
+    "bh_holat_ozod": ("Exempt (health)", "Ozod etilgan (salomatlik)", "Освобождён (здоровье)"),
+    "bh_holat_imtiyoz": ("Exempt (olympiad/certificate)", "Imtiyoz (olimpiada/sertifikat)",
+                         "Льгота (олимпиада/сертификат)"),
+    "bh_status_qoralama": ("Draft", "Qoralama", "Черновик"),
+    "bh_status_tasdiqlangan": ("Approved", "Tasdiqlangan", "Утверждено"),
+    "bh_status_otkazildi": ("Held", "O'tkazildi", "Проведено"),
+    "bh_status_yopildi": ("Closed", "Yopildi", "Закрыто"),
+
+    "bh_baddate": (
+        "The date must be in YYYY-MM-DD format",
+        "Sana YYYY-MM-DD ko'rinishida bo'lishi kerak",
+        "Дата должна быть в формате ГГГГ-ММ-ДД",
+    ),
+    "bh_noexam": (
+        "The assessment was not found",
+        "Baholash topilmadi",
+        "Оценивание не найдено",
+    ),
+    "bh_notstudent": (
+        "This person is not a student of this course",
+        "Bu odam shu kursning o'quvchisi emas",
+        "Этот человек не является учеником данного курса",
+    ),
+    "bh_reasonrequired": (
+        "More than {$a} hours have passed since the score was entered, so a "
+        "reason for the correction is required",
+        "Ball kiritilganiga {$a} soatdan ko'p vaqt o'tgan, shuning uchun "
+        "tuzatish sababi ko'rsatilishi shart",
+        "С момента ввода балла прошло более {$a} часов, поэтому требуется "
+        "указать причину исправления",
+    ),
+    "bh_windowclosed": (
+        "The {$a}-hour correction window has closed. Only the coordinator may "
+        "correct the score now, and a reason must be given.",
+        "{$a} soatlik tuzatish oynasi yopilgan. Endi ballni faqat koordinator "
+        "tuzatadi va sabab ko'rsatilishi shart.",
+        "{$a}-часовое окно исправления закрыто. Теперь балл может исправить "
+        "только координатор, с указанием причины.",
+    ),
+    "bh_clash_subjects": (
+        "{$a->soni} subjects have assessments on this day for this class — the "
+        "limit is {$a->chegara}",
+        "Shu sinfda shu kunda {$a->soni} fandan baholash bor — chegara {$a->chegara}",
+        "В этом классе в этот день оценивание по {$a->soni} предметам — предел {$a->chegara}",
+    ),
+    "bh_clash_hours": (
+        "Total assessment time on this day is {$a->daqiqa} minutes — the limit "
+        "is {$a->chegara}",
+        "Shu kundagi baholashlarning umumiy vaqti {$a->daqiqa} daqiqa — chegara "
+        "{$a->chegara} daqiqa",
+        "Общее время оцениваний в этот день {$a->daqiqa} минут — предел {$a->chegara}",
+    ),
+    "bh_clash_lesson": (
+        "Overlaps with a lesson: {$a->dars}. {$a->fan} at {$a->vaqt}",
+        "Dars bilan ustma-ust tushadi: {$a->dars}-dars · {$a->fan} · {$a->vaqt}",
+        "Накладывается на урок: {$a->dars}-й урок · {$a->fan} · {$a->vaqt}",
+    ),
+    "bh_capped": (
+        "Capped at 30% under the regulation",
+        "Nizom bo'yicha 30% bilan chegaralangan",
+        "Ограничено 30% согласно положению",
+    ),
+    "bh_parts_hint": (
+        "Counted: {$a}",
+        "Hisobga olindi: {$a}",
+        "Учтено: {$a}",
+    ),
+    "bh_frozen": ("The quarter is closed", "Chorak yopilgan", "Четверть закрыта"),
+
     "app_murojaat": ("Parent issues", "Murojaatlar", "Обращения"),
     "app_murojaatim": ("My issues", "Murojaatlarim", "Мои обращения"),
 

@@ -207,6 +207,8 @@
         <FIELD NAME="starttime" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="endtime" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="room" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="mavzu" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="O'quv rejadagi (KTP) mavzu — Frappe'dan kelgan reja slotlarga ketma-ket biriktiriladi"/>
+        <FIELD NAME="mavzuid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="_mavzu.id — qaysi reja qatoridan"/>
         <FIELD NAME="frozen" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 = o'tmish, qayta qurilmaydi"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
@@ -445,6 +447,162 @@
         <INDEX NAME="course_student" UNIQUE="false" FIELDS="courseid, studentid"/>
         <INDEX NAME="author_time" UNIQUE="false" FIELDS="authorid, timecreated"/>
         <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_mavzu" COMMENT="O'quv reja (KTP) mavzulari — Frappe'dan keladi. Slotga biriktirish SHU YERDA (Moodle) bajariladi: dars sanalari, bayramlar va jadval o'zgarishi faqat Moodle'da ma'lum.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="subjectkey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Frappe Course nomi"/>
+        <FIELD NAME="groupkey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Frappe Student Group nomi"/>
+        <FIELD NAME="chorak" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1..4; 0 = butun yil"/>
+        <FIELD NAME="tartib" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="bolim" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="mavzu" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="soat" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Mavzu necha darsga mo'ljallangan"/>
+        <FIELD NAME="darsturi" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="frappereja" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Frappe Oquv Reja.name"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="yil_fan_guruh" UNIQUE="false" FIELDS="academicyear, subjectkey, groupkey"/>
+        <INDEX NAME="tartib" UNIQUE="false" FIELDS="academicyear, subjectkey, groupkey, chorak, tartib"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_exam" COMMENT="Summativ baholash = e-kundalikdagi JURNAL USTUNI (ish turi + sana + maksimal ball). BAHOLASH_ARXITEKTURA.md.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="CHSB" SEQUENCE="false" COMMENT="BSB | CHSB | LI (loyiha ishi)"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="termname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="1-chorak"/>
+        <FIELD NAME="subjectkey" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="kurs idnumber'ining 3-bo'lagi"/>
+        <FIELD NAME="gradelevel" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="sinf darajasi: 7 (guruh '7 A' ning raqamli qismi)"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="shakli" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="qogoz" SEQUENCE="false" COMMENT="onlayn | qogoz"/>
+        <FIELD NAME="examdate" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="YYYY-MM-DD — STANDART, sitting qayta yozishi mumkin"/>
+        <FIELD NAME="starttime" TYPE="char" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="HH:MM — STANDART"/>
+        <FIELD NAME="room" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="STANDART xona"/>
+        <FIELD NAME="duration" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="45" SEQUENCE="false" COMMENT="daqiqa"/>
+        <FIELD NAME="maxscore" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="100" SEQUENCE="false"/>
+        <FIELD NAME="randomcount" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 = hamma savol; &gt;0 = bankdan shuncha tasodifiy savol"/>
+        <FIELD NAME="qbankcmid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="qcategoryid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="retro" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 = o'tgan davr uchun kiritilgan: quiz yaratilmaydi, bildirishnoma yo'q"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="qoralama" SEQUENCE="false" COMMENT="qoralama | tasdiqlangan | otkazildi | yopildi"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="year_term" UNIQUE="false" FIELDS="academicyear, termname"/>
+        <INDEX NAME="subject_level" UNIQUE="false" FIELDS="subjectkey, gradelevel"/>
+        <INDEX NAME="examdate" UNIQUE="false" FIELDS="examdate"/>
+        <INDEX NAME="turi" UNIQUE="false" FIELDS="turi"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_exam_sitting" COMMENT="Imtihon JADVALI qatori: har guruh/kurs uchun sana, vaqt, xona. NULL = baholashdan meros oladi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="examid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="groupkey" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="examdate" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="NULL = baholashdan meros"/>
+        <FIELD NAME="starttime" TYPE="char" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="NULL = meros"/>
+        <FIELD NAME="room" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="NULL = meros"/>
+        <FIELD NAME="quizcmid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="onlayn bo'lsa yaratilgan quiz; qog'ozda NULL"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="kutilmoqda" SEQUENCE="false" COMMENT="kutilmoqda | otkazildi | yopildi | xato"/>
+        <FIELD NAME="xato" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="quiz yaratilmasa sababi"/>
+        <FIELD NAME="timegenerated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="exam_course" UNIQUE="true" FIELDS="examid, courseid"/>
+        <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_exam_result" COMMENT="O'quvchining summativ natijasi. Onlayn: vazifa Moodle quiz'dan yig'adi. Qog'oz: qo'lda kiritiladi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="examid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sittingid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="score" TYPE="number" LENGTH="7" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="NULL = hali kiritilmagan"/>
+        <FIELD NAME="holat" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="ishladi" SEQUENCE="false" COMMENT="ishladi | uzrli | uzrsiz | chetlashtirildi | ozod | imtiyoz"/>
+        <FIELD NAME="retake" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="capped" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 = nizomdagi 30% chegarasi qo'llanildi"/>
+        <FIELD NAME="rawscore" TYPE="number" LENGTH="7" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="chegaralashdan OLDINGI ball — dalil"/>
+        <FIELD NAME="enteredby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="exam_student" UNIQUE="true" FIELDS="examid, studentid"/>
+        <INDEX NAME="sittingid" UNIQUE="false" FIELDS="sittingid"/>
+        <INDEX NAME="student_course" UNIQUE="false" FIELDS="studentid, courseid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_term_score" COMMENT="Chorak yakuni: FB + BSB/LI + CHSB -> 0..100 -> baho. HISOBLANADI, lekin SAQLANADI va yopilgach frozen=1 (aks holda o'tgan chorak bahosi o'zgarib ketadi).">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="academicyear" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="termname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="termkey" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false" COMMENT="md5(student|course|yil|chorak) — CHAR ustunlar uzun, Postgres indeks chegarasi"/>
+        <FIELD NAME="fb" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="0..10, NULL = kundalik baho yo'q"/>
+        <FIELD NAME="bsb" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="0..50 (BSB + LI birgalikda)"/>
+        <FIELD NAME="chsb" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="0..40"/>
+        <FIELD NAME="total" TYPE="int" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="0..100"/>
+        <FIELD NAME="baho" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false" COMMENT="2 | 3 | 4 | 5"/>
+        <FIELD NAME="parts" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="hisobga olingan qismlar: fb,bsb,chsb — vazn qayta taqsimlangani KO'RINIB turishi shart"/>
+        <FIELD NAME="divisor" TYPE="int" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="bo'luvchi: 100 | 90 | 40 ... — tekshiruv va tushuntirish uchun"/>
+        <FIELD NAME="frozen" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="termkey" UNIQUE="true" FIELDS="termkey"/>
+        <INDEX NAME="course_term" UNIQUE="false" FIELDS="courseid, termname"/>
+        <INDEX NAME="studentid" UNIQUE="false" FIELDS="studentid"/>
+        <INDEX NAME="frozen" UNIQUE="false" FIELDS="frozen"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_grade_log" COMMENT="Baho o'zgarishlari tarixi — e-kundalikning «O'zgarishlar tarixi» talabi (72 soatlik oyna). O'CHIRILMAYDI: bu dalil.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="fb" SEQUENCE="false" COMMENT="fb (kundalik) | summativ"/>
+        <FIELD NAME="recordid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="_record.id yoki _exam_result.id"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="oldvalue" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="newvalue" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="kim o'zgartirdi"/>
+        <FIELD NAME="reason" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="72 soatdan keyin MAJBURIY"/>
+        <FIELD NAME="approvedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="72 soatdan keyingi tuzatishni kim tasdiqladi (0 = kerak emas)"/>
+        <FIELD NAME="latehours" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="birinchi kiritishdan necha soat o'tgan"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="turi_record" UNIQUE="false" FIELDS="turi, recordid"/>
+        <INDEX NAME="student_time" UNIQUE="false" FIELDS="studentid, timecreated"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

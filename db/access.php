@@ -101,4 +101,45 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [],
     ],
+
+    // ================================================ BAHOLASH (FB/BSB/CHSB)
+    // BAHOLASH_ARXITEKTURA.md 4.2-bo'lim.
+
+    // O'quv koordinatori: baholash yaratish, savol yuklash, sitting
+    // generatsiyasi, CHSB ballini kiritish va tasdiqlash.
+    //
+    // `archetypes` ATAYLAB BO'SH: rol `cli/koordinator_rol.php` bilan
+    // yaratiladi. Agar `manager` ga bog'lasak, direktor ham koordinator
+    // ishini qila olardi va rollarni ajratishning ma'nosi qolmasdi.
+    'local/targetzenit:manageexams' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'riskbitmask' => RISK_DATALOSS,
+        'archetypes' => [],
+    ],
+
+    // Summativ ball kiritish — KURS kontekstida.
+    //
+    // NEGA KURS: nizom bo'yicha BSB ni FAN O'QITUVCHISI tekshiradi va
+    // natijani bir hafta ichida jurnalga qo'yadi. O'qituvchi faqat O'Z
+    // kursida ball kiritishi kerak, shuning uchun tizim konteksti yaramaydi.
+    // Koordinator bu ruxsatni `manageexams` orqali oladi (kod ikkisini ham
+    // qabul qiladi).
+    'local/targetzenit:gradeexam' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    // Butun maktab bo'yicha baholash natijalari va tahlili — koordinator,
+    // direktor va zavuch.
+    'local/targetzenit:viewexamresults' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['manager' => CAP_ALLOW],
+    ],
 ];
