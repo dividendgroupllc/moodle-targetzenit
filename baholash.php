@@ -16,6 +16,7 @@
 require(__DIR__ . '/../../config.php');
 
 use local_targetzenit\exam;
+use local_targetzenit\output\ballsetka;
 use local_targetzenit\output\shell;
 use local_targetzenit\output\ui;
 use local_targetzenit\timetable;
@@ -30,8 +31,9 @@ $id = optional_param('id', 0, PARAM_INT);
 $chorak = optional_param('chorak', '', PARAM_TEXT);
 $turi = optional_param('turi', '', PARAM_ALPHA);
 $fan = optional_param('fan', '', PARAM_TEXT);
+$sitting = optional_param('sitting', 0, PARAM_INT);
 
-if (!in_array($view, ['royxat', 'yangi', 'jadval'], true)) {
+if (!in_array($view, ['royxat', 'yangi', 'jadval', 'ball'], true)) {
     $view = 'royxat';
 }
 
@@ -122,6 +124,18 @@ if ($amal !== '' && confirm_sesskey()) {
         }
         redirect($url(['view' => 'jadval', 'id' => $id]),
             $t('bh_saved'), null, \core\output\notification::NOTIFY_SUCCESS);
+    }
+
+    if ($amal === 'ball') {
+        // Ruxsat `exam::result_save()` ichida tekshiriladi (koordinator yoki
+        // shu kursning o'qituvchisi) — bitta joyda.
+        $n = ballsetka::handle();
+        if ($n) {
+            redirect(new moodle_url('/local/targetzenit/baholash.php',
+                ['view' => 'ball', 'sitting' => optional_param('sitting', 0, PARAM_INT)]),
+                $t('bh_scoressaved', (object) $n), null,
+                \core\output\notification::NOTIFY_SUCCESS);
+        }
     }
 
     if ($amal === 'status' && $id) {
@@ -396,6 +410,7 @@ if ($view === 'jadval') {
         foreach (['bh_group', 'bh_date', 'bh_time', 'bh_room', 'bh_status'] as $k) {
             echo html_writer::tag('th', $t($k));
         }
+        echo html_writer::tag('th', $t('bh_scores'));
         echo html_writer::end_tag('tr') . html_writer::end_tag('thead');
         echo html_writer::start_tag('tbody');
 
@@ -438,6 +453,16 @@ if ($view === 'jadval') {
                     . ($q['starttime'] ? ' · ' . s($q['starttime']) : '')
                     . ($q['room'] ? ' · ' . s($q['room']) : ''), 'tz-dir-sub')
                 . ($s->xato ? html_writer::div(s($s->xato), 'tz-dir-sub') : ''));
+
+            // Ball kiritish — HAVOLA, forma ichidagi tugma emas: tugma
+            // bosilganda jadval formasi yuborilib ketardi.
+            echo html_writer::tag('td', html_writer::link(
+                new moodle_url('/local/targetzenit/baholash.php',
+                    ['view' => 'ball', 'sitting' => (int) $s->id]),
+                $t('bh_enterscores'),
+                ['class' => 'btn btn-sm btn-outline-primary']),
+                ['class' => 'tz-bh-actcell']);
+
             echo html_writer::end_tag('tr');
         }
         echo html_writer::end_tag('tbody') . html_writer::end_tag('table');
@@ -457,6 +482,32 @@ if ($view === 'jadval') {
         $t('bh_refreshgroups'), ['class' => 'btn btn-sm btn-outline-secondary'])
         . ' ' . html_writer::tag('span', $t('bh_refreshhint'),
             ['class' => 'tz-dir-sub']), 'mt-4');
+}
+
+// ========================================================= BALL SETKASI
+if ($view === 'ball') {
+    $sit = $sitting ? exam::sitting($sitting) : null;
+    if (!$sit) {
+        echo $OUTPUT->notification($t('bh_noexam'), 'warn');
+        echo html_writer::end_div();
+        shell::end();
+        echo $OUTPUT->footer();
+        exit;
+    }
+
+    echo html_writer::div(
+        html_writer::link($url(['view' => 'jadval', 'id' => (int) $sit->examid]),
+            '← ' . $t('bh_timetableback'),
+            ['class' => 'btn btn-sm btn-outline-secondary']), 'mb-2');
+
+    if ((int) $sit->retro === 1) {
+        echo $OUTPUT->notification($t('bh_retronotice'), 'info');
+    }
+
+    // Chizuvchi YAGONA: o'qituvchi sahifasi ham shu metodni chaqiradi
+    // (keyingi bosqich), faqat qamrovi o'z kursi bilan cheklanadi.
+    echo ballsetka::render($sit,
+        (new moodle_url('/local/targetzenit/baholash.php'))->out(false), true);
 }
 
 echo html_writer::end_div();   // .tz-bh

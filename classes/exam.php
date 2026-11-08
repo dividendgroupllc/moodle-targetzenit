@@ -421,6 +421,46 @@ class exam {
         return $out;
     }
 
+    /**
+     * BITTA sitting + o'zining baholashi.
+     *
+     * Ball kiritish ekrani ikkisini ham talab qiladi (maksimal ball, turi,
+     * shakli baholashda; guruh va kurs sittingda), shuning uchun bitta
+     * so'rovda olinadi.
+     */
+    public static function sitting(int $sittingid): ?\stdClass {
+        global $DB;
+
+        $r = $DB->get_record_sql("
+            SELECT s.*, e.turi, e.name AS examname, e.shakli, e.maxscore,
+                   e.duration, e.termname, e.academicyear, e.subjectkey,
+                   e.retro, e.status AS examstatus,
+                   e.examdate AS e_examdate, e.starttime AS e_starttime,
+                   e.room AS e_room,
+                   c.fullname AS coursename, c.idnumber AS courseidnumber
+              FROM {local_targetzenit_exam_sitting} s
+              JOIN {local_targetzenit_exam} e ON e.id = s.examid
+         LEFT JOIN {course} c ON c.id = s.courseid
+             WHERE s.id = :id", ['id' => $sittingid]);
+
+        return $r ?: null;
+    }
+
+    /**
+     * `sitting()` qaytargan yassi qatordan `qachon()` uchun ikki obyekt.
+     *
+     * NEGA: `qachon()` baholash va sittingni alohida kutadi, `sitting()` esa
+     * ikkisini bitta qatorga qo'shib beradi. Qayta ajratish shu yerda,
+     * chaqiruvchida takrorlanmasin.
+     */
+    public static function qachon_flat(\stdClass $r): array {
+        return self::qachon(
+            (object) ['examdate' => $r->e_examdate, 'starttime' => $r->e_starttime,
+                      'room' => $r->e_room, 'duration' => $r->duration],
+            (object) ['examdate' => $r->examdate, 'starttime' => $r->starttime,
+                      'room' => $r->room]);
+    }
+
     /** Baholashning sittinglari (imtihon jadvali qatorlari). */
     public static function sittings(int $examid): array {
         global $DB;

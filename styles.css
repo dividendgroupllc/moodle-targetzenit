@@ -1088,3 +1088,30 @@
     padding: 4px 7px; border: 1px solid var(--tz-line); border-radius: 7px;
     background: var(--tz-card); color: var(--tz-ink); font-size: .82rem; }
 .tz-bh-sit input:focus { outline: 2px solid var(--tz-brand); outline-offset: -1px; }
+
+/* --- ball kiritish setkasi (output/ballsetka.php) */
+.tz-bh-grid-t td { vertical-align: middle; }
+/* Ball maydoni TOR: 0-100 uchun keng input ko'zni chalg'itadi va
+   setkani cho'zib yuboradi. */
+.tz-bh-score { width: 86px; padding: 5px 8px; border: 1px solid var(--tz-line);
+    border-radius: 7px; background: var(--tz-card); color: var(--tz-ink);
+    font-size: .9rem; font-variant-numeric: tabular-nums; text-align: right; }
+.tz-bh-score:focus { outline: 2px solid var(--tz-brand); outline-offset: -1px; }
+.tz-bh-state { max-width: 190px; }
+.tz-bh-actcell { white-space: nowrap; text-align: right; }
+
+/* Sabab maydoni: oddiy holatda xotirjam, 72 soat o'tgan bo'lsa KO'ZGA
+   TASHLANADI — aks holda saqlash yiqilganda sababi ko'rinmaydi. */
+.tz-bh-reason { margin-top: 16px; padding: 11px 14px; border-radius: 10px;
+    background: var(--tz-bg); border: 1px solid var(--tz-line); }
+.tz-bh-reason-on { background: var(--tz-warning-bg);
+    border-color: var(--tz-warning); border-left-width: 4px; }
+.tz-bh-reason input[type="text"] { width: 100%; max-width: 620px;
+    padding: 6px 9px; border: 1px solid var(--tz-line); border-radius: 8px;
+    background: var(--tz-card); color: var(--tz-ink); font-size: .9rem; }
+
+/* Chorak bahosi chipi — nizomdagi to'rt band */
+.tz-bh-baho-5 { background: var(--tz-good-bg); color: var(--tz-good); }
+.tz-bh-baho-4 { background: var(--tz-brand-soft); color: var(--tz-brand); }
+.tz-bh-baho-3 { background: var(--tz-warning-bg); color: var(--tz-warning); }
+.tz-bh-baho-2 { background: var(--tz-critical-bg); color: var(--tz-critical); }

@@ -2111,6 +2111,93 @@ S = {
     "bh_sit_yopildi": ("Closed", "Yopildi", "Закрыто"),
     "bh_sit_xato": ("Error", "Xato", "Ошибка"),
 
+    # --- ball kiritish setkasi (output/ballsetka.php)
+    "bh_student": ("Student", "O'quvchi", "Ученик"),
+    "bh_students": ("Students", "O'quvchilar", "Ученики"),
+    "bh_score": ("Score", "Ball", "Балл"),
+    "bh_state": ("Status", "Holat", "Статус"),
+    "bh_retake": ("Retake", "Qayta topshirish", "Повторная сдача"),
+    "bh_counted": ("Counted score", "Hisoblangan ball", "Зачтённый балл"),
+    "bh_termscore": ("Quarter score", "Chorak bali", "Балл за четверть"),
+    "bh_entered": ("Entered", "Kiritilgan", "Введено"),
+    "bh_ofstudents": ("of {$a} students", "{$a} o'quvchidan", "из {$a} учеников"),
+    "bh_missing": ("Still missing", "Qolgan", "Осталось"),
+    "bh_missinghint": (
+        "No score entered for these students yet",
+        "Bu o'quvchilarga hali ball qo'yilmagan",
+        "Этим ученикам балл ещё не выставлен",
+    ),
+    "bh_nostudents": (
+        "No students are enrolled in this course",
+        "Bu kursga o'quvchi yozilmagan",
+        "В этот курс ученики не записаны",
+    ),
+    "bh_nocourse": (
+        "The course of this sitting was not found",
+        "Bu o'tkazilishning kursi topilmadi",
+        "Курс этого проведения не найден",
+    ),
+    "bh_enterscores": ("Enter scores", "Ball kiritish", "Ввести баллы"),
+    "bh_savescores": ("Save the scores", "Ballarni saqlash", "Сохранить баллы"),
+    "bh_savehint": (
+        "Only the rows you changed are saved",
+        "Faqat o'zgartirilgan qatorlar saqlanadi",
+        "Сохраняются только изменённые строки",
+    ),
+    "bh_scoressaved": (
+        "{$a->saqlandi} scores saved, {$a->chorak} quarter results recalculated",
+        "{$a->saqlandi} ball saqlandi, {$a->chorak} chorak natijasi qayta hisoblandi",
+        "Сохранено баллов: {$a->saqlandi}, пересчитано итогов четверти: {$a->chorak}",
+    ),
+    "bh_timetableback": ("Back to the timetable", "Jadvalga qaytish", "К расписанию"),
+    "bh_cappedhint": (
+        "Under the regulation the score after a retake may not exceed {$a}",
+        "Nizom bo'yicha qayta topshirishdagi ball {$a} dan oshmaydi",
+        "Согласно положению балл при повторной сдаче не превышает {$a}",
+    ),
+    "bh_late": (
+        "Corrected after the window",
+        "Oynadan keyin tuzatilgan",
+        "Исправлено после окна",
+    ),
+    "bh_changes": (
+        "{$a} changes",
+        "{$a} marta o'zgargan",
+        "Изменений: {$a}",
+    ),
+    "bh_reason": ("Reason for the correction", "Tuzatish sababi", "Причина исправления"),
+    "bh_reasonph": (
+        "For example: the paper was re-marked by the working group",
+        "Masalan: ish ishchi guruh tomonidan qayta tekshirildi",
+        "Например: работа перепроверена рабочей группой",
+    ),
+    "bh_reasonneeded": (
+        "REQUIRED: more than {$a} hours have passed since some scores were "
+        "entered, so the correction must be explained",
+        "SHART: ba'zi ballar kiritilganiga {$a} soatdan ko'p vaqt o'tgan, "
+        "shuning uchun tuzatish izohlanishi kerak",
+        "ОБЯЗАТЕЛЬНО: с момента ввода некоторых баллов прошло более {$a} "
+        "часов, поэтому исправление нужно пояснить",
+    ),
+    "bh_reasonopt": (
+        "Optional. It becomes required once {$a} hours have passed since the "
+        "score was entered.",
+        "Ixtiyoriy. Ball kiritilganiga {$a} soat o'tgach majburiy bo'ladi.",
+        "Необязательно. Становится обязательным через {$a} часов после ввода.",
+    ),
+    "bh_onlinewarn": (
+        "This is an online test: scores are collected from Moodle "
+        "automatically. A score entered by hand may be overwritten by the "
+        "next collection run.",
+        "Bu onlayn test: ballar Moodle'dan avtomatik yig'iladi. Qo'lda "
+        "kiritilgan ball keyingi yig'ishda ustiga yozilishi mumkin.",
+        "Это онлайн-тест: баллы собираются из Moodle автоматически. "
+        "Введённый вручную балл может быть перезаписан при сборе.",
+    ),
+    "bh_part_fb": ("formative", "formativ", "формативное"),
+    "bh_part_bsb": ("BSB and projects", "BSB va loyihalar", "BSB и проекты"),
+    "bh_part_chsb": ("CHSB", "CHSB", "CHSB"),
+
     "app_murojaat": ("Parent issues", "Murojaatlar", "Обращения"),
     "app_murojaatim": ("My issues", "Murojaatlarim", "Мои обращения"),
 
