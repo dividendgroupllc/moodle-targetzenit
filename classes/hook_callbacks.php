@@ -40,6 +40,30 @@ class hook_callbacks {
             );
         }
 
+        // "OTA-ONA MUROJAATLARI" — CEO, direktor va zavuch uchun.
+        //
+        // NEGA YUQORI MENYU (chap menyu emas): CEO direktor paneliga kira
+        // olmaydi (`viewteachers` unda yo'q), ya'ni panelning yon
+        // menyusidagi havola unga yetmaydi. `lib.php` dagi
+        // `extend_navigation` nusxasi esa CHAP menyuga tushadi va Boost uni
+        // Dashboard sahifasida umuman ko'rsatmaydi — direktor bilan
+        // 2026-10-29 da aynan shu bo'lgan, CEO bilan 2026-11-07 da
+        // takrorlandi. Yuqori menyu har sahifada turadi.
+        //
+        // NEGA DIREKTOR PANELIDAN KEYIN: rahbar uchun kundalik kirish
+        // nuqtasi panel, murojaatlar esa kuniga bir-ikki marta ochiladi.
+        // Boost sig'magan elementni "More" ichiga yashiradi, shuning uchun
+        // tartib muhim.
+        if (murojaat::rahbarmi()) {
+            $nav->add(
+                get_string('mur_panel', 'local_targetzenit'),
+                '/local/targetzenit/murojaat.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzmurojaat'
+            );
+        }
+
         // "MENING DARSLARIM" — o'qituvchining kundalik kirish nuqtasi.
         //
         // NEGA YUQORIDA: `lib.php` dagi `extend_navigation` nusxasi CHAP
@@ -91,6 +115,19 @@ class hook_callbacks {
                 \navigation_node::TYPE_CUSTOM,
                 null,
                 'tzsharhlarim'
+            );
+        }
+
+        // "MUROJAATIM" — ota-ona (o'quvchi akkaunti) javobni shu yerdan
+        // ko'radi. Faqat murojaati BOR odamga: xodimda ham, murojaat
+        // qilmagan oilada ham bunday qator bo'lmaydi.
+        if (murojaat::meniki_bormi((int) $USER->id)) {
+            $nav->add(
+                get_string('mur_mine', 'local_targetzenit'),
+                '/local/targetzenit/murojaatim.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzmurojaatim'
             );
         }
 
