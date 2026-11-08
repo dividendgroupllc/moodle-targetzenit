@@ -125,6 +125,32 @@ class shell {
     }
 
     /**
+     * MUROJAAT menyusi.
+     *
+     * NEGA ALOHIDA: CEO direktor paneliga kira olmaydi (`viewteachers`
+     * unda yo'q), ya'ni `dir_menu()` ni ko'rsatish unga boshi berk
+     * havolalar beradi. Direktor va zavuchga esa to'liq menyu kerak —
+     * ular murojaatdan darslarga o'tib turadi.
+     *
+     * Qaysi holatda bo'lmasin, yon panelda saytga qaytish havolasi va
+     * chiqish tugmasi turadi — `start_menu()` ularni o'zi chizadi.
+     */
+    public static function mur_menu(): array {
+        $ctx = \context_system::instance();
+        if (has_capability('local/targetzenit:viewteachers', $ctx)) {
+            return self::dir_menu();
+        }
+
+        $t = fn(string $k) => get_string($k, 'local_targetzenit');
+        $u = fn(string $fayl) => new \moodle_url('/local/targetzenit/' . $fayl);
+
+        return [[
+            'lab' => $t('dir_navmain'),
+            'items' => [['murojaat', $t('mur_nav'), $u('murojaat.php')]],
+        ]];
+    }
+
+    /**
      * O'QITUVCHI menyusi.
      *
      * Faqat shu odam ochishi mumkin bo'lgan sahifalar. Maktab bo'limi esa

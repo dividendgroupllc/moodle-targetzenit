@@ -21,15 +21,21 @@ require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/murojaat.php'));
-shell::setup($PAGE, get_string('mur_panel', 'local_targetzenit'));
-
 $yonalishlar = murojaat::yonalishlar($context);
 if (!$yonalishlar) {
+    // DIQQAT: bu yerda `shell::setup()` ATAYLAB chaqirilmaydi. U sahifani
+    // `embedded` maketga o'tkazadi — Moodle navigatsiyasi butunlay
+    // chizilmaydi va ruxsati yo'q odam xabarni o'qib, hech qayerga
+    // o'tolmay qoladi. Oddiy maketda esa menyu joyida turadi.
+    $PAGE->set_title(get_string('mur_panel', 'local_targetzenit'));
+    $PAGE->set_heading(get_string('mur_panel', 'local_targetzenit'));
     echo $OUTPUT->header();
     echo $OUTPUT->notification(get_string('mur_noaccess', 'local_targetzenit'), 'error');
     echo $OUTPUT->footer();
     exit;
 }
+
+shell::setup($PAGE, get_string('mur_panel', 'local_targetzenit'));
 
 $holat = optional_param('holat', 'ochiq', PARAM_ALPHANUMEXT);
 $qidiruv = trim(optional_param('q', '', PARAM_TEXT));
@@ -88,11 +94,12 @@ echo $OUTPUT->header();
 $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
 $u = fn(array $p = []) => new moodle_url('/local/targetzenit/murojaat.php', $p);
 
+// Qobiq: yon panel + sarlavha. U bo'lmasa `embedded` maketda sahifada
+// orqaga qaytish yo'li qolmaydi — 2026-11-08 da aynan shu bo'ldi.
+shell::start_menu('murojaat', $t('mur_panel'), implode(' · ', $yonalishlar),
+    '', shell::mur_menu());
+
 echo html_writer::start_div('tz-mur');
-echo html_writer::div(
-    html_writer::tag('h1', $t('mur_panel'))
-    . html_writer::tag('span', implode(' · ', $yonalishlar), ['class' => 'tz-mur-kim']),
-    'tz-mur-bosh');
 
 // ---- plitalar
 // DIQQAT: `tz-dir-tile` / `tz-dir-two` ISHLATILMAYDI — ular direktor
@@ -202,6 +209,7 @@ if (!$rows) {
 }
 
 echo html_writer::end_div();
+shell::end();
 echo $OUTPUT->footer();
 
 /**
