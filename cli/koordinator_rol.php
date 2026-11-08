@@ -302,13 +302,31 @@ if ($opt['tekshir'] !== '') {
         // Haqiqiy tekshiruv: kategoriya ichidagi BITTA kursda ishlaydimi.
         // Kategoriya ruxsati pastga meros bo'lishi kerak; bo'lmasa imtihon
         // yaratish jim yiqiladi va sababi ko'rinmaydi.
+        //
+        // DIQQAT: kurslar `<yil>` ning BEVOSITA ichida EMAS — ular
+        // `<yil>` -> `<guruh>` ko'rinishida bir qavat pastda
+        // (`moodle_kurs.py`). Faqat `category = <yil>` deb qidirgan edim va
+        // tekshiruv JIM o'tkazib yuborilardi — aynan shu blok eng muhim
+        // tekshiruv bo'lgani uchun xato qimmat edi. Shuning uchun butun
+        // DARAXT bo'ylab qidiriladi (`path` bo'yicha).
         $kurs = $DB->get_record_sql(
-            "SELECT id, fullname FROM {course} WHERE category = :c ORDER BY id",
-            ['c' => $cat->id], IGNORE_MULTIPLE);
+            "SELECT c.id, c.fullname, cc.name AS katnomi
+               FROM {course} c
+               JOIN {course_categories} cc ON cc.id = c.category
+              WHERE cc.id = :c OR " . $DB->sql_like('cc.path', ':p') . "
+           ORDER BY c.id",
+            ['c' => $cat->id, 'p' => $DB->sql_like_escape($cat->path) . '/%'],
+            IGNORE_MULTIPLE);
+        if (!$kurs) {
+            cli_writeln('');
+            cli_writeln("! Kategoriya daraxtida birorta kurs topilmadi — meros");
+            cli_writeln("  tekshirilmadi. Kurslar sinxroni (`moodle_kurs.py`) o'tganmi?");
+        }
         if ($kurs) {
             $kc = context_course::instance($kurs->id);
             cli_writeln('');
-            cli_writeln("--- Namuna KURS: " . format_string($kurs->fullname));
+            cli_writeln("--- Namuna KURS: " . format_string($kurs->fullname)
+                . ' («' . format_string($kurs->katnomi) . '» kategoriyasida)');
             foreach (['moodle/course:manageactivities', 'mod/quiz:addinstance',
                       'moodle/question:add', 'local/targetzenit:gradeexam'] as $cap) {
                 cli_writeln('  ' . (has_capability($cap, $kc, $user) ? '[bor]    ' : "[yo'q]   ") . $cap);

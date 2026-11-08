@@ -195,6 +195,39 @@ class shell {
         return $menu;
     }
 
+    /**
+     * O'QUV KOORDINATORI menyusi (baholash paneli).
+     *
+     * Direktor menyusidan ALOHIDA: koordinatorda `viewteachers` yo'q, ya'ni
+     * direktor sahifalariga havola unda boshi berk yo'l bo'lardi (o'qituvchi
+     * menyusi bilan bir xil sabab).
+     */
+    public static function bh_menu(): array {
+        $ctx = \context_system::instance();
+        $t = fn(string $k) => get_string($k, 'local_targetzenit');
+        $u = fn(string $fayl, array $p = []) =>
+            new \moodle_url('/local/targetzenit/' . $fayl, $p);
+
+        $asosiy = [
+            ['royxat', $t('bh_navall'), $u('baholash.php', ['view' => 'royxat'])],
+            ['yangi', $t('bh_new'), $u('baholash.php', ['view' => 'yangi'])],
+        ];
+        $boshqa = [
+            ['jadval', $t('timetable'), $u('index.php')],
+        ];
+        // Koordinator maktab tahlilini ham ko'rsa — havola chiqadi. Ruxsati
+        // yo'q bo'lsa band umuman chizilmaydi.
+        if (has_capability('local/targetzenit:viewteachers', $ctx)) {
+            $boshqa[] = ['reyting', $t('dir_navranks'),
+                $u('direktor.php', ['view' => 'reyting'])];
+        }
+
+        return [
+            ['lab' => $t('bh_nav'), 'items' => $asosiy],
+            ['lab' => $t('oq_navschool'), 'items' => $boshqa],
+        ];
+    }
+
     protected static function item(string $active, string $kod, string $nom,
                                     \moodle_url $url): void {
         echo \html_writer::link($url, $nom,

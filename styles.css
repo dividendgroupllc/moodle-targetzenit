@@ -1048,3 +1048,43 @@
     .tz-sh-lastcell { min-width: 180px; }
 }
 
+
+/* ======================================================================
+   BAHOLASH PANELI (baholash.php)
+   ====================================================================== */
+.tz-bh-form { max-width: 980px; }
+
+/* Forma setkasi: ekran kengligiga qarab ustun soni o'zi moslashadi.
+   Qo'lda `grid-template-columns: 1fr 1fr 1fr` yozilsa telefonda maydonlar
+   qisilib qolardi. */
+.tz-bh-grid { display: grid; gap: 14px 18px;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.tz-bh-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tz-bh-field > label { margin: 0; }
+.tz-bh-field input[type="text"], .tz-bh-field input[type="number"],
+.tz-bh-field input[type="date"], .tz-bh-field input[type="time"],
+.tz-bh-field select {
+    width: 100%; padding: 6px 9px; border: 1px solid var(--tz-line);
+    border-radius: 8px; background: var(--tz-card); color: var(--tz-ink);
+    font-size: .9rem; }
+.tz-bh-field input:focus, .tz-bh-field select:focus {
+    outline: 2px solid var(--tz-brand); outline-offset: -1px; }
+/* Izoh maydon OSTIDA turadi va qoidani tushuntiradi — nizom raqamlari
+   koordinator yodida turmaydi. */
+.tz-bh-field .tz-dir-sub { font-size: .76rem; line-height: 1.35; }
+
+/* --- to'qnashuv ogohlantirishi: ko'zga tashlanishi SHART, chunki nizom
+   buzilishi hisobot paytida chiqadi va o'shanda tuzatib bo'lmaydi */
+.tz-bh-clash { background: var(--tz-warning-bg);
+    border: 1px solid var(--tz-warning); border-left-width: 4px;
+    border-radius: 10px; padding: 11px 14px; margin-bottom: 16px; }
+.tz-bh-clash ul { margin: 6px 0 0; padding-left: 20px; }
+.tz-bh-clash li { font-size: .86rem; line-height: 1.5; }
+
+/* --- imtihon jadvali: tor maydonlar, chunki ustun ko'p */
+.tz-bh-sit td { vertical-align: top; }
+.tz-bh-sit input[type="date"], .tz-bh-sit input[type="time"],
+.tz-bh-sit input[type="text"] {
+    padding: 4px 7px; border: 1px solid var(--tz-line); border-radius: 7px;
+    background: var(--tz-card); color: var(--tz-ink); font-size: .82rem; }
+.tz-bh-sit input:focus { outline: 2px solid var(--tz-brand); outline-offset: -1px; }

@@ -77,6 +77,23 @@ function local_targetzenit_extend_navigation(global_navigation $navigation) {
         $navigation->add_node($oq);
     }
 
+    // BAHOLASH — o'quv koordinatori paneli.
+    //
+    // Direktor panelidan OLDIN turadi: koordinator uchun kundalik kirish
+    // nuqtasi aynan shu (direktor uchun `direktor.php` bo'lgani kabi).
+    if (has_capability('local/targetzenit:manageexams', context_system::instance())) {
+        $bh = navigation_node::create(
+            get_string('bh_nav', 'local_targetzenit'),
+            new moodle_url('/local/targetzenit/baholash.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tzbaholash',
+            new pix_icon('i/checkpermissions', '')
+        );
+        $bh->showinflatnavigation = true;
+        $navigation->add_node($bh);
+    }
+
     // "O'qituvchilar sharhi" — o'quvchining (ota-onaning) o'z sahifasi.
     //
     // Shart: shu o'quvchi haqida OCHIQ sharh bor. Yo'q bo'lsa havola

@@ -159,6 +159,91 @@ class exam {
         return md5($studentid . '|' . $courseid . '|' . $year . '|' . $termname);
     }
 
+    // ======================================================== TANLAGICHLAR
+
+    /**
+     * O'quv yilidagi fanlar: [subjectkey => subjectname].
+     *
+     * Manba — dars JADVALI, kurs ro'yxati emas: jadvalda fan nomi odam
+     * o'qiydigan ko'rinishda turadi (`subjectname`), kurs `idnumber` ida esa
+     * faqat kalit bor.
+     */
+    public static function fanlar(string $year): array {
+        global $DB;
+
+        $rows = $DB->get_records_sql("
+            SELECT subjectkey, MAX(subjectname) AS nomi
+              FROM {local_targetzenit_timetable}
+             WHERE academicyear = :yil AND subjectkey <> ''
+          GROUP BY subjectkey", ['yil' => $year]);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[$r->subjectkey] = $r->nomi ?: $r->subjectkey;
+        }
+        \core_collator::asort($out);
+        return $out;
+    }
+
+    /**
+     * O'quv yilidagi sinf darajalari: ['7' => '7-sinf', ...].
+     *
+     * Guruh nomidan ajratiladi («7 A» -> «7»), chunki daraja alohida maydon
+     * sifatida Frappe'dan kelmaydi.
+     */
+    public static function darajalar(string $year): array {
+        global $DB;
+
+        $nomlar = $DB->get_fieldset_sql("
+            SELECT DISTINCT groupname
+              FROM {local_targetzenit_timetable}
+             WHERE academicyear = :yil", ['yil' => $year]);
+
+        $out = [];
+        foreach ($nomlar as $n) {
+            $d = self::daraja((string) $n);
+            if ($d !== '') {
+                $out[$d] = get_string('bh_class', 'local_targetzenit', $d);
+            }
+        }
+        // Raqamli tartib: 10-sinf 2-sinfdan KEYIN turishi kerak
+        uksort($out, fn($a, $b) => (int) $a <=> (int) $b);
+        return $out;
+    }
+
+    /** Baholash turlari tanlagich uchun: [kod => nomi]. */
+    public static function turlar_menu(): array {
+        $out = [];
+        foreach (self::TURLAR as $t) {
+            $out[$t] = get_string('bh_turi_' . $t, 'local_targetzenit');
+        }
+        return $out;
+    }
+
+    /** Shakllar tanlagichi. */
+    public static function shakllar_menu(): array {
+        $out = [];
+        foreach (self::SHAKLLAR as $t) {
+            $out[$t] = get_string('bh_shakli_' . $t, 'local_targetzenit');
+        }
+        return $out;
+    }
+
+    /** Natija holatlari tanlagichi. */
+    public static function holatlar_menu(): array {
+        $out = [];
+        foreach (self::NATIJA_HOLATLAR as $t) {
+            $out[$t] = get_string('bh_holat_' . $t, 'local_targetzenit');
+        }
+        return $out;
+    }
+
+    /** Taklif qilinadigan nom — koordinator har safar qo'lda yozmasin. */
+    public static function taklif_nom(string $turi, string $termname,
+                                       string $fan, string $daraja): string {
+        return trim($termname . ' · ' . $turi . ' · ' . $fan . ' · ' . $daraja);
+    }
+
     // ============================================================= BAHOLASH
 
     public static function get(int $id): ?\stdClass {

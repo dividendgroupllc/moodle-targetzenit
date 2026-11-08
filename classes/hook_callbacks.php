@@ -64,6 +64,21 @@ class hook_callbacks {
             );
         }
 
+        // BAHOLASH — koordinatorning kundalik kirish nuqtasi.
+        //
+        // NEGA YUQORI MENYU: Boost temasi Dashboard sahifasida chap menyuni
+        // UMUMAN ko'rsatmaydi (direktor panelida shu muammoga qoqilganmiz,
+        // 2026-10-29). Yuqori menyu esa har sahifada turadi.
+        if (has_capability('local/targetzenit:manageexams', \context_system::instance())) {
+            $nav->add(
+                get_string('bh_nav', 'local_targetzenit'),
+                '/local/targetzenit/baholash.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzbaholash'
+            );
+        }
+
         // "MENING DARSLARIM" — o'qituvchining kundalik kirish nuqtasi.
         //
         // NEGA YUQORIDA: `lib.php` dagi `extend_navigation` nusxasi CHAP

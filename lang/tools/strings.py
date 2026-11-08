@@ -1953,6 +1953,164 @@ S = {
     ),
     "bh_frozen": ("The quarter is closed", "Chorak yopilgan", "Четверть закрыта"),
 
+    # --- baholash paneli (baholash.php)
+    "bh_hint": (
+        "Summative assessments: schedule, questions, scores",
+        "Summativ baholashlar: jadval, savollar, ballar",
+        "Суммативные оценивания: расписание, вопросы, баллы",
+    ),
+    "bh_new": ("New assessment", "Yangi baholash", "Новое оценивание"),
+    "bh_edit": ("Edit", "Tahrirlash", "Редактировать"),
+    "bh_choose": ("— choose —", "— tanlang —", "— выберите —"),
+    "bh_term": ("Quarter", "Chorak", "Четверть"),
+    "bh_allterms": ("All quarters", "Hamma chorak", "Все четверти"),
+    "bh_type": ("Type", "Turi", "Тип"),
+    "bh_alltypes": ("All types", "Hamma turi", "Все типы"),
+    "bh_allsubjects": ("All subjects", "Hamma fan", "Все предметы"),
+    "bh_count": ("Assessments", "Baholashlar", "Оценивания"),
+    "bh_withresults": ("With scores", "Ballari bor", "С баллами"),
+    "bh_withresultshint": (
+        "At least one score entered",
+        "Kamida bitta ball kiritilgan",
+        "Введён хотя бы один балл",
+    ),
+    "bh_retro": ("Past period", "O'tgan davr", "Прошлый период"),
+    "bh_retrohint": (
+        "Entered retrospectively, on paper",
+        "Keyin kiritilgan, qog'oz shaklda",
+        "Внесено позже, на бумаге",
+    ),
+    "bh_empty": (
+        "No assessments match these filters",
+        "Bu filtrlarga mos baholash topilmadi",
+        "По этим фильтрам оцениваний не найдено",
+    ),
+    "bh_date": ("Date", "Sana", "Дата"),
+    "bh_time": ("Time", "Vaqt", "Время"),
+    "bh_name": ("Name", "Nomi", "Название"),
+    "bh_form": ("Form", "Shakli", "Форма"),
+    "bh_groups": ("Groups", "Guruhlar", "Группы"),
+    "bh_group": ("Group", "Guruh", "Группа"),
+    "bh_scores": ("Scores", "Ballar", "Баллы"),
+    "bh_status": ("Status", "Holat", "Состояние"),
+    "bh_level": ("Class level", "Sinf darajasi", "Уровень класса"),
+    "bh_class": ("Grade {$a}", "{$a}-sinf", "{$a} класс"),
+    "bh_room": ("Room", "Xona", "Кабинет"),
+    "bh_duration": ("Duration, minutes", "Davomiyligi, daqiqa", "Длительность, минут"),
+    "bh_maxscore": ("Maximum score", "Maksimal ball", "Максимальный балл"),
+    "bh_random": ("Random questions", "Tasodifiy savol soni", "Случайных вопросов"),
+
+    "bh_typehint": (
+        "CHSB is held once, at the end of the quarter; BSB up to three times "
+        "during it",
+        "CHSB chorak oxirida bir marta, BSB chorak davomida uch martagacha",
+        "CHSB проводится один раз в конце четверти, BSB — до трёх раз в течение",
+    ),
+    "bh_levelhint": (
+        "All groups of this level are included: 7 means 7 A, 7 B, 7 C...",
+        "Shu darajadagi hamma guruh qamraladi: 7 degani 7 A, 7 B, 7 C...",
+        "Охватываются все группы этого уровня: 7 значит 7 A, 7 B, 7 C...",
+    ),
+    "bh_formhint": (
+        "Online means Moodle marks it automatically; on paper the score is "
+        "entered by hand",
+        "Onlayn — Moodle o'zi baholaydi; qog'ozda ball qo'lda kiritiladi",
+        "Онлайн — Moodle оценивает сам; на бумаге балл вводится вручную",
+    ),
+    "bh_datehint": (
+        "A past date is allowed: that is how a quarter the system missed is "
+        "entered. The form is then forced to paper.",
+        "O'tgan sana ham mumkin: tizim o'tkazib yuborgan chorak shunday "
+        "kiritiladi. Unda shakl majburan qog'oz bo'ladi.",
+        "Прошедшая дата разрешена: так вносится четверть, которую система "
+        "пропустила. Форма тогда принудительно бумажная.",
+    ),
+    "bh_timehint": (
+        "The default for every group — it can be shifted per group afterwards",
+        "Hamma guruh uchun standart — keyin har guruhga alohida siljitiladi",
+        "По умолчанию для всех групп — потом можно сдвинуть для каждой",
+    ),
+    "bh_roomhint": (
+        "The default room; it can be changed per group",
+        "Standart xona; har guruhga o'zgartirish mumkin",
+        "Кабинет по умолчанию; можно изменить для каждой группы",
+    ),
+    "bh_maxscorehint": (
+        "Scores go into the journal out of 100 under the regulation",
+        "Nizom bo'yicha natija jurnalga 100 ballik tizimda kiritiladi",
+        "Согласно положению результат вносится в журнал по 100-балльной системе",
+    ),
+    "bh_randomhint": (
+        "0 means every question in the bank. Online only.",
+        "0 — bankdagi hamma savol. Faqat onlayn shaklda.",
+        "0 — все вопросы банка. Только для онлайн-формы.",
+    ),
+    "bh_namehint": (
+        "Leave empty and the system will compose it from the quarter, subject "
+        "and class",
+        "Bo'sh qoldirsangiz tizim chorak, fan va sinfdan o'zi yasaydi",
+        "Оставьте пустым — система составит из четверти, предмета и класса",
+    ),
+    "bh_savenext": (
+        "Save and set the timetable",
+        "Saqlash va jadvalni belgilash",
+        "Сохранить и задать расписание",
+    ),
+    "bh_saved": ("Saved", "Saqlandi", "Сохранено"),
+    "bh_fillall": (
+        "Quarter, subject and class level are required",
+        "Chorak, fan va sinf darajasi to'ldirilishi shart",
+        "Четверть, предмет и уровень класса обязательны",
+    ),
+    "bh_groupsadded": (
+        "{$a->kurslar} groups found, {$a->qoshildi} added",
+        "{$a->kurslar} guruh topildi, {$a->qoshildi} tasi qo'shildi",
+        "Найдено групп: {$a->kurslar}, добавлено: {$a->qoshildi}",
+    ),
+    "bh_nogroups": (
+        "No group matched. Check that the subject and class level are right, "
+        "and that courses have been synced.",
+        "Mos guruh topilmadi. Fan va sinf darajasi to'g'rimi, kurslar "
+        "sinxroni o'tganmi — tekshirib ko'ring.",
+        "Подходящих групп нет. Проверьте предмет и уровень класса, а также "
+        "синхронизацию курсов.",
+    ),
+    "bh_savetimetable": ("Save the timetable", "Jadvalni saqlash", "Сохранить расписание"),
+    "bh_inherit": ("Inherited: {$a}", "Merosga olinadi: {$a}", "Наследуется: {$a}"),
+    "bh_inherithint": (
+        "An empty field takes the assessment default",
+        "Bo'sh maydon baholashning standart qiymatini oladi",
+        "Пустое поле берёт значение по умолчанию",
+    ),
+    "bh_refreshgroups": ("Refresh groups", "Guruhlarni yangilash", "Обновить группы"),
+    "bh_refreshhint": (
+        "If a new group has appeared since",
+        "Shundan keyin yangi guruh paydo bo'lgan bo'lsa",
+        "Если после этого появилась новая группа",
+    ),
+    "bh_retronotice": (
+        "This is a past period: no online test is created and no notification "
+        "is sent. Enter the scores by hand.",
+        "Bu o'tgan davr: onlayn test yaratilmaydi va bildirishnoma "
+        "yuborilmaydi. Ballarni qo'lda kiritasiz.",
+        "Это прошлый период: онлайн-тест не создаётся и уведомление не "
+        "отправляется. Баллы вводятся вручную.",
+    ),
+    "bh_clash_future": (
+        "Clashes found — they must be resolved before the test is created",
+        "To'qnashuv topildi — test yaratilishidan oldin hal qilinishi kerak",
+        "Найдены накладки — их нужно устранить до создания теста",
+    ),
+    "bh_clash_retro": (
+        "Clashes found. This is a past period, so they are only a note.",
+        "To'qnashuv topildi. Bu o'tgan davr, shuning uchun faqat qayd.",
+        "Найдены накладки. Это прошлый период, поэтому только отметка.",
+    ),
+    "bh_sit_kutilmoqda": ("Scheduled", "Kutilmoqda", "Ожидается"),
+    "bh_sit_otkazildi": ("Held", "O'tkazildi", "Проведено"),
+    "bh_sit_yopildi": ("Closed", "Yopildi", "Закрыто"),
+    "bh_sit_xato": ("Error", "Xato", "Ошибка"),
+
     "app_murojaat": ("Parent issues", "Murojaatlar", "Обращения"),
     "app_murojaatim": ("My issues", "Murojaatlarim", "Мои обращения"),
 

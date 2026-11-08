@@ -876,6 +876,23 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026110840, 'local', 'targetzenit');
     }
 
+    // Frappe web service funksiyalarini servisga biriktirish.
+    //
+    // `sinxronla()` o'zi `external_update_descriptions()` ni chaqiradi, chunki
+    // bu nuqtada Moodle funksiya ro'yxatini hali yangilamagan (qarang:
+    // `classes/servis.php` izohi).
+    //
+    // NEGA UPGRADE ICHIDA: `db/services.php` da funksiya e'lon qilinishi uni
+    // ishlatish mumkin degani emas — token SERVIS bo'yicha tekshiriladi.
+    // Shu paytgacha har yangi funksiya admin UI'dan qo'lda qo'shilardi va
+    // esdan chiqsa Frappe «accessexception» olardi (2026-11-08, push_mavzular).
+    // Endi har deploy o'zi biriktiradi. Shartsiz ishlaydi: ro'yxat o'zgarsa
+    // ham, versiya oshmasa ham yangi funksiya tushib qolmasin.
+    if ($oldversion < 2026110860) {
+        \local_targetzenit\servis::sinxronla();
+        upgrade_plugin_savepoint(true, 2026110860, 'local', 'targetzenit');
+    }
+
     return true;
 }
 
