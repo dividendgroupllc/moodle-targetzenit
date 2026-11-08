@@ -889,7 +889,23 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
     // Endi har deploy o'zi biriktiradi. Shartsiz ishlaydi: ro'yxat o'zgarsa
     // ham, versiya oshmasa ham yangi funksiya tushib qolmasin.
     if ($oldversion < 2026110860) {
-        \local_targetzenit\servis::sinxronla();
+        // TRY/CATCH SHART: 2026-11-08 da aynan shu chaqiruv butun migratsiyani
+        // yiqitdi (`servis.php` da mavjud bo'lmagan kesh ta'rifi) va deploy
+        // to'xtadi. Web-servis biriktirish — QULAYLIK, jadval yaratish esa
+        // MAJBURIY ish; qulaylik majburiy ishni to'smasligi kerak.
+        //
+        // Bu kodbazadagi mavjud qoidaning o'zi: `gradebook::push()` va
+        // `homework::ensure()` ham try/catch ichida — tashqi integratsiya
+        // yiqilsa ham asosiy yozuv saqlanadi.
+        try {
+            \local_targetzenit\servis::sinxronla();
+        } catch (\Throwable $e) {
+            // Jim yutilmaydi: upgrade jurnaliga chiqadi va admin ko'radi.
+            // Funksiyani qo'lda biriktirish yo'li ochiq qoladi
+            // (Site administration -> Server -> Web services).
+            mtrace('  OGOHLANTIRISH: web-servis sinxroni o\'tmadi — '
+                . $e->getMessage());
+        }
         upgrade_plugin_savepoint(true, 2026110860, 'local', 'targetzenit');
     }
 

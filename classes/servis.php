@@ -93,10 +93,17 @@ class servis {
 			}
 		}
 
-		if ($natija['qoshildi']) {
-			// Token ruxsatlari keshlanadi — tozalamasa yangi funksiya darhol ishlamaydi
-			\cache_helper::invalidate_by_definition('core', 'external_services');
-		}
+		// KESH TOZALASH SHART EMAS — va «core/external_services» degan kesh
+		// ta'rifi Moodle'da UMUMAN YO'Q (`lib/db/caches.php` da bunday nom
+		// yo'q). O'sha chaqiruv `codingerror: The requested cache definition
+		// does not exist` berib BUTUN MIGRATSIYANI yiqitgan (2026-11-08
+		// deploy, 75fa4d9).
+		//
+		// Nega shart emas: Moodle yadrosining o'zi
+		// `webservice::add_external_function_to_service()` da faqat
+		// `insert_record` qiladi va hech narsa tozalamaydi — token ruxsati
+		// keshda emas, har so'rovda jonli SQL bilan tekshiriladi
+		// (`webservice/lib.php` dagi `external_services_functions` JOIN i).
 		return $natija;
 	}
 
