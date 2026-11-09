@@ -185,6 +185,24 @@ class mavzu {
         foreach ($mavzular as $m) {
             $bolingan[(int) $m->chorak][] = $m;
         }
+        ksort($bolingan);
+        // Choraksiz (chorak=0) mavzular — butun yilga tegishli, shuning uchun
+        // chorakli mavzulardan KEYIN joylashtiriladi. `ksort` dan keyin 0
+        // birinchi turadi, uni oxiriga olib o'tamiz: aks holda u yilning
+        // boshidagi slotlarni egallab, 1-chorak mavzulariga joy qolmaydi.
+        if (isset($bolingan[0])) {
+            $yilliklar = $bolingan[0];
+            unset($bolingan[0]);
+            $bolingan[0] = $yilliklar;
+        }
+
+        // Chorak oraliqlari bir kunga ustma-ust tushishi mumkin (Frappe'da
+        // 1-chorak «..11-10», 2-chorak «11-10..» bo'lib qolgan). Bunda
+        // 11-10 kungi dars avval 1-chorak mavzusini olib, keyin 2-chorak
+        // uning ustidan yozardi va 1-chorakning oxirgi mavzusi yo'qolardi.
+        // Shuning uchun bir marta ishlatilgan slotni ikkinchi chorak
+        // qaytib olmaydi.
+        $ishlatilgan = [];
 
         foreach ($bolingan as $chorak => $qator) {
             // Chorak oralig'i; chorak=0 (butun yil) bo'lsa — yilning hammasi
@@ -206,7 +224,9 @@ class mavzu {
                  'a' => $boshi, 'b' => $oxiri],
                 'lessondate ASC, lessonno ASC', 'id, mavzu, mavzuid');
 
-            $slotlar = array_values($slotlar);
+            // Oldingi chorak olgan slotlarni chiqarib tashlaymiz
+            $slotlar = array_values(array_filter($slotlar,
+                static fn($sl) => !isset($ishlatilgan[$sl->id])));
             $i = 0;
             foreach ($qator as $m) {
                 $soat = max((int) $m->soat, 1);
@@ -217,6 +237,7 @@ class mavzu {
                     }
                     $slot = $slotlar[$i];
                     $i++;
+                    $ishlatilgan[$slot->id] = true;
                     // O'zgarmagan bo'lsa yozmaymiz — bekorga UPDATE qilmaslik
                     // uchun (PostgreSQL'da o'lik qator to'planadi)
                     if ((string) $slot->mavzu === (string) $m->mavzu

@@ -103,24 +103,22 @@ class push_mavzular extends external_api {
             $qoshildi++;
         }
 
-        // 3) Darslarga biriktirish — faqat tegilgan fan/guruhlar uchun
+        // 3) Darslarga biriktirish.
+        //
+        // XATO BO'LGAN (2026-11-09 tuzatildi): avval FAQAT shu BO'LAKDAGI
+        // (fan, guruh) juftliklari biriktirilardi. Frappe esa rejani
+        // bo'laklab yuboradi (BATCH=300) va `biriktir=1` ni faqat OXIRGI
+        // bo'lakda beradi — ya'ni 1840 qatorli reja 7 bo'lakka bo'linsa,
+        // faqat oxirgi bo'lakka tushgan guruhlar biriktirilardi, qolgani
+        // esa mavzusiz qolardi.
+        //
+        // Endi `biriktir=1` kelganda SHU YIL uchun rejada bor HAMMA juftlik
+        // biriktiriladi. Bu xavfsiz: o'zgarmagan slotlarga yozilmaydi
+        // (`juftlikni_biriktir` ichida solishtiriladi), ya'ni amal idempotent.
         $hisobot = ['juftlar' => 0, 'biriktirildi' => 0, 'bosh_slot' => 0,
                     'sigmagan' => 0, 'ogohlantirish' => []];
         if ($params['biriktir']) {
-            $korilgan = [];
-            foreach ($uchliklar as [$fan, $guruh, $chorak]) {
-                $kalit = $fan . '|' . $guruh;
-                if (isset($korilgan[$kalit])) {
-                    continue;
-                }
-                $korilgan[$kalit] = true;
-                $h = mavzu::biriktir($yil, ['subjectkey' => $fan, 'groupkey' => $guruh]);
-                foreach (['juftlar', 'biriktirildi', 'bosh_slot', 'sigmagan'] as $k) {
-                    $hisobot[$k] += $h[$k];
-                }
-                $hisobot['ogohlantirish'] = array_merge($hisobot['ogohlantirish'],
-                    $h['ogohlantirish']);
-            }
+            $hisobot = mavzu::biriktir($yil);
         }
 
         return [
