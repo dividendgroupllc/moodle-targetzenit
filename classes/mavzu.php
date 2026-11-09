@@ -24,10 +24,39 @@ defined('MOODLE_INTERNAL') || die();
 
 class mavzu {
 
-    /** Chorak nomidan raqamini ajratadi: «1-chorak» -> 1. */
+    /**
+     * Chorak nomidan raqamini ajratadi: «2026-2027 (1-chorak)» -> 1.
+     *
+     * XATO BO'LGAN (2026-11-09 tuzatildi): avval shunchaki BIRINCHI raqam
+     * olinardi (`/(\d+)/`). Frappe'dagi `Academic Term` nomi esa
+     * «2026-2027 (1-chorak)» ko'rinishida — birinchi raqam 2026 chiqardi.
+     * Natijada to'rt chorak ham 2026 kalitini olib, bittasiga aylanardi va
+     * 1..4 choraklarning mavzulari HECH QAYSI chorak oralig'iga tushmay
+     * «sig'madi» bo'lib qolardi: biriktirildi = 0.
+     *
+     * Shuning uchun avval «chorak» so'zi yonidagi raqam qidiriladi, keyin
+     * 1..4 oralig'idagi yakka raqam; yil (4 xonali) hech qachon olinmaydi.
+     */
     public static function chorak_raqami(string $nom): int {
-        if (preg_match('/(\d+)/', $nom, $m)) {
-            return (int) $m[1];
+        // «1-chorak», «1 chorak», «2-term», «3 quarter». `(?<!\d)` — oldidan
+        // yana raqam bo'lmasin, aks holda «2026-2027 Quarter 4» dan «27» olinadi.
+        $naqshlar = [
+            '/(?<!\d)(\d{1,2})(?!\d)\s*[-–—]?\s*(?:chorak|term|quarter|четверт)/iu',
+            '/(?:chorak|term|quarter|четверт)\w*\s*[-–—]?\s*(?<!\d)(\d{1,2})(?!\d)/iu',
+        ];
+        foreach ($naqshlar as $naqsh) {
+            if (preg_match($naqsh, $nom, $m) && $m[1] >= 1 && $m[1] <= 4) {
+                return (int) $m[1];
+            }
+        }
+        // Zaxira: 1..4 oralig'idagi YAKKA raqam (yil emas). Oxirgisini olamiz —
+        // «2026-2027 (3)» kabi nomlarda chorak oxirida turadi.
+        if (preg_match_all('/(?<!\d)(\d)(?!\d)/', $nom, $m)) {
+            foreach (array_reverse($m[1]) as $raqam) {
+                if ($raqam >= 1 && $raqam <= 4) {
+                    return (int) $raqam;
+                }
+            }
         }
         return 0;
     }
@@ -44,9 +73,17 @@ class mavzu {
         foreach (timetable::terms($year) as $t) {
             $n++;
             $raqam = self::chorak_raqami((string) $t->name) ?: $n;
+            // HIMOYA: ikki chorak bitta raqamni olsa (nom g'alati bo'lsa),
+            // avvalgisi JIMGINA ustiga yozilib ketardi va choraklar soni
+            // kamayib qolardi. Bunday holda tartib raqamiga qaytamiz —
+            // `terms()` startdate bo'yicha tartiblangan, ya'ni tartib to'g'ri.
+            if (isset($out[$raqam])) {
+                $raqam = $n;
+            }
             $out[$raqam] = ['boshi' => $t->startdate, 'oxiri' => $t->enddate,
                             'nomi' => $t->name];
         }
+        ksort($out);
         return $out;
     }
 
