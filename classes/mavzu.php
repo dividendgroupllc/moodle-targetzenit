@@ -104,11 +104,19 @@ class mavzu {
             }
         }
 
-        // Qaysi (fan, guruh) juftligida reja bor
-        $juftlar = $DB->get_records_sql(
+        // Qaysi (fan, guruh) juftligida reja bor.
+        //
+        // DIQQAT — `get_recordset_sql`, `get_records_sql` EMAS: ikkinchisi
+        // natijani BIRINCHI ustun bo'yicha massiv kalitiga aylantiradi, ya'ni
+        // `subjectkey` takrorlansa qatorlar JIMGINA bir-birini bosib ketadi.
+        // 2026-11-09 da shu sabab 18 juftlikdan faqat 2 tasi (MATH va
+        // MENTAL.M dan bittasi) ishlangan: har fandan oxirgi guruh qolgan,
+        // qolgan 16 guruhga mavzu biriktirilmagan.
+        $juftlar = $DB->get_recordset_sql(
             "SELECT DISTINCT subjectkey, groupkey
                FROM {local_targetzenit_mavzu}
-              WHERE " . self::shart_sql($shart, $p),
+              WHERE " . self::shart_sql($shart, $p) . "
+           ORDER BY subjectkey, groupkey",
             $p);
 
         $choraklar = self::choraklar($year);
@@ -127,7 +135,17 @@ class mavzu {
                     '%s / %s: %d mavzu darsga sig\'madi',
                     $j->subjectkey, $j->groupkey, $hisobot['sigmagan']);
             }
+            // Rejada bor, lekin jadvalda shu fandan darsi yo'q guruh —
+            // zavuch mavzuni noto'g'ri guruhga yuklagan (masalan 5-sinfda
+            // MATH oqim guruhlarida o'tiladi, sinf guruhida emas)
+            if (!$hisobot['biriktirildi'] && !$hisobot['bosh_slot']
+                    && !$hisobot['sigmagan']) {
+                $natija['ogohlantirish'][] = sprintf(
+                    '%s / %s: jadvalda bu fandan dars yo\'q — reja hech qayerga tushmadi',
+                    $j->subjectkey, $j->groupkey);
+            }
         }
+        $juftlar->close();
         return $natija;
     }
 
