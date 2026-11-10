@@ -904,6 +904,49 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111020, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111030) {
+
+        // ============================== SHARH 5 KATEGORIYAGA O'TKAZILDI
+        // Foydalanuvchi talabi 2026-11-10: har o'qituvchi har o'quvchiga
+        // BESH kategoriya bo'yicha yozadi (akademik bilim, darsdagi faollik,
+        // ijtimoiy-emotsional ko'nikmalar, mas'uliyat va mustaqillik,
+        // tanqidiy fikrlash va ijodkorlik).
+        //
+        // MODEL: har kategoriya — ALOHIDA comment (matn baribir Moodle'ning
+        // `{comments}` jadvalida), `kategoriya` ustuni esa qaysi biri
+        // ekanini aytadi. Bitta saqlash = bitta `batch` (besh qator shu
+        // kalitni bo'lishadi), shunda «bir martalik sharh» butun bo'lib
+        // ko'rinadi.
+        //
+        // NEGA JSON EMAS: matnni bitta katakka JSON qilib solsak, Moodle
+        // comment quyi tizimining qidiruvi, hodisalari va tozalashi
+        // yo'qoladi — modulning butun asosi shunda edi.
+        //
+        // ESKI YOZUVLAR SAQLANADI: `kategoriya` standart qiymati `umumiy`,
+        // ya'ni 2026-11-10 dan oldin yozilgan erkin sharhlar «Umumiy»
+        // yorlig'i ostida ko'rinishda qoladi (o'chirilmaydi, ko'chirilmaydi).
+        $table = new xmldb_table('local_targetzenit_sharh');
+
+        $field = new xmldb_field('kategoriya', XMLDB_TYPE_CHAR, '20', null,
+            XMLDB_NOTNULL, null, 'umumiy', 'authorid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('batch', XMLDB_TYPE_CHAR, '32', null,
+            null, null, null, 'kategoriya');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $index = new xmldb_index('batch', XMLDB_INDEX_NOTUNIQUE, ['batch']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111030, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

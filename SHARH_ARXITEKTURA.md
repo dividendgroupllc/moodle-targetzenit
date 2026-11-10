@@ -149,3 +149,56 @@ Bildirishnoma yuborilmasa sharh saqlanishi to'smaydi (`try/catch`).
   turadi. Bu `_feedback` bilan allaqachon noto'g'ri edi, sharh bilan yana
   bir pog'ona noto'g'ri bo'ldi: jadvalda voyaga yetmaganlar haqidagi
   xodim izohlari bor. **Majburiy qarz.**
+
+---
+
+## 10. BESH KATEGORIYA (2026-11-10, foydalanuvchi talabi)
+
+Erkin matnli bitta sharh o'rniga har o'qituvchi har o'quvchiga **beshta
+kategoriya** bo'yicha yozadi:
+
+| Kalit | Nomi |
+|---|---|
+| `akademik` | Academic Performance — Akademik bilim |
+| `faollik` | Classroom Participation — Darsdagi faollik |
+| `ijtimoiy` | Social and Emotional Skills |
+| `masuliyat` | Responsibility and Independence |
+| `tanqidiy` | Critical Thinking and Creativity |
+
+**BESHTASI HAM MAJBURIY** (`sharh::add_batch()` tekshiradi + formada
+`required`). Nega qattiq: bittasi bo'sh qolsa hisobot «akademik bilimi bor,
+ijtimoiy ko'nikmasi yo'q» degan noto'g'ri xulosaga olib keladi — aslida esa
+shunchaki yozilmagan. Bo'sh qoldirishga ruxsat bersak amalda faqat birinchi
+maydon to'ldiriladi.
+
+### Model — har kategoriya ALOHIDA comment
+
+Matn baribir Moodle'ning `{comments}` jadvalida qoladi (modulning asosi
+shu), `_sharh` ga ikki ustun qo'shildi:
+
+- **`kategoriya`** (CHAR 20, standart `umumiy`) — qaysi biri;
+- **`batch`** (CHAR 32, NULL) — **bitta saqlash = bitta to'plam**, besh qator
+  shu kalitni bo'lishadi.
+
+**Nega JSON emas:** matnni bitta katakka JSON qilib solsak, comment quyi
+tizimining qidiruvi, hodisalari va tozalashi yo'qoladi.
+
+**Eski yozuvlar saqlanadi:** 2026-11-10 dan oldingi erkin sharhlar
+`kategoriya = umumiy` bo'lib qoladi va «Umumiy (oldingi sharh)» yorlig'i
+ostida ko'rinadi. Ular **ko'chirilmaydi**: o'qituvchi o'sha matnni qaysi
+kategoriya deb yozganini bilmaymiz, taxmin qilish xato bo'lardi.
+
+### Nimalar o'zgardi
+
+| Joy | O'zgarish |
+|---|---|
+| `sharh::add_batch()` | asosiy yozish yo'li; `add()` endi bitta kategoriyani yozadi |
+| Bildirishnoma | TO'PLAM uchun **bitta** (avval beshta ketardi) |
+| `sharh::guruhla()` | qatorlarni to'plamlarga yig'adi; eski sharh ham to'plam (`old<id>`) |
+| `latest()` dagi `soni` | **to'plamlar** soni, qatorlar emas — aks holda bitta sharh «5 sharh» bo'lib ko'rinardi |
+| `sharhblok::form()` | besh maydon, har biriga yorliq + ko'rsatma + namuna matn |
+| `sharhblok::compactcell()` | bir qatorli yozish maydoni **olib tashlandi** (besh maydon sig'maydi), faqat xulosa |
+| `sharh.php` tugmasi | sharh yo'q bo'lsa «Sharh yozish» (ko'k), bor bo'lsa «Ochish» |
+| `sharhlar.php` | lenta **to'plamlar bo'yicha** guruhlanadi, aks holda besh barobar uzun bo'lardi |
+
+Migratsiya: `2026111030`, version 0.44.0.

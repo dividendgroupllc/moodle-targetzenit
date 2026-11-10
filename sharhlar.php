@@ -130,24 +130,30 @@ $rows = sharh::royxat([
     'korilmagan' => $korilmagan,
 ]);
 
+// TO'PLAMLARGA GURUHLASH — bitta sharh = besh kategoriya = besh qator.
+// Guruhlamasak lenta besh barobar uzun bo'lib ko'rinardi va «bir o'quvchiga
+// beshta sharh yozilgan» degan noto'g'ri manzara chiqardi.
+$tplar = sharh::guruhla($rows);
+
 // Plitalar lentaning O'ZIDAN hisoblanadi — alohida so'rov yozilsa u filtrdan
 // uzilib qoladi va «jami 120, ro'yxatda 12» degan chalkashlik chiqadi.
 $maxfiy = 0;
 $okilmagan = 0;
 $oquvchilar = [];
 $mualliflar = [];
-foreach ($rows as $r) {
-    if ($r->visibility === 'maxfiy') {
+foreach ($tplar as $tp) {
+    $b = $tp['bosh'];
+    if ($b->visibility === 'maxfiy') {
         $maxfiy++;
-    } else if ($r->status !== 'seen') {
+    } else if ($b->status !== 'seen') {
         $okilmagan++;
     }
-    $oquvchilar[(int) $r->studentid] = true;
-    $mualliflar[(int) $r->authorid] = true;
+    $oquvchilar[(int) $b->studentid] = true;
+    $mualliflar[(int) $b->authorid] = true;
 }
 
 echo html_writer::div(
-    ui::tile((string) count($rows), get_string('sh_total', 'local_targetzenit'))
+    ui::tile((string) count($tplar), get_string('sh_total', 'local_targetzenit'))
     . ui::tile((string) count($mualliflar), get_string('sh_teachers', 'local_targetzenit'))
     . ui::tile((string) count($oquvchilar), get_string('sh_covered', 'local_targetzenit'),
         get_string('sh_coveredhint', 'local_targetzenit'))
@@ -179,51 +185,93 @@ echo html_writer::end_tag('tr');
 echo html_writer::end_tag('thead');
 echo html_writer::start_tag('tbody');
 
-foreach ($rows as $r) {
-    $ochiq = ($open === (int) $r->id);
-    $xom = sharh::matn($r);
-    $qisqa = core_text::substr(trim($xom), 0, sharh::QISQA);
+$yorliqlar = sharh::kategoriyalar_menu();
+
+foreach ($tplar as $tp) {
+    $b = $tp['bosh'];
+    $ochiq = ($open === (int) $b->id);
 
     echo html_writer::start_tag('tr');
 
     echo html_writer::tag('td',
-        html_writer::div(userdate($r->timecreated, '%d.%m.%Y'), '')
-        . html_writer::div(userdate($r->timecreated, '%H:%M'), 'tz-dir-sub'));
+        html_writer::div(userdate($b->timecreated, '%d.%m.%Y'), '')
+        . html_writer::div(userdate($b->timecreated, '%H:%M'), 'tz-dir-sub'));
 
     // O'qituvchi ismi uning panelining o'ziga olib boradi — «bu odam
     // umuman qanday ishlayapti?» savoli shu yerda tug'iladi.
     echo html_writer::tag('td', html_writer::link(
-        new moodle_url('/local/targetzenit/oqituvchi.php', ['userid' => (int) $r->authorid]),
-        s(dashboard::ism($r->afirstname ?? '', $r->alastname ?? ''))));
+        new moodle_url('/local/targetzenit/oqituvchi.php', ['userid' => (int) $b->authorid]),
+        s(dashboard::ism($b->afirstname ?? '', $b->alastname ?? ''))));
 
     echo html_writer::tag('td', html_writer::tag('span',
-        s(sharh::kurs_yorlig($r->courseidnumber ?? '', $r->coursename ?? '')),
+        s(sharh::kurs_yorlig($b->courseidnumber ?? '', $b->coursename ?? '')),
         ['class' => 'tz-dir-chip']));
 
     echo html_writer::tag('td', html_writer::link(
-        new moodle_url('/local/targetzenit/baholarim.php', ['userid' => (int) $r->studentid]),
-        s(dashboard::ism($r->sfirstname ?? '', $r->slastname ?? ''))));
+        new moodle_url('/local/targetzenit/baholarim.php', ['userid' => (int) $b->studentid]),
+        s(dashboard::ism($b->sfirstname ?? '', $b->slastname ?? ''))));
 
-    // Matn: qisqasi ko'rinadi, to'lig'i havola bosilganda shu yerda ochiladi.
+    // MATN KATAGI.
+    //
+    // Yopiq holatda: nechta kategoriya to'ldirilgani + birinchisining
+    // boshi. Ochiq holatda: BESHTASI YORLIG'I BILAN — direktorning asosiy
+    // savoli «kim qaysi o'quvchiga nima deb yozdi», ya'ni kategoriya
+    // nomisiz matn foydasiz.
+    //
     // `<details>` emas, chunki qator tanlovi havolada saqlanishi kerak
     // (filtrni yo'qotmasdan boshqa qatorga o'tish).
+    if ($ochiq) {
+        $matn = '';
+        foreach ($yorliqlar as $kat => $nom) {
+            if (!isset($tp['matnlar'][$kat])) {
+                continue;
+            }
+            $matn .= html_writer::div(
+                html_writer::div(s($nom), 'tz-sh-katlab')
+                . html_writer::tag('p', nl2br(s(sharh::matn($tp['matnlar'][$kat]))),
+                    ['class' => 'tz-sh-body']),
+                'tz-sh-kat');
+        }
+        // Eski erkin sharh ham ko'rinadi — ko'chirilmaydi, yorlig'i bilan
+        if (isset($tp['matnlar'][sharh::ESKI_KAT])) {
+            $matn .= html_writer::div(
+                html_writer::div(get_string('sh_kat_umumiy', 'local_targetzenit'),
+                    'tz-sh-katlab')
+                . html_writer::tag('p',
+                    nl2br(s(sharh::matn($tp['matnlar'][sharh::ESKI_KAT]))),
+                    ['class' => 'tz-sh-body']),
+                'tz-sh-kat tz-sh-kat-old');
+        }
+        $ichi = html_writer::div($matn, 'tz-sh-fulltext');
+    } else {
+        $birinchi = reset($tp['matnlar']);
+        $xom = $birinchi ? sharh::matn($birinchi) : '';
+        $qisqa = core_text::substr(trim($xom), 0, sharh::QISQA);
+        $ichi = html_writer::div(
+            html_writer::tag('span',
+                get_string('sh_katcount', 'local_targetzenit',
+                    count($tp['matnlar'])),
+                ['class' => 'tz-sh-katchip'])
+            . ' ' . s($qisqa)
+            . (core_text::strlen($xom) > sharh::QISQA ? '…' : ''),
+            'tz-sh-ctext');
+    }
+
     echo html_writer::tag('td',
-        html_writer::div(s($ochiq ? $xom : $qisqa)
-            . (!$ochiq && core_text::strlen($xom) > sharh::QISQA ? '…' : ''),
-            $ochiq ? 'tz-sh-fulltext' : 'tz-sh-ctext')
-        . html_writer::link($url(['open' => $ochiq ? 0 : (int) $r->id]),
+        $ichi
+        . html_writer::link($url(['open' => $ochiq ? 0 : (int) $b->id]),
             $ochiq ? get_string('sh_close', 'local_targetzenit')
                    : get_string('sh_openfull', 'local_targetzenit'),
             ['class' => 'tz-dir-sub']),
         ['class' => 'tz-sh-textcell']);
 
-    if ($r->visibility === 'maxfiy') {
+    if ($b->visibility === 'maxfiy') {
         $holat = html_writer::tag('span', get_string('sh_private', 'local_targetzenit'),
             ['class' => 'tz-dir-chip tz-dir-warning']);
-    } else if ($r->status === 'seen') {
+    } else if ($b->status === 'seen') {
         $holat = html_writer::tag('span', get_string('sh_seen', 'local_targetzenit'),
             ['class' => 'tz-dir-chip tz-dir-good'])
-            . ($r->seenat ? html_writer::div(userdate($r->seenat, '%d.%m.%Y'),
+            . ($b->seenat ? html_writer::div(userdate($b->seenat, '%d.%m.%Y'),
                 'tz-dir-sub') : '');
     } else {
         $holat = html_writer::tag('span', get_string('sh_notseen', 'local_targetzenit'),

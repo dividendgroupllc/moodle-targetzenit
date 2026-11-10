@@ -212,17 +212,30 @@ foreach ($oquvchilar as $o) {
         ? html_writer::tag('span', (string) $soni, ['class' => 'tz-dir-chip'])
         : html_writer::tag('span', '—', ['class' => 'tz-dir-sub']));
 
-    // Qisqa ko'rinish + bir qatorli yozish: kartani ochmasdan ham izoh
-    // qoldirish mumkin.
+    // Qisqa ko'rinish — OXIRGI to'plamning xulosasi.
+    //
+    // Bir qatorli yozish maydoni OLIB TASHLANDI: sharh endi besh
+    // kategoriyadan iborat va bitta `<input>` ga sig'maydi.
     echo html_writer::tag('td',
         sharhblok::compactcell($courseid, $sid, $oxirgi, $action, ['open' => $open]),
         ['class' => 'tz-sh-lastcell']);
 
+    // Tugma yorlig'i HOLATGA qarab: hali sharh yo'q bo'lsa «Sharh yozish»,
+    // bor bo'lsa «Ochish». Yozish endi faqat shu yo'l bilan bo'ladi,
+    // shuning uchun tugma nima qilishini aytib turishi kerak.
+    if ($ochiq) {
+        $yorliq = get_string('sh_close', 'local_targetzenit');
+        $sinf = 'btn btn-sm btn-outline-secondary';
+    } else if ($soni) {
+        $yorliq = get_string('sh_openrow', 'local_targetzenit');
+        $sinf = 'btn btn-sm btn-outline-secondary';
+    } else {
+        $yorliq = get_string('sh_write', 'local_targetzenit');
+        $sinf = 'btn btn-sm btn-primary';
+    }
     echo html_writer::tag('td',
-        html_writer::link($url(['open' => $ochiq ? 0 : $sid]),
-            $ochiq ? get_string('sh_close', 'local_targetzenit')
-                   : get_string('sh_openrow', 'local_targetzenit'),
-            ['class' => 'btn btn-sm btn-outline-secondary']),
+        html_writer::link($url(['open' => $ochiq ? 0 : $sid]), $yorliq,
+            ['class' => $sinf]),
         ['class' => 'tz-sh-actcell']);
 
     echo html_writer::end_tag('tr');

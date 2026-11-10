@@ -1115,3 +1115,30 @@
 .tz-bh-baho-4 { background: var(--tz-brand-soft); color: var(--tz-brand); }
 .tz-bh-baho-3 { background: var(--tz-warning-bg); color: var(--tz-warning); }
 .tz-bh-baho-2 { background: var(--tz-critical-bg); color: var(--tz-critical); }
+
+/* --- sharhning BESH KATEGORIYASI (2026-11-10) */
+/* Forma: har kategoriya o'z bloki. Beshta maydon ketma-ket turgani uchun
+   ularni ko'z bilan ajratish SHART — aks holda o'qituvchi qaysi maydonga
+   yozayotganini yo'qotadi. */
+.tz-sh-field { margin-bottom: 14px; padding-left: 11px;
+    border-left: 3px solid var(--tz-brand-soft); }
+.tz-sh-field > label { display: block; margin: 0; }
+.tz-sh-field .tz-dir-sub { margin-bottom: 5px; }
+.tz-sh-katlab { font-weight: 700; font-size: .88rem; color: var(--tz-ink); }
+
+/* Ko'rinishda: kategoriya yorlig'i + matni */
+.tz-sh-kat { margin-bottom: 9px; }
+.tz-sh-kat:last-child { margin-bottom: 0; }
+.tz-sh-kat .tz-sh-body { margin: 1px 0 0; }
+/* Eski erkin sharh — ko'chirilmaydi, lekin yangi kategoriyalardan
+   ajralib turadi: u boshqa qoida bo'yicha yozilgan. */
+.tz-sh-kat-old { padding-left: 9px; border-left: 2px dashed var(--tz-line);
+    opacity: .85; }
+
+/* Jadval katagidagi kategoriya belgisi */
+.tz-sh-katchip { display: inline-block; padding: 1px 7px; border-radius: 9px;
+    background: var(--tz-brand-soft); color: var(--tz-brand);
+    font-size: .72rem; font-weight: 700; white-space: nowrap; }
+
+/* Ochilgan kartadagi to'liq matn: beshta blok sig'ishi uchun kengroq */
+.tz-sh-fulltext { max-width: 560px; }

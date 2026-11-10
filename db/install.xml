@@ -437,6 +437,8 @@
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kurs = guruh + fan"/>
         <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim haqida"/>
         <FIELD NAME="authorid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Kim yozdi"/>
+        <FIELD NAME="kategoriya" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="umumiy" SEQUENCE="false" COMMENT="akademik|faollik|ijtimoiy|masuliyat|tanqidiy — 5 kategoriya; umumiy = 2026-11-10 dan oldingi erkin sharhlar"/>
+        <FIELD NAME="batch" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="bitta saqlash = bitta to'plam (5 kategoriya shu kalitni bo'lishadi); NULL = eski erkin sharh"/>
         <FIELD NAME="visibility" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="ochiq" SEQUENCE="false" COMMENT="ochiq = o'quvchi ko'radi va bildirishnoma oladi | maxfiy = faqat xodim"/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="new" SEQUENCE="false" COMMENT="new|seen — o'quvchi o'qidimi"/>
         <FIELD NAME="seenat" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -449,6 +451,7 @@
         <INDEX NAME="commentid" UNIQUE="true" FIELDS="commentid"/>
         <INDEX NAME="student_time" UNIQUE="false" FIELDS="studentid, timecreated"/>
         <INDEX NAME="course_student" UNIQUE="false" FIELDS="courseid, studentid"/>
+        <INDEX NAME="batch" UNIQUE="false" FIELDS="batch"/>
         <INDEX NAME="author_time" UNIQUE="false" FIELDS="authorid, timecreated"/>
         <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
       </INDEXES>

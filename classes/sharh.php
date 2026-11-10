@@ -48,6 +48,33 @@ class sharh {
     /** Qatorda ko'rsatiladigan qisqa matn uzunligi. */
     const QISQA = 110;
 
+    /**
+     * BESH KATEGORIYA (foydalanuvchi talabi 2026-11-10).
+     *
+     * Har o'qituvchi har o'quvchiga shu beshtasi bo'yicha yozadi. Tartib
+     * MUHIM: forma ham, ko'rinish ham shu ketma-ketlikda chiqadi, ya'ni
+     * o'qituvchi har o'quvchida bir xil tartibni ko'radi va o'rganib qoladi.
+     *
+     * Kalitlar O'ZGARMAYDI — ular bazada yozilgan. Yorliqlar til
+     * satrlarida (`sh_kat_*`).
+     */
+    const KATEGORIYALAR = [
+        'akademik',     // Academic Performance — akademik bilim
+        'faollik',      // Classroom Participation — darsdagi faollik
+        'ijtimoiy',     // Social and Emotional Skills
+        'masuliyat',    // Responsibility and Independence
+        'tanqidiy',     // Critical Thinking and Creativity
+    ];
+
+    /**
+     * 2026-11-10 dan OLDIN yozilgan erkin sharhlarning kategoriyasi.
+     *
+     * Ular o'chirilmaydi va ko'chirilmaydi — «Umumiy» yorlig'i ostida
+     * ko'rinishda qoladi. Eski ma'lumotni qayta talqin qilish xato bo'lardi:
+     * o'qituvchi o'sha matnni qaysi kategoriya deb yozganini bilmaymiz.
+     */
+    const ESKI_KAT = 'umumiy';
+
     // ===================================================== COMMENT QUYI TIZIMI
 
     /**
@@ -76,7 +103,9 @@ class sharh {
      * @return int yangi holat qatorining id si (0 = matn bo'sh, saqlanmadi)
      */
     public static function add(int $courseid, int $studentid, string $body,
-                                string $visibility = 'ochiq'): int {
+                                string $visibility = 'ochiq',
+                                string $kategoriya = self::ESKI_KAT,
+                                ?string $batch = null): int {
         global $DB, $USER;
 
         $body = trim($body);
@@ -85,6 +114,10 @@ class sharh {
         }
         if (!in_array($visibility, self::VIS, true)) {
             $visibility = 'ochiq';
+        }
+        if ($kategoriya !== self::ESKI_KAT
+                && !in_array($kategoriya, self::KATEGORIYALAR, true)) {
+            $kategoriya = self::ESKI_KAT;
         }
 
         $context = \context_course::instance($courseid);
@@ -110,23 +143,115 @@ class sharh {
             'courseid' => $courseid,
             'studentid' => $studentid,
             'authorid' => (int) $USER->id,
+            'kategoriya' => $kategoriya,
+            'batch' => $batch,
             'visibility' => $visibility,
             'status' => 'new',
             'seenat' => 0,
             'timecreated' => time(),
         ]);
 
-        // Bildirishnoma yiqilsa sharh saqlanishi to'smasligi kerak — asosiy
-        // yozuv yuqorida tugadi (fidbek modulidagi bilan bir xil qoida).
-        if ($visibility === 'ochiq') {
+        // BILDIRISHNOMA BU YERDA YUBORILMAYDI.
+        //
+        // Besh kategoriya = besh `add()` chaqiruvi, ya'ni o'quvchi bitta
+        // sharh uchun BESH xabar olardi. Xabar `add_batch()` da, to'plam
+        // tugagach BIR MARTA yuboriladi.
+        return $id;
+    }
+
+    /**
+     * BESH KATEGORIYA BO'YICHA sharhni bir to'plam qilib saqlaydi.
+     *
+     * Bu modulning ASOSIY yozish yo'li. `add()` esa bitta kategoriyani
+     * yozadi va faqat shu metod (yoki eski ma'lumot) uchun ishlatiladi.
+     *
+     * @param array $matnlar [kategoriya => matn]
+     * @return array ['batch' => string, 'yozildi' => int]
+     */
+    public static function add_batch(int $courseid, int $studentid,
+                                      array $matnlar,
+                                      string $visibility = 'ochiq'): array {
+        $toza = [];
+        foreach (self::KATEGORIYALAR as $kat) {
+            $toza[$kat] = trim((string) ($matnlar[$kat] ?? ''));
+        }
+
+        // HAMMA BESHTASI TO'LDIRILISHI SHART (foydalanuvchi talabi:
+        // «har birini yoniga yozishi kerak»).
+        //
+        // Nega qattiq tekshiruv: sharhning maqsadi — o'quvchining to'liq
+        // manzarasi. Bittasi bo'sh qolsa hisobot «akademik bilimi bor,
+        // ijtimoiy ko'nikmasi yo'q» degan noto'g'ri xulosaga olib keladi,
+        // aslida esa shunchaki yozilmagan. Bo'sh qoldirishga ruxsat bersak,
+        // amalda faqat birinchi maydon to'ldiriladi.
+        $bosh = [];
+        foreach ($toza as $kat => $matn) {
+            if ($matn === '') {
+                $bosh[] = get_string('sh_kat_' . $kat, 'local_targetzenit');
+            }
+        }
+        if ($bosh) {
+            throw new \moodle_exception('sh_allrequired', 'local_targetzenit', '',
+                implode(', ', $bosh));
+        }
+
+        // To'plam kaliti — besh qator shuni bo'lishadi va ko'rinishda bitta
+        // sharh bo'lib yig'iladi.
+        $batch = \core\uuid::generate();
+        $batch = substr(str_replace('-', '', $batch), 0, 32);
+
+        $yozildi = 0;
+        foreach ($toza as $kat => $matn) {
+            if (self::add($courseid, $studentid, $matn, $visibility, $kat, $batch)) {
+                $yozildi++;
+            }
+        }
+
+        // Bildirishnoma — TO'PLAM uchun BITTA. Birinchi kategoriya matni
+        // qisqa ko'rinish sifatida ketadi.
+        if ($yozildi && $visibility === 'ochiq') {
             try {
-                self::xabar($courseid, $studentid, $body);
+                self::xabar($courseid, $studentid,
+                    $toza[self::KATEGORIYALAR[0]]);
             } catch (\Throwable $e) {
                 debugging('local_targetzenit: sharh bildirishnomasi yuborilmadi — '
                     . $e->getMessage(), DEBUG_DEVELOPER);
             }
         }
-        return $id;
+        return ['batch' => $batch, 'yozildi' => $yozildi];
+    }
+
+    /**
+     * Qatorlarni TO'PLAMLARGA guruhlaydi — bitta saqlash = bitta sharh.
+     *
+     * `batch` NULL bo'lgan eski erkin sharh o'zi alohida to'plam bo'ladi
+     * (kaliti `old<id>`), ya'ni eski ma'lumot ham bir xil yo'l bilan
+     * chiziladi va chizuvchida ikkinchi shoxcha kerak bo'lmaydi.
+     *
+     * @param array $rows `select()` qatorlari (tartibi saqlanadi)
+     * @return array har biri ['bosh' => record, 'matnlar' => [kat => record]]
+     */
+    public static function guruhla(array $rows): array {
+        $out = [];
+        foreach ($rows as $r) {
+            $kalit = ($r->batch !== null && $r->batch !== '')
+                ? 'b' . $r->batch
+                : 'old' . $r->id;
+            if (!isset($out[$kalit])) {
+                $out[$kalit] = ['bosh' => $r, 'matnlar' => []];
+            }
+            $out[$kalit]['matnlar'][$r->kategoriya] = $r;
+        }
+        return $out;
+    }
+
+    /** Kategoriya yorliqlari: [kalit => nomi]. Tartib `KATEGORIYALAR` dagidek. */
+    public static function kategoriyalar_menu(): array {
+        $out = [];
+        foreach (self::KATEGORIYALAR as $kat) {
+            $out[$kat] = get_string('sh_kat_' . $kat, 'local_targetzenit');
+        }
+        return $out;
     }
 
     /** Shu odam shu kursning o'quvchisimi. */
@@ -182,6 +307,7 @@ class sharh {
      */
     protected static function select(): string {
         return "SELECT s.id, s.commentid, s.courseid, s.studentid, s.authorid,
+                       s.kategoriya, s.batch,
                        s.visibility, s.status, s.seenat, s.timecreated,
                        c.content, c.format,
                        a.firstname AS afirstname, a.lastname AS alastname,
@@ -239,14 +365,27 @@ class sharh {
         $rows = $DB->get_records_sql(self::select()
             . " WHERE $shart ORDER BY s.timecreated ASC, s.id ASC", $params);
 
+        // SONI = TO'PLAMLAR soni, qatorlar soni EMAS.
+        //
+        // Besh kategoriya = besh qator, ya'ni oddiy sanoq bitta sharhni
+        // «5 sharh» qilib ko'rsatardi. O'qituvchi «men bir marta yozdim,
+        // nega beshta?» deb o'ylardi.
         $out = [];
+        $tplar = [];
         foreach ($rows as $r) {
             $k = (int) $r->studentid;
             if (!isset($out[$k])) {
                 $out[$k] = ['oxirgi' => null, 'soni' => 0];
+                $tplar[$k] = [];
             }
             $out[$k]['oxirgi'] = $r;      // tartib ASC — oxirgisi ustiga yoziladi
-            $out[$k]['soni']++;
+
+            $tp = ($r->batch !== null && $r->batch !== '')
+                ? 'b' . $r->batch : 'old' . $r->id;
+            $tplar[$k][$tp] = true;
+        }
+        foreach ($out as $k => $v) {
+            $out[$k]['soni'] = count($tplar[$k]);
         }
         return $out;
     }

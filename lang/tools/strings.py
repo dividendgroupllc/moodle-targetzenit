@@ -2289,6 +2289,114 @@ S = {
     "bh_part_bsb": ("BSB and projects", "BSB va loyihalar", "BSB и проекты"),
     "bh_part_chsb": ("CHSB", "CHSB", "CHSB"),
 
+    # ---------------------------- sharhning 5 kategoriyasi (2026-11-10)
+    "sh_kat_akademik": (
+        "Academic Performance",
+        "Akademik bilim",
+        "Академические знания",
+    ),
+    "sh_kat_faollik": (
+        "Classroom Participation",
+        "Darsdagi faollik",
+        "Активность на уроке",
+    ),
+    "sh_kat_ijtimoiy": (
+        "Social and Emotional Skills",
+        "Ijtimoiy va emotsional ko'nikmalar",
+        "Социальные и эмоциональные навыки",
+    ),
+    "sh_kat_masuliyat": (
+        "Responsibility and Independence",
+        "Mas'uliyat va mustaqillik",
+        "Ответственность и самостоятельность",
+    ),
+    "sh_kat_tanqidiy": (
+        "Critical Thinking and Creativity",
+        "Tanqidiy fikrlash va ijodkorlik",
+        "Критическое мышление и креативность",
+    ),
+    "sh_kat_umumiy": (
+        "General (earlier review)",
+        "Umumiy (oldingi sharh)",
+        "Общий (ранний отзыв)",
+    ),
+
+    # Ko'rsatmalar — o'qituvchi NIMA yozishini bilishi uchun. Qisqa, chunki
+    # beshta maydon ustida uzun matn o'qilmaydi.
+    "sh_hint_akademik": (
+        "Subject knowledge, grasp of the material, progress",
+        "Fan bilimi, mavzuni o'zlashtirishi, o'sishi",
+        "Знание предмета, усвоение материала, прогресс",
+    ),
+    "sh_hint_faollik": (
+        "Taking part in the lesson, asking and answering, group work",
+        "Darsda qatnashishi, savol-javob, guruhda ishlashi",
+        "Участие в уроке, вопросы и ответы, работа в группе",
+    ),
+    "sh_hint_ijtimoiy": (
+        "Relations with classmates, self-control, empathy",
+        "Sinfdoshlari bilan munosabati, o'zini tutishi, hamdardligi",
+        "Отношения с одноклассниками, самоконтроль, эмпатия",
+    ),
+    "sh_hint_masuliyat": (
+        "Homework, keeping to deadlines, working without being told",
+        "Uy vazifasi, muddatga yetishi, aytmasdan ishlashi",
+        "Домашние задания, соблюдение сроков, работа без напоминаний",
+    ),
+    "sh_hint_tanqidiy": (
+        "Asking why, finding their own solutions, new ideas",
+        "Sabab so'rashi, o'z yechimini topishi, yangi g'oyalari",
+        "Задаёт вопросы «почему», находит свои решения, новые идеи",
+    ),
+
+    # Namuna matnlar (placeholder) — bo'sh maydon qo'rqitadi, namuna esa
+    # ohangni ham ko'rsatadi: ayblov emas, kuzatish.
+    "sh_ph_akademik": (
+        "For example: has a solid grasp of fractions, needs more practice with word problems",
+        "Masalan: kasrlarni yaxshi o'zlashtirgan, masalalar yechishda mashq kerak",
+        "Например: хорошо усвоил дроби, нужна практика в текстовых задачах",
+    ),
+    "sh_ph_faollik": (
+        "For example: answers readily, but rarely asks questions of their own",
+        "Masalan: javob berishga shoshiladi, lekin o'zi savol kam beradi",
+        "Например: охотно отвечает, но редко задаёт свои вопросы",
+    ),
+    "sh_ph_ijtimoiy": (
+        "For example: helps classmates, finds it hard to wait their turn",
+        "Masalan: sinfdoshlariga yordam beradi, navbat kutishi qiyin",
+        "Например: помогает одноклассникам, трудно даётся ждать очереди",
+    ),
+    "sh_ph_masuliyat": (
+        "For example: brings homework on time, needs reminding about materials",
+        "Masalan: uy vazifasini vaqtida olib keladi, jihozlarni eslatish kerak",
+        "Например: вовремя приносит домашнее задание, про материалы нужно напоминать",
+    ),
+    "sh_ph_tanqidiy": (
+        "For example: looks for a second way to solve it, enjoys open questions",
+        "Masalan: ikkinchi yechim yo'lini izlaydi, ochiq savollarni yaxshi ko'radi",
+        "Например: ищет второй способ решения, любит открытые вопросы",
+    ),
+
+    "sh_allhint": (
+        "All five categories must be filled in — the review is a complete "
+        "picture of the student, not a single remark",
+        "Beshta kategoriya ham to'ldirilishi shart — sharh o'quvchining "
+        "to'liq manzarasi, bir og'iz izoh emas",
+        "Все пять категорий обязательны — отзыв это полная картина ученика, "
+        "а не одно замечание",
+    ),
+    "sh_allrequired": (
+        "These categories are still empty: {$a}. All five must be filled in.",
+        "Bu kategoriyalar bo'sh qoldi: {$a}. Beshtasi ham to'ldirilishi shart.",
+        "Эти категории не заполнены: {$a}. Все пять обязательны.",
+    ),
+    "sh_write": ("Write a review", "Sharh yozish", "Написать отзыв"),
+    "sh_katcount": (
+        "{$a} categories",
+        "{$a} kategoriya",
+        "Категорий: {$a}",
+    ),
+
     "app_murojaat": ("Parent issues", "Murojaatlar", "Обращения"),
     "app_murojaatim": ("My issues", "Murojaatlarim", "Мои обращения"),
 
