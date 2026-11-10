@@ -31,6 +31,36 @@ class timetable {
             : (self::DAYS[$dayno] ?? (string) $dayno);
     }
 
+    /**
+     * Foydalanuvchining BUGUNI, YYYY-MM-DD.
+     *
+     * NEGA `date('Y-m-d')` EMAS: PHP ning `date()` i SERVER mintaqasida
+     * ishlaydi. 2026-11-10 da o'lchangan: Moodle sayt mintaqasi
+     * `Europe/London`, serverning OS vaqti UTC, maktab esa `Asia/Tashkent`
+     * (+5). Ya'ni mahalliy 00:00–05:00 orasida sahifa "bugun" deb OLDINGI
+     * kunni ko'rsatardi, dushanba ertalab esa butun hafta avvalgi haftaga
+     * siljib ketardi. Chet ellik o'qituvchilarda profil mintaqasi boshqa
+     * bo'lsa farq yana boshqacha.
+     *
+     * `usergetdate()` — Moodle ning standart yo'li: foydalanuvchi
+     * profilidagi mintaqa, u `99` bo'lsa sayt sozlamasi.
+     *
+     * DIQQAT: sayt mintaqasini `Asia/Tashkent` ga qo'yish ham kerak
+     * (Site administration -> Location -> Location settings). Kod to'g'ri
+     * mintaqani SO'RAYDI, lekin qaysi mintaqa ekanini sozlama aytadi.
+     */
+    public static function bugun(): string {
+        $d = usergetdate(time());
+        return sprintf('%04d-%02d-%02d', $d['year'], $d['mon'], $d['mday']);
+    }
+
+    /** Foydalanuvchining bugungi hafta kuni: 1=Dushanba ... 7=Yakshanba. */
+    public static function bugun_dayno(): int {
+        $d = usergetdate(time());
+        // `wday`: 0=Yakshanba ... 6=Shanba -> ISO: 1=Dushanba ... 7=Yakshanba
+        return (int) $d['wday'] === 0 ? 7 : (int) $d['wday'];
+    }
+
     /** Jadvalda mavjud oxirgi o'quv yili. */
     public static function current_year(): string {
         global $DB;
@@ -95,11 +125,58 @@ class timetable {
         return $out;
     }
 
-    /** Guruhning haftalik darslari. */
+    /**
+     * Guruhning haftalik darslari.
+     *
+     * NEGA SHUNCHAKI `groupkey = :g` EMAS: qo'shma va daraja darslarida
+     * `groupkey` — BLOK guruhi (masalan «ENGLISH 8A+8B+9A+9B (qo'shma)»),
+     * sinf emas. Aniq tenglik bilan qidirilganda blok darslari hech qaysi
+     * sinf jadvaliga tushmaydi: 2026-11-10 da 8A dushanbasida manbada 10
+     * dars bor edi, sahifa 3 tasini ko'rsatdi.
+     *
+     * Shuning uchun `memberclasses` ham tekshiriladi — dars tegishli
+     * sinflar `|sinf|sinf|` ko'rinishida saqlanadi. Ajratgichlar tufayli
+     * `LIKE '%|8 A(full)|%'` faqat TO'LIQ nomni ushlaydi.
+     *
+     * `groupkey` tengligi saqlanib qoladi, chunki:
+     *   - blok guruhini ATAYLAB tanlash mumkin (tanlagichda turadi);
+     *   - migratsiyadan keyin, birinchi push'gacha `memberclasses` bo'sh.
+     */
     public static function for_group(string $year, string $group): array {
         global $DB;
-        return $DB->get_records('local_targetzenit_timetable',
-            ['academicyear' => $year, 'groupkey' => $group], 'dayno ASC, lessonno ASC');
+        return $DB->get_records_select(
+            'local_targetzenit_timetable',
+            'academicyear = :y AND (groupkey = :g OR ' . $DB->sql_like('memberclasses', ':a') . ')',
+            ['y' => $year, 'g' => $group, 'a' => '%|' . $DB->sql_like_escape($group) . '|%'],
+            'dayno ASC, lessonno ASC'
+        );
+    }
+
+    /**
+     * Blok (qo'shma/daraja) guruhlarining kalitlari.
+     *
+     * Blok darsi — `memberclasses` da o'z `groupkey` idan boshqa sinflar
+     * turgan qator. Sinf guruhida esa `memberclasses` o'zidan iborat
+     * (`|8 A(full)|`), ya'ni ikkisini ishonchli ajratish mumkin.
+     *
+     * Kerak: `groups_of()` o'quvchiga standart guruhni tanlaganda SINF ni
+     * olishi kerak — blokni olsa, u o'z sinfining boshqa darslarini
+     * ko'rmaydi.
+     */
+    public static function blok_groupkeys(string $year): array {
+        global $DB;
+        $rows = $DB->get_records_sql(
+            'SELECT DISTINCT groupkey, memberclasses FROM {local_targetzenit_timetable}
+              WHERE academicyear = :y',
+            ['y' => $year]
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            if ((string) $r->memberclasses !== '' && $r->memberclasses !== '|' . $r->groupkey . '|') {
+                $out[$r->groupkey] = true;
+            }
+        }
+        return $out;
     }
 
     /** O'qituvchining haftalik darslari. */
@@ -201,14 +278,25 @@ class timetable {
             'userid' => $userid,
             'pattern' => $year . '::%',
         ]);
-        $out = [];
+        // Blok kurslariga ham yozilgan bo'lishi mumkin (daraja guruhi ham
+        // kurs). Standart ko'rinish SINF jadvali bo'lishi kerak, shuning
+        // uchun blok guruhlari ro'yxat OXIRIGA suriladi: `index.php`
+        // birinchisini oladi.
+        $bloklar = self::blok_groupkeys($year);
+        $sinf = [];
+        $blok = [];
         foreach ($rows as $idn) {
             $qism = explode('::', $idn);
-            if (count($qism) >= 3) {
-                $out[$qism[1]] = $qism[1];
+            if (count($qism) < 3) {
+                continue;
+            }
+            if (isset($bloklar[$qism[1]])) {
+                $blok[$qism[1]] = $qism[1];
+            } else {
+                $sinf[$qism[1]] = $qism[1];
             }
         }
-        return $out;
+        return $sinf + $blok;
     }
 
     /** Kurs idnumber -> Moodle kurs id (jadvaldan kursga havola qo'yish uchun). */

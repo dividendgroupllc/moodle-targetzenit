@@ -35,6 +35,17 @@ class push_timetable extends external_api {
                     'endtime' => new external_value(PARAM_TEXT, 'HH:MM', VALUE_DEFAULT, ''),
                     'room' => new external_value(PARAM_RAW, 'Xona', VALUE_DEFAULT, ''),
                     'courseidnumber' => new external_value(PARAM_TEXT, 'Moodle kursining idnumber i', VALUE_DEFAULT, ''),
+                    // Dars qaysi SINFLARGA tegishli: |1 A(full)|1 B(hybrid)|
+                    //
+                    // NEGA ALOHIDA: `groupkey` qo'shma/daraja darsida BLOK
+                    // guruhi bo'ladi, sinf emas. Sinf jadvalini faqat shu
+                    // ustun orqali to'liq yig'ib bo'ladi (`for_group`).
+                    //
+                    // KALIT maydon, shuning uchun `PARAM_TEXT`: moslik aniq
+                    // bo'lishi shart va jimgina o'zgartirilishi mumkin emas —
+                    // nomuvofiqlik bo'lsa sinxron baland ovozda yiqilsin.
+                    'memberclasses' => new external_value(PARAM_TEXT,
+                        "Dars tegishli sinflar, |sinf|sinf| ko'rinishida", VALUE_DEFAULT, ''),
                 ]),
                 'Dars jadvali qatorlari'
             ),
@@ -119,6 +130,7 @@ class push_timetable extends external_api {
                 'endtime' => $l['endtime'],
                 'room' => self::nom($l['room'], 100),
                 'courseidnumber' => $l['courseidnumber'],
+                'memberclasses' => \core_text::substr($l['memberclasses'], 0, 1000),
                 'timemodified' => $now,
             ];
         }

@@ -14,12 +14,12 @@ use local_targetzenit\timetable;
 require_login();
 
 $view = optional_param('view', 'week', PARAM_ALPHA);     // week | today | all
-$date = optional_param('date', date('Y-m-d'), PARAM_TEXT);
+$date = optional_param('date', timetable::bugun(), PARAM_TEXT);
 $group = optional_param('group', '', PARAM_TEXT);
-$dayno = optional_param('dayno', (int) date('N'), PARAM_INT);
+$dayno = optional_param('dayno', timetable::bugun_dayno(), PARAM_INT);
 
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-    $date = date('Y-m-d');
+    $date = timetable::bugun();
 }
 
 $context = context_system::instance();
@@ -173,8 +173,21 @@ if (!$rows && $view !== 'all') {
 }
 
 // --- Qaysi ustunda nima ko'rsatiladi: o'qituvchiga guruh, o'quvchiga o'qituvchi
-$ikkinchi_qator = function($r) use ($isteacherview) {
-    return $isteacherview ? format_string($r->groupname) : format_string($r->teachername);
+// Sinf jadvalida blok darslari ham ko'rinadi — `for_group()` ularni
+// `memberclasses` orqali topadi. Bunday darsda guruh SINF emas, blok
+// (masalan «ENGLISH High 8-9»), ya'ni bitta katakda bitta fan bir necha
+// marta — har darajaga bittadan — turishi mumkin. Shuning uchun guruh nomi
+// ham yoziladi: aks holda o'quvchi qaysi qator o'ziga tegishli ekanini
+// bilmaydi.
+$ikkinchi_qator = function($r) use ($isteacherview, $group) {
+    if ($isteacherview) {
+        return format_string($r->groupname);
+    }
+    $oqituvchi = format_string($r->teachername);
+    if ($group !== '' && $r->groupkey !== $group) {
+        return format_string($r->groupname) . ' · ' . $oqituvchi;
+    }
+    return $oqituvchi;
 };
 
 if ($view === 'today') {
@@ -423,7 +436,7 @@ if ($view === 'today') {
             $navargs + ['date' => $prev]), get_string('tt_prevweek', 'local_targetzenit'),
             ['class' => 'btn btn-outline-secondary mr-2']) .
         html_writer::link(new moodle_url('/local/targetzenit/index.php',
-            $navargs + ['date' => date('Y-m-d')]), get_string('tt_thisweek', 'local_targetzenit'),
+            $navargs + ['date' => timetable::bugun()]), get_string('tt_thisweek', 'local_targetzenit'),
             ['class' => 'btn btn-outline-secondary mr-2']) .
         html_writer::link(new moodle_url('/local/targetzenit/index.php',
             $navargs + ['date' => $next]), get_string('tt_nextweek', 'local_targetzenit'),
@@ -437,7 +450,7 @@ if ($view === 'today') {
     }
 
     $t = new html_table();
-    $bugun = date('Y-m-d');
+    $bugun = timetable::bugun();
     $head = [get_string('lesson', 'local_targetzenit')];
     foreach (array_keys(timetable::DAYS) as $d) {
         $nom = timetable::kun_nomi($d);

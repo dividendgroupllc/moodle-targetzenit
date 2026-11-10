@@ -94,6 +94,7 @@ class mobile {
         // o'z sinfiniki. Mantiq veb sahifadagi (`index.php`) bilan bir xil.
         $teacherkey = timetable::teacher_key_of($USER, $year);
         $oqituvchi = $teacherkey !== '';
+        $guruh = '';
         if ($oqituvchi) {
             $rows = timetable::for_teacher($year, $teacherkey);
         } else {
@@ -111,8 +112,8 @@ class mobile {
 
         $terms = timetable::terms($year);
         $holidays = timetable::holidays($year);
-        $hafta = timetable::week_dates(date('Y-m-d'));
-        $bugun = date('Y-m-d');
+        $hafta = timetable::week_dates(timetable::bugun());
+        $bugun = timetable::bugun();
 
         foreach (array_keys(timetable::DAYS) as $dayno) {
             $sana = $hafta[$dayno];
@@ -134,8 +135,17 @@ class mobile {
                     'xona' => format_string((string) $r->room),
                     // O'qituvchi qaysi SINFGA kirishini, o'quvchi esa KIM
                     // o'tishini bilishi kerak — ehtiyoj teskari.
-                    'kim' => format_string((string)
-                        ($oqituvchi ? $r->groupname : $r->teachername)),
+                    //
+                    // Blok darsida (`groupkey` sinfdan boshqa) o'quvchiga
+                    // guruh nomi ham qo'shiladi: bitta darsda sinf
+                    // darajalarga bo'linsa, bir vaqtda bir necha qator
+                    // ko'rinadi va qaysi biri o'ziga tegishli ekani
+                    // faqat guruh nomidan bilinadi.
+                    'kim' => format_string((string) ($oqituvchi
+                        ? $r->groupname
+                        : (($guruh !== '' && $r->groupkey !== $guruh)
+                            ? $r->groupname . ' · ' . $r->teachername
+                            : $r->teachername))),
                 ];
             }
 
@@ -230,7 +240,7 @@ class mobile {
             }
             $data['kunlar'][] = [
                 'sana' => userdate(strtotime($sana), get_string('strftimedaydate')),
-                'bugun' => $sana === date('Y-m-d'),
+                'bugun' => $sana === timetable::bugun(),
                 'ochiq_blok' => $birinchi_kun,
                 'darslar' => $darslar,
             ];
@@ -677,7 +687,7 @@ class mobile {
         }
 
         // Joriy chorak — bugungi sana qaysi oraliqqa tushsa.
-        $bugun = date('Y-m-d');
+        $bugun = timetable::bugun();
         $chorak = null;
         foreach (timetable::terms($year) as $t) {
             if ($bugun >= $t->startdate && $bugun <= $t->enddate) {

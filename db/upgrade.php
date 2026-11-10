@@ -868,6 +868,42 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111010, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111020) {
+
+        // ============ BLOK DARSI SINF JADVALIDA KO'RINMAY QOLGAN (nuqson)
+        //
+        // MUAMMO: `groupkey` — darsning Frappe'dagi guruhi. Qo'shma/daraja
+        // darsida bu BLOK guruhi (masalan «ENGLISH 8A+8B+9A+9B (qo'shma)»),
+        // sinf emas. `timetable::for_group()` esa aniq tenglik bilan
+        // qidirardi, ya'ni blok darsi HECH QAYSI sinf jadvaliga tushmasdi.
+        //
+        // 2026-11-10 da prodda o'lchangan: 8A dushanbasida manbada 10 dars
+        // bor, sahifa 3 tasini ko'rsatardi (ENGLISH x2, MATH x2, HIST.U x2,
+        // IT — hammasi blok qatorlarida qolgan). Sinf-slot qoplami 630/998;
+        // 1A=48, 3A=50 (boshlang'ichda blok kam), lekin 5A=21, 8A=22.
+        //
+        // YECHIM: dars qaysi SINFLARGA tegishli ekanini alohida ustunda
+        // saqlaymiz. Frappe buni allaqachon biladi — `Jadval Yozuvi.sinflar`
+        // har qatorda to'ldirilgan (oddiy darsda o'z sinfi, blok darsida
+        // barcha a'zo sinflar).
+        //
+        // Format: |sinf|sinf| — boshida va oxirida ajratgich BOR, chunki
+        // ajratgichsiz `LIKE '%1 A(full)%'` «11 A(full)» ni ham ushlaydi
+        // (sinovda 1A ga 100 dars chiqqan).
+        //
+        // Ustun BO'SH qoladi — keyingi push to'ldiradi. Shu sababli
+        // `for_group()` eski `groupkey` tengligini ham saqlab turadi:
+        // migratsiya bilan push orasida jadval ishlashdan to'xtamasin.
+        $table = new xmldb_table('local_targetzenit_timetable');
+        $field = new xmldb_field('memberclasses', XMLDB_TYPE_CHAR, '1000',
+            null, null, null, null, 'courseidnumber');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111020, 'local', 'targetzenit');
+    }
+
     return true;
 }
 
