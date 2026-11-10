@@ -148,6 +148,13 @@ if (get_config('local_targetzenit', 'audioenabled')) {
             echo html_writer::tag('audio', '', ['src' => $url->out(false), 'controls' => 'controls',
                 'preload' => 'none', 'class' => 'w-100 mb-2']);
         }
+        // Yig'ishda nuqson sezilgan bo'lsa JIM qolmaymiz: o'qituvchi
+        // darsni qayta yozishi kerakmi yoki yo'qligini bilishi shart.
+        if (!empty($yozuv->warning)) {
+            echo html_writer::tag('div',
+                get_string('au_warning', 'local_targetzenit', s($yozuv->warning)),
+                ['class' => 'alert alert-warning py-1 px-2 small mb-2']);
+        }
         if ($yozuv->status === 'transcribed') {
             $qoldi = max(0, $kun - (int) floor((time() - $yozuv->timecreated) / DAYSECS));
             echo html_writer::tag('div',

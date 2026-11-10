@@ -6,7 +6,8 @@
 // eng kuchsiz domen qaysi" degan savolga JSON ustunidan SQL bilan javob
 // olinmaydi (MySQL va Postgres JSON funksiyalari ham bir xil emas).
 //
-// YECHIM: tahlil saqlanayotgan paytda 15 ball shu jadvalga ham yoziladi.
+// YECHIM: tahlil saqlanayotgan paytda har bir kategoriya bali shu jadvalga
+// ham yoziladi (universal o'zak + shu fanning moduli, ya'ni 23-27 qator).
 // JSON YAGONA MANBA bo'lib qoladi — bu faqat indeks, shuning uchun istalgan
 // vaqtda JSON'dan qayta qurilishi mumkin:
 //

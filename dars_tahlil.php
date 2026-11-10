@@ -176,6 +176,14 @@ if ($a) {
     } else {
         echo html_writer::div(get_string('dir_audionone', 'local_targetzenit'), 'tz-dir-sub');
     }
+
+    // Yig'ishda nuqson sezilgan bo'lsa JIM qolmaymiz — zavuch tahlilni
+    // qanday faylga tayanganini bilishi kerak (yetmagan bo'lak, uzilish).
+    if (!empty($a->warning)) {
+        echo html_writer::div(
+            get_string('au_warning', 'local_targetzenit', s($a->warning)),
+            'alert alert-warning py-1 px-2 small mt-2 mb-0');
+    }
     echo html_writer::end_div();
 }
 

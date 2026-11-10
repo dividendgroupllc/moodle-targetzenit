@@ -85,6 +85,19 @@ echo html_writer::tag('div',
     get_string('rc_hint', 'local_targetzenit', $kun),
     ['class' => 'text-muted small']);
 
+// TUGALLANMAGAN YOZUV: sahifa qayta yuklangan yoki brauzer yiqilgan bo'lsa
+// bo'laklar serverda qolgan. "Boshlash" ularni O'CHIRMAYDI — yozuv keyingi
+// avlod sifatida davom etadi. O'qituvchi buni bosishdan OLDIN bilishi kerak,
+// aks holda "hammasi yo'qoldimi?" deb darsni boshqatdan yozishga urinardi.
+if ($yozuv && $yozuv->status === 'recording') {
+    $qolgan = count(\local_targetzenit\audio::parts($lessonid));
+    if ($qolgan) {
+        echo html_writer::tag('div',
+            get_string('rc_resume', 'local_targetzenit', $qolgan),
+            ['class' => 'alert alert-warning mt-3 small']);
+    }
+}
+
 if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {
     echo html_writer::tag('div',
         get_string('rc_exists', 'local_targetzenit',

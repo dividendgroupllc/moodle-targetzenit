@@ -836,6 +836,38 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026110890, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111010) {
+
+        // ===================== AUDIO: SESSIYA, AVLOD, OGOHLANTIRISH
+        //
+        // `sessionid` — bitta dars ikki oyna/qurilmada ochilsa bo'laklar
+        // aralashmasligi uchun. `start` yangi kalit beradi, eski sessiyadan
+        // kelgan bo'lak rad etiladi.
+        //
+        // `segments` — yozuv necha marta uzilib qayta boshlangani. 1 dan katta
+        // bo'lsa fayl ffmpeg bilan ulangan (bayt-ulash bunday faylni
+        // o'qilmas qiladi — `audio.php` boshidagi izohga qara).
+        //
+        // `warning` — yig'ishda sezilgan nuqson (yetmagan bo'lak, kutilgandan
+        // qisqa davomiylik). JIM yo'qotishdan ko'ra yozib qo'yish kerak.
+        $table = new xmldb_table('local_targetzenit_audio');
+
+        $field = new xmldb_field('sessionid', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('segments', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('warning', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111010, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

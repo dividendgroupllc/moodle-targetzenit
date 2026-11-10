@@ -137,6 +137,24 @@ S = {
         "Muddati o'tgan dars audiolarini o'chirish",
         "Удалить устаревшие аудиозаписи уроков",
     ),
+    "au_warning": (
+        "Recording issue: {$a}",
+        "Yozuvda nuqson: {$a}",
+        "Дефект записи: {$a}",
+    ),
+    "rc_resume": (
+        "An unfinished recording was found for this lesson ({$a} chunks saved). "
+        "Pressing start CONTINUES it \u2014 nothing already recorded is lost.",
+        "Bu darsda tugallanmagan yozuv topildi ({$a} bo'lak saqlangan). "
+        "\u00abBoshlash\u00bb bosilsa yozuv DAVOM etadi \u2014 avval yozilgani yo'qolmaydi.",
+        "\u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0443\u0440\u043e\u043a\u0430 \u043d\u0430\u0439\u0434\u0435\u043d\u0430 \u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u0430\u044f \u0437\u0430\u043f\u0438\u0441\u044c ({$a} \u0444\u0440\u0430\u0433\u043c.). "
+        "\u00ab\u041d\u0430\u0447\u0430\u0442\u044c\u00bb \u041f\u0420\u041e\u0414\u041e\u041b\u0416\u0418\u0422 \u0435\u0451 \u2014 \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u043d\u043e\u0435 \u043d\u0435 \u043f\u0440\u043e\u043f\u0430\u0434\u0451\u0442.",
+    ),
+    "audio_finalize": (
+        "Finalise abandoned lesson recordings",
+        "Tashlab ketilgan dars yozuvlarini yakunlash",
+        "Завершить брошенные записи уроков",
+    ),
     "recordings": ("Lesson recordings", "Dars yozuvlari", "Записи уроков"),
 
     # ------------------------------------------------------------ AI tahlili
@@ -456,6 +474,79 @@ S = {
     "ai_grp_emotional": ('Emotional support', "Emotsional qo'llab-quvvatlash", 'Эмоциональная поддержка'),
     "ai_grp_organization": ('Classroom organization', 'Sinfni tashkil etish', 'Организация класса'),
     "ai_grp_feedback": ('Feedback and language', 'Fikr-mulohaza va til', 'Обратная связь и язык'),
+
+    # --- 0.42.0 ramkasi: GTT (Coe 2020) + CLASS + ICALT + TEACH + MQI/PLATO.
+    # Guruhlar qayta tuzildi (quality/emotional/feedback -> content/thinking/
+    # climate/outcome), shuning uchun yuqoridagi uchtasi endi ishlatilmaydi,
+    # lekin eski tahlillar uchun jadvalda qolgan.
+    "ai_grp_content": ('Content and explanation', 'Mazmun va tushuntirish', 'Содержание и объяснение'),
+    "ai_grp_thinking": ('Activating hard thinking', 'Fikrlashni faollashtirish', 'Активизация мышления'),
+    "ai_grp_climate": ('Climate and relationships', 'Muhit va munosabat', 'Климат и отношения'),
+    "ai_grp_outcome": ('Learning outcome', 'Natija', 'Результат'),
+    "ai_grp_subject": ('Subject-specific craft', 'Fan mahorati', 'Предметное мастерство'),
+
+    # universal o'zakka qo'shilgan kategoriyalar
+    "ai_cat_structuring": ('Lesson structure', 'Dars strukturasi', 'Структура урока'),
+    "ai_cat_relevance": ('Connection to real life', "Hayot bilan bog'liqlik", 'Связь с жизнью'),
+    "ai_cat_questioning": ('Quality of questioning', 'Savol berish sifati', 'Качество вопросов'),
+    "ai_cat_participation": ('Distribution of participation', 'Qatnashuv taqsimoti', 'Распределение участия'),
+    "ai_cat_embedding": ('Practice and review', 'Mashq va takrorlash', 'Отработка и повторение'),
+    "ai_cat_student_attitude": (
+        'Students\' attitude towards the teacher',
+        "O'quvchilarning o'qituvchiga munosabati",
+        'Отношение учеников к учителю',
+    ),
+    "ai_cat_high_expectations": ('Climate of high expectations', 'Yuqori talab muhiti', 'Атмосфера высоких требований'),
+    "ai_cat_error_climate": ('Response to mistakes', 'Xatoga munosabat', 'Отношение к ошибкам'),
+    "ai_cat_learning_evidence": ('What students learned', "O'quvchi nima o'rgandi", 'Что ученик усвоил'),
+
+    # fan moduli — aniq fanlar (MQI)
+    "ai_cat_math_precision": ('Precision of mathematical language', 'Matematik til va yozuvning aniqligi', 'Точность математического языка'),
+    "ai_cat_procedure_meaning": ('Meaning behind the procedure', "Algoritm ortidagi ma'no", 'Смысл за алгоритмом'),
+    "ai_cat_reasoning": ('Demanding reasoning and proof', 'Asoslash va isbot talab qilish', 'Требование обоснования и доказательства'),
+    "ai_cat_representations": ('Multiple representations of one idea', "Bir g'oyani bir necha ko'rinishda", 'Несколько представлений одной идеи'),
+
+    # fan moduli — til darslari (PLATO)
+    "ai_cat_target_language_use": ('Use of the target language', "O'rganilayotgan tilda gapirish ulushi", 'Доля речи на изучаемом языке'),
+    "ai_cat_student_talk_length": ('Length of student talk', "O'quvchi nutqining uzunligi", 'Длина речи ученика'),
+    "ai_cat_text_based": ('Text-based discussion', 'Matnga tayangan muhokama', 'Обсуждение с опорой на текст'),
+    "ai_cat_strategy_modeling": ('Modelling reading/writing strategies', "O'qish/yozish strategiyasini modellashtirish", 'Моделирование стратегий чтения и письма'),
+
+    # fan moduli — gumanitar fanlar
+    "ai_cat_evidence_argument": ('Argument from sources and evidence', 'Manba va dalil bilan asoslash', 'Обоснование источниками и доводами'),
+    "ai_cat_multiple_perspectives": ('Multiple perspectives', 'Bir necha nuqtai nazar', 'Несколько точек зрения'),
+    "ai_cat_discussion_depth": ('Depth of discussion', 'Muhokama chuqurligi', 'Глубина обсуждения'),
+    "ai_cat_value_discussion": ('Discussion of values and ethics', 'Qadriyat va axloqiy muhokama', 'Обсуждение ценностей и этики'),
+
+    # fan moduli — tabiiy fanlar
+    "ai_cat_inquiry": ('Observation, hypothesis, experiment', 'Kuzatish, gipoteza, tajriba', 'Наблюдение, гипотеза, опыт'),
+    "ai_cat_misconception_check": ('Surfacing misconceptions', 'Xato tasavvurni ochish', 'Выявление ошибочных представлений'),
+    "ai_cat_everyday_science": ('Linking to everyday phenomena', 'Kundalik hodisa bilan bog\'lash', 'Связь с повседневными явлениями'),
+
+    # fan moduli — boshlang'ich sinf (CLASS K-3)
+    "ai_cat_routines": ('Routines and clear instructions', "Rutinalar va aniq ko'rsatmalar", 'Рутины и ясные инструкции'),
+    "ai_cat_vocabulary_building": ('Vocabulary building', "Lug'at boyitish", 'Обогащение словаря'),
+    "ai_cat_play_engagement": ('Engagement through play and movement', "O'yin va harakat orqali jalb qilish", 'Вовлечение через игру и движение'),
+
+    # fan moduli — amaliy fanlar
+    "ai_cat_demonstration": ('Demonstration and correcting technique', 'Namoyish va texnika tuzatish', 'Демонстрация и исправление техники'),
+    "ai_cat_practice_time": ('Share of hands-on practice time', 'Amaliy mashq vaqti ulushi', 'Доля времени практики'),
+    "ai_cat_safety": ('Safety rules', 'Xavfsizlik qoidalari', 'Правила безопасности'),
+
+    # dars turlari — AI transkriptdan o'zi aniqlaydi
+    "ai_tur_yangi": ('New topic', 'Yangi mavzu', 'Новая тема'),
+    "ai_tur_mustahkamlash": ('Consolidation / practice', 'Mustahkamlash / mashq', 'Закрепление / отработка'),
+    "ai_tur_takrorlash": ('Revision', 'Takrorlash', 'Повторение'),
+    "ai_tur_nazorat": ('Assessment / test', 'Nazorat / test', 'Контрольная / тест'),
+    "ai_tur_amaliy": ('Practical / lab', 'Amaliy / laboratoriya', 'Практическая / лабораторная'),
+    "ai_tur_muhokama": ('Discussion / seminar', 'Muhokama / seminar', 'Обсуждение / семинар'),
+    "ai_dars_turi": ('Lesson type', 'Dars turi', 'Тип урока'),
+    "ai_fan_oila": ('Subject family', 'Fan oilasi', 'Группа предметов'),
+    "ai_min_n_ogoh": (
+        'This criterion needs at least {$a} lessons for a reliable judgement, so it is shown only in the termly profile.',
+        "Bu mezon ishonchli bo'lishi uchun kamida {$a} dars kerak, shuning uchun u faqat chorak profilida ko'rsatiladi.",
+        'Для надёжной оценки этому критерию нужно не менее {$a} уроков, поэтому он показывается только в профиле за четверть.',
+    ),
 
     # ------------------------------------------------- yozuv oynasi (rec.php)
     "rc_mic": ("Microphone:", "Mikrofon:", "Микрофон:"),

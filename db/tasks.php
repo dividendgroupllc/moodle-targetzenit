@@ -15,6 +15,18 @@ $tasks = [
         'dayofweek' => '*',
     ],
     [
+        // Har 10 daqiqada — tashlab ketilgan dars yozuvlarini yakunlash.
+        // Kunlik `cleanup_audio` ni kutib turmaydi: yozuv tez fayl bo'lishi
+        // kerak, aks holda AI tahlili ham kechgacha kutib qolardi.
+        'classname' => 'local_targetzenit\\task\\finalize_audio',
+        'blocking' => 0,
+        'minute' => '*/10',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+    [
         // Har 15 daqiqada — yozib olingan darslarni AI bilan tahlil qilish
         'classname' => 'local_targetzenit\task\analyse_audio',
         'blocking' => 0,

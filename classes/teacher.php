@@ -353,11 +353,15 @@ class teacher {
     }
 
     /**
-     * 15 kategoriya profili — har biri O'Z xalqaro o'rtachasiga nisbatan.
+     * Kategoriya profili — har biri O'Z xalqaro o'rtachasiga nisbatan.
      *
-     * Tartib `ai::CATEGORIES` dagidek (guruhlar bo'yicha), ballsiz
-     * kategoriyalar ham qatorda qoladi: "audio orqali baholanmadi" bo'sh
-     * joydan ko'ra ko'proq ma'lumot beradi (5-tamoyil).
+     * Tartib `ai::CATEGORIES` dagidek (guruhlar bo'yicha), universal o'zakning
+     * ballsiz kategoriyalari ham qatorda qoladi: "audio orqali baholanmadi"
+     * bo'sh joydan ko'ra ko'proq ma'lumot beradi (5-tamoyil).
+     *
+     * FAN MODULLARI va iste'moldan chiqqan kodlar esa FAQAT ma'lumot bo'lsa
+     * ko'rinadi: matematika o'qituvchisining profilida "Matnga tayangan
+     * muhokama" bo'sh qator bo'lib turishi noto'g'ri bo'lardi.
      */
     public static function profile(int $userid, array $davr): array {
         $xom = aicat::profile($userid, $davr['from'], $davr['to']);
@@ -365,6 +369,9 @@ class teacher {
         $out = [];
         foreach (ai::CATEGORIES as $kod => $k) {
             $bor = $xom[$kod] ?? null;
+            if (!$bor && (isset($k['fan']) || !empty($k['eski']))) {
+                continue;
+            }
             $out[] = (object) [
                 'kod' => $kod,
                 // Nom va guruh TARJIMA bilan: ular ekranga chiqadi, shuning
@@ -377,14 +384,28 @@ class teacher {
                 'delta' => $bor ? round($bor['avg'] - $k['norm'], 1) : null,
                 'n' => $bor ? $bor['n'] : 0,
                 'kam' => $bor ? ($bor['n'] < self::KAM_NAMUNA) : false,
+                // Praetorius va h. (2014): kognitiv mezonlar darsdan darsga
+                // tebranadi, barqaror baho uchun ~9 dars kerak. `ishonchli`
+                // bo'lmagan mezon kuchli/kuchsiz tomon deb atalmaydi.
+                'min_n' => (int) $k['min_n'],
+                'ishonchli' => $bor ? ($bor['n'] >= (int) $k['min_n']) : false,
+                'fan_moduli' => isset($k['fan']),
             ];
         }
         return $out;
     }
 
-    /** Profildan eng kuchli va eng kuchsiz tomon (normaga nisbatan). */
+    /**
+     * Profildan eng kuchli va eng kuchsiz tomon (normaga nisbatan).
+     *
+     * FAQAT `min_n` bajarilgan mezonlar hisobga olinadi. Aks holda 2 darsdan
+     * keyin "Tushunchani chuqurlashtirish kuchsiz tomoningiz" deb aytardik —
+     * bu mezon uchun esa barqaror baho ~9 dars talab qiladi (Praetorius 2014).
+     * Hech biri yetarli bo'lmasa, umuman hech narsa aytmaymiz.
+     */
     public static function kuchli_kuchsiz(array $profil): array {
-        $bor = array_values(array_filter($profil, fn($p) => $p->delta !== null));
+        $bor = array_values(array_filter($profil,
+            fn($p) => $p->delta !== null && !empty($p->ishonchli)));
         if (!$bor) {
             return ['kuchli' => null, 'kuchsiz' => null];
         }

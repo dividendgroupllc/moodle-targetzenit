@@ -4,9 +4,10 @@
 // NEGA ALOHIDA SINF: xuddi shu tahlil ikki joyda ko'rinadi —
 //   dars.php          o'qituvchining dars kokpitida (tahrir bilan)
 //   dars_tahlil.php   direktor/zavuch uchun FAQAT O'QISH rejimida
-// Kod nusxalansa, tahlil ramkasi o'zgarganda (allaqachon ikki marta
-// o'zgargan: ha/yo'q -> foiz -> 15 kategoriya) ikki joyni yangilash
-// esdan chiqadi va ikki sahifa boshqa-boshqa narsa ko'rsatadi.
+// Kod nusxalansa, tahlil ramkasi o'zgarganda (allaqachon uch marta
+// o'zgargan: ha/yo'q -> foiz -> 15 kategoriya -> generic o'zak + fan
+// moduli) ikki joyni yangilash esdan chiqadi va ikki sahifa boshqa-boshqa
+// narsa ko'rsatadi. Ramka tavsifi: AI_TAHLIL_KATEGORIYALARI.md
 
 namespace local_targetzenit\output;
 
@@ -37,7 +38,12 @@ class tahlil {
 
         // --- Umumiy foiz
         $um = $d['overall']['score'] ?? null;
-        $norma = \local_targetzenit\ai::norm_overall();
+        // Norma SHU DARS uchun hisoblanadi: fan oilasi va dars turi vaznlarni
+        // o'zgartiradi, demak "odatdagi dars" foizi ham har xil bo'ladi
+        // (nazorat ishida norma yuqori — unda og'ir mezonlar baholanmaydi).
+        $oila = (string) ($d['subject_family'] ?? 'umumiy');
+        $tur = (string) ($d['lesson_type'] ?? '');
+        $norma = \local_targetzenit\ai::norm_overall($oila, $tur);
         $sarlavha = '🤖 ' . get_string('ai_analyse', 'local_targetzenit');
         if ($um !== null) {
             // Rang XALQARO O'RTACHAGA nisbatan: 59% o'rtacha dars demakdir,
@@ -46,12 +52,23 @@ class tahlil {
             $sarlavha .= ' ' . \html_writer::tag('span', $um . '%',
                 ['class' => 'badge badge-' . $rang . ' tz-ai-umumiy']);
         }
+        if ($tur !== '') {
+            $sarlavha .= ' ' . \html_writer::tag('span',
+                s(\local_targetzenit\ai::tur_nomi($tur)),
+                ['class' => 'badge badge-light tz-ai-tur',
+                 'title' => get_string('ai_dars_turi', 'local_targetzenit')]);
+        }
+        if ($oila !== '' && $oila !== 'umumiy') {
+            $sarlavha .= ' ' . \html_writer::tag('span', s($oila),
+                ['class' => 'badge badge-light tz-ai-tur',
+                 'title' => get_string('ai_fan_oila', 'local_targetzenit')]);
+        }
         $h .= \html_writer::tag('h5', $sarlavha);
 
         if ($um !== null) {
             $farq = $um - $norma;
             $h .= \html_writer::div(
-                "Xalqaro o'rtacha: <b>{$norma}%</b> (CLASS va ICALT tadqiqotlari) · " .
+                "Xalqaro o'rtacha: <b>{$norma}%</b> (shu fan va dars turi uchun) · " .
                 "bu dars: <b>{$um}%</b> — o'rtachadan " .
                 ($farq >= 0 ? "<span class='text-success'>+{$farq}%</span>"
                             : "<span class='text-danger'>{$farq}%</span>"),
@@ -60,6 +77,27 @@ class tahlil {
 
         if (!empty($d['summary'])) {
             $h .= \html_writer::tag('p', s($d['summary']), ['class' => 'mb-3']);
+        }
+
+        // --- O'QUVCHI NIMA O'RGANDI
+        //
+        // Ataylab mezon chiziqlaridan YUQORIDA turadi: darsning maqsadi ball
+        // olish emas, o'quvchining bir narsa o'rganishi. Bo'sh bo'lsa ham
+        // ko'rsatiladi — "dalil topilmadi" o'zi ham ma'lumot.
+        if (isset($d['learned'])) {
+            $org = array_values(array_filter(
+                array_map('trim', array_map('strval', (array) $d['learned'])),
+                fn($x) => $x !== ''));
+            $ichi = $org
+                ? \html_writer::alist(array_map('s', $org), ['class' => 'mb-0 pl-3'])
+                : \html_writer::tag('span',
+                    "Transkriptda o'quvchi nimani egallaganiga aniq dalil topilmadi.",
+                    ['class' => 'text-muted']);
+            $h .= \html_writer::div(
+                \html_writer::tag('div',
+                    s(\local_targetzenit\ai::cat_name('learning_evidence')),
+                    ['class' => 'tz-cat-guruh']) . $ichi,
+                'mb-3');
         }
 
         // --- Mavzuga muvofiqlik
@@ -80,9 +118,12 @@ class tahlil {
         // --- Kategoriyalar (ICALT) — foizli chiziqlar
         if (!empty($d['categories']) && is_array($d['categories'])) {
             $h .= \html_writer::tag('div',
-                "Baholash ramkasi: <b>ICALT</b> + <b>CLASS</b> + Jahon banki <b>TEACH</b>. " .
-                "Chiziqdagi <span class='tz-norm-namuna'></span> belgisi — shu mezon bo'yicha " .
-                "<b>xalqaro o'rtacha</b>. Undan o'ngda bo'lsangiz — o'rtachadan yuqorisiz.",
+                "Baholash ramkasi: <b>Great Teaching Toolkit</b> (Coe, 2020) + <b>CLASS</b> + " .
+                "<b>ICALT</b> + Jahon banki <b>TEACH</b>; fan mahorati uchun <b>MQI</b> " .
+                "(aniq fanlar) va <b>PLATO</b> (til darslari). Vaznlar fan va dars turiga " .
+                "qarab sozlangan. Chiziqdagi <span class='tz-norm-namuna'></span> belgisi — " .
+                "shu mezon bo'yicha <b>xalqaro o'rtacha</b>. Undan o'ngda bo'lsangiz — " .
+                "o'rtachadan yuqorisiz.",
                 ['class' => 'text-muted small mb-2']);
 
             // Guruhlar bo'yicha tartiblaymiz (CATEGORIES dagi tartib bo'yicha)
@@ -117,7 +158,9 @@ class tahlil {
                 $h .= \html_writer::div(
                     \html_writer::tag('span', s($c['name'] ?? $c['code'] ?? ''), ['class' => 'tz-cat-nom']) .
                     \html_writer::tag('span', ($c['weight'] ?? 0) . '%', ['class' => 'tz-cat-vazn']) .
-                    \html_writer::tag('span', $past ? 'audio orqali baholanmadi' : $ball . '%',
+                    \html_writer::tag('span',
+                        $past ? (!empty($c['note']) ? s($c['note']) : 'audio orqali baholanmadi')
+                              : $ball . '%',
                         ['class' => 'tz-cat-ball text-' . $rang]),
                     'tz-cat-bosh');
 
@@ -135,6 +178,22 @@ class tahlil {
                 if (!empty($c['evidence'])) {
                     $h .= \html_writer::div(s($c['evidence']), 'tz-cat-dalil');
                 }
+                // Ball raqamlardan hisoblangani ALOHIDA aytiladi: o'qituvchi
+                // "nega shu ball" deb so'rasa, javob modelning fikri emas,
+                // transkriptdan sanalgan raqam bo'ladi.
+                if (($c['score_source'] ?? '') === 'metrics' && !$past) {
+                    $h .= \html_writer::div(
+                        "Bu ball dars o'lchovlaridan hisoblangan (modelning bahosi emas).",
+                        'tz-cat-dalil text-muted');
+                }
+                // Praetorius va h. (2014): ba'zi mezonlar darsdan darsga shunchalik
+                // tebranadi ki, bitta darsga qarab xulosa chiqarish mumkin emas.
+                $min_n = (int) ($c['min_n'] ?? \local_targetzenit\ai::min_n($c['code'] ?? ''));
+                if ($min_n >= 4 && !$past) {
+                    $h .= \html_writer::div(
+                        get_string('ai_min_n_ogoh', 'local_targetzenit', $min_n),
+                        'tz-cat-dalil text-muted');
+                }
                 if (!empty($c['advice'])) {
                     $h .= \html_writer::div('→ ' . s($c['advice']), 'tz-cat-tavsiya');
                 }
@@ -142,10 +201,15 @@ class tahlil {
             }
 
             if (!empty($d['overall']['chetda'])) {
+                // Kod emas, NOM ko'rsatiladi: "concept_development" o'qituvchiga
+                // hech narsa demaydi.
+                $nomlar = array_map(
+                    fn($k) => \local_targetzenit\ai::cat_name($k),
+                    (array) $d['overall']['chetda']);
                 $h .= \html_writer::div(
-                    "Hisobga olinmadi (audio orqali baholab bo'lmaydi): " .
-                    s(implode(', ', $d['overall']['chetda'])) .
-                    ". Umumiy foiz qolgan kategoriyalar bo'yicha hisoblangan.",
+                    "Hisobga olinmadi (audio orqali baholab bo'lmaydi yoki bu turdagi " .
+                    "darsda kutilmaydi): " . s(implode(', ', $nomlar)) .
+                    ". Umumiy foiz qolgan mezonlar bo'yicha hisoblangan.",
                     'text-muted small mt-2');
             }
         } else if (!empty($d['structure']) && is_array($d['structure'])) {
@@ -187,8 +251,16 @@ class tahlil {
             if (isset($m['students_addressed'])) {
                 $q[] = 'Murojaat qilingan o\'quvchi: ' . (int) $m['students_addressed'];
             }
+            if (isset($m['student_questions'])) {
+                $q[] = "O'quvchi savollari: " . (int) $m['student_questions'];
+            }
             if (isset($m['on_task_pct'])) {
                 $q[] = "O'quv ishida: " . (int) $m['on_task_pct'] . '%';
+            }
+            if (isset($m['negative_episodes'])) {
+                $n = (int) $m['negative_episodes'];
+                $q[] = \html_writer::tag('span', "Salbiy epizod: " . $n,
+                    ['class' => $n > 0 ? 'text-danger' : '']);
             }
             if (!empty($m['language']) && is_array($m['language'])) {
                 $til = [];

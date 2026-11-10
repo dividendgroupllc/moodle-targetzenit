@@ -152,7 +152,7 @@ class dashboard {
     /**
      * Ball bandi — XALQARO O'RTACHAGA NISBATAN.
      *
-     * NEGA MUTLAQ EMAS: norma 59% (CLASS va ICALT tadqiqotlari, `ai::norm_overall()`).
+     * NEGA MUTLAQ EMAS: norma 57% (GTT, CLASS va ICALT tadqiqotlari, `ai::norm_overall()`).
      * Mutlaq shkalada 61% "yomon" ko'rinadi, aslida esa u o'rtachadan +2% yuqori.
      * Edulytics dizaynida aynan shu xato bor edi — o'rtacha ishlayotgan
      * o'qituvchi qizil "E'tibor kerak" bo'lib turardi.
@@ -631,6 +631,14 @@ class dashboard {
             $r->band = self::band($r->ball);
 
             // Kategoriyalar — normadan eng uzoqlashganlari (ijobiy va salbiy)
+            //
+            // BITTA DARS bo'yicha faqat BARQAROR mezonlar nomlanadi.
+            // Praetorius va h. (2014): sinf boshqaruvi va muhit bitta darsda
+            // ishonchli o'lchanadi, kognitiv mezonlar esa darsdan darsga
+            // tebranadi — ularni bitta darsga qarab "kuchsiz tomon" deb atash
+            // tasodifni xulosaga aylantirish bo'ladi. Shuning uchun bu yerda
+            // `min_n <= 2` chegarasi; tebranadigan mezonlar faqat chorak
+            // profilida (`teacher::profile`) baholanadi.
             $r->kuchli = null;
             $r->kuchsiz = null;
             if (is_array($d) && !empty($d['categories'])) {
@@ -638,6 +646,9 @@ class dashboard {
                 foreach ($d['categories'] as $c) {
                     $kod = $c['code'] ?? '';
                     if (!isset(ai::CATEGORIES[$kod]) || ($c['confidence'] ?? '') === 'low') {
+                        continue;
+                    }
+                    if (ai::min_n($kod) > 2) {
                         continue;
                     }
                     $k[] = ['nom' => ai::cat_name($kod),

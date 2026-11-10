@@ -6,7 +6,7 @@
 // ishlayapti, shuning uchun faqat ko'rinish ko'chirildi.
 //
 // MAKETDAN BITTA ATAYLAB CHEKINISH: maketda reyting mutlaq foizda edi va
-// 61% "E'tibor kerak" deb qizil turardi. Xalqaro o'rtacha esa 59%
+// 61% "E'tibor kerak" deb qizil turardi. Xalqaro o'rtacha esa 57%
 // (`ai::norm_overall()`) — ya'ni u dars o'rtachadan YUQORI. Shuning uchun
 // hamma ball NORMAGA NISBATAN rangalanadi va chiziqda norma belgisi turadi.
 // Aks holda panel o'rtacha ishlayotgan o'qituvchini muvaffaqiyatsiz deb

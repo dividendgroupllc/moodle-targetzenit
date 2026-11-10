@@ -3,7 +3,7 @@
 //
 // IKKI QAT'IY QOIDA (ikkalasi ham tajribadan kelib chiqqan):
 //
-// 1) NORMAGA NISBATAN, mutlaq emas. Xalqaro o'rtacha — 59% (CLASS va ICALT
+// 1) NORMAGA NISBATAN, mutlaq emas. Xalqaro o'rtacha — 57% (GTT, CLASS va ICALT
 //    tadqiqotlari, `ai::norm_overall()`). Mutlaq shkalada 61% "yomon"
 //    ko'rinadi, aslida esa o'rtachadan yuqori. Kuchli/kuchsiz tomon ham
 //    HAR KATEGORIYANING O'Z normasiga nisbatan hisoblanadi: "Tabaqalashtirilgan
@@ -201,14 +201,22 @@ class reyting {
                 'delta' => round($avg - ai::CATEGORIES[$kod]['norm'], 1),
                 'n' => (int) $r->soni,
                 'nom' => ai::cat_name($kod),
+                'ishonchli' => (int) $r->soni >= ai::min_n($kod),
             ];
         }
         $rs->close();
         return $out;
     }
 
-    /** Profildan eng kuchli va eng kuchsiz tomon (normaga nisbatan). */
+    /**
+     * Profildan eng kuchli va eng kuchsiz tomon (normaga nisbatan).
+     *
+     * `min_n` bajarilmagan mezon chiqarib tashlanadi (Praetorius 2014) —
+     * tasodifiy tebranishni "kuchsiz tomon" deb atash o'qituvchini noto'g'ri
+     * yo'naltiradi.
+     */
     public static function kuchli_kuchsiz(array $profil): array {
+        $profil = array_filter($profil, fn($p) => !empty($p['ishonchli']));
         if (!$profil) {
             return ['kuchli' => null, 'kuchsiz' => null];
         }
@@ -339,6 +347,11 @@ class reyting {
                 continue;
             }
             $avg = round((float) $r->ortacha, 1);
+            // Namunasi yetarli bo'lmagan mezon kuchli/kuchsiz ro'yxatiga
+            // umuman kirmaydi (Praetorius 2014).
+            if ((int) $r->soni < ai::min_n($kod)) {
+                continue;
+            }
             $profil[] = [
                 'code' => $kod,
                 'nom' => ai::cat_name($kod),
