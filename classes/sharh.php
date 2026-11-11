@@ -254,6 +254,70 @@ class sharh {
         return $out;
     }
 
+    // ============================================================= O'CHIRISH
+
+    /**
+     * Sharh TO'PLAMINI o'chiradi — FAQAT SAYT MA'MURI.
+     *
+     * NEGA FAQAT MA'MUR (`yozuvlar.php` dagi qoida bilan bir xil): sharh —
+     * o'quvchi haqidagi yozma dalil. O'qituvchi o'zi yozganini keyin
+     * o'chira olsa, ota-ona «shunday deb yozilgandi» deganda hech narsa
+     * qolmaydi; direktor esa kuzatuvchi — u ham o'zgartirmaydi.
+     * Ma'murga esa SINOV ma'lumotini tozalash uchun kerak.
+     *
+     * NEGA TO'PLAM: besh kategoriya bitta sharh. Bittasini o'chirsak,
+     * qolgan to'rtta «chala sharh» bo'lib qoladi va hisobotda «ijtimoiy
+     * ko'nikmasi yozilmagan» degan noto'g'ri manzara chiqadi.
+     *
+     * @param int $sharhid to'plamning ISTALGAN qatori (odatda boshi)
+     * @return int o'chirilgan qator soni
+     */
+    public static function ochir(int $sharhid): int {
+        global $DB;
+
+        // Tugmani yashirish himoya EMAS — havolani qo'lda yozish mumkin.
+        require_capability('moodle/site:config', \context_system::instance());
+
+        $bosh = $DB->get_record('local_targetzenit_sharh', ['id' => $sharhid]);
+        if (!$bosh) {
+            return 0;
+        }
+
+        // `batch` bor bo'lsa — butun to'plam; eski erkin sharhda faqat o'zi.
+        if ($bosh->batch !== null && $bosh->batch !== '') {
+            $rows = $DB->get_records('local_targetzenit_sharh',
+                ['batch' => $bosh->batch]);
+        } else {
+            $rows = [(int) $bosh->id => $bosh];
+        }
+
+        $soni = 0;
+        foreach ($rows as $r) {
+            // MATN Moodle'ning comment quyi tizimida — uni o'sha tizimning
+            // O'Z API si bilan o'chiramiz, shunda hodisa (event) va
+            // tozalash ham o'zi ishlaydi.
+            try {
+                self::mgr((int) $r->courseid, (int) $r->studentid)
+                    ->delete((int) $r->commentid);
+            } catch (\Throwable $e) {
+                // Kurs yoki kontekst yo'qolgan bo'lsa menejer qurilmaydi.
+                // Bunda ham holat qatori yetim qolib ketmasligi kerak,
+                // shuning uchun comment to'g'ridan-to'g'ri o'chiriladi.
+                $DB->delete_records('comments', ['id' => (int) $r->commentid]);
+                debugging('local_targetzenit: sharh comment menejersiz o\'chirildi — '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+            $DB->delete_records('local_targetzenit_sharh', ['id' => (int) $r->id]);
+            $soni++;
+        }
+        return $soni;
+    }
+
+    /** O'chirish tugmasi kimga ko'rinadi. */
+    public static function ochirish_mumkinmi(): bool {
+        return has_capability('moodle/site:config', \context_system::instance());
+    }
+
     /** Shu odam shu kursning o'quvchisimi. */
     public static function oquvchimi(int $courseid, int $studentid): bool {
         $context = \context_course::instance($courseid, IGNORE_MISSING);

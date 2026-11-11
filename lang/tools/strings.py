@@ -2390,6 +2390,20 @@ S = {
         "Bu kategoriyalar bo'sh qoldi: {$a}. Beshtasi ham to'ldirilishi shart.",
         "Эти категории не заполнены: {$a}. Все пять обязательны.",
     ),
+    "sh_delete": ("Delete the review", "Sharhni o'chirish", "Удалить отзыв"),
+    "sh_delete_q": (
+        "Delete this review? All five categories go together and this cannot "
+        "be undone.",
+        "Shu sharh o'chirilsinmi? Beshta kategoriya birga ketadi va qaytarib "
+        "bo'lmaydi.",
+        "Удалить этот отзыв? Все пять категорий удаляются вместе, отменить "
+        "нельзя.",
+    ),
+    "sh_deleted": (
+        "Deleted ({$a} entries)",
+        "O'chirildi ({$a} yozuv)",
+        "Удалено (записей: {$a})",
+    ),
     "sh_write": ("Write a review", "Sharh yozish", "Написать отзыв"),
     "sh_katcount": (
         "{$a} categories",

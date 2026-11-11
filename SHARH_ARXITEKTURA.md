@@ -142,9 +142,17 @@ Bildirishnoma yuborilmasa sharh saqlanishi to'smaydi (`try/catch`).
 - **Mobil ilova paneli** (qaror: keyingi bosqich) — `db/mobile.php` +
   `output/mobile.php` + mustache.
 - **Tutor umumiy sharhi** (fansiz).
-- **O'chirish** — hozircha hech kim o'chirmaydi. Xato yozilgan sharh
-  faqat core comment vositasi bilan o'chiriladi
-  (`moodle/comment:delete`).
+- ~~O'chirish~~ — **QO'SHILDI (2026-11-11, 0.44.1):** `sharh::ochir()`,
+  FAQAT `moodle/site:config` (sayt ma'muri). O'chirish **TO'PLAM** bo'yicha —
+  besh kategoriya birga ketadi, aks holda «chala sharh» qolardi.
+  Matn Moodle comment API si (`manager::delete()`) bilan o'chiriladi, shunda
+  hodisa va tozalash ham o'zi ishlaydi; kontekst yo'qolgan bo'lsa
+  `{comments}` to'g'ridan-to'g'ri tozalanadi (holat qatori yetim qolmasin).
+  Tugma `thread()` da, lekin FAQAT `$ochirurl` berilganda — o'quvchi/ota-ona
+  sahifasi uni bermaydi, ya'ni tugma u yerda tasodifan chiqmaydi.
+  **Nega o'qituvchi va direktor o'chira olmaydi:** sharh — o'quvchi haqidagi
+  yozma dalil; muallif o'zi yozganini keyin o'chira olsa ota-ona oldida hech
+  narsa qolmaydi, direktor esa kuzatuvchi (`yozuvlar.php` qoidasi).
 - **`privacy/provider.php`** hamon «shaxsiy ma'lumot saqlamaydi» deb
   turadi. Bu `_feedback` bilan allaqachon noto'g'ri edi, sharh bilan yana
   bir pog'ona noto'g'ri bo'ldi: jadvalda voyaga yetmaganlar haqidagi

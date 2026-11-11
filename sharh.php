@@ -27,6 +27,7 @@ require_login();
 $courseid = optional_param('cid', 0, PARAM_INT);
 $qidiruv = trim(optional_param('q', '', PARAM_TEXT));
 $open = optional_param('open', 0, PARAM_INT);
+$ochir = optional_param('ochir', 0, PARAM_INT);
 
 $syscontext = context_system::instance();
 $PAGE->set_context($syscontext);
@@ -60,6 +61,18 @@ $url = function(array $p = []) use ($courseid, $qidiruv) {
 // ------------------------------------------------------------------- YOZISH
 // Chiqarishdan OLDIN: saqlagach redirect qilamiz, shunda sahifa yangilansa
 // forma qayta yuborilmaydi (POST/Redirect/GET).
+// ------------------------------------------------------------- O'CHIRISH
+// Chiqarishdan OLDIN: amaldan keyin redirect, shunda sahifa yangilansa
+// o'chirish qayta bajarilmaydi.
+if ($ochir && confirm_sesskey()) {
+    // Ruxsat `sharh::ochir()` ichida ham tekshiriladi — havolani qo'lda
+    // yozish mumkin, tugmani yashirish himoya emas.
+    $n = sharh::ochir($ochir);
+    redirect($url(['open' => $open]),
+        get_string('sh_deleted', 'local_targetzenit', $n), null,
+        \core\output\notification::NOTIFY_SUCCESS);
+}
+
 if (sharhblok::handle()) {
     redirect($url(['open' => optional_param('shstudent', 0, PARAM_INT)]),
         get_string('sh_saved', 'local_targetzenit'), null,
@@ -252,7 +265,11 @@ foreach ($oquvchilar as $o) {
         echo html_writer::start_div('tz-sh-card');
         echo html_writer::div(get_string('sh_about', 'local_targetzenit', s($ism)),
             'tz-dir-lab');
-        echo sharhblok::thread($zanjir, true, false);
+        // O'chirish havolasi — FAQAT sayt ma'muriga chiziladi (chizuvchi
+        // `sharh::ochirish_mumkinmi()` ni o'zi tekshiradi).
+        echo sharhblok::thread($zanjir, true, false,
+            fn(int $sid) => $url(['open' => $open, 'ochir' => $sid,
+                                  'sesskey' => sesskey()]));
         echo sharhblok::form($courseid, $sid, $action, false, ['open' => $sid]);
         echo html_writer::end_div();
         echo html_writer::end_tag('td');

@@ -28,10 +28,17 @@ class sharhblok {
      *                       bir necha fan o'qituvchisi yozadi)
      * @param bool $qaysikurs guruh/fan yorlig'i ko'rsatilsinmi (o'quvchi
      *                        sahifasida — ha, kurs ichida — yo'q)
+     * @param callable|null $ochirurl `fn(int $sharhid): moodle_url` — berilsa
+     *        SAYT MA'MURIGA o'chirish tugmasi chiziladi.
+     *        ATAYLAB parametr: o'quvchi/ota-ona sahifasi uni BERMAYDI, ya'ni
+     *        tugma u yerda tasodifan paydo bo'lib qolmaydi. Ruxsat esa
+     *        baribir `sharh::ochir()` ichida tekshiriladi.
      */
     public static function thread(array $rows, bool $kimyozdi = true,
-                                    bool $qaysikurs = false): string {
+                                    bool $qaysikurs = false,
+                                    ?callable $ochirurl = null): string {
         $t = fn(string $k) => get_string($k, 'local_targetzenit');
+        $ochirsin = ($ochirurl !== null) && sharh::ochirish_mumkinmi();
 
         if (!$rows) {
             return \html_writer::div($t('sh_none'), 'tz-dir-sub');
@@ -101,6 +108,18 @@ class sharhblok {
                         nl2br(s(sharh::matn($tp['matnlar'][sharh::ESKI_KAT]))),
                         ['class' => 'tz-sh-body']),
                     'tz-sh-kat tz-sh-kat-old');
+            }
+
+            // --- O'CHIRISH (faqat sayt ma'muri) — TO'PLAM bo'yicha
+            if ($ochirsin) {
+                $h .= \html_writer::div(\html_writer::link(
+                    $ochirurl((int) $b->id), $t('sh_delete'),
+                    ['class' => 'btn btn-sm btn-outline-danger',
+                     // Besh kategoriya birga ketadi — foydalanuvchi shuni
+                     // bilib turib tasdiqlashi kerak.
+                     'onclick' => 'return confirm('
+                         . json_encode($t('sh_delete_q')) . ')']),
+                    'tz-sh-del');
             }
 
             $h .= \html_writer::end_div();

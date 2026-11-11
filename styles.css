@@ -1142,3 +1142,7 @@
 
 /* Ochilgan kartadagi to'liq matn: beshta blok sig'ishi uchun kengroq */
 .tz-sh-fulltext { max-width: 560px; }
+
+/* O'chirish tugmasi — to'plam oxirida, ko'zga tashlanmaydigan joyda.
+   Faqat sayt ma'muriga chiziladi, ya'ni kundalik ishda ko'rinmaydi. */
+.tz-sh-del { margin-top: 8px; }

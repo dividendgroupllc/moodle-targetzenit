@@ -31,6 +31,7 @@ $from = optional_param('from', '', PARAM_TEXT);
 $to = optional_param('to', '', PARAM_TEXT);
 $korilmagan = optional_param('korilmagan', 0, PARAM_INT);
 $open = optional_param('open', 0, PARAM_INT);
+$ochir = optional_param('ochir', 0, PARAM_INT);
 
 // Standart oyna — oxirgi 30 kun (`yozuvlar.php` lentasi bilan bir xil):
 // butun o'quv yilini bir sahifada ko'rsatish lentani foydasiz uzaytiradi.
@@ -58,6 +59,17 @@ $url = function(array $p = []) use ($muallif, $guruh, $oquvchi, $from, $to, $kor
     }
     return new moodle_url('/local/targetzenit/sharhlar.php', $p + $asos);
 };
+
+// ------------------------------------------------------------- O'CHIRISH
+//
+// Direktor sharhni O'CHIRA OLMAYDI (`viewteachers` yetarli emas) — u
+// kuzatuvchi. Faqat SAYT MA'MURI, sinov ma'lumotini tozalash uchun.
+// Tekshiruv `sharh::ochir()` ichida.
+if ($ochir && confirm_sesskey()) {
+    $n = sharh::ochir($ochir);
+    redirect($url(), get_string('sh_deleted', 'local_targetzenit', $n), null,
+        \core\output\notification::NOTIFY_SUCCESS);
+}
 
 echo $OUTPUT->header();
 
@@ -241,6 +253,15 @@ foreach ($tplar as $tp) {
                     nl2br(s(sharh::matn($tp['matnlar'][sharh::ESKI_KAT]))),
                     ['class' => 'tz-sh-body']),
                 'tz-sh-kat tz-sh-kat-old');
+        }
+        if (sharh::ochirish_mumkinmi()) {
+            $matn .= html_writer::div(html_writer::link(
+                $url(['open' => 0, 'ochir' => (int) $b->id, 'sesskey' => sesskey()]),
+                get_string('sh_delete', 'local_targetzenit'),
+                ['class' => 'btn btn-sm btn-outline-danger',
+                 'onclick' => 'return confirm('
+                     . json_encode(get_string('sh_delete_q', 'local_targetzenit')) . ')']),
+                'tz-sh-del');
         }
         $ichi = html_writer::div($matn, 'tz-sh-fulltext');
     } else {
