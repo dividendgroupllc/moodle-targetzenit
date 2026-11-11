@@ -991,22 +991,48 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111120, 'local', 'targetzenit');
     }
 
-    if ($oldversion < 2026111140) {
+    if ($oldversion < 2026111150) {
 
-        // ===================== DOSKADAGI MATERIAL TAVSIFI
+        // ===================== USTUNLARNI YARASHTIRISH (zarur tuzatish)
         //
-        // AI dars audiosini eshitadi, lekin doskani ko'rmaydi — shuning uchun
-        // tahlilda "ko'rgazmali vositalardan foydalanmadingiz" deb nohaq
-        // yozilardi. Endi o'qituvchi doskada ko'rsatgan faylni biriktiradi,
-        // AI uni ko'rib tavsiflaydi va o'sha tavsif shu ustunda saqlanadi
-        // (zavuch "AI aynan nimani ko'rdi" deb tekshira olishi uchun).
+        // NEGA BU QADAM BOR — 2026-11-11 da qoqildik:
+        // `009f0ac` commitida `version.php` 2026111140 deb yozilgan edi, lekin
+        // `db/upgrade.php` da o'sha raqamdagi qadam YO'Q edi. Moodle qadamlarni
+        // 2026111120 gacha bajardi va BAZADAGI VERSIYANI 2026111140 ga
+        // ko'tardi — ya'ni raqam "yoqib yuborildi". Natijada `materialdesc`
+        // ustuni yaratilmadi va `if ($oldversion < 2026111140)` sharti endi
+        // HECH QACHON bajarilmaydi: ustun abadiy yo'q bo'lib qolardi.
+        //
+        // SABOQ: `version.php` dagi raqam har doim `upgrade.php` dagi eng
+        // katta savepointga TENG bo'lishi kerak. Oshib ketsa — oradagi
+        // qadamlar jim o'tkazib yuboriladi.
+        //
+        // Shuning uchun bu qadam oxirgi vaqtda qo'shilgan HAMMA ustunni
+        // qayta tekshiradi: `field_exists` tufayli borini qaytadan
+        // yaratmaydi, yo'g'ini qo'shadi. Takroriy ishlatish xavfsiz.
         $table = new xmldb_table('local_targetzenit_audio');
-        $field = new xmldb_field('materialdesc', XMLDB_TYPE_TEXT, null, null, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
+
+        $ustunlar = [
+            // nomi          turi                       uzunlik  notnull  default
+            ['sessionid',    XMLDB_TYPE_CHAR,           '32',    false,   null],
+            ['segments',     XMLDB_TYPE_INTEGER,        '4',     true,    '0'],
+            ['warning',      XMLDB_TYPE_CHAR,           '255',   false,   null],
+            ['audiblesec',   XMLDB_TYPE_INTEGER,        '10',    true,    '0'],
+            ['wallsec',      XMLDB_TYPE_INTEGER,        '10',    true,    '0'],
+            ['diag',         XMLDB_TYPE_TEXT,           null,    false,   null],
+            ['materialdesc', XMLDB_TYPE_TEXT,           null,    false,   null],
+        ];
+
+        foreach ($ustunlar as list($nom, $turi, $uzunlik, $notnull, $default)) {
+            $field = new xmldb_field($nom, $turi, $uzunlik, null,
+                $notnull ? XMLDB_NOTNULL : null, null, $default);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+                mtrace("  local_targetzenit: ustun qo'shildi — {$nom}");
+            }
         }
 
-        upgrade_plugin_savepoint(true, 2026111140, 'local', 'targetzenit');
+        upgrade_plugin_savepoint(true, 2026111150, 'local', 'targetzenit');
     }
 
     return true;
