@@ -66,6 +66,20 @@ class push_timetable extends external_api {
                 VALUE_DEFAULT,
                 []
             ),
+            // Jadval versiyasi kuchga kirgan sana (`Jadval Versiyasi.amal_boshlanishi`).
+            //
+            // NEGA KERAK: reja (`slot`) o'tmishni muzlatadi, shunda keyin
+            // kelgan jadval tarixni qayta yozmaydi. Lekin jadval kechikib
+            // kelsa (2026-11-09 kechasi import, Moodlega 11-10 ertalab) o'sha
+            // kunlar eski jadvalda qolib ketadi. Shu sana o'zgarganda reja
+            // o'sha nuqtadan qayta quriladi — `slot::muzdan_chiqar()` izohiga
+            // qara.
+            'effectivefrom' => new external_value(
+                PARAM_TEXT,
+                "Jadval kuchga kirgan sana, YYYY-MM-DD",
+                VALUE_DEFAULT,
+                ''
+            ),
         ]);
     }
 
@@ -88,11 +102,13 @@ class push_timetable extends external_api {
     }
 
     public static function execute(string $academicyear, array $lessons,
-                                   string $mode = 'replace', array $calendar = []): array {
+                                   string $mode = 'replace', array $calendar = [],
+                                   string $effectivefrom = ''): array {
         global $DB;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'academicyear' => $academicyear,
+            'effectivefrom' => $effectivefrom,
             'lessons' => $lessons,
             'mode' => $mode,
             'calendar' => $calendar,
@@ -164,7 +180,7 @@ class push_timetable extends external_api {
         // Reja (slot) jadvalga tayanadi — push tugashi bilan uni qayta
         // quramiz. Fonda bajariladi: jadval 900+ qatordan iborat va bu
         // ishni web-so'rov ichida qilsak, Frappe tomonda timeout bo'ladi.
-        \local_targetzenit\task\slot_rebuild_now::queue($year);
+        \local_targetzenit\task\slot_rebuild_now::queue($year, (string) $params['effectivefrom']);
 
         return [
             'lessons' => count($rows),

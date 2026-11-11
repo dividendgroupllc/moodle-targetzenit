@@ -34,7 +34,20 @@ class slot_rebuild_now extends \core\task\adhoc_task {
         // Sabab va xavfsizlik shartlari: `slot::muzdan_chiqar()` izohida.
         $sanadan = trim((string) ($data->effectivefrom ?? ''));
         $oxirgi = (string) get_config('local_targetzenit', 'slot_effectivefrom');
-        if ($sanadan !== '' && $sanadan !== $oxirgi) {
+        if ($sanadan !== '' && $oxirgi === '') {
+            // BIRINCHI YURISH: taqqoslash uchun nuqta yo'q. Hech narsa
+            // ochilmaydi, faqat hozirgi qiymat eslab qolinadi.
+            //
+            // NEGA SHART: tuzatish chiqqan paytda `amal_boshlanishi` o'quv
+            // yili boshi (2026-09-01) bo'lib turardi. Darhol ishlatilsa
+            // butun sentabr-oktabr tarixi muzdan chiqib, yangi jadval bilan
+            // qayta yozilib ketardi. Shundan keyin sana HAQIQATAN
+            // o'zgartirilsa (masalan 2026-11-09 ga) — o'sha nuqtadan
+            // qayta quriladi.
+            set_config('slot_effectivefrom', $sanadan, 'local_targetzenit');
+            mtrace("local_targetzenit: amal sanasi eslab qolindi ({$sanadan}) — "
+                . "birinchi yurish, reja muzdan chiqarilmadi");
+        } else if ($sanadan !== '' && $sanadan !== $oxirgi) {
             $ochildi = \local_targetzenit\slot::muzdan_chiqar($year, $sanadan);
             set_config('slot_effectivefrom', $sanadan, 'local_targetzenit');
             mtrace("local_targetzenit: jadval {$sanadan} dan kuchga kirdi — "
@@ -55,10 +68,16 @@ class slot_rebuild_now extends \core\task\adhoc_task {
         \local_targetzenit\fact::refresh($from, $to);
     }
 
-    /** Jadval push'idan keyin navbatga qo'yish. */
-    public static function queue(string $year): void {
+    /**
+     * Jadval push'idan keyin navbatga qo'yish.
+     *
+     * `$effectivefrom` — jadval versiyasi kuchga kirgan sana (Frappe'dagi
+     * `Jadval Versiyasi.amal_boshlanishi`). `execute()` undan muzdan
+     * chiqarish kerakligini biladi.
+     */
+    public static function queue(string $year, string $effectivefrom = ''): void {
         $task = new self();
-        $task->set_custom_data(['year' => $year]);
+        $task->set_custom_data(['year' => $year, 'effectivefrom' => $effectivefrom]);
         $task->set_component('local_targetzenit');
         \core\task\manager::queue_adhoc_task($task, true);   // true = takrorlamaydi
     }
