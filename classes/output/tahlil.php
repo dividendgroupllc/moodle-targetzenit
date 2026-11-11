@@ -75,6 +75,20 @@ class tahlil {
                 'text-muted small mb-3');
         }
 
+        // DOSKADAGI MATERIAL: AI uni ko'rgan bo'lsa shuni OSHKORA aytamiz —
+        // zavuch "tahlil nimaga tayandi" degan savolga javob olishi kerak,
+        // o'qituvchi esa biriktirgani hisobga olinganini ko'rsin.
+        if (!empty($tahlil['audio']->materialdesc)) {
+            $h .= \html_writer::start_tag('details', ['class' => 'mb-3']);
+            $h .= \html_writer::tag('summary',
+                '🖼 ' . get_string('mt_aiseen', 'local_targetzenit'),
+                ['class' => 'tz-ai-summary text-success']);
+            $h .= \html_writer::tag('div',
+                nl2br(s($tahlil['audio']->materialdesc)),
+                ['class' => 'small text-muted mt-2']);
+            $h .= \html_writer::end_tag('details');
+        }
+
         if (!empty($d['summary'])) {
             $h .= \html_writer::tag('p', s($d['summary']), ['class' => 'mb-3']);
         }

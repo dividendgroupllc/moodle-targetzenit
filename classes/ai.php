@@ -18,6 +18,7 @@ defined('MOODLE_INTERNAL') || die();
 class ai {
 
     const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
+    const COMPONENT_NOMI = 'local_targetzenit';
     const URINISH = 3;
     /** Inline audio uchun amaliy chegara (base64 ~1.37x shishiradi). */
     const MAX_BYTES = 15728640;   // 15 MB
@@ -814,13 +815,74 @@ class ai {
         return array_values(array_unique(array_filter([$asosiy, $zaxira])));
     }
 
+    /**
+     * Doskadagi materialni TAVSIFLASH — alohida kichik so'rov.
+     *
+     * NEGA ALOHIDA SO'ROV (asosiy tahlilga qo'shib yuborilmaydi):
+     *   - asosiy tahlil FAQAT MATN bilan ishlaydi va u sinovdan o'tgan —
+     *     unga rasm qo'shish butun quvurni xavf ostiga qo'yardi;
+     *   - bu so'rov yiqilsa (tur qo'llanmasa, kvota tugasa) tahlil
+     *     AUDIO BO'YICHA DAVOM ETADI, shunchaki materialni ko'rmaydi;
+     *   - rasm katta promptsiz yuborilgani uchun arzon.
+     *
+     * Bo'lak TURI (`image`/`file`) tajriba bilan topiladi va sozlamaga
+     * yozib qo'yiladi: API nomi o'zgarsa qayta topiladi, kod tegmaydi.
+     *
+     * @return string|null tavsif matni yoki null (o'qib bo'lmadi)
+     */
+    protected static function material_tavsifi(\stored_file $f, string $mavzu): ?string {
+        $mime = $f->get_mimetype();
+        $b64 = base64_encode($f->get_content());
+        if (strlen($b64) > self::MAX_BYTES) {
+            return null;
+        }
+
+        $prompt = "Bu — O'ZBEK maktabidagi darsda O'QITUVCHI DOSKADA KO'RSATGAN material"
+            . ($mavzu !== '' ? " (dars mavzusi: \"{$mavzu}\")" : '') . ".\n\n"
+            . "Vazifa: materialni KO'RIB, quyidagilarni qisqa va ANIQ yoz:\n"
+            . "1) Turi (slayd, doska surati, mashq varaqasi, chizma, jadval, test...)\n"
+            . "2) Nimalar bor: sarlavha, matn, formulalar, rasm, chizma, jadval, misollar "
+            . "— nechtasi borligini ham ayt\n"
+            . "3) Dars mavzusiga mos keladimi va qaysi qismi bilan bog'liq\n"
+            . "4) O'quvchi uchun tushunarlimi: shrift/yozuv o'qiladimi, tartiblimi, "
+            . "ortiqcha to'lib ketmaganmi\n"
+            . "5) O'quvchini ishlatadigan element bormi (savol, bo'sh joy, topshiriq)\n\n"
+            . "FAQAT KO'RGANINGNI yoz. Agar fayl bo'sh, o'qilmas yoki darsga aloqasi "
+            . "bo'lmasa — shuni to'g'ridan-to'g'ri ayt. HECH NARSA O'YLAB TOPMA.\n"
+            . "Javob 150 so'zdan oshmasin.";
+
+        // Avval sozlamada saqlangan tur, keyin qolganlari
+        $saqlangan = trim((string) get_config(self::COMPONENT_NOMI, 'aipartturi'));
+        $turlar = array_values(array_unique(array_filter(array_merge(
+            [$saqlangan],
+            strpos($mime, 'image/') === 0 ? ['image', 'file'] : ['file', 'image', 'document']
+        ))));
+
+        foreach ($turlar as $turi) {
+            try {
+                $matn = trim((string) self::so_rov($prompt, $b64, $mime, false, $turi));
+                if ($matn !== '') {
+                    if ($turi !== $saqlangan) {
+                        set_config('aipartturi', $turi, self::COMPONENT_NOMI);
+                    }
+                    return $matn;
+                }
+            } catch (\Throwable $e) {
+                debugging('local_targetzenit: material turi "' . $turi . '" ishlamadi — '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+        return null;
+    }
+
     /** Model ro'yxati bo'yicha so'rov: biri yiqilsa keyingisi sinaladi. */
     protected static function so_rov(string $prompt, ?string $b64 = null,
-                                     ?string $mime = null, bool $json = true) {
+                                     ?string $mime = null, bool $json = true,
+                                     string $turi = 'audio') {
         $oxirgi = '';
         foreach (self::models() as $m) {
             try {
-                $natija = self::call($m, $prompt, $b64, $mime, $json);
+                $natija = self::call($m, $prompt, $b64, $mime, $json, $turi);
                 self::$ishlatilgan = $m;
                 return $natija;
             } catch (\Throwable $e) {
@@ -934,9 +996,38 @@ class ai {
 
             $transkript = implode("\n\n", $qismlar);
 
+            // ---------- 1.5-bosqich: DOSKADAGI MATERIAL
+            //
+            // AI darsni faqat eshitadi, doskani ko'rmaydi — shuning uchun
+            // o'qituvchi biriktirgan slayd/rasm/PDF ni SHU YERDA ko'rib,
+            // tavsifini tahlilga qo'shib beramiz. Aks holda tahlil
+            // "ko'rgazmali vositalardan foydalanmadingiz" deb nohaq
+            // yozib qo'yardi (2026-11-11 foydalanuvchi shikoyati).
+            $materialbloki = null;
+            $materialtavsif = null;
+            $mfayl = material::get((int) $audio->lessonid, $context);
+            if ($mfayl) {
+                $nom = $mfayl->get_filename() . ' (' . material::tur_nomi($mfayl) . ')';
+                if (material::korinadimi($mfayl)) {
+                    $materialtavsif = self::material_tavsifi($mfayl,
+                        trim((string) $dars->topic));
+                }
+                if ($materialtavsif !== null) {
+                    $materialbloki = "O'qituvchi darsda doskada ko'rsatgan materialni "
+                        . "BIRIKTIRGAN va u KO'RIB CHIQILDI.\nFayl: {$nom}\n"
+                        . "Materialning tavsifi:\n{$materialtavsif}";
+                } else {
+                    $materialbloki = "O'qituvchi darsda doskada ko'rsatgan materialni "
+                        . "BIRIKTIRGAN: {$nom}. Bu turning MAZMUNI o'qilmadi, lekin "
+                        . "ko'rgazmali material ISHLATILGANI ANIQ.";
+                }
+            }
+
             // ---------- 2-bosqich: to'liq matn bo'yicha tahlil (audiosiz)
-            $javob = self::so_rov(self::prompt_analyse($dars, $course, $transkript));
+            $javob = self::so_rov(self::prompt_analyse($dars, $course, $transkript,
+                $materialbloki));
             $javob['transcript'] = $transkript;
+            $javob['materialdesc'] = $materialtavsif;
 
             // Fan oilasi: promptga ham, vazn profiliga ham shu kerak
             $oila = 'umumiy';
@@ -1130,7 +1221,8 @@ class ai {
      * qo'lda yozilgan edi va jadval bilan ajralib ketish xavfi bor edi.
      */
     protected static function prompt_analyse(\stdClass $dars, ?\stdClass $course,
-                                             string $transkript): string {
+                                             string $transkript,
+                                             ?string $material = null): string {
         $mavzu = trim((string) $dars->topic);
         $kurs = $course ? $course->fullname : '';
 
@@ -1231,12 +1323,28 @@ class ai {
             . $royxat . "\n"
 
             . "=== HALOLLIK QOIDASI ===\n"
-            . "Senda FAQAT audio transkripti bor. Imo-ishora, doskadagi ish, sinf "
-            . "joylashuvi va yozma ishlar KO'RINMAYDI. Har kategoriyaga `confidence` qo'y: "
-            . "\"high\" (transkriptda aniq dalil bor), \"medium\" (qisman), \"low\" "
-            . "(audio orqali baholab bo'lmaydi). Dalil bo'lmasa \"low\" qil — taxmin "
+            . ($material !== null
+                ? "Senda audio transkripti VA o'qituvchi doskada ko'rsatgan MATERIAL bor "
+                  . "(pastdagi \"DOSKADAGI MATERIAL\" bo'limi). Imo-ishora, sinf "
+                  . "joylashuvi va o'quvchilarning yozma ishlari hamon ko'rinmaydi.\n"
+                : "Senda FAQAT audio transkripti bor. Imo-ishora, doskadagi ish, sinf "
+                  . "joylashuvi va yozma ishlar KO'RINMAYDI.\n")
+            . "Har kategoriyaga `confidence` qo'y: "
+            . "\"high\" (aniq dalil bor), \"medium\" (qisman), \"low\" "
+            . "(mavjud dalil bilan baholab bo'lmaydi). Dalil bo'lmasa \"low\" qil — taxmin "
             . "qilib ball QO'YMA. `low` kategoriya umumiy ballga kiritilmaydi, ya'ni "
             . "halol \"bilmadim\" o'qituvchiga zarar qilmaydi.\n\n"
+
+            // MUHIM: materialning YO'QLIGI — ko'rgazmali ish bo'lmaganining
+            // dalili EMAS. Avval model shu xatoni qilib, o'qituvchini
+            // ko'rmagan narsasi uchun jazolab qo'yardi.
+            . ($material === null
+                ? "DIQQAT: doskada material biriktirilmagani — o'qituvchi ko'rgazmali "
+                  . "vositadan FOYDALANMAGANINING dalili EMAS. Sen shunchaki ko'rmayapsan. "
+                  . "\"Ko'rgazmali vositalardan foydalanilmadi\", \"doskadan "
+                  . "foydalanilmadi\" kabi xulosa YOZMA va buning uchun ball "
+                  . "PASAYTIRMA — bunday kategoriyani \"low\" qilib qo'y.\n\n"
+                : '')
 
             . "TAQIQ: o'qituvchining ichki hissiy holati, charchoqligi, stressi yoki "
             . "shaxsiyati haqida XULOSA CHIQARMA. Faqat eshitilgan XATTI-HARAKATNI "
@@ -1289,16 +1397,41 @@ class ai {
             . "bo'lsin: " . implode(', ', $kodlar) . ". "
             . "score butun son (0-100). Umumiy foizni O'ZING hisoblama — tizim hisoblaydi. "
             . "Transkriptni QAYTARMA — u allaqachon bizda.\n\n"
+
+            // ===== DOSKADAGI MATERIAL
+            //
+            // Material transkriptdan OLDIN turadi: model kategoriyalarni
+            // baholaganda uni dalil sifatida ko'rib turishi kerak.
+            // Bu bo'lim faqat fayl biriktirilganda qo'shiladi.
+            . ($material !== null
+                ? "=== DOSKADAGI MATERIAL ===\n" . $material . "\n\n"
+                  . "SHU MATERIALNI DALIL SIFATIDA ISHLAT:\n"
+                  . "- `representations`, `demonstration`, `clarity`, `topic_match` "
+                  . "kategoriyalarida uni hisobga ol va `confidence` ni oshir "
+                  . "(endi faqat eshitib emas, KO'RIB baholayapsan);\n"
+                  . "- material mavzuga mos va tushunarli bo'lsa — bu o'qituvchining "
+                  . "TAYYORGARLIGI dalili, ballni shunga yarasha qo'y;\n"
+                  . "- transkript bilan BOG'LA: materialdagi narsa darsda haqiqatan "
+                  . "ishlatilganmi (\"qaranglar\", \"doskaga qara\", slayddagi "
+                  . "misolni o'qish kabi belgilar bormi);\n"
+                  . "- `evidence` ga materialdan ANIQ dalil yoz (masalan: "
+                  . "\"slaydda 4 ta misol va chizma bor, [07:10] da shu misol ishlangan\");\n"
+                  . "- \"ko'rgazmali vosita ishlatilmadi\" deb YOZMA — material bor.\n\n"
+                : '')
+
             . "=== DARS TRANSKRIPTI ===\n" . $transkript;
     }
     /** Bitta modelga so'rov; vaqtinchalik xatolarda qayta urinadi. */
     protected static function call(string $model, string $prompt, ?string $b64 = null,
-                                   ?string $mime = null, bool $json = true) {
+                                   ?string $mime = null, bool $json = true,
+                                   string $turi = 'audio') {
         $kalit = trim((string) get_config('local_targetzenit', 'geminikey'));
 
         $input = [['type' => 'text', 'text' => $prompt]];
         if ($b64 !== null) {
-            $input[] = ['type' => 'audio', 'data' => $b64, 'mime_type' => $mime];
+            // `$turi` — so'rovdagi bo'lak turi: audio | image | file.
+            // Rasm/PDF yuborilganda 'audio' deb yuborsak model xato qaytaradi.
+            $input[] = ['type' => $turi, 'data' => $b64, 'mime_type' => $mime];
         }
         $body = json_encode(['model' => $model, 'input' => $input]);
 
@@ -1469,6 +1602,11 @@ class ai {
         $transkript = (string) ($javob['transcript'] ?? '');
         unset($javob['transcript']);   // tahlil JSON'ida takrorlanmasin
 
+        // Doskadagi material tavsifi — alohida ustunda saqlanadi, chunki
+        // zavuch "AI nimani ko'rdi" degan savolga javob olishi kerak.
+        $materialdesc = $javob['materialdesc'] ?? null;
+        unset($javob['materialdesc']);
+
         $tur = self::dars_turi($javob['lesson_type'] ?? '');
         $javob['lesson_type'] = $tur;
         $javob['subject_family'] = $oila;
@@ -1517,6 +1655,7 @@ class ai {
 
         $audio->transcript = $transkript;
         $audio->analysis = json_encode($javob, JSON_UNESCAPED_UNICODE);
+        $audio->materialdesc = $materialdesc;
         $audio->aimodel = \core_text::substr($model, 0, 64);
         $audio->aierror = null;
         $audio->analysedat = time();

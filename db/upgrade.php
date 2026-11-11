@@ -991,6 +991,24 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111120, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111140) {
+
+        // ===================== DOSKADAGI MATERIAL TAVSIFI
+        //
+        // AI dars audiosini eshitadi, lekin doskani ko'rmaydi — shuning uchun
+        // tahlilda "ko'rgazmali vositalardan foydalanmadingiz" deb nohaq
+        // yozilardi. Endi o'qituvchi doskada ko'rsatgan faylni biriktiradi,
+        // AI uni ko'rib tavsiflaydi va o'sha tavsif shu ustunda saqlanadi
+        // (zavuch "AI aynan nimani ko'rdi" deb tekshira olishi uchun).
+        $table = new xmldb_table('local_targetzenit_audio');
+        $field = new xmldb_field('materialdesc', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111140, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

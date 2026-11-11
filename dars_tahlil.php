@@ -177,6 +177,17 @@ if ($a) {
         echo html_writer::div(get_string('dir_audionone', 'local_targetzenit'), 'tz-dir-sub');
     }
 
+    // DOSKADAGI MATERIAL: zavuch AI tavsifini emas, FAYLNING O'ZINI ham
+    // ko'rishi kerak — tahlil to'g'ri tayanganini tekshirish uchun.
+    $murl = \local_targetzenit\material::url($lessonid, $context);
+    if ($murl) {
+        echo html_writer::div(
+            '🖼 ' . html_writer::link($murl->out(false),
+                get_string('mt_title', 'local_targetzenit'),
+                ['target' => '_blank', 'rel' => 'noopener']),
+            'tz-dir-sub mt-2');
+    }
+
     // Yig'ishda nuqson sezilgan bo'lsa JIM qolmaymiz — zavuch tahlilni
     // qanday faylga tayanganini bilishi kerak (yetmagan bo'lak, uzilish).
     if (!empty($a->warning)) {

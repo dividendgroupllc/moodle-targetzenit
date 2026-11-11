@@ -44,6 +44,22 @@ $dars = lesson::get_or_create($courseid, $date, $lessonno, (int) $USER->id);
 $students = lesson::students($context);
 
 // ------------------------------------------------------------------ SAQLASH
+// ---------------------------------------------- DOSKADAGI MATERIAL (bitta fayl)
+// Alohida forma: asosiy saqlash formasining kodirovkasiga tegmaymiz
+// (fayl yuklash `multipart/form-data` talab qiladi).
+if (optional_param('material', 0, PARAM_INT) && confirm_sesskey()) {
+    $xato = \local_targetzenit\material::save_upload((int) $dars->id, $context, 'materialfayl');
+    redirect($PAGE->url,
+        $xato ?: get_string('mt_saved', 'local_targetzenit'),
+        null, $xato ? \core\output\notification::NOTIFY_ERROR
+                    : \core\output\notification::NOTIFY_SUCCESS);
+}
+if (optional_param('materialoch', 0, PARAM_INT) && confirm_sesskey()) {
+    \local_targetzenit\material::delete((int) $dars->id, $context);
+    redirect($PAGE->url, get_string('mt_deleted', 'local_targetzenit'), null,
+        \core\output\notification::NOTIFY_SUCCESS);
+}
+
 if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
     $topic = optional_param('topic', '', PARAM_TEXT);
     $homework = optional_param('homework', '', PARAM_TEXT);
@@ -191,6 +207,86 @@ if (get_config('local_targetzenit', 'audioenabled')) {
         });
     ");
 }
+
+// --------------------------------------------- DOSKADAGI MATERIAL
+// NEGA BU KERAK: AI tahlili faqat audioni ESHITADI, doskani KO'RMAYDI —
+// shuning uchun tahlilda "ko'rgazmali vositalardan foydalanmadingiz" deb
+// yozilardi, o'qituvchi slayd ko'rsatgan bo'lsa ham. Shu yerga biriktirilgan
+// fayl tahlilga KIRADI va dalil sifatida hisobga olinadi.
+$material = \local_targetzenit\material::get((int) $dars->id, $context);
+
+echo html_writer::start_div('card mb-3');
+echo html_writer::start_div('card-body');
+echo html_writer::tag('h5', get_string('mt_title', 'local_targetzenit'),
+    ['class' => 'card-title h6']);
+
+if ($material) {
+    $murl = \local_targetzenit\material::url((int) $dars->id, $context);
+    $korinadi = \local_targetzenit\material::korinadimi($material);
+
+    if (strpos($material->get_mimetype(), 'image/') === 0) {
+        echo html_writer::div(
+            html_writer::empty_tag('img', [
+                'src' => $murl->out(false),
+                'alt' => s($material->get_filename()),
+                'style' => 'max-height:160px;max-width:100%;border:1px solid #ddd;border-radius:4px',
+            ]), 'mb-2');
+    }
+
+    echo html_writer::div(
+        html_writer::link($murl->out(false), s($material->get_filename()),
+            ['target' => '_blank', 'rel' => 'noopener'])
+        . ' · ' . \local_targetzenit\material::tur_nomi($material)
+        . ' · ' . display_size($material->get_filesize()),
+        'mb-2');
+
+    echo html_writer::div(
+        get_string($korinadi ? 'mt_aisees' : 'mt_notread', 'local_targetzenit'),
+        'small ' . ($korinadi ? 'text-success' : 'text-warning') . ' mb-2');
+
+    // O'chirish — alohida forma (tasdiq bilan)
+    echo html_writer::start_tag('form', ['method' => 'post',
+        'action' => $PAGE->url->out(false), 'class' => 'd-inline']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey',
+        'value' => sesskey()]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'materialoch',
+        'value' => 1]);
+    echo html_writer::tag('button', get_string('mt_delete', 'local_targetzenit'),
+        ['type' => 'submit', 'class' => 'btn btn-sm btn-outline-danger',
+         'onclick' => 'return confirm('
+            . json_encode(get_string('mt_delete_q', 'local_targetzenit')) . ')']);
+    echo html_writer::end_tag('form');
+}
+
+// Yuklash formasi (fayl bor bo'lsa — almashtirish)
+echo html_writer::start_tag('form', ['method' => 'post',
+    'action' => $PAGE->url->out(false), 'enctype' => 'multipart/form-data',
+    'class' => $material ? 'mt-3' : '']);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey',
+    'value' => sesskey()]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'material',
+    'value' => 1]);
+echo html_writer::start_div('form-group mb-2');
+echo html_writer::empty_tag('input', [
+    'type' => 'file',
+    'name' => 'materialfayl',
+    'class' => 'form-control-file',
+    'accept' => 'image/png,image/jpeg,image/webp,image/gif,application/pdf,'
+        . '.pdf,.png,.jpg,.jpeg,.webp,.gif,.pptx,.ppt,.docx,.doc',
+    'required' => 'required',
+]);
+echo html_writer::end_div();
+echo html_writer::tag('button',
+    get_string($material ? 'mt_replace' : 'mt_upload', 'local_targetzenit'),
+    ['type' => 'submit', 'class' => 'btn btn-sm btn-primary']);
+echo html_writer::end_tag('form');
+
+echo html_writer::tag('div', get_string('mt_hint', 'local_targetzenit',
+    round(\local_targetzenit\material::MAX_BYTES / 1048576)),
+    ['class' => 'text-muted small mt-2']);
+
+echo html_writer::end_div();
+echo html_writer::end_div();
 
 // ---------------------------------------------------------- AI DARS TAHLILI
 // Chizish `classes/output/tahlil.php` da — XUDDI SHU karta direktorning

@@ -150,6 +150,83 @@ S = {
         "\u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0443\u0440\u043e\u043a\u0430 \u043d\u0430\u0439\u0434\u0435\u043d\u0430 \u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u0430\u044f \u0437\u0430\u043f\u0438\u0441\u044c ({$a} \u0444\u0440\u0430\u0433\u043c.). "
         "\u00ab\u041d\u0430\u0447\u0430\u0442\u044c\u00bb \u041f\u0420\u041e\u0414\u041e\u041b\u0416\u0418\u0422 \u0435\u0451 \u2014 \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u043d\u043e\u0435 \u043d\u0435 \u043f\u0440\u043e\u043f\u0430\u0434\u0451\u0442.",
     ),
+    # ---------------------------------------- doskadagi material (AI ko'rishi uchun)
+    "mt_title": (
+        "Board material (the AI sees it in the analysis)",
+        "Doskadagi material (AI tahlilda ko'radi)",
+        "Материал с доски (ИИ учитывает его в анализе)",
+    ),
+    "mt_hint": (
+        "Attach what you showed on the board: a slide, a photo of the board, "
+        "a PDF. The analysis only HEARS the lesson \u2014 it cannot see the "
+        "board, so without this file it cannot credit your visual aids. "
+        "Images and PDF are read in full; PPT/DOC are counted as present but "
+        "not read. One file, up to {$a} MB.",
+        "Darsda doskada ko'rsatgan narsangizni biriktiring: slayd, doskaning "
+        "surati, PDF. Tahlil darsni faqat ESHITADI \u2014 doskani ko'rmaydi, "
+        "shuning uchun bu fayl bo'lmasa ko'rgazmali ishingizni hisobga olib "
+        "bo'lmaydi. Rasm va PDF to'liq o'qiladi; PPT/DOC borligi hisobga "
+        "olinadi, lekin mazmuni o'qilmaydi. Bitta fayl, {$a} MB gacha.",
+        "Прикрепите то, что показывали на доске: слайд, фото доски, PDF. "
+        "Анализ только СЛЫШИТ урок \u2014 доску он не видит, поэтому без "
+        "этого файла засчитать наглядную работу невозможно. Изображения и PDF "
+        "читаются полностью; PPT/DOC учитываются как наличие, но не читаются. "
+        "Один файл, до {$a} МБ.",
+    ),
+    "mt_upload": ("Attach file", "Faylni biriktirish", "Прикрепить файл"),
+    "mt_replace": ("Replace file", "Faylni almashtirish", "Заменить файл"),
+    "mt_delete": ("Delete", "O'chirish", "Удалить"),
+    "mt_delete_q": (
+        "Delete the board material? The analysis will no longer see it.",
+        "Doskadagi material o'chiriladi. Tahlil endi uni ko'rmaydi. Davom etamizmi?",
+        "Материал с доски будет удалён. Анализ его больше не увидит. Продолжить?",
+    ),
+    "mt_saved": (
+        "Board material attached \u2014 the next analysis will take it into account",
+        "Doskadagi material biriktirildi \u2014 keyingi tahlil uni hisobga oladi",
+        "Материал с доски прикреплён \u2014 следующий анализ учтёт его",
+    ),
+    "mt_deleted": ("Board material deleted", "Doskadagi material o'chirildi",
+                   "Материал с доски удалён"),
+    "mt_aisees": (
+        "The AI reads the content of this file and uses it as evidence.",
+        "AI bu faylning mazmunini o'qiydi va dalil sifatida ishlatadi.",
+        "ИИ читает содержимое этого файла и использует его как доказательство.",
+    ),
+    "mt_notread": (
+        "The AI cannot read this format \u2014 it only counts the file as "
+        "present. For full credit attach an image or a PDF.",
+        "AI bu turni o'qiy olmaydi \u2014 faqat fayl borligini hisobga oladi. "
+        "To'liq hisobga olinishi uchun rasm yoki PDF biriktiring.",
+        "ИИ не читает этот формат \u2014 учитывается только наличие файла. "
+        "Для полного зачёта прикрепите изображение или PDF.",
+    ),
+    "mt_err_empty": ("No file selected.", "Fayl tanlanmadi.", "Файл не выбран."),
+    "mt_err_big": (
+        "The file is too large (limit {$a} MB).",
+        "Fayl juda katta ({$a} MB chegarasi).",
+        "Файл слишком большой (ограничение {$a} МБ).",
+    ),
+    "mt_err_upload": (
+        "Upload failed. Please try again.",
+        "Yuklab bo'lmadi. Qaytadan urinib ko'ring.",
+        "Не удалось загрузить. Попробуйте снова.",
+    ),
+    "mt_err_type": (
+        "This file type is not allowed. Allowed: {$a}.",
+        "Bu fayl turiga ruxsat yo'q. Ruxsat etilgan: {$a}.",
+        "Этот тип файла не разрешён. Разрешено: {$a}.",
+    ),
+    "mt_err_virus": (
+        "The file did not pass the virus check.",
+        "Fayl virus tekshiruvidan o'tmadi.",
+        "Файл не прошёл проверку на вирусы.",
+    ),
+    "mt_aiseen": (
+        "The AI saw the board material",
+        "AI doskadagi materialni ko'rdi",
+        "ИИ видел материал с доски",
+    ),
     "audio_finalize": (
         "Finalise abandoned lesson recordings",
         "Tashlab ketilgan dars yozuvlarini yakunlash",

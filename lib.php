@@ -157,12 +157,16 @@ function local_targetzenit_myprofile_navigation(\core_user\output\myprofile\tree
 }
 
 /**
- * Dars audio faylini berish.
- * Faqat shu kursda dars o'tish huquqi borlar eshitadi — o'quvchilarga ochiq emas.
+ * Dars faylini berish: AUDIO yozuvi yoki DOSKADAGI MATERIAL.
+ * Faqat shu kursda dars o'tish huquqi borlar ko'radi — o'quvchilarga ochiq emas.
  */
 function local_targetzenit_pluginfile($course, $cm, $context, $filearea, $args,
                                       $forcedownload, array $options = []) {
-    if ($filearea !== \local_targetzenit\audio::FILEAREA) {
+    $ruxsatli = [
+        \local_targetzenit\audio::FILEAREA,
+        \local_targetzenit\material::FILEAREA,
+    ];
+    if (!in_array($filearea, $ruxsatli, true)) {
         return false;
     }
     if ($context->contextlevel !== CONTEXT_COURSE) {
@@ -186,7 +190,7 @@ function local_targetzenit_pluginfile($course, $cm, $context, $filearea, $args,
 
     $fs = get_file_storage();
     $file = $fs->get_file($context->id, 'local_targetzenit',
-        \local_targetzenit\audio::FILEAREA, $itemid, $filepath, $filename);
+        $filearea, $itemid, $filepath, $filename);
     if (!$file || $file->is_directory()) {
         return false;
     }
