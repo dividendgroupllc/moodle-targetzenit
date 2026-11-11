@@ -16,6 +16,7 @@
 require(__DIR__ . '/../../config.php');
 
 use local_targetzenit\exam;
+use local_targetzenit\exam_import;
 use local_targetzenit\output\ballsetka;
 use local_targetzenit\output\shell;
 use local_targetzenit\output\ui;
@@ -59,6 +60,13 @@ $url = function(array $p = []) use ($chorak, $turi, $fan) {
 
 $xabar = '';
 $amal = optional_param('amal', '', PARAM_ALPHA);
+
+// Excel importdan keladigan natija — amal shoxchasida to'ladi va pastda
+// `view=ball` ko'rinishiga beriladi.
+$impoldin = null;
+$imphisobot = '';
+$impxato = '';
+$impblokchoose = null;
 
 if ($amal !== '' && confirm_sesskey()) {
 
@@ -136,6 +144,119 @@ if ($amal !== '' && confirm_sesskey()) {
                 $t('bh_scoressaved', (object) $n), null,
                 \core\output\notification::NOTIFY_SUCCESS);
         }
+    }
+
+    if ($amal === 'import') {
+        // EXCEL O'QILADI, LEKIN SAQLANMAYDI.
+        //
+        // Natija setkaga to'ldiriladi va odam ko'rib «Saqlash» bosadi.
+        // Shuning uchun bu shoxcha REDIRECT QILMAYDI — redirect qilsa
+        // o'qilgan ma'lumot yo'qolardi. Yozish yo'li bitta bo'lib qoladi
+        // (`exam::result_save()`), ism bo'yicha moslikni odam tasdiqlaydi.
+        $impsitting = optional_param('sitting', 0, PARAM_INT);
+        $sit = $impsitting ? exam::sitting($impsitting) : null;
+
+        // FAYLNI SAQLAB TURAMIZ: fan bloki avtomatik topilmasa odam uni
+        // tanlashi kerak, va buning uchun faylni QAYTA YUKLASH talab
+        // qilmaslik kerak. Nom faqat `PARAM_FILE` va o'z papkamiz ichida
+        // tekshiriladi.
+        $papka = make_temp_directory('local_targetzenit/imp');
+        $impfile = clean_param(optional_param('impfile', '', PARAM_FILE), PARAM_FILE);
+        $impblok = optional_param('impblok', -1, PARAM_INT);
+        $yol = '';
+
+        if ($sit && !empty($_FILES['ballfile']['tmp_name'])
+                && is_uploaded_file($_FILES['ballfile']['tmp_name'])) {
+
+            require_capability('local/targetzenit:manageexams', $context);
+
+            // Eski vaqtinchalik fayllarni tozalaymiz (2 soatdan oshgani).
+            foreach ((array) glob($papka . '/*') as $eski) {
+                if (is_file($eski) && filemtime($eski) < time() - 7200) {
+                    @unlink($eski);
+                }
+            }
+            $kengaytma = clean_param(
+                pathinfo($_FILES['ballfile']['name'], PATHINFO_EXTENSION), PARAM_ALPHANUM);
+            $impfile = uniqid('imp_') . '.' . ($kengaytma ?: 'xlsx');
+            $yol = $papka . '/' . $impfile;
+            move_uploaded_file($_FILES['ballfile']['tmp_name'], $yol);
+
+        } else if ($sit && $impfile !== '') {
+            // Fan bloki qayta tanlangan — avval yuklangan fayl ishlatiladi
+            require_capability('local/targetzenit:manageexams', $context);
+            $nomzod = $papka . '/' . $impfile;
+            if (is_file($nomzod)) {
+                $yol = $nomzod;
+            }
+        }
+
+        if ($sit && $yol !== '') {
+            try {
+                $hamma = exam_import::varaqlar($yol);
+
+                // --- VARAQ: guruh nomiga mos keladigani («3 A» -> «3A»)
+                $varaqnomi = exam_import::varaq_tanla($hamma['varaqlar'],
+                    (string) $sit->groupname);
+                $qatorlar = ($varaqnomi !== null)
+                    ? $hamma['varaqlar'][$varaqnomi]
+                    : $hamma['faol'];
+
+                $tahlil = exam_import::tahlil($qatorlar);
+
+                // --- FAN BLOKI: baholashning fanidan, topilmasa odam tanlaydi
+                $bloklar = $tahlil['bloklar'] ?? [];
+                $blok = null;
+                if ($tahlil['rejim'] === 'bloklar') {
+                    if ($impblok >= 0 && isset($bloklar[$impblok])) {
+                        $blok = $impblok;          // odam tanlagan
+                    } else {
+                        $blok = exam_import::blok_tanla($bloklar,
+                            (string) $sit->subjectkey, (string) $sit->subjectkey);
+                    }
+                }
+
+                if ($tahlil['rejim'] === 'bloklar' && $blok === null) {
+                    // Taxmin qilmaymiz — fanni odam tanlaydi.
+                    $impblokchoose = ['bloklar' => $bloklar, 'varaq' => $varaqnomi,
+                                      'file' => $impfile];
+                } else {
+                    if ($tahlil['rejim'] === 'bloklar') {
+                        $imptahlilqatorlar = exam_import::blok_qatorlari($tahlil, $blok);
+                        $impsavollar = $bloklar[$blok]['savollar'];
+                        $impfan = $bloklar[$blok]['fan'];
+                    } else {
+                        $imptahlilqatorlar = $tahlil['qatorlar'];
+                        $impsavollar = $tahlil['savollar'];
+                        $impfan = '';
+                    }
+
+                    $oquvchilar = \local_targetzenit\lesson::students(
+                        context_course::instance((int) $sit->courseid));
+
+                    // Savollar soni fayldan kelsa, ball SHU maksimalga
+                    // nisbatan o'qiladi (foizli qiymatlar uchun muhim).
+                    $maxuchun = ($impsavollar && $impsavollar > 0)
+                        ? (int) $impsavollar : (int) $sit->maxscore;
+
+                    $natija = exam_import::moslashtir($imptahlilqatorlar,
+                        $oquvchilar, $maxuchun);
+
+                    $impoldin = $natija['ball'];
+                    $imphisobot = \local_targetzenit\output\ballsetka::hisobot(
+                        $sit, $natija, $impsavollar, $tahlil['rejim'],
+                        $varaqnomi, $impfan);
+                }
+            } catch (\Throwable $e) {
+                $impxato = $e->getMessage();
+            }
+        } else if ($sit) {
+            $impxato = $t('bh_imp_nofile');
+        }
+
+        // Shoxcha tugadi — pastdagi `view=ball` ko'rinishi chiziladi.
+        $view = 'ball';
+        $sitting = $impsitting;
     }
 
     if ($amal === 'status' && $id) {
@@ -504,10 +625,51 @@ if ($view === 'ball') {
         echo $OUTPUT->notification($t('bh_retronotice'), 'info');
     }
 
+    if ($impxato !== '') {
+        echo $OUTPUT->notification($t('bh_imp_failed', $impxato), 'error');
+    }
+
+    // FAN BLOKI AVTOMATIK TOPILMADI — odam tanlaydi.
+    //
+    // Taxmin qilib birinchi blokni olish eng qimmat xato bo'lardi:
+    // matematika bali ingliz tili imtihoniga tushib ketardi. Fayl
+    // saqlanib turadi, ya'ni qayta yuklash kerak emas.
+    if ($impblokchoose !== null) {
+        echo html_writer::start_tag('form', ['method' => 'post',
+            'action' => (new moodle_url('/local/targetzenit/baholash.php'))->out(false),
+            'class' => 'tz-bh-imprep tz-bh-imprep-warn']);
+        echo html_writer::empty_tag('input',
+            ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+        echo html_writer::empty_tag('input',
+            ['type' => 'hidden', 'name' => 'amal', 'value' => 'import']);
+        echo html_writer::empty_tag('input',
+            ['type' => 'hidden', 'name' => 'sitting', 'value' => (int) $sit->id]);
+        echo html_writer::empty_tag('input',
+            ['type' => 'hidden', 'name' => 'impfile',
+             'value' => $impblokchoose['file']]);
+
+        echo html_writer::div($t('bh_imp_pick', (object) [
+            'fan' => s((string) $sit->subjectkey),
+            'varaq' => s((string) ($impblokchoose['varaq'] ?? '—')),
+        ]), 'tz-dir-lab');
+
+        $tanlov = [];
+        foreach ($impblokchoose['bloklar'] as $i => $b) {
+            $tanlov[$i] = $b['fan']
+                . ($b['savollar'] ? ' (' . $b['savollar'] . ')' : '');
+        }
+        echo html_writer::select($tanlov, 'impblok', '', ['' => $t('bh_choose')]);
+        echo ' ' . html_writer::empty_tag('input', ['type' => 'submit',
+            'class' => 'btn btn-sm btn-primary', 'value' => $t('bh_imp_read')]);
+        echo html_writer::div($t('bh_imp_pickhint'), 'tz-dir-sub');
+        echo html_writer::end_tag('form');
+    }
+
     // Chizuvchi YAGONA: o'qituvchi sahifasi ham shu metodni chaqiradi
     // (keyingi bosqich), faqat qamrovi o'z kursi bilan cheklanadi.
     echo ballsetka::render($sit,
-        (new moodle_url('/local/targetzenit/baholash.php'))->out(false), true);
+        (new moodle_url('/local/targetzenit/baholash.php'))->out(false), true,
+        $impoldin, $imphisobot);
 }
 
 echo html_writer::end_div();   // .tz-bh

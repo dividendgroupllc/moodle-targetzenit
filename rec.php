@@ -107,7 +107,10 @@ if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) 
 
 echo html_writer::end_div();
 
-$PAGE->requires->js(new moodle_url('/local/targetzenit/js/recorder.js'));
+// Keshni sindirish uchun versiya: aks holda o'qituvchining brauzeri
+// eski `recorder.js` ni ishlatib yuradi va tuzatish yetib bormaydi.
+$PAGE->requires->js(new moodle_url('/local/targetzenit/js/recorder.js',
+    ['v' => get_config('local_targetzenit', 'version')]));
 $PAGE->requires->js_amd_inline("
     require([], function() {
         var boshla = function() {

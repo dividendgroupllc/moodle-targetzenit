@@ -215,7 +215,12 @@ class slot {
             $blok_boshi = date('Y-m-d', strtotime('+1 day', strtotime($blok_oxiri)));
         }
 
-        // O'tgan sanalarni muzlatamiz
+        // O'tgan sanalarni muzlatamiz.
+        //
+        // DIQQAT: bu `build()` ning OXIRIDA turadi, ya'ni `muzdan_chiqar()`
+        // bilan ochilgan oraliq shu yurishda qayta qurilib bo'lgach yana
+        // muzlatiladi — aynan shu kerak: bir marta yangilanadi, keyin tarix
+        // bo'lib qotadi.
         $natija['muzlatildi'] = $DB->count_records_select('local_targetzenit_slot',
             'academicyear = :y AND lessondate < :d AND frozen = 0',
             ['y' => $year, 'd' => $bugun]);
@@ -227,6 +232,53 @@ class slot {
         }
 
         return $natija;
+    }
+
+    /**
+     * Yangi jadval kuchga kirgan sanadan boshlab slotlarni muzdan chiqaradi.
+     *
+     * NEGA MUZLATISH QOIDASIGA ISTISNO: odatda o'tgan slotga tegilmaydi —
+     * `build()` har yurishda `lessondate < bugun` bo'lgan hammasini muzlatadi,
+     * shunda keyin kelgan jadval tarixni qayta yozmaydi.
+     *
+     * Lekin jadval almashinuvi KECHIKIB kelishi mumkin: 2026-11-09 kechasi
+     * yangi jadval Frappe'ga import qilingan, Moodlega esa 11-10 ertalab
+     * yetgan. O'sha paytda 11-09 va 11-10 allaqachon muzlatilgan edi, ya'ni
+     * ikki kun eski jadvalda qolib ketdi (12 115 slot muzlatilgan, chegara
+     * 11-10 da) va hafta ko'rinishida "jadval o'zgarmagan" bo'lib ko'rindi.
+     *
+     * Shu sababli Frappe jadval bilan birga versiyaning AMAL QILISH SANASINI
+     * (`Jadval Versiyasi.amal_boshlanishi`) yuboradi. Sana O'ZGARGANDA — ya'ni
+     * yangi versiya kuchga kirganda — shu sanadan bugungacha bo'lgan slotlar
+     * muzdan chiqariladi va `build()` ularni yangi jadval bo'yicha qayta
+     * quradi.
+     *
+     * Sana o'zgarmasa HECH NARSA qilinmaydi: aks holda har kunlik sinxron
+     * butun o'quv yilini qayta yozib, tarixni yo'q qilardi.
+     *
+     * Jurnal yozuvlari (`local_targetzenit_lesson`) o'chmaydi — ular
+     * `courseid + lessondate + lessonno` bilan saqlanadi, slot id siga
+     * bog'lanmagan.
+     *
+     * @return int muzdan chiqarilgan slot soni
+     */
+    public static function muzdan_chiqar(string $year, string $sanadan): int {
+        global $DB;
+
+        if ($year === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $sanadan)) {
+            return 0;
+        }
+        $bugun = timetable::bugun();
+        if ($sanadan >= $bugun) {
+            return 0;            // kelajak baribir muzlatilmagan
+        }
+        $shart = 'academicyear = :y AND lessondate >= :a AND lessondate < :b AND frozen = 1';
+        $par = ['y' => $year, 'a' => $sanadan, 'b' => $bugun];
+        $soni = $DB->count_records_select('local_targetzenit_slot', $shart, $par);
+        if ($soni) {
+            $DB->execute("UPDATE {local_targetzenit_slot} SET frozen = 0 WHERE $shart", $par);
+        }
+        return $soni;
     }
 
     /**

@@ -792,9 +792,15 @@ class ai {
      */
     public static function pending(int $limit): array {
         global $DB;
+        // KESILGAN YOZUV TAHLILGA OLINMAYDI (2026-11-11): yozuv oynasi fonda
+        // muzlab qolganda ovoz 3 daqiqa, "davomiyligi" 33 daqiqa bo'lib
+        // qoladi. Bunday faylning jim joylariga model dars matnini o'ylab
+        // topadi. `audiblesec = 0` — eski yoki o'lchanmagan yozuv, unga
+        // tegmaymiz; aks holda ovoz devor soatining yarmidan ko'p bo'lishi shart.
         return $DB->get_records_select('local_targetzenit_audio',
             "status = 'ready' AND (analysis IS NULL OR analysis = '') AND filesize > 0
-             AND (aierror IS NULL OR aierror = '' OR timemodified < :chegara)",
+             AND (aierror IS NULL OR aierror = '' OR timemodified < :chegara)
+             AND (audiblesec = 0 OR wallsec <= 120 OR audiblesec * 2 >= wallsec)",
             ['chegara' => time() - HOURSECS],
             'timecreated ASC', '*', 0, $limit);
     }
@@ -869,24 +875,63 @@ class ai {
             $daq = (int) (get_config('local_targetzenit', 'aisegmentminutes') ?: 5);
 
             $qismlar = [];
+            $eshitilgan = 0;
+            $jim = 0;
             foreach ($bolaklar as $i => $yol) {
                 if (filesize($yol) > self::MAX_BYTES) {
                     continue;   // g'ayrioddiy katta bo'lak — o'tkazamiz
                 }
                 $boshlanish = $i * $daq * 60;
+                $belgi = sprintf('[%02d:%02d]', intdiv($boshlanish, 60), $boshlanish % 60);
+
+                // JIM BO'LAK MODELGA YUBORILMAYDI. Sabab yuqorida
+                // `ovoz_bormi()` izohida: bo'sh audio berilsa model dars
+                // matnini o'ylab topadi. Bu tekshiruv tokenni ham tejaydi.
+                list($bor, $izoh, $ovozsek) = self::ovoz_bormi($yol);
+                if (!$bor) {
+                    $jim++;
+                    $qismlar[] = $belgi . "\n(jimlik — bu oraliqda ovoz yozilmagan"
+                        . ($izoh ? ': ' . $izoh : '') . ')';
+                    continue;
+                }
+
                 $matn = self::so_rov(
-                    self::prompt_transcribe($boshlanish, $daq),
+                    self::prompt_transcribe($boshlanish, $daq, $ovozsek),
                     base64_encode(file_get_contents($yol)),
                     $mime,
                     false
                 );
-                $belgi = sprintf('[%02d:%02d]', intdiv($boshlanish, 60), $boshlanish % 60);
-                $qismlar[] = $belgi . "\n" . trim($matn);
+                $matn = trim($matn);
+
+                // Model o'zi "audio yo'q" deb aytgan holatlar ham bor —
+                // ularni nutq deb sanamaymiz.
+                if ($matn === '' || preg_match('/^\(?jimlik\)?$/ui', $matn)
+                        || preg_match('/audio\s+(fayl|yo|taqdim|biriktir)/ui', $matn)) {
+                    $jim++;
+                    $qismlar[] = $belgi . "\n(jimlik — bu oraliqda ovoz yozilmagan)";
+                    continue;
+                }
+
+                $eshitilgan++;
+                $qismlar[] = $belgi . "\n" . $matn;
             }
 
-            if (!$qismlar) {
-                return self::fail($audio, 'Transkript olinmadi');
+            if (!$eshitilgan) {
+                return self::fail($audio, 'Yozuvda eshitiladigan nutq yo\'q — '
+                    . 'tahlil qilinmadi (' . $jim . ' bo\'lak jim)');
             }
+
+            // YETARLI QOPLAMA TEKSHIRUVI: yozuvning yarmidan ko'pi jim bo'lsa,
+            // qolgan qismiga qarab butun darsga baho berish NOTO'G'RI. Transkript
+            // saqlanadi (eshitilgani ko'rinib turadi), lekin BAHO BERILMAYDI.
+            $jami = $eshitilgan + $jim;
+            if ($jami > 1 && $eshitilgan < $jami / 2) {
+                self::save_transcript_only($audio, implode("\n\n", $qismlar));
+                return self::fail($audio, sprintf(
+                    'Yozuvning faqat %d/%d bo\'lagida ovoz bor — baho berilmadi',
+                    $eshitilgan, $jami));
+            }
+
             $transkript = implode("\n\n", $qismlar);
 
             // ---------- 2-bosqich: to'liq matn bo'yicha tahlil (audiosiz)
@@ -909,6 +954,44 @@ class ai {
             }
             @rmdir($ish);
         }
+    }
+
+    /**
+     * Bo'lakda eshitiladigan nutq bormi?
+     *
+     * NEGA KERAK (2026-11-11, dars 159): yozuv oynasi muzlab qolgani uchun
+     * faylning 30 daqiqasi bo'sh edi. ffmpeg uni 5 daqiqalik bo'laklarga
+     * kesganda har biri ~600 bayt — faqat sarlavha — bo'lib chiqdi, va Gemini
+     * o'sha bo'sh bo'laklar uchun butun bir dars matnini O'YLAB TOPDI
+     * (7-sinf algebra, 8-sinf fizika). Shuning uchun bo'lak modelga
+     * yuborilishidan OLDIN o'lchanadi.
+     *
+     * Ikki mezon: (a) dekodlangan ovoz uzunligi, (b) o'rtacha ovoz darajasi.
+     * -50 dB dan past = tinch xona shovqini ham emas, raqamli jimlik.
+     *
+     * @return array [eshitiladimi, izoh, o'lchangan ovoz soniyasi yoki null]
+     */
+    protected static function ovoz_bormi(string $yol): array {
+        $sek = audio::audio_seconds($yol);
+        if ($sek !== null && $sek < 3) {
+            return [false, sprintf('%.1f s ovoz', $sek), $sek];
+        }
+
+        $ffmpeg = self::ffmpeg();
+        if (!$ffmpeg) {
+            return [true, '', $sek];      // o'lchab bo'lmadi — yuboramiz
+        }
+        $cmd = escapeshellcmd($ffmpeg) . ' -hide_banner -nostats -i ' . escapeshellarg($yol)
+            . ' -af volumedetect -f null - 2>&1';
+        $chiqish = [];
+        @exec($cmd, $chiqish);
+        if (preg_match('/mean_volume:\s*(-?[\d.]+) dB/', implode("\n", (array) $chiqish), $m)) {
+            $db = (float) $m[1];
+            if ($db < -50) {
+                return [false, sprintf('%.0f dB — jimlik', $db), $sek];
+            }
+        }
+        return [true, '', $sek];
     }
 
     /** ffmpeg yo'li (sozlamadan yoki tizimdan). */
@@ -999,8 +1082,21 @@ class ai {
      * Javob kichik bo'lgani uchun model uni oxirigacha yozadi; bitta uzun
      * so'rovda esa javob chegarasiga urilib, matn o'rtasidan kesilardi.
      */
-    protected static function prompt_transcribe(int $boshlanish, int $daqiqa): string {
+    protected static function prompt_transcribe(int $boshlanish, int $daqiqa,
+                                                ?float $ovozsek = null): string {
         $dan = sprintf('%02d:%02d', intdiv($boshlanish, 60), $boshlanish % 60);
+
+        // Bo'lakda ovoz oz bo'lsa (qolgani jimlik) — buni MODELGA AYTAMIZ.
+        // Aks holda u "5 daqiqalik bo'lak" deb o'ylab, bo'sh joyni o'zi
+        // to'ldirib yuborishga urinadi (2026-11-11 saboqi).
+        $qoshimcha = '';
+        if ($ovozsek !== null && $ovozsek < $daqiqa * 60 * 0.5) {
+            $qoshimcha = sprintf(
+                "\n\nDIQQAT: bu bo'lakda jami ~%d soniya ovoz bor, qolgani JIMLIK "
+                . "(yozuv uzilgan). Faqat eshitilgan o'sha qisqa qismni yoz — "
+                . "bo'lakni \"to'ldirish\" uchun hech narsa qo'shma.",
+                max(1, (int) round($ovozsek)));
+        }
 
         return "Bu — O'ZBEK maktabidagi darsning {$dan} dan boshlanadigan "
             . "{$daqiqa} daqiqalik bo'lagi.\n\n"
@@ -1013,7 +1109,17 @@ class ai {
             . "takroriy so'zlar, to'xtalishlar ham yozilsin\n"
             . "- Eshitilmagan joyni [eshitilmadi] deb belgila, taxmin qilma\n"
             . "- Ingliz tilida aytilgan joylarni ingliz tilida qoldir\n"
-            . "- Bo'lak oxirigacha yoz, o'rtada to'xtama";
+            . "- Bo'lak oxirigacha yoz, o'rtada to'xtama\n\n"
+            // 2026-11-11: jim bo'lak berilganda model DARS MATNINI O'YLAB TOPGAN
+            // (7-sinf algebra, 8-sinf fizika) va zavuch soxta bahoni o'qigan.
+            // Shuning uchun taqiq PROMPTDA ham qat'iy yozilgan — jim bo'lak
+            // endi bu yergacha kelmaydi, lekin himoya ikki qatlamli bo'lsin.
+            . "ENG MUHIM QOIDA: faqat HAQIQATAN ESHITILGAN narsani yoz. "
+            . "Agar bu bo'lakda nutq bo'lmasa, jimlik bo'lsa yoki audio bo'sh bo'lsa — "
+            . "javob sifatida FAQAT `(jimlik)` deb yoz va BOSHQA HECH NARSA qo'shma. "
+            . "Dars qanday o'tishi mumkinligini TASAVVUR QILIB YOZISH QAT'IYAN TAQIQLANADI: "
+            . "bu o'qituvchiga nohaq baho berilishiga olib keladi."
+            . $qoshimcha;
     }
 
     /**
@@ -1435,6 +1541,22 @@ class ai {
         }
 
         return true;
+    }
+
+    /**
+     * Faqat transkriptni saqlash — BAHO BERMASDAN.
+     *
+     * Yozuvning yarmidan ko'pi jim bo'lganda ishlatiladi: eshitilgan qism
+     * ko'rinib tursin, lekin o'qituvchiga chala yozuv bo'yicha baho
+     * qo'yilmasin (2026-11-11 saboqi).
+     */
+    protected static function save_transcript_only(\stdClass $audio, string $transkript): void {
+        global $DB;
+        $audio->transcript = $transkript;
+        $audio->analysis = null;
+        $audio->analysedat = time();
+        $audio->timemodified = time();
+        $DB->update_record('local_targetzenit_audio', $audio);
     }
 
     protected static function fail(\stdClass $audio, string $xato): bool {

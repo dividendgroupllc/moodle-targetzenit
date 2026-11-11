@@ -357,6 +357,51 @@ class exam {
         return (int) $DB->insert_record('local_targetzenit_exam', $yozuv);
     }
 
+    /**
+     * Maksimal ballni o'zgartiradi — Excel'dan kelgan «savollar soni» uchun.
+     *
+     * DIQQAT: `maxscore` BAHOLASHGA tegishli, ya'ni hamma guruhga umumiy.
+     * Uni o'zgartirish saqlangan ballarning FOIZINI o'zgartiradi
+     * (`term_score()` da `score / maxscore`): 18/20 = 90%, lekin max 100
+     * bo'lsa o'sha 18 = 18% bo'lib qoladi.
+     *
+     * HIMOYA: saqlangan ballardan birortasi yangi maksimaldan katta bo'lsa
+     * O'ZGARTIRILMAYDI — aks holda ball jimgina kesilib, o'quvchi haqsiz
+     * past natija olardi. Shunda odam avval o'sha ballni tuzatadi.
+     *
+     * @return bool o'zgardimi
+     */
+    public static function maxscore_ozgartir(int $examid, int $yangi): bool {
+        global $DB;
+
+        require_capability('local/targetzenit:manageexams',
+            \context_system::instance());
+
+        $exam = self::get($examid);
+        if (!$exam || $yangi < 1) {
+            return false;
+        }
+        if ((int) $exam->maxscore === $yangi) {
+            return false;            // o'zgarish yo'q — xato ham emas
+        }
+        if ($exam->status === 'yopildi') {
+            throw new \moodle_exception('bh_maxclosed', 'local_targetzenit');
+        }
+
+        $eng = $DB->get_field_sql(
+            "SELECT MAX(rawscore) FROM {local_targetzenit_exam_result}
+              WHERE examid = :e", ['e' => $examid]);
+        if ($eng !== null && $eng !== false && (float) $eng > $yangi) {
+            throw new \moodle_exception('bh_maxtoolow', 'local_targetzenit', '',
+                (object) ['yangi' => $yangi, 'eng' => (float) $eng]);
+        }
+
+        $DB->update_record('local_targetzenit_exam', (object) [
+            'id' => $examid, 'maxscore' => $yangi, 'timemodified' => time(),
+        ]);
+        return true;
+    }
+
     /** Holatni o'zgartiradi. */
     public static function status(int $examid, string $status): void {
         global $DB;

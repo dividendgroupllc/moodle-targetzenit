@@ -49,9 +49,284 @@
         this.pauzaBoshi = 0;
         this.xatolar = 0;
         this.timer = null;
+        this.qorovul = null;
         this.stream = null;
         this.rec = null;
+        this.oxirgiBolak = 0;      // oxirgi bo'lak qachon keldi (qorovul uchun)
+        this.bolakSoni = 0;        // jami yaratilgan bo'lak — HAQIQIY ovoz o'lchovi
+        this.uzilish = 0;          // necha marta o'zi tiklandi
+        this.wakeLock = null;
+        this.jimlikdan = 0;        // mikrofon qachondan beri jim
+        this.jurnal = [];          // qora quti
+        this.diskda = false;       // IndexedDB ishlayaptimi
     }
+
+    // =====================================================================
+    // INDEXEDDB: bo'laklar DISKDA turadi, brauzer xotirasida emas.
+    //
+    // NEGA: avval navbat faqat `this.navbat` massivida — ya'ni sahifa
+    // xotirasida — edi. Internet uzilganda bo'laklar saqlanib turardi, lekin
+    // oyna yopilsa, brauzer yiqilsa yoki kompyuter o'chib qolsa YO'QOLARDI.
+    // IndexedDB diskda saqlaydi: brauzer qayta ochilganda ham bo'laklar
+    // joyida bo'ladi va keyingi kirishda o'zi yuboriladi.
+    //
+    // Xotira ham tejaladi: navbat uzun bo'lsa (uzoq internetsiz ish) bo'lak
+    // xotiradan olib tashlanadi va yuborish paytida diskdan o'qiladi.
+    // =====================================================================
+    var IDB_NOM = 'tz-audio';
+    var IDB_STORE = 'bolaklar';
+    var XOTIRA_CHEGARA = 20;   // shundan ortiq navbatda bo'lsa diskka tayanamiz
+
+    function idbQur(db) {
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+            var st = db.createObjectStore(IDB_STORE, {keyPath: 'kalit'});
+            st.createIndex('lessonid', 'lessonid', {unique: false});
+        }
+    }
+
+    function idbOch() {
+        return new Promise(function (bajar, rad) {
+            if (!window.indexedDB) { rad(new Error('indexedDB yo\'q')); return; }
+            var s = indexedDB.open(IDB_NOM);     // versiyani MAJBURLAMAYMIZ
+            s.onupgradeneeded = function () { idbQur(s.result); };
+            s.onerror = function () { rad(s.error); };
+            s.onsuccess = function () {
+                var db = s.result;
+                if (db.objectStoreNames.contains(IDB_STORE)) { bajar(db); return; }
+
+                // Baza bor, lekin ombor yo'q (yarim yaratilgan yoki boshqa kod
+                // ochib qo'ygan). Versiyani oshirib omborni QO'SHAMIZ — aks
+                // holda bo'laklar hech qachon diskka tushmay qolardi.
+                var yangi = db.version + 1;
+                db.close();
+                var s2 = indexedDB.open(IDB_NOM, yangi);
+                s2.onupgradeneeded = function () { idbQur(s2.result); };
+                s2.onsuccess = function () { bajar(s2.result); };
+                s2.onerror = function () { rad(s2.error); };
+            };
+        });
+    }
+
+    function idbAmal(rejim, ishlovchi) {
+        return idbOch().then(function (db) {
+            return new Promise(function (bajar, rad) {
+                var tx = db.transaction(IDB_STORE, rejim);
+                var st = tx.objectStore(IDB_STORE);
+                var natija = ishlovchi(st);
+                tx.oncomplete = function () { db.close(); bajar(natija && natija.result); };
+                tx.onerror = function () { db.close(); rad(tx.error); };
+                tx.onabort = function () { db.close(); rad(tx.error); };
+            });
+        });
+    }
+
+    function idbSaqla(ish) {
+        return idbAmal('readwrite', function (st) {
+            return st.put({
+                kalit: ish.kalit, lessonid: ish.lessonid, sid: ish.sid,
+                gen: ish.gen, seq: ish.seq, blob: ish.blob, vaqt: Date.now()
+            });
+        });
+    }
+
+    function idbOl(kalit) {
+        return idbAmal('readonly', function (st) { return st.get(kalit); })
+            .then(function (r) { return r ? r.blob : null; });
+    }
+
+    function idbOchir(kalit) {
+        return idbAmal('readwrite', function (st) { return st.delete(kalit); });
+    }
+
+    /** Shu darsning diskda qolgan bo'laklari (tartib bilan). */
+    function idbRoyxat(lessonid) {
+        return idbAmal('readonly', function (st) {
+            return st.index('lessonid').getAll(lessonid);
+        }).then(function (list) {
+            list = list || [];
+            list.sort(function (a, b) { return (a.gen - b.gen) || (a.seq - b.seq); });
+            return list;
+        });
+    }
+
+    function idbTozala(lessonid) {
+        return idbRoyxat(lessonid).then(function (list) {
+            return Promise.all((list || []).map(function (x) { return idbOchir(x.kalit); }));
+        });
+    }
+
+    /**
+     * QORA QUTI — hodisalar jurnali.
+     *
+     * "Nega jim bo'lib qoldi?" degan savolga KEYIN javob berish uchun.
+     * 2026-11-11 dagi tekshiruvda bu jurnal yo'q edi va sababni nginx
+     * jurnali bilan fayl ichidagi vaqt belgilaridan tiklashga to'g'ri keldi.
+     * Endi hamma narsa o'zi yozilib boradi: oyna yashirildi/ko'rindi,
+     * internet uzildi, mikrofon o'chdi, qorovul yozuvni tikladi.
+     *
+     * Jurnalda AUDIO YO'Q — faqat texnik hodisalar.
+     */
+    TzRecorder.prototype.qayd = function (hodisa, izoh) {
+        var t = this.boshlandi ? Math.floor((Date.now() - this.boshlandi) / 1000) : 0;
+        this.jurnal.push([t, hodisa, izoh || '']);
+        if (this.jurnal.length > 600) { this.jurnal.splice(0, 100); }
+    };
+
+    /** Jurnalni serverga yuborish (yo'qolib ketmasin). */
+    TzRecorder.prototype.jurnalYubor = function (beacon) {
+        var tana = JSON.stringify({
+            boshlandi: this.boshlandi,
+            bolak: this.bolakSoni,
+            uzilish: this.uzilish,
+            qurilma: navigator.userAgent,
+            jurnal: this.jurnal
+        });
+        var u = this.url('diag');
+        if (beacon && navigator.sendBeacon) {
+            try { navigator.sendBeacon(u, new Blob([tana], {type: 'application/json'})); }
+            catch (e) { /* ahamiyatsiz */ }
+            return;
+        }
+        fetch(u, {method: 'POST', body: tana,
+            headers: {'Content-Type': 'application/json'}}).catch(function () {});
+    };
+
+    /**
+     * DISKDA QOLGAN bo'laklarni yuborish.
+     *
+     * Brauzer yiqilgan, oyna yopilgan yoki kompyuter o'chib qolgan bo'lsa,
+     * yuborilmagan bo'laklar IndexedDB da qoladi. Yangi sessiya SO'RASHDAN
+     * OLDIN ularni jo'natamiz: bazadagi yozuv hali `recording` holatda va
+     * eski `sid` turgani uchun server ularni qabul qiladi, keyin yangi
+     * sessiya keyingi avlod bo'lib ustiga qo'shiladi — dars yo'qolmaydi.
+     */
+    TzRecorder.prototype.qoldiqniYubor = function () {
+        var self = this;
+        return idbRoyxat(self.cfg.lessonid).then(function (list) {
+            if (!list || !list.length) { return; }
+            self.qayd('qoldiq', list.length + ' bolak diskda topildi');
+            self.holat('Oldingi yozuvdan ' + list.length
+                + ' bo\'lak topildi — yuborilmoqda...', 'text-info');
+
+            return list.reduce(function (zanjir, x) {
+                return zanjir.then(function () {
+                    if (!x.blob) { return idbOchir(x.kalit); }
+                    return fetch(self.chunkUrl(x.sid, x.gen, x.seq), {
+                        method: 'POST',
+                        body: x.blob,
+                        headers: {'Content-Type': 'application/octet-stream'}
+                    }).then(function (r) { return r.json(); }).then(function () {
+                        // Server qabul qilmasa ham o'chiramiz: yozuv
+                        // allaqachon yakunlangan bo'lsa bu bo'lak kerak emas.
+                        return idbOchir(x.kalit);
+                    });
+                    // DIQQAT: internet yo'q bo'lsa `catch` ishlamaydi va
+                    // bo'lak DISKDA QOLADI — keyingi kirishda yuboriladi.
+                });
+            }, Promise.resolve());
+        }).catch(function () { /* internet yo'q — keyingi kirishda */ });
+    };
+
+    /**
+     * Ekranni uyg'oq ushlash.
+     *
+     * NEGA KERAK (2026-11-11, prodda 14 yozuvdan 9 tasi kesilgan): noutbuk
+     * uxlab qolsa yoki oyna fonga o'tsa MediaRecorder bo'lak bermay qo'yadi,
+     * brauzer soati esa yuraveradi — natijada 3 daqiqalik ovoz "33 daqiqa"
+     * bo'lib saqlanadi. Frappe'dagi birinchi versiyada wake lock BOR edi,
+     * Moodle'ga ko'chirishda tushib qolgan.
+     *
+     * DIQQAT: wake lock faqat sahifa KO'RINIB turganda ishlaydi, shuning
+     * uchun `visibilitychange` da qaytadan olinadi.
+     */
+    TzRecorder.prototype.wakeLockOl = function () {
+        var self = this;
+        if (!navigator.wakeLock || self.wakeLock) { return; }
+        navigator.wakeLock.request('screen').then(function (l) {
+            self.wakeLock = l;
+            self.qayd('wakelock', 'olindi');
+            l.addEventListener('release', function () {
+                self.wakeLock = null;
+                self.qayd('wakelock', 'bo\'shadi');
+            });
+        }).catch(function (e) {
+            self.qayd('wakelock', 'BERILMADI: ' + (e && e.name));
+        });
+    };
+
+    TzRecorder.prototype.wakeLockQoyib = function () {
+        if (this.wakeLock) {
+            try { this.wakeLock.release(); } catch (e) { /* allaqachon bo'shagan */ }
+            this.wakeLock = null;
+        }
+    };
+
+    /**
+     * Mikrofon darajasini o'lchash.
+     *
+     * Ikki foyda: (1) o'qituvchi mikrofon ishlayotganini KO'RADI — jim
+     * yozuvdan ogohlantiramiz; (2) tirik `AudioContext` sahifani "audio
+     * bilan ishlayapti" deb belgilaydi, bu brauzerning fon oynani
+     * muzlatishini qiyinlashtiradi.
+     */
+    TzRecorder.prototype.olchovBoshla = function (stream) {
+        var self = this;
+        try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) { return; }
+            self.ac = new AC();
+            if (self.ac.state === 'suspended') { self.ac.resume(); }
+            self.analyser = self.ac.createAnalyser();
+            self.analyser.fftSize = 2048;
+            self.ac.createMediaStreamSource(stream).connect(self.analyser);
+            self.buf = new Uint8Array(self.analyser.fftSize);
+        } catch (e) { self.analyser = null; }
+    };
+
+    /** Hozirgi ovoz darajasi 0..1 (analyser bo'lmasa null). */
+    TzRecorder.prototype.daraja = function () {
+        if (!this.analyser || !this.buf) { return null; }
+        this.analyser.getByteTimeDomainData(this.buf);
+        var jami = 0;
+        for (var i = 0; i < this.buf.length; i++) {
+            var v = (this.buf[i] - 128) / 128;
+            jami += v * v;
+        }
+        return Math.sqrt(jami / this.buf.length);
+    };
+
+    /**
+     * QOROVUL — eng muhim tuzatish.
+     *
+     * MediaRecorder "recording" holatida turib, bo'lak BERMAY qo'yishi mumkin
+     * (qurilma uxladi, oyna muzlatildi, mikrofonni boshqa ilova oldi). Hodisa
+     * ham, xato ham chiqmaydi — shuning uchun buni faqat VAQT bilan sezish
+     * mumkin: bo'lak kelmayotgan bo'lsa, yozuvni majburan qayta boshlaymiz.
+     * Avlod raqami oshadi, server qismlarni ffmpeg bilan to'g'ri ulaydi.
+     */
+    TzRecorder.prototype.tekshir = function () {
+        if (!this.rec || this.pauzada || this.yakunlanmoqda || this.tamom) { return; }
+
+        var tinch = Date.now() - this.oxirgiBolak;
+
+        // 1-pog'ona: bo'lakni o'zimiz so'rab ko'ramiz (taymer throttle bo'lgan bo'lishi mumkin)
+        if (tinch > SLICE_MS * 2.5 && !this.soraldi) {
+            this.soraldi = true;
+            this.qayd('qorovul', 'bolak kelmadi ' + Math.round(tinch / 1000) + 's — so\'raldi');
+            try { this.rec.requestData(); } catch (e) { /* ahamiyatsiz */ }
+            return;
+        }
+
+        // 2-pog'ona: hamon jim — yozuvni MAJBURAN qayta boshlaymiz
+        if (tinch > SLICE_MS * 4) {
+            this.uzilish++;
+            this.qayd('qorovul', 'YOZUV TO\'XTAGAN ' + Math.round(tinch / 1000)
+                + 's — majburan tiklanadi');
+            this.soraldi = false;
+            this.oxirgiBolak = Date.now();
+            this.qayta(true);
+        }
+    };
 
     TzRecorder.prototype.url = function (action, extra) {
         var u = this.cfg.ajaxurl + '?action=' + action +
@@ -59,6 +334,15 @@
         if (this.sid) { u += '&sid=' + encodeURIComponent(this.sid); }
         if (extra) { u += extra; }
         return u;
+    };
+
+    /** Bo'lak yuklash manzili — sid/avlod/seq ATAYLAB oshkor beriladi:
+     *  diskdan topilgan qoldiq ESKI sessiyaga tegishli bo'lishi mumkin. */
+    TzRecorder.prototype.chunkUrl = function (sid, gen, seq) {
+        return this.cfg.ajaxurl + '?action=chunk&lessonid=' + this.cfg.lessonid
+            + '&sesskey=' + this.cfg.sesskey
+            + '&sid=' + encodeURIComponent(sid || '')
+            + '&avlod=' + gen + '&seq=' + seq;
     };
 
     TzRecorder.prototype.holat = function (matn, sinf) {
@@ -78,7 +362,9 @@
         this.tamom = true;
         this.band = false;
         clearInterval(this.timer);
+        clearInterval(this.qorovul);
         clearTimeout(this.pauzaTimer);
+        this.wakeLockQoyib();
         try {
             if (this.rec && this.rec.state !== 'inactive') {
                 this.yakunlanmoqda = true;
@@ -104,18 +390,36 @@
         this.yuklanmoqda = true;
 
         var ish = this.navbat[0];
-        fetch(this.url('chunk', '&avlod=' + ish.gen + '&seq=' + ish.seq), {
-            method: 'POST',
-            body: ish.blob,
-            headers: {'Content-Type': 'application/octet-stream'}
-        }).then(function (r) { return r.json(); })
+
+        // Blob xotirada bo'lmasa — DISKDAN o'qiymiz (uzoq internetsiz ishda
+        // bo'laklar xotiradan olib tashlanadi, diskda esa qoladi).
+        var blobni = ish.blob ? Promise.resolve(ish.blob) : idbOl(ish.kalit);
+
+        blobni.then(function (blob) {
+            if (!blob) {
+                // Diskda ham yo'q — bu bo'lakni tiklab bo'lmaydi, o'tkazamiz
+                // (aks holda navbat butunlay qotib qolardi).
+                self.qayd('bolak-yoq', 'seq=' + ish.seq);
+                self.navbat.shift();
+                self.yuklanmoqda = false;
+                self.navbatniYur();
+                return null;
+            }
+            return fetch(self.chunkUrl(ish.sid, ish.gen, ish.seq), {
+                method: 'POST',
+                body: blob,
+                headers: {'Content-Type': 'application/octet-stream'}
+            });
+        }).then(function (r) { return r ? r.json() : null; })
           .then(function (j) {
+              if (j === null) { return; }
               if (!j.ok) {
                   var e = new Error(j.error || 'xato');
                   e.qatiy = !!j.qatiy;
                   throw e;
               }
               self.navbat.shift();
+              idbOchir(ish.kalit).catch(function () {});
               self.yuklanmoqda = false;
               self.tarmoq = true;
               self.xatolar = 0;
@@ -126,6 +430,7 @@
 
               if (e && e.qatiy) {
                   // Server aytdi: bu bo'lak HECH QACHON qabul qilinmaydi.
+                  self.qayd('qatiy-xato', e.message);
                   self.qatiyXato(e.message);
                   return;
               }
@@ -136,6 +441,9 @@
               // shuning uchun uzilish paytidagi ovoz YO'QOLMAYDI.
               ish.urinish = (ish.urinish || 0) + 1;
               self.xatolar++;
+              if (self.tarmoq !== false) {
+                  self.qayd('yuklash-uzildi', 'seq=' + ish.seq + ' ' + (e && e.message));
+              }
               self.tarmoq = false;
               var kut = Math.min(KUTISH_MIN * ish.urinish, KUTISH_MAX);
               clearTimeout(self.navbatTimer);
@@ -204,13 +512,19 @@
                 });
 
             self.sid = '';   // yangi sessiya so'rayapmiz
-            return fetch(self.url('start', '&mime=' + encodeURIComponent(mime.split(';')[0])), {
-                method: 'POST'
+            return self.qoldiqniYubor().then(function () {
+                return fetch(self.url('start', '&mime=' + encodeURIComponent(mime.split(';')[0])), {
+                    method: 'POST'
+                });
             }).then(function (r) { return r.json(); }).then(function (j) {
                 if (!j.ok) { throw new Error(j.error || 'boshlab bo\'lmadi'); }
 
                 self.mime = mime;
                 self.tarmoq = true;
+                self.boshlandi = Date.now();
+                self.jurnal = [];
+                self.qayd('start', 'mime=' + mime + (j.davom ? ' DAVOM' : '')
+                    + ' avlod=' + (j.avlod || 1));
                 self.sid = j.sid || '';
                 self.gen = j.avlod || 1;
                 self.seq = 0;
@@ -220,17 +534,51 @@
                 // ishlatadi, shuning uchun alohida saqlaymiz.
                 self.dataHandler = function (e) {
                     if (!e.data || e.data.size === 0) { return; }
+                    self.oxirgiBolak = Date.now();
+                    self.soraldi = false;
+                    self.bolakSoni++;
                     self.seq++;
+                    self.qayd('bolak', 'seq=' + self.gen + '-' + self.seq
+                        + ' ' + Math.round(e.data.size / 1024) + 'KB');
+                    // Har 20 bo'lakda jurnalni serverga tashlab turamiz —
+                    // brauzer yiqilsa ham sabab bazada qoladi.
+                    if (self.bolakSoni % 20 === 0) { self.jurnalYubor(false); }
                     if (self.beaconRejimi && navigator.sendBeacon) {
                         // Oyna yopilmoqda: `fetch` bekor qilinadi, beacon esa
                         // yetib boradi. Tartib muhim emas — server bo'lakni
                         // NOMI bo'yicha joylaydi.
                         navigator.sendBeacon(
-                            self.url('chunk', '&avlod=' + self.gen + '&seq=' + self.seq),
-                            e.data);
+                            self.chunkUrl(self.sid, self.gen, self.seq), e.data);
                         return;
                     }
-                    self.navbat.push({gen: self.gen, seq: self.seq, blob: e.data});
+                    var ish = {
+                        kalit: self.cfg.lessonid + ':' + self.sid + ':'
+                            + self.gen + ':' + self.seq,
+                        lessonid: self.cfg.lessonid,
+                        sid: self.sid,
+                        gen: self.gen,
+                        seq: self.seq,
+                        blob: e.data
+                    };
+                    self.navbat.push(ish);
+
+                    // DISKKA YOZAMIZ: oyna yopilsa, brauzer yiqilsa yoki
+                    // kompyuter o'chsa ham bo'lak yo'qolmaydi — keyingi
+                    // kirishda o'zi yuboriladi.
+                    idbSaqla(ish).then(function () {
+                        self.diskda = true;
+                        // Navbat uzun bo'lsa blobni xotiradan bo'shatamiz:
+                        // yuborish paytida diskdan o'qiladi.
+                        if (self.navbat.length > XOTIRA_CHEGARA) { ish.blob = null; }
+                    }).catch(function (err) {
+                        // IndexedDB yo'q (shaxsiy rejim, kvota) — eski
+                        // xatti-harakat: bo'lak xotirada qoladi.
+                        if (self.diskda !== 'xato') {
+                            self.diskda = 'xato';
+                            self.qayd('disk-yoq', err && err.message);
+                        }
+                    });
+
                     self.navbatniYur();
                 };
 
@@ -239,12 +587,16 @@
                 // Mikrofon uzilsa (USB sug'urildi, qurilma almashdi) — qayta ulanamiz
                 stream.getTracks().forEach(function (t) {
                     t.onended = function () {
+                        self.qayd('mikrofon', 'UZILDI (ended)');
                         if (!self.yakunlanmoqda) { self.qayta(); }
                     };
+                    // `mute` — mikrofon tizim darajasida o'chirilgan yoki
+                    // boshqa ilova olgan. Yozuv davom etadi, lekin JIM bo'ladi.
+                    t.onmute = function () { self.qayd('mikrofon', 'O\'CHDI (mute)'); };
+                    t.onunmute = function () { self.qayd('mikrofon', 'yoqildi'); };
                 });
 
                 self.rec.start(SLICE_MS);
-                self.boshlandi = Date.now();
 
                 qs('tz-audio-start').classList.add('hidden');
                 qs('tz-audio-stop').classList.remove('hidden');
@@ -259,21 +611,52 @@
                         + ' bo\'lak saqlangan)', 'text-danger');
                 }
 
+                self.oxirgiBolak = Date.now();
+                self.bolakSoni = 0;
+                self.wakeLockOl();
+                self.olchovBoshla(stream);
+
                 self.timer = setInterval(function () { self.yangila(); }, 1000);
+                // Qorovul ALOHIDA taymer: ko'rsatish taymeri sekinlashsa ham
+                // tekshiruv davom etsin.
+                self.qorovul = setInterval(function () { self.tekshir(); }, 5000);
+
+                // Sahifa ko'rinadigan holga qaytganda: wake lock'ni qayta
+                // olamiz va darhol tekshiramiz — fonda turganda bo'lak
+                // kelmagan bo'lishi mumkin.
+                self.visHandler = function () {
+                    self.qayd('oyna', document.hidden ? 'YASHIRILDI' : 'ko\'rindi');
+                    if (!document.hidden) {
+                        self.wakeLockOl();
+                        self.tekshir();
+                    }
+                };
+                document.addEventListener('visibilitychange', self.visHandler);
 
                 // Internet qaytishi bilan navbatni darhol bo'shatamiz
                 self.onlineHandler = function () {
                     self.tarmoq = true;
+                    self.qayd('internet', 'qaytdi');
                     clearTimeout(self.navbatTimer);
                     self.navbatniYur();
                 };
                 window.addEventListener('online', self.onlineHandler);
 
+                self.offlineHandler = function () {
+                    self.tarmoq = false;
+                    self.qayd('internet', 'UZILDI');
+                };
+                window.addEventListener('offline', self.offlineHandler);
+
                 // Oyna yopilayotganda oxirgi parchani BEACON bilan jo'natamiz:
                 // `fetch` bu paytda bekor qilinadi, `sendBeacon` esa brauzer
                 // yopilgandan keyin ham yetib boradi. Shunda yo'qoladigan
                 // vaqt 15 soniyadan ~0 ga tushadi.
-                self.unloadHandler = function () { self.oxirginiJonat(); };
+                self.unloadHandler = function () {
+                    self.qayd('oyna', 'yopilmoqda');
+                    self.jurnalYubor(true);
+                    self.oxirginiJonat();
+                };
                 window.addEventListener('pagehide', self.unloadHandler);
 
                 window.addEventListener('beforeunload', self.ogohlantir);
@@ -323,10 +706,14 @@
         if (!self.rec || self.tamom || !navigator.sendBeacon) { return; }
         try {
             if (self.rec.state === 'inactive') { return; }
-            // Navbatda qolgan bo'laklarni ham beacon bilan urinib ko'ramiz
+            // Navbatda qolgan bo'laklarni ham beacon bilan urinib ko'ramiz.
+            // Blobi xotirada YO'Q bo'lganlar (uzun navbatda diskka ko'chirilgan)
+            // o'tkazib yuboriladi — ular IndexedDB da turadi va keyingi
+            // kirishda `qoldiqniYubor()` ularni o'zi jo'natadi. Aks holda
+            // beacon BO'SH tana yuborib, server "bo'sh bo'lak" xatosini olardi.
             self.navbat.forEach(function (ish) {
-                navigator.sendBeacon(
-                    self.url('chunk', '&avlod=' + ish.gen + '&seq=' + ish.seq), ish.blob);
+                if (!ish.blob) { return; }
+                navigator.sendBeacon(self.chunkUrl(ish.sid, ish.gen, ish.seq), ish.blob);
             });
             // Hozirgi to'planayotgan parcha: `requestData` hodisani
             // ASINXRON chaqiradi, shuning uchun ishlovchini almashtirib
@@ -346,6 +733,7 @@
         if (!this.rec || this.rec.state !== 'recording') { return; }
 
         this.rec.pause();
+        this.qayd('pauza', 'qo\'lda');
         this.pauzada = true;
         this.pauzaBoshi = Date.now();
         this.yangila();
@@ -359,6 +747,7 @@
     TzRecorder.prototype.davom = function (avto) {
         if (!this.rec || this.rec.state !== 'paused') { return; }
         clearTimeout(this.pauzaTimer);
+        this.qayd('davom', avto ? 'avtomatik' : 'qo\'lda');
         this.rec.resume();
         // Pauzada o'tgan vaqt davomiylikka KIRMAYDI — aks holda holat qatori
         // va `duration` haqiqiy ovoz uzunligidan katta chiqardi.
@@ -379,10 +768,23 @@
      * shuning uchun server bu qismni alohida ulashi kerak. Avlod oshmasa
      * tartib raqamlari ustma-ust tushib, yozuv buzilardi.
      */
-    TzRecorder.prototype.qayta = function () {
+    TzRecorder.prototype.qayta = function (majburiy) {
         var self = this;
         if (self.yakunlanmoqda || self.tamom) { return; }
-        if (self.rec && self.rec.state === 'recording') { return; }   // allaqachon tirik
+        if (self.rec && self.rec.state === 'recording' && !majburiy) {
+            return;   // allaqachon tirik
+        }
+
+        // MAJBURIY tiklash: yozuvchi "recording" deb turib bo'lak bermayapti.
+        // Eskisini to'xtatamiz (oxirgi parchasi `ondataavailable` bilan
+        // keladi), lekin `onstop` yana `qayta()` chaqirmasligi kerak.
+        if (majburiy && self.rec && self.rec.state !== 'inactive') {
+            try {
+                self.rec.onstop = null;
+                self.rec.onerror = null;
+                self.rec.stop();
+            } catch (e) { /* allaqachon o'lgan */ }
+        }
 
         self.holat('Yozuv uzildi — qayta ulanmoqda...', 'text-warning');
 
@@ -397,6 +799,8 @@
                 };
             });
             self.rec.start(SLICE_MS);
+            self.oxirgiBolak = Date.now();
+            self.soraldi = false;
             self.pauzada = false;
             self.yangila();
         };
@@ -426,19 +830,57 @@
             - this.pauzaJami - pauzada;
         var matn, sinf;
 
+        // HAQIQIY ovoz: har bo'lak ~15 soniya. Devor soati bilan farq qilsa,
+        // yozuv to'xtab qolgan — buni YASHIRMAYMIZ (2026-11-11 saboqi: ekranda
+        // "33:00" turgan, faylda esa 3 daqiqa ovoz bor edi).
+        var ovoz = Math.floor(this.bolakSoni * SLICE_MS / 1000);
+        var farq = s - ovoz;
+
         if (this.pauzada) {
             matn = '⏸ Pauza — 30 soniyada o\'zi davom etadi';
             sinf = 'text-warning';
+        } else if (farq > 60) {
+            matn = '⚠ Yozuv to\'xtab qolgan! ovoz ' + fmtVaqt(ovoz)
+                + ' / o\'tgan vaqt ' + fmtVaqt(s) + ' — oynani ko\'rinib turadigan '
+                + 'joyda qoldiring';
+            sinf = 'text-danger font-weight-bold';
         } else {
-            matn = '● Yozilmoqda — ' + fmtVaqt(s);
+            matn = '● Yozilmoqda — ' + fmtVaqt(ovoz);
             sinf = 'text-danger';
+            var d = this.daraja();
+            if (d !== null) {
+                if (d < 0.004) {
+                    this.jimlikdan = this.jimlikdan || Date.now();
+                    if (Date.now() - this.jimlikdan > 60000) {
+                        matn += '  ·  ⚠ mikrofon ovoz olmayapti';
+                        sinf = 'text-warning font-weight-bold';
+                        if (!this.jimlikQayd) {
+                            this.jimlikQayd = true;
+                            this.qayd('mikrofon', 'JIM — 60s ovoz yo\'q');
+                        }
+                    }
+                } else {
+                    if (this.jimlikQayd) {
+                        this.qayd('mikrofon', 'ovoz qaytdi');
+                        this.jimlikQayd = false;
+                    }
+                    this.jimlikdan = 0;
+                    matn += '  ·  ' + '▁▂▃▄▅▆▇'.charAt(
+                        Math.min(6, Math.floor(d * 24))) + ' mikrofon';
+                }
+            }
         }
         if (this.gen > 1) {
             matn += '  ·  ' + this.gen + '-qism';
         }
+        if (this.uzilish) {
+            matn += '  ·  ' + this.uzilish + ' marta tiklandi';
+        }
         if (this.navbat.length) {
             matn += this.tarmoq === false
-                ? '  ·  internet yo\'q, ' + this.navbat.length + ' bo\'lak navbatda (yo\'qolmaydi)'
+                ? '  ·  internet yo\'q, ' + this.navbat.length + ' bo\'lak '
+                    + (this.diskda === true ? 'DISKDA saqlandi' : 'navbatda')
+                    + ' (yo\'qolmaydi)'
                 : '  ·  yuklanmoqda: ' + this.navbat.length;
         }
         this.holat(matn, sinf);
@@ -457,11 +899,24 @@
         if (this.onlineHandler) {
             window.removeEventListener('online', this.onlineHandler);
         }
+        if (this.offlineHandler) {
+            window.removeEventListener('offline', this.offlineHandler);
+        }
         if (this.unloadHandler) {
             window.removeEventListener('pagehide', this.unloadHandler);
         }
+        if (this.visHandler) {
+            document.removeEventListener('visibilitychange', this.visHandler);
+        }
         clearInterval(this.timer);
+        clearInterval(this.qorovul);
         clearTimeout(this.pauzaTimer);
+        this.wakeLockQoyib();
+        if (this.ac) {
+            try { this.ac.close(); } catch (e) { /* allaqachon yopilgan */ }
+            this.ac = null;
+            this.analyser = null;
+        }
     };
 
     TzRecorder.prototype.stop = function () {
@@ -502,10 +957,24 @@
                     setTimeout(kut, 1000);
                     return;
                 }
-                fetch(self.url('finish', '&duration=' + davomiylik), {method: 'POST'})
+                self.qayd('finish', 'bolak=' + self.bolakSoni + ' vaqt=' + davomiylik + 's');
+                fetch(self.url('finish', '&duration=' + davomiylik), {
+                    method: 'POST',
+                    // QORA QUTI yakuniy nusxasi — serverda `diag` ustuniga tushadi
+                    body: JSON.stringify({
+                        boshlandi: self.boshlandi,
+                        bolak: self.bolakSoni,
+                        uzilish: self.uzilish,
+                        qurilma: navigator.userAgent,
+                        jurnal: self.jurnal
+                    }),
+                    headers: {'Content-Type': 'application/json'}
+                })
                     .then(function (r) { return r.json(); })
                     .then(function (j) {
                         if (!j.ok) { throw new Error(j.error || 'saqlab bo\'lmadi'); }
+                        // Hammasi serverda — diskdagi nusxalar endi kerak emas
+                        idbTozala(self.cfg.lessonid).catch(function () {});
                         var mb = (j.filesize / 1048576).toFixed(1);
                         var matn = '✔ Saqlandi — ' + fmtVaqt(j.duration || davomiylik)
                             + ', ' + mb + ' MB';

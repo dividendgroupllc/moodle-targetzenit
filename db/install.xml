@@ -102,6 +102,9 @@
         <FIELD NAME="sessionid" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="Yozuv sessiyasi kaliti — bitta dars ikki oynada ochilsa bo'laklar aralashmasligi uchun"/>
         <FIELD NAME="segments" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Yozuv necha qismdan ulandi (uzilish soni + 1)"/>
         <FIELD NAME="warning" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Yig'ishda sezilgan nuqson: yetmagan bo'lak, qisqa davomiylik"/>
+        <FIELD NAME="audiblesec" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Faylda HAQIQATAN bor ovoz (soniya). 0 = o'lchanmagan (eski yozuv)"/>
+        <FIELD NAME="wallsec" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Yozuv tugmasi bosilgan turgan vaqt (devor soati). audiblesec'dan keskin katta bo'lsa yozuv kesilgan"/>
+        <FIELD NAME="diag" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Brauzer tomonidagi hodisalar jurnali (QORA QUTI): oyna yashirildi/ko'rindi, internet uzildi, mikrofon o'chdi, qorovul tiklandi. Yozuv nega jim qolganini SHUNDAN aniqlanadi."/>
         <FIELD NAME="transcript" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI transkripti — audio o'chgandan keyin ham qoladi"/>
         <FIELD NAME="analysis" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI tahlili (JSON): xulosa, mavzuga muvofiqlik, tuzilish, nutq ulushi"/>
         <FIELD NAME="aimodel" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>

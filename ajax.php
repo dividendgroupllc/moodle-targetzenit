@@ -19,13 +19,13 @@ $context = context_course::instance($dars->courseid);
 // YOZUV amallari — faqat shu kursda dars o'tadigan odam.
 // TAHLIL amallari (status/analyse/reanalyse) — direktor/zavuch ham: ularda
 // kurs kontekstidagi `teach` yo'q, tizim darajasida `viewanalysis` bor.
-if (in_array($action, ['start', 'chunk', 'finish', 'cancel'], true)) {
+if (in_array($action, ['start', 'chunk', 'finish', 'cancel', 'diag'], true)) {
     require_capability('local/targetzenit:teach', $context);
 } else if (!has_capability('local/targetzenit:teach', $context)) {
     require_capability('local/targetzenit:viewanalysis', context_system::instance());
 }
 
-if (in_array($action, ['start', 'chunk', 'finish', 'cancel'], true)
+if (in_array($action, ['start', 'chunk', 'finish', 'cancel', 'diag'], true)
         && !get_config('local_targetzenit', 'audioenabled')) {
     throw new \local_targetzenit\audio_xato('ochirilgan', 'Audio yozuv o\'chirilgan.');
 }
@@ -64,9 +64,24 @@ try {
                 'parts' => $natija['parts']]);
             break;
 
+        case 'diag':
+            // QORA QUTI: brauzer hodisalari jurnali. `pagehide` da
+            // `sendBeacon` bilan ham keladi, shuning uchun tana xom o'qiladi.
+            $json = file_get_contents('php://input');
+            if ($json !== false && $json !== '') {
+                audio::save_diag($lessonid, $json);
+            }
+            echo json_encode(['ok' => true]);
+            break;
+
         case 'finish':
             $duration = optional_param('duration', 0, PARAM_INT);
             $sid = optional_param('sid', '', PARAM_ALPHANUM);
+            // Jurnal finish tanasida keladi — yakuniy va eng to'liq nusxa.
+            $jurnal = file_get_contents('php://input');
+            if ($jurnal !== false && $jurnal !== '') {
+                audio::save_diag($lessonid, $jurnal);
+            }
             $rec = audio::finish($lessonid, $context, $duration, $sid ?: null);
             echo json_encode([
                 'ok' => true,

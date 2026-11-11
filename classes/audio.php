@@ -78,6 +78,11 @@ class audio {
         'audio/mpeg' => 'mp3',
     ];
 
+    /** Soniyani m:ss ko'rinishida (xabarlar uchun). */
+    protected static function hhmm(int $sek): string {
+        return intdiv($sek, 60) . ':' . sprintf('%02d', $sek % 60);
+    }
+
     /** Shu dars uchun bo'laklar saqlanadigan papka. */
     protected static function tempdir(int $lessonid): string {
         return make_temp_directory(self::COMPONENT . '/audio/' . $lessonid);
@@ -134,6 +139,54 @@ class audio {
         @exec($cmd, $chiqish, $kod);
         $s = (float) trim(implode('', $chiqish));
         return ($kod === 0 && $s > 0) ? (int) round($s) : null;
+    }
+
+    /** Audio oqimining namuna tezligi va kanal soni (standart 48 kHz mono). */
+    protected static function stream_info(string $path): array {
+        $probe = self::ffprobe();
+        $hz = 48000;
+        $kanal = 1;
+        if ($probe && is_readable($path)) {
+            $cmd = escapeshellcmd($probe) . ' -v error -select_streams a:0'
+                . ' -show_entries stream=sample_rate,channels'
+                . ' -of default=nw=1:nk=1 ' . escapeshellarg($path) . ' 2>/dev/null';
+            $chiqish = [];
+            @exec($cmd, $chiqish, $kod);
+            if ($kod === 0 && count($chiqish) >= 2) {
+                $hz = max(8000, (int) trim($chiqish[0]));
+                $kanal = max(1, (int) trim($chiqish[1]));
+            }
+        }
+        return [$hz, $kanal];
+    }
+
+    /**
+     * Faylda HAQIQATAN qancha ovoz borligi (soniya).
+     *
+     * NEGA `probe_duration()` YETARLI EMAS — 2026-11-11 da qimmatga tushgan saboq:
+     * bo'lak-bo'lak yig'ilgan webm'da konteyner davomiyligi YO'Q (`duration=N/A`),
+     * bo'laklar yaratilmay qolganda esa vaqt belgilari OLDINGA sakraydi va ffprobe
+     * o'sha BO'SHLIQNI ham davomiylik deb ko'rsatadi. Shu sabab 3 daqiqalik yozuv
+     * bazaga "33 daqiqa" bo'lib tushdi va AI jim joylarga dars matnini o'ylab topdi.
+     *
+     * Shuning uchun DEKODLANGAN PCM hajmini o'lchaymiz: ffmpeg `-f null` chiqishidagi
+     * `audio:NNNkB` faqat HAQIQIY paketlardan hosil bo'ladi, bo'shliqni sanamaydi.
+     */
+    public static function audio_seconds(string $path): ?float {
+        $ffmpeg = self::ffmpeg();
+        if (!$ffmpeg || !is_readable($path)) {
+            return null;
+        }
+        $cmd = escapeshellcmd($ffmpeg) . ' -hide_banner -nostats'
+            . ' -i ' . escapeshellarg($path) . ' -f null - 2>&1';
+        $chiqish = [];
+        @exec($cmd, $chiqish);
+        if (!preg_match('/audio:\s*(\d+)\s*kB/i', implode("\n", (array) $chiqish), $m)) {
+            return null;
+        }
+        list($hz, $kanal) = self::stream_info($path);
+        $sek = ((int) $m[1] * 1024) / ($hz * 2 * $kanal);
+        return $sek > 0 ? $sek : null;
     }
 
     /** Shu darsning audio yozuvi (bo'lsa). */
@@ -359,6 +412,31 @@ class audio {
             . ' yozuvi qayta ochildi — kech kelgan bo\'laklar qo\'shiladi', DEBUG_DEVELOPER);
     }
 
+    /**
+     * Brauzer hodisalari jurnalini saqlash (QORA QUTI).
+     *
+     * Yozuv nega jim qolganini KEYIN aniqlash uchun. Jurnal brauzerdan
+     * JSON bo'lib keladi: har qator [soniya, hodisa, izoh].
+     * Audio yoki shaxsiy ma'lumot YO'Q — faqat texnik hodisalar.
+     *
+     * Sessiya tekshirilmaydi: jurnal yo'qotishdan ko'ra ortiqcha yozilsa
+     * yaxshi, u faqat diagnostika uchun.
+     */
+    public static function save_diag(int $lessonid, string $json): void {
+        global $DB;
+        $rec = self::get($lessonid);
+        if (!$rec) {
+            return;
+        }
+        // Chegara: juda uzun jurnal bazani shishirmasin (oxiri muhimroq)
+        if (strlen($json) > 60000) {
+            $json = substr($json, -60000);
+        }
+        $rec->diag = $json;
+        $rec->timemodified = time();
+        $DB->update_record('local_targetzenit_audio', $rec);
+    }
+
     /** Hozirgacha yuklangan bo'laklar hajmi. */
     public static function staged_size(int $lessonid): int {
         $jami = 0;
@@ -464,8 +542,16 @@ class audio {
             // --- 2) Avlodlarni bitta faylga qo'shamiz
             $birlashgan = $dir . '/birlashgan.' . $ext;
             if (count($avlodfayllar) === 1) {
-                rename($avlodfayllar[0], $birlashgan);
+                // BITTA avlod bo'lsa ham remux SHART: MediaRecorder bergan
+                // oqimda davomiylik yo'q va pleyer surib qo'yishga ruxsat
+                // bermaydi (`remux()` izohiga qara).
+                if (!self::remux($avlodfayllar[0], $birlashgan)) {
+                    rename($avlodfayllar[0], $birlashgan);
+                    $ogohlantirish[] = 'remux bo\'lmadi — pleyerda vaqt chizig\'i chiqmasligi mumkin';
+                }
             } else {
+                // `join_segments` ffmpeg concat bilan ulaydi va sarlavhani
+                // o'zi qaytadan yozadi — ya'ni natija allaqachon qidiriladigan.
                 $xato = self::join_segments($avlodfayllar, $birlashgan, $dir);
                 if ($xato) {
                     $ogohlantirish[] = $xato;
@@ -475,18 +561,42 @@ class audio {
                 throw new audio_xato('birlashma', 'Birlashtirilgan fayl bo\'sh chiqdi');
             }
 
-            // --- 3) Davomiylikni FAYLDAN o'lchaymiz (brauzer soati pauzani ham
-            //        sanaydi, ffprobe esa haqiqiy ovoz uzunligini beradi)
-            $olchangan = self::probe_duration($birlashgan);
-            if ($olchangan) {
-                // Brauzer vaqtidan keskin kam bo'lsa — yozuvning bir qismi
-                // o'qilmayapti degani, buni yashirmaymiz.
-                if ($duration > 60 && $olchangan < $duration * 0.8) {
-                    $ogohlantirish[] = sprintf('o\'lchangan %d s / kutilgan %d s',
-                        $olchangan, $duration);
-                }
-                $duration = $olchangan;
+            // --- 3) HAQIQIY OVOZ UZUNLIGI va KESILISH tekshiruvi
+            //
+            // Brauzer bergan `$duration` — devor soati, ya'ni "necha daqiqa
+            // yozuv tugmasi bosilgan turdi". Agar oyna fonga o'tib Chrome uni
+            // muzlatsa, MediaRecorder bo'lak bermay qo'yadi, lekin soat
+            // yuraveradi — natijada 3 daqiqalik ovoz "33 daqiqa" bo'lib
+            // saqlanadi (2026-11-11, dars 159). Shuning uchun uchta mustaqil
+            // o'lchov bilan tekshiramiz.
+            $devorsoat = $duration;
+
+            // (a) ENG ISHONCHLI VA ARZON: nechta bo'lak keldi? Har bo'lak
+            //     ~15 soniya, demak kutilgan ovoz = bo'lak soni x 15.
+            //     ffmpeg kerak emas, hamma holatda ishlaydi.
+            $bolakdan = count($bolaklar) * self::SLICE_SEC;
+
+            // (b) ANIQ: dekodlangan PCM hajmi (bo'shliqni sanamaydi)
+            $ovozsek = self::audio_seconds($birlashgan);
+
+            // (c) Konteyner davomiyligi — faqat zaxira uchun; bo'shliqni ham
+            //     qo'shib ko'rsatishi mumkin, shuning uchun unga tayanmaymiz.
+            $konteyner = self::probe_duration($birlashgan);
+
+            $ovoz = $ovozsek !== null ? (int) round($ovozsek) : $bolakdan;
+            $kesilgan = false;
+
+            if ($devorsoat > 120 && $ovoz < $devorsoat * 0.8) {
+                $kesilgan = true;
+                $ogohlantirish[] = sprintf(
+                    'KESILGAN: %s ovoz bor, %s yozilgan (%d bo\'lak) — '
+                    . 'yozuv oynasi ishlashdan to\'xtagan',
+                    self::hhmm($ovoz), self::hhmm($devorsoat), count($bolaklar));
             }
+
+            // Davomiylik sifatida HAQIQIY ovoz uzunligini yozamiz: panellar va
+            // hisobotlar yo'q narsani ko'rsatmasligi kerak.
+            $duration = $ovoz ?: ($konteyner ?: $devorsoat);
 
             // --- 4) Omborga joylaymiz: AVVAL yangi faylni yaratamiz, keyin
             //        eskisini o'chiramiz. Teskarisi bo'lsa, yaratish xato
@@ -523,6 +633,8 @@ class audio {
             $rec->filesize = filesize($birlashgan);
             $rec->duration = $duration;
             $rec->segments = count($avlodfayllar);
+            $rec->audiblesec = $ovoz;
+            $rec->wallsec = $devorsoat;
             $rec->warning = $ogohlantirish
                 ? \core_text::substr(implode('; ', $ogohlantirish), 0, 255) : null;
             $rec->timemodified = time();
@@ -539,7 +651,14 @@ class audio {
 
             // AI tahlilni DARHOL navbatga qo'yamiz — 15 daqiqalik jadvalni kutmaydi.
             // Moodle croni har daqiqada ishlagani uchun tahlil ~1 daqiqada boshlanadi.
-            if (ai::enabled()) {
+            //
+            // KESILGAN yozuv tahlilga BERILMAYDI. Sabab (2026-11-11): jim
+            // joylarga model dars matnini O'YLAB TOPADI va zavuch soxta
+            // bahoni o'qiydi. Tahlilsiz qolgani — soxta tahlildan yaxshi.
+            if ($kesilgan) {
+                debugging('local_targetzenit: dars ' . $lessonid
+                    . ' AI tahliliga berilmadi — yozuv kesilgan', DEBUG_DEVELOPER);
+            } else if (ai::enabled()) {
                 task\analyse_one::queue($lessonid);
             }
 
@@ -548,6 +667,45 @@ class audio {
         } finally {
             $qulf->release();
         }
+    }
+
+    /**
+     * Faylni QIDIRILADIGAN holga keltirish (remux, qayta kodlashsiz).
+     *
+     * NEGA KERAK — 2026-11-11 da o'lchab aniqlangan: MediaRecorder "oqim"
+     * (live) webm beradi, unda DAVOMIYLIK ham, qidiruv indeksi (Cues) ham
+     * YO'Q. Brauzer bunday faylni `duration = Infinity` deb ko'radi, ya'ni
+     * pleyerda suriladigan vaqt chizig'i CHIQMAYDI — o'qituvchi 10- yoki
+     * 15-daqiqaga o'tolmaydi, faqat boshidan tinglaydi.
+     *
+     * `ffmpeg -c copy` sarlavhani qaytadan yozadi: davomiylik va Cues paydo
+     * bo'ladi. Sinovda: `duration=Infinity` -> `1978.7s`, `seekable` to'liq
+     * fayl, 120-soniyaga o'tish ishladi. Qayta kodlash YO'Q, shuning uchun
+     * sifat o'zgarmaydi va 45 daqiqalik fayl ~1 soniyada qayta yoziladi.
+     *
+     * Yonma-yon foyda: `probe_duration()` endi ishlaydi, AI bo'laklarga
+     * to'g'ri kesadi, hisobotlarda haqiqiy uzunlik ko'rinadi.
+     *
+     * @return bool muvaffaqiyatli bo'lsa true (aks holda xom fayl qoladi)
+     */
+    public static function remux(string $xom, string $nishon): bool {
+        $ffmpeg = self::ffmpeg();
+        if (!$ffmpeg) {
+            return false;
+        }
+        $cmd = escapeshellcmd($ffmpeg) . ' -hide_banner -loglevel error -y'
+            . ' -i ' . escapeshellarg($xom)
+            . ' -c copy ' . escapeshellarg($nishon) . ' 2>&1';
+        $chiqish = [];
+        @exec($cmd, $chiqish, $kod);
+
+        if ($kod === 0 && file_exists($nishon) && filesize($nishon) > 0) {
+            return true;
+        }
+        @unlink($nishon);
+        debugging('local_targetzenit: remux bo\'lmadi — '
+            . implode(' ', (array) $chiqish), DEBUG_DEVELOPER);
+        return false;
     }
 
     /**

@@ -556,27 +556,36 @@ S = {
         "\u25a0 Остановить и сохранить",
     ),
     "rc_hint": (
-        "<b>Do not close this window.</b> While it is open you can take "
-        "attendance, enter grades and open the journal in the main window "
-        "\u2014 the recording continues.<br><br>"
+        "<b>Do not close this window and do not minimise it.</b> Keep it "
+        "visible \u2014 side by side with the main window. If the window is "
+        "hidden or the laptop goes to sleep, the browser stops the recorder "
+        "and only the first few minutes are saved.<br><br>"
+        "While it is visible you can take attendance, enter grades and open "
+        "the journal in the main window \u2014 the recording continues.<br><br>"
         "<b>If the internet drops, recording does NOT stop</b> \u2014 chunks "
         "are queued and sent automatically when the connection returns; no "
         "audio is lost.<br><br>"
         "<b>Pause</b> resumes by itself after 30 seconds \u2014 so a "
         "forgotten pause will not cost you the lesson.<br><br>"
         "Audio is kept for {$a} days.",
-        "<b>Bu oynani yopmang.</b> U ochiq turganda asosiy oynada yo'qlama "
-        "qilish, baho qo'yish va jurnalni ochish mumkin \u2014 yozuv davom "
-        "etaveradi.<br><br>"
+        "<b>Bu oynani yopmang va KICHRAYTIRMANG.</b> Uni ko'rinib turadigan "
+        "joyda qoldiring \u2014 asosiy oyna bilan yonma-yon. Oyna yashirilsa "
+        "yoki noutbuk uxlab qolsa, brauzer yozuvni to'xtatadi va faqat "
+        "birinchi bir necha daqiqa saqlanadi.<br><br>"
+        "Oyna ko'rinib turganda asosiy oynada yo'qlama qilish, baho qo'yish "
+        "va jurnalni ochish mumkin \u2014 yozuv davom etaveradi.<br><br>"
         "<b>Internet uzilsa yozuv TO'XTAMAYDI</b> \u2014 bo'laklar navbatda "
         "turadi va aloqa qaytishi bilan o'zi yuboriladi, ovoz "
         "yo'qolmaydi.<br><br>"
         "<b>Pauza</b> 30 soniyadan keyin o'zi davom etadi \u2014 unutib "
         "qo'yilsa ham dars yozilmay qolmaydi.<br><br>"
         "Audio {$a} kun saqlanadi.",
-        "<b>Не закрывайте это окно.</b> Пока оно открыто, в основном окне "
-        "можно отмечать посещаемость, ставить оценки и открывать журнал "
-        "\u2014 запись продолжается.<br><br>"
+        "<b>Не закрывайте и не сворачивайте это окно.</b> Держите его на "
+        "виду \u2014 рядом с основным окном. Если окно скрыто или ноутбук "
+        "уснёт, браузер остановит запись и сохранятся только первые "
+        "минуты.<br><br>"
+        "Пока окно видно, в основном окне можно отмечать посещаемость, "
+        "ставить оценки и открывать журнал \u2014 запись продолжается.<br><br>"
         "<b>Если интернет пропадёт, запись НЕ остановится</b> \u2014 "
         "фрагменты встанут в очередь и отправятся сами при возвращении "
         "связи, звук не потеряется.<br><br>"
@@ -2203,6 +2212,163 @@ S = {
     "bh_sit_xato": ("Error", "Xato", "Ошибка"),
 
     # --- ball kiritish setkasi (output/ballsetka.php)
+    # ----------------------------- Excel'dan ball yuklash (exam_import.php)
+    "bh_imp_title": (
+        "Upload scores from Excel",
+        "Excel'dan ballarni yuklash",
+        "Загрузить баллы из Excel",
+    ),
+    "bh_imp_hint": (
+        "The file is only read — nothing is saved until you check the grid "
+        "and press Save",
+        "Fayl faqat O'QILADI — setkani tekshirib «Saqlash» bosmaguningizcha "
+        "hech narsa saqlanmaydi",
+        "Файл только читается — ничего не сохраняется, пока вы не проверите "
+        "таблицу и не нажмёте «Сохранить»",
+    ),
+    "bh_imp_read": ("Read the file", "Faylni o'qish", "Прочитать файл"),
+    "bh_imp_formats": (
+        "xlsx, xls, csv. The file needs a name column and either a score "
+        "column or one column per question (0/1). A student ID column makes "
+        "matching exact.",
+        "xlsx, xls, csv. Faylda ism ustuni va yo ball ustuni, yoki har savolga "
+        "bitta ustun (0/1) bo'lishi kerak. O'quvchi ID ustuni bo'lsa moslik "
+        "aniq bo'ladi.",
+        "xlsx, xls, csv. В файле нужен столбец с именем и либо столбец с "
+        "баллом, либо по столбцу на каждый вопрос (0/1). Столбец с ID ученика "
+        "делает сопоставление точным.",
+    ),
+    "bh_imp_nofile": ("No file was chosen", "Fayl tanlanmadi", "Файл не выбран"),
+    "bh_imp_failed": (
+        "The file could not be read: {$a}",
+        "Faylni o'qib bo'lmadi: {$a}",
+        "Не удалось прочитать файл: {$a}",
+    ),
+    "bh_imp_unreadable": (
+        "The file could not be opened",
+        "Faylni ochib bo'lmadi",
+        "Файл не удалось открыть",
+    ),
+    "bh_imp_nohead": (
+        "A name column was not found. The file needs a header row with a cell "
+        "such as F.I.Sh., Student or Name.",
+        "Ism ustuni topilmadi. Faylda sarlavha qatori bo'lishi va unda "
+        "«F.I.Sh.», «O'quvchi» yoki «Name» kabi katak turishi kerak.",
+        "Столбец с именем не найден. В файле нужна строка заголовков с ячейкой "
+        "вида «ФИО», «Ученик» или «Name».",
+    ),
+    "bh_imp_noscore": (
+        "A score column was not found, and the columns do not look like "
+        "per-question marks either. Add a column such as Ball, Natija or Score.",
+        "Ball ustuni topilmadi, ustunlar savol-savol belgilarga ham o'xshamaydi. "
+        "«Ball», «Natija» yoki «Score» kabi ustun qo'shing.",
+        "Столбец с баллом не найден, и столбцы не похожи на отметки по вопросам. "
+        "Добавьте столбец «Балл», «Результат» или «Score».",
+    ),
+    "bh_imp_mode_ball": ("one score column", "bitta ball ustuni", "один столбец с баллом"),
+    "bh_imp_mode_matritsa": (
+        "one column per question, summed",
+        "har savolga bitta ustun, yig'indi olindi",
+        "по столбцу на вопрос, суммировано",
+    ),
+    "bh_imp_result": (
+        "{$a->topildi} students matched, {$a->xato} rows could not be used "
+        "({$a->rejim})",
+        "{$a->topildi} o'quvchi topildi, {$a->xato} qator ishlatilmadi "
+        "({$a->rejim})",
+        "Сопоставлено учеников: {$a->topildi}, не использовано строк: "
+        "{$a->xato} ({$a->rejim})",
+    ),
+    "bh_imp_qsame": (
+        "Questions in the file: {$a} — matches the maximum score",
+        "Fayldagi savollar soni: {$a} — maksimal ball bilan bir xil",
+        "Вопросов в файле: {$a} — совпадает с максимальным баллом",
+    ),
+    "bh_imp_setmax": (
+        "Set the maximum score to {$a->savollar} (now {$a->hozir})",
+        "Maksimal ballni {$a->savollar} ga tenglashtirish (hozir {$a->hozir})",
+        "Установить максимальный балл {$a->savollar} (сейчас {$a->hozir})",
+    ),
+    "bh_imp_setmaxhint": (
+        "The maximum score belongs to the assessment, so it applies to every "
+        "group and changes the percentages already stored",
+        "Maksimal ball BAHOLASHGA tegishli, ya'ni hamma guruhga qo'llanadi va "
+        "saqlangan ballarning foizini o'zgartiradi",
+        "Максимальный балл относится к оцениванию, то есть применяется ко всем "
+        "группам и меняет проценты уже сохранённых баллов",
+    ),
+    "bh_maxclosed": (
+        "The assessment is closed, so the maximum score cannot be changed",
+        "Baholash yopilgan, maksimal ballni o'zgartirib bo'lmaydi",
+        "Оценивание закрыто, максимальный балл изменить нельзя",
+    ),
+    "bh_maxtoolow": (
+        "The maximum score cannot be set to {$a->yangi}: a stored score of "
+        "{$a->eng} is higher and would be silently cut. Correct that score first.",
+        "Maksimal ballni {$a->yangi} qilib bo'lmaydi: saqlangan {$a->eng} ball "
+        "undan katta va jimgina kesilib ketardi. Avval o'sha ballni tuzating.",
+        "Нельзя установить максимум {$a->yangi}: сохранённый балл {$a->eng} "
+        "больше и был бы молча урезан. Сначала исправьте этот балл.",
+    ),
+    "bh_imp_empty": (
+        "{$a} rows had no score in the file — those students are left untouched",
+        "{$a} qatorda fayldagi ball bo'sh — o'sha o'quvchilarga hech narsa yozilmaydi",
+        "В {$a} строках балл в файле пуст — этим ученикам ничего не записывается",
+    ),
+    "bh_imp_h_bosh": ("no score in the file", "faylda ball yo'q", "в файле нет балла"),
+    "bh_imp_source": (
+        "Taken from sheet «{$a->varaq}», subject «{$a->fan}»",
+        "«{$a->varaq}» varag'idan, «{$a->fan}» fani bo'yicha olindi",
+        "Взято с листа «{$a->varaq}», предмет «{$a->fan}»",
+    ),
+    "bh_imp_pick": (
+        "The file holds several subjects and none matched «{$a->fan}» "
+        "automatically (sheet «{$a->varaq}»). Choose the subject yourself.",
+        "Faylda bir nechta fan bor va «{$a->fan}» ga avtomatik moslashtirib "
+        "bo'lmadi («{$a->varaq}» varag'i). Fanni o'zingiz tanlang.",
+        "В файле несколько предметов, и ни один не сопоставился с «{$a->fan}» "
+        "автоматически (лист «{$a->varaq}»). Выберите предмет сами.",
+    ),
+    "bh_imp_pickhint": (
+        "The number in brackets is the question count in that block. The file "
+        "is kept, so there is no need to upload it again.",
+        "Qavs ichidagi son — o'sha blokdagi savollar soni. Fayl saqlanib "
+        "turadi, qayta yuklash kerak emas.",
+        "Число в скобках — количество вопросов в этом блоке. Файл сохранён, "
+        "загружать заново не нужно.",
+    ),
+    "bh_imp_row": ("Row", "Qator", "Строка"),
+    "bh_imp_file": ("In the file", "Faylda", "В файле"),
+    "bh_imp_matched": ("Matched student", "Topilgan o'quvchi", "Найденный ученик"),
+    "bh_imp_how": ("How", "Qanday", "Как"),
+    "bh_imp_h_id": ("by student ID", "ID bo'yicha", "по ID"),
+    "bh_imp_h_ism": ("by full name", "ism bo'yicha", "по ФИО"),
+    "bh_imp_h_qisman": (
+        "by partial name — check it",
+        "ism qisman mos — tekshiring",
+        "частичное совпадение ФИО — проверьте",
+    ),
+    "bh_imp_h_topilmadi": ("not found", "topilmadi", "не найден"),
+    "bh_imp_h_ikkixil": (
+        "matches two students",
+        "ikki o'quvchiga mos keldi",
+        "подходит двум ученикам",
+    ),
+    "bh_imp_h_takror": (
+        "this student is already in the file",
+        "bu o'quvchi faylda takrorlangan",
+        "этот ученик в файле повторяется",
+    ),
+    "bh_imp_h_ballyoq": ("no numeric score", "ball son emas", "балл не число"),
+    "bh_imp_confirm": (
+        "Check the grid below and press Save. Rows that were not matched are "
+        "left untouched.",
+        "Pastdagi setkani tekshirib «Saqlash» bosing. Topilmagan qatorlarga "
+        "hech narsa yozilmaydi.",
+        "Проверьте таблицу ниже и нажмите «Сохранить». По несопоставленным "
+        "строкам ничего не записывается.",
+    ),
+
     "bh_student": ("Student", "O'quvchi", "Ученик"),
     "bh_students": ("Students", "O'quvchilar", "Ученики"),
     "bh_score": ("Score", "Ball", "Балл"),

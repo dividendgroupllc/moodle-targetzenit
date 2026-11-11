@@ -32,9 +32,15 @@ class ballsetka {
      * @param \stdClass $sit `exam::sitting()` qatori
      * @param string $action forma qayerga yuborilsin
      * @param bool $yozish ball kiritish mumkinmi (false = faqat o'qish)
+     * @param array|null $oldin Excel'dan kelgan ballar [studentid => float].
+     *        Berilsa maydonlar SHU qiymat bilan to'ladi, lekin HECH NARSA
+     *        saqlanmaydi — odam ko'rib, tekshirib «Saqlash» bosadi.
+     * @param string $hisobot setka ustida ko'rsatiladigan import hisoboti
      */
     public static function render(\stdClass $sit, string $action,
-                                    bool $yozish = true): string {
+                                    bool $yozish = true,
+                                    ?array $oldin = null,
+                                    string $hisobot = ''): string {
         global $DB;
 
         $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
@@ -78,6 +84,14 @@ class ballsetka {
         // ustiga yozilishi mumkin — shuni ochiq aytamiz.
         if ($sit->shakli === 'onlayn') {
             $h .= \html_writer::div($t('bh_onlinewarn'), 'tz-bh-clash');
+        }
+
+        // --- EXCEL IMPORT formasi (o'z formasi — setka saqlashi bilan
+        // aralashmasligi kerak). Hisobot esa SETKA FORMASINING ICHIDA,
+        // quyida — chunki undagi «savollar soni» belgisi setka bilan
+        // birga yuborilishi kerak.
+        if ($yozish) {
+            $h .= self::importform($sit, $action);
         }
 
         // ============================================================= PLITALAR
@@ -133,6 +147,13 @@ class ballsetka {
         $h .= \html_writer::empty_tag('input',
             ['type' => 'hidden', 'name' => 'sitting', 'value' => (int) $sit->id]);
 
+        // IMPORT HISOBOTI — forma ICHIDA. Undagi «maksimal ballni savollar
+        // soniga tenglashtirish» belgisi shu forma bilan yuboriladi; tashqarida
+        // qolsa belgi jimgina e'tiborsiz qolardi.
+        if ($hisobot !== '') {
+            $h .= $hisobot;
+        }
+
         $h .= \html_writer::start_div('tz-dir-card');
         $h .= \html_writer::start_div('tz-dir-tablewrap');
         $h .= \html_writer::start_tag('table', ['class' => 'tz-dir-table tz-bh-grid-t']);
@@ -176,9 +197,15 @@ class ballsetka {
                 ? \html_writer::empty_tag('input', [
                     'type' => 'number', 'name' => 'ball[' . $k . ']',
                     'min' => 0, 'max' => $max, 'step' => '0.01',
-                    'value' => ($r && $r->rawscore !== null)
-                        ? self::son($r->rawscore) : '',
-                    'class' => 'tz-bh-score',
+                    // Excel'dan kelgan qiymat saqlangan ballning USTIDAN
+                    // ko'rsatiladi — odam fayl nima deganini ko'rishi kerak,
+                    // keyin saqlash yoki tuzatish uning qarori.
+                    'value' => isset($oldin[$sid])
+                        ? self::son($oldin[$sid])
+                        : (($r && $r->rawscore !== null)
+                            ? self::son($r->rawscore) : ''),
+                    'class' => isset($oldin[$sid])
+                        ? 'tz-bh-score tz-bh-imported' : 'tz-bh-score',
                     'placeholder' => '0–' . $max])
                 : (($r && $r->score !== null) ? self::son($r->score) : '—'));
 
@@ -268,6 +295,150 @@ class ballsetka {
         return $h;
     }
 
+    /**
+     * EXCEL YUKLASH formasi.
+     *
+     * Ataylab setkaning USTIDA va alohida forma: fayl yuklash setkani
+     * saqlash bilan aralashmasligi kerak — ikkisi bitta formada bo'lsa
+     * fayl tanlab «Saqlash» bosilsa fayl jimgina e'tiborsiz qolardi.
+     */
+    public static function importform(\stdClass $sit, string $action): string {
+        $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
+
+        $h = \html_writer::start_tag('form', ['method' => 'post',
+            'action' => $action, 'enctype' => 'multipart/form-data',
+            'class' => 'tz-bh-imp']);
+        $h .= \html_writer::empty_tag('input',
+            ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+        $h .= \html_writer::empty_tag('input',
+            ['type' => 'hidden', 'name' => 'amal', 'value' => 'import']);
+        $h .= \html_writer::empty_tag('input',
+            ['type' => 'hidden', 'name' => 'sitting', 'value' => (int) $sit->id]);
+
+        $h .= \html_writer::div($t('bh_imp_title'), 'tz-dir-lab');
+        $h .= \html_writer::div($t('bh_imp_hint'), 'tz-dir-sub');
+        $h .= \html_writer::start_div('tz-bh-improw');
+        $h .= \html_writer::empty_tag('input', ['type' => 'file',
+            'name' => 'ballfile', 'accept' => '.xlsx,.xls,.csv,.txt',
+            'required' => 'required']);
+        $h .= \html_writer::empty_tag('input', ['type' => 'submit',
+            'class' => 'btn btn-sm btn-outline-primary',
+            'value' => $t('bh_imp_read')]);
+        $h .= \html_writer::end_div();
+        $h .= \html_writer::div($t('bh_imp_formats'), 'tz-dir-sub');
+        $h .= \html_writer::end_tag('form');
+        return $h;
+    }
+
+    /**
+     * Import HISOBOTI — fayl o'qilgandan keyin, setka ustida.
+     *
+     * MAJBURIY QISM: ism bo'yicha topilgan moslik ODAM TASDIQLASHI kerak
+     * (o'zgarmas ID qoidasi). Shuning uchun hisobot nimani qanday topganini
+     * ro'yxat qilib ko'rsatadi va topilmaganlarni YASHIRMAYDI.
+     *
+     * @param array $natija `exam_import::moslashtir()` qaytargani
+     * @param int|null $savollar fayldan topilgan savollar soni
+     */
+    public static function hisobot(\stdClass $sit, array $natija,
+                                     ?int $savollar, string $rejim,
+                                     ?string $varaq = null,
+                                     string $fan = ''): string {
+        $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
+
+        $topildi = count($natija['ball']);
+        $xato = 0;
+        $bosh = 0;
+        foreach ($natija['hisobot'] as $x) {
+            if (isset($x['userid'])) {
+                continue;
+            }
+            // «bosh» = fayldagi katak bo'sh (shu fandan topshirmagan) —
+            // bu XATO emas, shuning uchun ogohlantirish rangini yoqmaydi.
+            if ($x['holat'] === 'bosh') {
+                $bosh++;
+            } else {
+                $xato++;
+            }
+        }
+
+        $h = \html_writer::start_div('tz-bh-imprep'
+            . ($xato ? ' tz-bh-imprep-warn' : ''));
+        $h .= \html_writer::div($t('bh_imp_result', (object) [
+            'topildi' => $topildi, 'xato' => $xato,
+            'rejim' => $t('bh_imp_mode_' . $rejim),
+        ]), 'tz-dir-lab');
+        if ($bosh) {
+            $h .= \html_writer::div($t('bh_imp_empty', $bosh), 'tz-dir-sub');
+        }
+
+        // Fayldan NIMA olinganini ochiq aytamiz: varaq va fan bloki.
+        // Bitta faylda 20 varaq va 6 fan bor — noto'g'ri blok olinsa
+        // matematika bali ingliz tiliga tushib ketardi, shuning uchun
+        // tanlov KO'RINIB turishi shart.
+        if ($varaq !== null || $fan !== '') {
+            $h .= \html_writer::div($t('bh_imp_source', (object) [
+                'varaq' => s((string) ($varaq ?? '—')),
+                'fan' => s($fan !== '' ? $fan : '—'),
+            ]), 'tz-dir-sub');
+        }
+
+        // --- savollar soni: fayldan topilgan bo'lsa va baholashdagidan
+        // farq qilsa, TENGLASHTIRISH taklif qilinadi. Avtomatik emas:
+        // maksimal ball hamma guruhga umumiy va foizlarni o'zgartiradi.
+        if ($savollar !== null && $savollar > 0) {
+            if ((int) $sit->maxscore === $savollar) {
+                $h .= \html_writer::div($t('bh_imp_qsame', $savollar), 'tz-dir-sub');
+            } else {
+                $h .= \html_writer::div(
+                    \html_writer::tag('label',
+                        \html_writer::checkbox('setmax', $savollar, false, '')
+                        . ' ' . $t('bh_imp_setmax', (object) [
+                            'savollar' => $savollar,
+                            'hozir' => (int) $sit->maxscore,
+                        ]),
+                        ['class' => 'tz-sh-check'])
+                    // Bu belgini setkaning O'Z formasi yuboradi, shuning
+                    // uchun hisobot setka formasining ICHIDA bo'lishi kerak.
+                    . \html_writer::div($t('bh_imp_setmaxhint'), 'tz-dir-sub'),
+                    'tz-bh-setmax');
+            }
+        }
+
+        // --- qator-qator ro'yxat
+        $h .= \html_writer::start_div('tz-bh-impliststr');
+        $h .= \html_writer::start_tag('table', ['class' => 'tz-dir-table']);
+        $h .= \html_writer::start_tag('thead') . \html_writer::start_tag('tr');
+        foreach (['bh_imp_row', 'bh_imp_file', 'bh_imp_matched',
+                  'bh_score', 'bh_imp_how'] as $k) {
+            $h .= \html_writer::tag('th', $t($k));
+        }
+        $h .= \html_writer::end_tag('tr') . \html_writer::end_tag('thead');
+        $h .= \html_writer::start_tag('tbody');
+
+        foreach ($natija['hisobot'] as $x) {
+            $ok = isset($x['userid']);
+            $h .= \html_writer::start_tag('tr',
+                ['class' => $ok ? '' : 'tz-bh-impbad']);
+            $h .= \html_writer::tag('td', (string) $x['qator']);
+            $h .= \html_writer::tag('td', s($x['ism']));
+            $h .= \html_writer::tag('td', $ok ? s($x['moodle']) : '—');
+            $h .= \html_writer::tag('td', s($x['ball']));
+            $h .= \html_writer::tag('td', \html_writer::tag('span',
+                $t('bh_imp_h_' . $x['holat']),
+                ['class' => 'tz-dir-chip'
+                    . ($ok ? ($x['holat'] === 'id' ? ' tz-dir-good' : ' tz-dir-warning')
+                           : ' tz-dir-critical')]));
+            $h .= \html_writer::end_tag('tr');
+        }
+        $h .= \html_writer::end_tag('tbody') . \html_writer::end_tag('table');
+        $h .= \html_writer::end_div();
+
+        $h .= \html_writer::div($t('bh_imp_confirm'), 'tz-dir-sub mt-2');
+        $h .= \html_writer::end_div();
+        return $h;
+    }
+
     /** Ballni ortiqcha nollarsiz ko'rsatadi: 30.00 -> 30, 30.50 -> 30.5 */
     public static function son($v): string {
         if ($v === null || $v === '') {
@@ -321,6 +492,17 @@ class ballsetka {
         $holatlar = optional_param_array('holat', [], PARAM_ALPHA);
         $retakelar = optional_param_array('retake', [], PARAM_INT);
         $sabab = trim(optional_param('sabab', '', PARAM_TEXT));
+
+        // --- «savollar soni» ni maksimal ball qilib qo'yish (Excel importdan)
+        //
+        // BALLARDAN OLDIN: chegaralash va tekshiruv yangi maksimalga
+        // nisbatan ishlashi kerak, aks holda 18/20 ball 100 ballik shkalada
+        // qabul qilinib, keyin maksimal 20 ga tushirilsa — chalkashlik.
+        $setmax = optional_param('setmax', 0, PARAM_INT);
+        if ($setmax > 0) {
+            exam::maxscore_ozgartir((int) $sit->examid, $setmax);
+            $sit = exam::sitting($sittingid);        // yangilangan maxscore
+        }
 
         $bor = exam::results($sittingid);
         $saqlandi = 0;

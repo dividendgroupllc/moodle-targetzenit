@@ -668,3 +668,110 @@ savol banki va quiz qurish kerak bo'lardi.
 
 Aloqador: [[moodle-local-plugin]], `DIREKTOR_PANELI.md`,
 `SHARH_ARXITEKTURA.md`, `MUROJAAT_ARXITEKTURA.md`
+
+---
+
+## 13. EXCEL'DAN BALL YUKLASH (0.45.0, 2026-11-11)
+
+Foydalanuvchi talabi: *«o'tgan testning natijalarini guruh bo'yicha bittada
+yuklamoqchiman; yuklagan faylimdan savollar soni va har bir o'quvchi
+natijasini olishi kerak»*.
+
+### Asosiy qoida: import HECH NARSA YOZMAYDI
+
+Fayl faqat **o'qiladi** va mavjud **ball setkasini to'ldiradi** — odam ko'rib,
+tekshirib «Saqlash» bosadi. Shuning uchun:
+
+- yozish yo'li **bitta** bo'lib qoladi (`exam::result_save()`), ya'ni nizomdagi
+  30% chegarasi, 72 soatlik oyna va o'zgarishlar tarixi import uchun
+  **qaytadan yozilmaydi**;
+- ism bo'yicha topilgan moslikni **odam tasdiqlaydi** — bu majburiy, chunki
+  tizimlararo bog'lanish faqat o'zgarmas ID bilan bo'lishi kerak.
+
+Shu sabab import shoxchasi `baholash.php` da **redirect QILMAYDI** (redirect
+o'qilgan ma'lumotni yo'qotardi) — bu yagona shunday amal.
+
+### Fayl formati QOTIB BELGILANMAYDI
+
+O'qituvchining fayli har xil bo'ladi, shuning uchun ustunlar **sarlavha
+so'zlaridan** aniqlanadi (uz/ru/en): ism (`F.I.Sh.`, `O'quvchi`, `ФИО`,
+`Name`...), ID (`ID`, `Kod`...), ball (`Ball`, `Natija`, `To'g'ri`, `Балл`,
+`Score`...). Topilmasa — tushunarli xabar, taxmin qilinmaydi.
+
+**Ikki rejim:**
+
+| Rejim | Fayl ko'rinishi | Savollar soni qaydan |
+|---|---|---|
+| `ball` | `F.I.Sh. | Ball` | «Savollar soni: 20» katagidan |
+| `matritsa` | `F.I.Sh. | 1 | 2 | 3 | ...` (0/1) | **ustunlar sonidan** |
+
+Matritsa rejimi ataylab: savol-savol varaq foydalanuvchi so'ragan ikki
+narsani (savollar soni + har o'quvchi natijasi) bir vaqtda beradi. Ball =
+yig'indi. *Kelajak:* savol-savol javoblarni saqlab item analysis qilish
+(hozir faqat yig'indi olinadi).
+
+### Moslashtirish tartibi (qat'iy)
+
+1. **`idnumber` bo'yicha aniq moslik** — o'zgarmas unikal ID qoidasi;
+2. ism tokenlari **to'liq** mos kelsa (to'plam sifatida — fayldagi tartib
+   «Familiya Ism» bo'lishi mumkin, Moodle'da «Ism Familiya»);
+3. fayldagi tokenlar o'quvchining tokenlari **ichida** bo'lsa va kamida
+   ikkitasi mos kelsa (otasining ismi fayldan tushib qolgan hol) — sariq
+   «tekshiring» belgisi bilan.
+
+**Ikki o'quvchiga mos kelgan qator YOZILMAYDI** («ikki xil» deb belgilanadi).
+Taxmin qilib yozish eng qimmat xato: ball boshqa o'quvchiga tushadi va buni
+keyin topish deyarli imkonsiz.
+
+Ball sifatida qabul qilinadi: `18` · `18,5` · `18.5` · `90%` (maksimal
+ballning foizi). Matn (`kelmadi`) — ball emas, hisobotda ko'rinadi.
+
+### «Savollar soni» → maksimal ball
+
+Avtomatik QO'YILMAYDI, **taklif qilinadi** (belgi). Sabab: `maxscore`
+baholashga tegishli, ya'ni hamma guruhga umumiy va saqlangan ballarning
+foizini o'zgartiradi (18/20 = 90%, lekin max 100 bo'lsa 18%).
+
+`exam::maxscore_ozgartir()` da himoya: saqlangan ballardan birortasi yangi
+maksimaldan **katta** bo'lsa o'zgartirilmaydi — aks holda ball jimgina
+kesilib, o'quvchi haqsiz past natija olardi.
+
+**TUZOQ (tuzatildi):** hisobot avval setka formasidan TASHQARIDA chizilgan
+edi va undagi «savollar soni» belgisi hech qachon yuborilmasdi. Endi hisobot
+setka formasining **ichida**.
+
+### 13.1 Maktabning HAQIQIY fayli (0.46.0, tekshirilgan)
+
+`1Quarter3grade Test_natijalari_sinflar.xlsx` ustida sinaldi. Tuzilishi:
+
+```
+Varaqlar:  Umumiy · Darajalar · 1A · 1B · 2A ... 11B      <- har sinf alohida
+1-qator:   «3A sinf — test natijalari (har bir o'quvchiga 50 ta savol)»
+2-qator:   N | O'quvchi ism familiyasi | Math | English | Russian | Business | JAMI
+3-qator:       | ballar soni | To'g'ri javob | Foiz | Progress | Daraja | ...
+4-qator+:  1 | Ravshanbekova Parizoda | 30 | 0 | ...
+```
+
+**Tizim o'zi topadi:**
+- **varaqni** — sitting guruhining nomidan (`3 A` -> `3A`, bo'shliq va registr
+  e'tiborsiz; `Umumiy`/`Darajalar` chetlab o'tiladi);
+- **fan blokini** — baholashning fanidan (`blok_tanla()`); topilmasa
+  **odam tanlaydi**, fayl saqlanib turadi va qayta yuklash kerak emas;
+- **savollar sonini** — o'sha blokning «Savollar soni / ballar soni»
+  ustunidan (3A: Math 30, English 25, Russian 15, Business 5);
+- **jadval oxirini** — № ustuni butun son bo'lmagan birinchi qatorda
+  to'xtaydi. Bu SHART: fayl ostida «darajalar bo'yicha guruhlar» jadvallari
+  bor va ular o'quvchi ismlarini QAYTA sanaydi.
+
+`JAMI` bloki **ataylab chetlab o'tiladi** — u yig'indi, fan emas.
+
+**TUZOQ (tuzatildi):** sarlavha qatorida «har bir **o'quvchi**ga 50 ta savol»
+yozilgan va u ism ustuni deb qabul qilinardi -> butun tahlil buzilardi.
+`ism_ustun()` da ikki himoya: katak **60 belgidan uzun bo'lmasin** (izoh emas,
+yorliq) va sarlavha qatorida **kamida ikki to'ldirilgan katak** bo'lsin
+(title qatorida bitta bo'ladi).
+
+**Ism moslashtirish sinovdan o'tdi** (16/16): tartib almashgan
+(`Familiya Ism` <-> `Ism Familiya`), apostrof boshqa belgi
+(`Yo'ldosheva` <-> `Yo‘ldosheva`), Moodle'da otasining ismi qo'shimcha
+(`qisman` belgisi bilan).

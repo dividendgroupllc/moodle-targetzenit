@@ -28,6 +28,19 @@ class slot_rebuild_now extends \core\task\adhoc_task {
 
         \core_php_time_limit::raise(600);
 
+        // Jadval kuchga kirgan sana O'ZGARGAN bo'lsa — o'sha sanadan
+        // bugungacha bo'lgan muzlatilgan slotlarni ochamiz; `build()` ularni
+        // yangi jadval bo'yicha qayta quradi va oxirida yana muzlatadi.
+        // Sabab va xavfsizlik shartlari: `slot::muzdan_chiqar()` izohida.
+        $sanadan = trim((string) ($data->effectivefrom ?? ''));
+        $oxirgi = (string) get_config('local_targetzenit', 'slot_effectivefrom');
+        if ($sanadan !== '' && $sanadan !== $oxirgi) {
+            $ochildi = \local_targetzenit\slot::muzdan_chiqar($year, $sanadan);
+            set_config('slot_effectivefrom', $sanadan, 'local_targetzenit');
+            mtrace("local_targetzenit: jadval {$sanadan} dan kuchga kirdi — "
+                . "{$ochildi} slot muzdan chiqarildi");
+        }
+
         $s = \local_targetzenit\staff::rebuild($year);
         mtrace("local_targetzenit: o'qituvchilar yangilandi — {$s['jami']} ta");
 

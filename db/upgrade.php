@@ -947,6 +947,50 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111030, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111110) {
+
+        // ===================== AUDIO: HAQIQIY OVOZ UZUNLIGI
+        //
+        // 2026-11-11 da ma'lum bo'ldi: yozuv oynasi fonga o'tganda Chrome uni
+        // muzlatadi, MediaRecorder bo'lak bermay qo'yadi, lekin brauzer soati
+        // yuraveradi. Natijada 3 daqiqalik ovoz bazaga "33 daqiqa" bo'lib
+        // tushdi va AI jim joylarga dars matnini O'YLAB TOPDI.
+        //
+        // `audiblesec` — faylda HAQIQATAN bor ovoz (dekodlangan PCM hajmidan
+        // yoki bo'laklar sonidan). `wallsec` — tugma bosilgan turgan vaqt.
+        // Ikkisi keskin farq qilsa yozuv kesilgan: tahlilga berilmaydi.
+        $table = new xmldb_table('local_targetzenit_audio');
+
+        $field = new xmldb_field('audiblesec', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('wallsec', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111110, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026111120) {
+
+        // ===================== AUDIO QORA QUTISI
+        //
+        // Yozuv nega jim qolganini KEYIN aniqlash uchun brauzer hodisalarini
+        // saqlaymiz: oyna yashirilgani, internet uzilgani, mikrofon o'chgani,
+        // qorovul yozuvni tiklagani. 2026-11-11 dagi tekshiruvda bu jurnal
+        // bo'lmagani uchun sababni nginx jurnali va fayl ichidagi vaqt
+        // belgilaridan tiklashga to'g'ri keldi.
+        $table = new xmldb_table('local_targetzenit_audio');
+        $field = new xmldb_field('diag', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111120, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

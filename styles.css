@@ -1146,3 +1146,26 @@
 /* O'chirish tugmasi — to'plam oxirida, ko'zga tashlanmaydigan joyda.
    Faqat sayt ma'muriga chiziladi, ya'ni kundalik ishda ko'rinmaydi. */
 .tz-sh-del { margin-top: 8px; }
+
+/* --- Excel'dan ball yuklash (exam_import) */
+.tz-bh-imp { margin: 14px 0; padding: 11px 14px; border-radius: 10px;
+    background: var(--tz-bg); border: 1px dashed var(--tz-line); }
+.tz-bh-improw { display: flex; gap: 9px; align-items: center;
+    flex-wrap: wrap; margin: 7px 0 5px; }
+
+/* Hisobot: xato bo'lsa sariq — topilmagan qatorni ko'rmasdan «Saqlash»
+   bosib qo'yish eng qimmat xato bo'lardi. */
+.tz-bh-imprep { margin: 14px 0; padding: 12px 14px; border-radius: 10px;
+    background: var(--tz-brand-soft); border: 1px solid var(--tz-brand);
+    border-left-width: 4px; }
+.tz-bh-imprep-warn { background: var(--tz-warning-bg);
+    border-color: var(--tz-warning); }
+.tz-bh-impliststr { max-height: 320px; overflow: auto; margin-top: 9px;
+    background: var(--tz-card); border-radius: 8px; }
+.tz-bh-impbad td { background: var(--tz-critical-bg); }
+.tz-bh-setmax { margin-top: 9px; padding: 8px 11px; border-radius: 8px;
+    background: var(--tz-card); border: 1px solid var(--tz-line); }
+
+/* Fayldan kelgan, LEKIN HALI SAQLANMAGAN ball — ko'zga tashlanadi */
+.tz-bh-imported { border-color: var(--tz-brand) !important;
+    background: var(--tz-brand-soft) !important; font-weight: 700; }
