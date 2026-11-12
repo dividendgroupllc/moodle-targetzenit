@@ -38,10 +38,17 @@ class analyse_audio extends \core\task\scheduled_task {
 
         $ok = 0;
         $xato = 0;
+        $otkazildi = 0;
         foreach ($navbat as $audio) {
             mtrace("  dars {$audio->lessonid} tahlil qilinmoqda...");
             if (\local_targetzenit\ai::analyse($audio)) {
                 $ok++;
+            } else if (\local_targetzenit\ai::$otkazildi) {
+                // XATO EMAS: shu darsni boshqa jarayon (`analyse_one`)
+                // tahlil qilmoqda. Avval ikkisi birga ishlab, bir-birining
+                // vaqtinchalik fayllarini o'chirardi va tahlil yiqilardi.
+                $otkazildi++;
+                mtrace('    o\'tkazib yuborildi — boshqa jarayon tahlil qilmoqda');
             } else {
                 $xato++;
                 // Sabab bazaga yozilgan — qayta urinish keyingi yurishda
@@ -49,6 +56,7 @@ class analyse_audio extends \core\task\scheduled_task {
                 mtrace('    xato: ' . ($yangi->aierror ?? 'noma\'lum'));
             }
         }
-        mtrace("local_targetzenit: tahlil tugadi — {$ok} muvaffaqiyatli, {$xato} xato");
+        mtrace("local_targetzenit: tahlil tugadi — {$ok} muvaffaqiyatli, "
+            . "{$xato} xato" . ($otkazildi ? ", {$otkazildi} o'tkazib yuborildi" : ''));
     }
 }

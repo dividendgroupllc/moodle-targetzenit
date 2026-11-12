@@ -816,6 +816,13 @@ class ai {
     /** Ishlatilgan model (so'rovdan keyin to'ldiriladi). */
     protected static $ishlatilgan = '';
 
+    /**
+     * Oxirgi `analyse()` chaqiruvi QULF band bo'lgani uchun o'tkazib
+     * yuborildimi. Vazifa buni xato deb sanamasligi kerak — dars boshqa
+     * jarayon tomonidan tahlil qilinmoqda.
+     */
+    public static $otkazildi = false;
+
     protected static function models(): array {
         $asosiy = trim((string) get_config('local_targetzenit', 'geminimodel')) ?: 'gemini-3.8-flash';
         $zaxira = trim((string) get_config('local_targetzenit', 'geminifallback'));
@@ -913,6 +920,44 @@ class ai {
     public static function analyse(\stdClass $audio): bool {
         global $DB;
 
+        self::$otkazildi = false;
+
+        // ============ QULF: bitta darsni IKKI jarayon tahlil qilmasin
+        //
+        // 2026-11-12 da prodda topilgan ildiz sabab: `analyse_one` (yozuv
+        // tugashi bilan darhol) va `analyse_audio` (har 15 daqiqada) BIR XIL
+        // darsni bir vaqtda tahlil qilardi — chunki tahlil 2-6 daqiqa davom
+        // etadi va o'sha paytda `analysis` hali NULL, ya'ni cron uni ham
+        // "navbatda" deb oladi.
+        //
+        // Ikkisi BITTA vaqtinchalik papkani ishlatardi; birinchi tugagani
+        // `finally` blokida papkani tozalab, ikkinchisining segment fayllarini
+        // o'chirib yuborardi. Natijada `file_get_contents()` false qaytarib,
+        // modelga BO'SH audio ketardi:
+        //   "Gemini HTTP 400 ... hajm=0.0MB: invalid argument"
+        // va BUTUN darsning tahlili yiqilardi. Jurnalda isbot: har bir 400
+        // aynan ustma-ust tushgan juftlikda bo'lgan.
+        $qulfzavod = \core\lock\lock_config::get_lock_factory('local_targetzenit_ai');
+        $qulf = $qulfzavod->get_lock('lesson_' . (int) $audio->lessonid, 0);
+        if (!$qulf) {
+            self::$otkazildi = true;
+            debugging('local_targetzenit: dars ' . $audio->lessonid
+                . ' tahlili o\'tkazib yuborildi — boshqa jarayon ishlayapti',
+                DEBUG_DEVELOPER);
+            return false;
+        }
+
+        try {
+            return self::analyse_locked($audio);
+        } finally {
+            $qulf->release();
+        }
+    }
+
+    /** Qulf ostidagi haqiqiy tahlil (`analyse()` dan chaqiriladi). */
+    protected static function analyse_locked(\stdClass $audio): bool {
+        global $DB;
+
         $dars = $DB->get_record('local_targetzenit_lesson', ['id' => $audio->lessonid]);
         if (!$dars) {
             return self::fail($audio, 'Dars topilmadi');
@@ -934,7 +979,10 @@ class ai {
         $course = $DB->get_record('course', ['id' => $dars->courseid], 'id, fullname, idnumber');
 
         // Faylni vaqtinchalik papkaga chiqaramiz (ffmpeg fayl bilan ishlaydi)
-        $ish = make_temp_directory('local_targetzenit/ai/' . $audio->lessonid);
+        // Papka HAR YURISH uchun ALOHIDA: qulf bo'lsa ham ikki jarayon bir
+        // papkani bo'lishmasligi KAFOLATLANADI (ikki qatlamli himoya).
+        $ish = make_temp_directory('local_targetzenit/ai/' . $audio->lessonid
+            . '-' . getmypid() . '-' . substr(md5((string) microtime(true)), 0, 6));
         $asl = $ish . '/asl.' . pathinfo($file->get_filename(), PATHINFO_EXTENSION);
         $file->copy_content_to($asl);
 

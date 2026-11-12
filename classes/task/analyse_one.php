@@ -39,8 +39,15 @@ class analyse_one extends \core\task\adhoc_task {
         \core_php_time_limit::raise(900);
         mtrace("local_targetzenit: dars {$lessonid} tahlil qilinmoqda...");
         $ok = \local_targetzenit\ai::analyse($audio);
-        mtrace($ok ? '  tayyor' : '  xato: ' .
-            (\local_targetzenit\audio::get($lessonid)->aierror ?? 'noma\'lum'));
+        if ($ok) {
+            mtrace('  tayyor');
+        } else if (\local_targetzenit\ai::$otkazildi) {
+            // Boshqa jarayon (cron) shu darsni tahlil qilmoqda — xato emas.
+            mtrace('  o\'tkazib yuborildi — boshqa jarayon tahlil qilmoqda');
+        } else {
+            mtrace('  xato: '
+                . (\local_targetzenit\audio::get($lessonid)->aierror ?? 'noma\'lum'));
+        }
     }
 
     /** Yozuv tugagach navbatga qo'yish. */

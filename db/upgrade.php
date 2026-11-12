@@ -991,7 +991,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111120, 'local', 'targetzenit');
     }
 
-    if ($oldversion < 2026111210) {
+    if ($oldversion < 2026111220) {
 
         // ===================== USTUNLARNI YARASHTIRISH (zarur tuzatish)
         //
@@ -1032,7 +1032,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
             }
         }
 
-        upgrade_plugin_savepoint(true, 2026111210, 'local', 'targetzenit');
+        upgrade_plugin_savepoint(true, 2026111220, 'local', 'targetzenit');
     }
 
     return true;
