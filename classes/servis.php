@@ -30,6 +30,28 @@ class servis {
 	const TAYANCH = 'local_targetzenit_push_timetable';
 
 	/**
+	 * Frappe'ga kerak MOODLE YADRO funksiyalari.
+	 *
+	 * Plagin funksiyalari `db/services.php` dan o'qiladi, yadro funksiyalari
+	 * esa (kurs yaratish/yangilash, yozilish) shu paytgacha admin UI'dan
+	 * QO'LDA biriktirilgan — va yangi kerak bo'lgani har safar esdan chiqib,
+	 * Frappe `accessexception` olardi. Shuning uchun ro'yxat kodda turadi.
+	 *
+	 * DIQQAT: bu ro'yxat Frappe tokeniga beriladigan ruxsat — faqat
+	 * integratsiyaga HAQIQATAN kerak bo'lganini yozamiz.
+	 *
+	 * - core_course_delete_courses — kursni Frappe'dan o'chirish
+	 *   (`Moodle Course Link` yozuvi o'chirilsa yoki «Amal = O'chirish»).
+	 * - core_enrol_get_enrolled_users — tekshiruv uchun: Moodle'dagi HAQIQIY
+	 *   yozilishni o'qib, Frappe jadvali bilan solishtirish (qo'lda qilingan
+	 *   o'zgarishlarni topish). Faqat o'qiydi.
+	 */
+	const YADRO = [
+		'core_course_delete_courses',
+		'core_enrol_get_enrolled_users',
+	];
+
+	/**
 	 * Plagin funksiyalarini Frappe servisiga biriktiradi.
 	 *
 	 * @param bool $chiqar CLI uchun: nima bo'layotganini bosib chiqarish
@@ -126,6 +148,9 @@ class servis {
 			if (!empty($tavsif['ajax'])) {
 				continue;   // brauzerdan chaqiriladigan — Frappe uchun emas
 			}
+			$out[] = $nom;
+		}
+		foreach (self::YADRO as $nom) {
 			$out[] = $nom;
 		}
 		return $out;

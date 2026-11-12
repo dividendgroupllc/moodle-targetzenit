@@ -1035,6 +1035,30 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111240, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111150) {
+
+        // ============ YADRO FUNKSIYALARINI FRAPPE SERVISIGA BIRIKTIRISH
+        //
+        // `servis::YADRO` ro'yxatiga `core_course_delete_courses` va
+        // `core_enrol_get_enrolled_users` qo'shildi (Frappe'dan kursni
+        // o'chirish va yozilishni tekshirish uchun). Biriktirish
+        // `servis::sinxronla()` da bo'ladi, lekin u yuqorida FAQAT
+        // `$oldversion < 2026110860` blokida chaqirilgan — ya'ni allaqachon
+        // yangilangan saytda qayta ishlamaydi. Shuning uchun ro'yxat
+        // o'zgarganda shunday blok qo'shish kerak.
+        //
+        // TRY/CATCH SHART: web-servis biriktirish — qulaylik, u butun
+        // migratsiyani yiqitmasligi kerak (2026-11-08 tajribasi).
+        try {
+            \local_targetzenit\servis::sinxronla();
+        } catch (\Throwable $e) {
+            mtrace('  OGOHLANTIRISH: web-servis sinxroni o\'tmadi — '
+                . $e->getMessage());
+        }
+
+        upgrade_plugin_savepoint(true, 2026111150, 'local', 'targetzenit');
+    }
+
     return true;
 }
 
