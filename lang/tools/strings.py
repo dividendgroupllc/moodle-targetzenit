@@ -143,12 +143,27 @@ S = {
         "Дефект записи: {$a}",
     ),
     "rc_resume": (
-        "An unfinished recording was found for this lesson ({$a} chunks saved). "
-        "Pressing start CONTINUES it \u2014 nothing already recorded is lost.",
-        "Bu darsda tugallanmagan yozuv topildi ({$a} bo'lak saqlangan). "
-        "\u00abBoshlash\u00bb bosilsa yozuv DAVOM etadi \u2014 avval yozilgani yo'qolmaydi.",
-        "\u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0443\u0440\u043e\u043a\u0430 \u043d\u0430\u0439\u0434\u0435\u043d\u0430 \u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u0430\u044f \u0437\u0430\u043f\u0438\u0441\u044c ({$a} \u0444\u0440\u0430\u0433\u043c.). "
-        "\u00ab\u041d\u0430\u0447\u0430\u0442\u044c\u00bb \u041f\u0420\u041e\u0414\u041e\u041b\u0416\u0418\u0422 \u0435\u0451 \u2014 \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u043d\u043e\u0435 \u043d\u0435 \u043f\u0440\u043e\u043f\u0430\u0434\u0451\u0442.",
+        "An unfinished recording was found for this lesson: {$a->vaqt} "
+        "({$a->soni} chunks). Choose below \u2014 continue it, or start over. "
+        "If you start over, that fragment is set aside, not merged into the "
+        "new recording.",
+        "Bu darsda tugallanmagan yozuv topildi: {$a->vaqt} ({$a->soni} bo'lak). "
+        "Pastda tanlang \u2014 davom ettirasizmi yoki boshidan yozasizmi. "
+        "Boshidan boshlasangiz, o'sha parcha yangi yozuvga QO'SHILMAYDI, "
+        "chetga olinadi.",
+        "\u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0443\u0440\u043e\u043a\u0430 \u043d\u0430\u0439\u0434\u0435\u043d\u0430 \u043d\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u0430\u044f \u0437\u0430\u043f\u0438\u0441\u044c: {$a->vaqt} ({$a->soni} \u0444\u0440\u0430\u0433\u043c.). "
+        "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043d\u0438\u0436\u0435 \u2014 \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c \u0438\u043b\u0438 \u0437\u0430\u043f\u0438\u0441\u0430\u0442\u044c \u0441 \u043d\u0430\u0447\u0430\u043b\u0430. "
+        "\u041f\u0440\u0438 \u0437\u0430\u043f\u0438\u0441\u0438 \u0441 \u043d\u0430\u0447\u0430\u043b\u0430 \u0442\u043e\u0442 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442 \u041d\u0415 \u043f\u0440\u0438\u043a\u043b\u0435\u0438\u0432\u0430\u0435\u0442\u0441\u044f, \u0430 \u043e\u0442\u043a\u043b\u0430\u0434\u044b\u0432\u0430\u0435\u0442\u0441\u044f \u0432 \u0441\u0442\u043e\u0440\u043e\u043d\u0443.",
+    ),
+    "rc_continue": (
+        "Continue the recording (+{$a} already recorded)",
+        "Yozuvni davom ettirish ({$a} allaqachon yozilgan)",
+        "\u041f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c \u0437\u0430\u043f\u0438\u0441\u044c ({$a} \u0443\u0436\u0435 \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u043e)",
+    ),
+    "rc_fresh": (
+        "Record from the beginning (set the fragment aside)",
+        "Boshidan yozish (parcha chetga olinadi)",
+        "\u0417\u0430\u043f\u0438\u0441\u0430\u0442\u044c \u0441 \u043d\u0430\u0447\u0430\u043b\u0430 (\u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442 \u0432 \u0441\u0442\u043e\u0440\u043e\u043d\u0443)",
     ),
     # ---------------------------------------- doskadagi material (AI ko'rishi uchun)
     "mt_title": (
@@ -866,10 +881,13 @@ S = {
         "Sizning sinfingiz aniqlanmadi — hali birorta kursga yozilmagansiz.",
         "Ваш класс не определён — вы ещё не зачислены ни на один курс.",
     ),
+    # Panjarada qidiruv KATAK matni bo'yicha ishlaydi (fan + o'qituvchi +
+    # xona). Sinf endi ustun sarlavhasi, katak ichida emas — shuning uchun
+    # matn "sinf" ni va'da qilmaydi.
     "tt_search": (
-        "Search by class or teacher...",
-        "Sinf yoki o'qituvchi bo'yicha qidirish...",
-        "Поиск по классу или учителю...",
+        "Search by teacher or subject...",
+        "O'qituvchi yoki fan bo'yicha qidirish...",
+        "Поиск по учителю или предмету...",
     ),
     "tt_classcount": ("{$a} classes", "{$a} sinf", "классов: {$a}"),
     "tt_prevweek": ("\u2190 Previous week", "\u2190 oldingi hafta", "\u2190 Предыдущая неделя"),

@@ -36,7 +36,10 @@ try {
     switch ($action) {
         case 'start':
             $mime = optional_param('mime', 'audio/webm', PARAM_RAW_TRIMMED);
-            $rec = audio::start($lessonid, $mime, (int) $USER->id);
+            // `rejim`: davom | yangi — tugallanmagan yozuv topilganda nima
+            // qilish kerakligini O'QITUVCHI tanlaydi (dars 201 saboqi).
+            $rejim = optional_param('rejim', 'davom', PARAM_ALPHA);
+            $rec = audio::start($lessonid, $mime, (int) $USER->id, $rejim);
             // `sid` — shu sessiyaning kaliti; `avlod` — brauzer qaysi raqamdan
             // yozishni boshlashi kerak (tugallanmagan yozuv davom etsa > 1).
             echo json_encode([

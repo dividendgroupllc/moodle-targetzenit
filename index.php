@@ -356,65 +356,144 @@ if ($view === 'today') {
         get_string('tt_classcount', 'local_targetzenit', '__N__'),
         JSON_UNESCAPED_UNICODE);
 
+    // Qidiruv panjarada QATORNI YASHIRMAYDI: qator — dars raqami, uni
+    // yashirsak jadval shakli buziladi. O'qituvchi/fan izlanganda mos
+    // kelmagan darslar xiralashadi, panjara joyida qoladi.
     $PAGE->requires->js_amd_inline("
         require([], function() {
             var inp = document.getElementById('tz-all-filter');
             if (!inp) { return; }
+            var hisob = document.getElementById('tz-all-hisob');
+            var asl = hisob ? hisob.textContent : '';
             inp.addEventListener('input', function() {
                 var q = inp.value.trim().toLowerCase();
-                var qatorlar = document.querySelectorAll('.tz-all tbody tr');
-                var korindi = 0;
-                Array.prototype.forEach.call(qatorlar, function(tr) {
-                    var mos = !q || tr.textContent.toLowerCase().indexOf(q) !== -1;
-                    tr.classList.toggle('tz-row-hidden', !mos);
-                    if (mos) { korindi++; }
+                var darslar = document.querySelectorAll('.tz-grid .tz-lesson');
+                var topildi = 0;
+                Array.prototype.forEach.call(darslar, function(el) {
+                    var mos = !q || el.textContent.toLowerCase().indexOf(q) !== -1;
+                    el.classList.toggle('tz-dim', !mos);
+                    if (q && mos) { topildi++; }
                 });
-                var hisob = document.getElementById('tz-all-hisob');
                 if (hisob) {
-                    hisob.textContent = {$hisobmatn}.replace('__N__', korindi);
+                    hisob.textContent = q
+                        ? {$hisobmatn}.replace('__N__', topildi)
+                        : asl;
                 }
             });
         });
     ");
 
-    if (!$rows) {
+    // PANJARA: ustunlar = SINFLAR, qatorlar = darslar.
+    //
+    // NEGA SHUNDAY: avval qatorlar GURUH edi, ya'ni ro'yxatda «ENGLISH
+    // 8A+8B+9A+9B (qo'shma)» kabi 40 ta blok nomi turardi va bir sinfning
+    // kuni qaysi qatorlarda ekanini topib bo'lmasdi. Zavuch esa kunni SINF
+    // kesimida o'qiydi. Shuning uchun Frappe'dagi («Dars jadvali» paneli)
+    // bilan bir xil shaklga keltirildi: bitta kun, 20 sinf ustun, 10 dars
+    // qator. Blok darsi o'ziga tegishli HAR BIR sinf ustunida ko'rinadi —
+    // buni `memberclasses` beradi.
+    $sinflar = timetable::sinflar($year);
+    $panjara = timetable::panjara($year, $dayno);
+    $bloklar = timetable::blok_groupkeys($year);
+
+    if (!$sinflar || !$panjara) {
         echo $OUTPUT->notification(get_string('timetable_empty', 'local_targetzenit'), 'info');
     } else {
-        $maxles = max(array_map(fn($r) => (int) $r->lessonno, $rows));
-        $perguruh = [];
-        foreach ($rows as $r) {
-            $perguruh[$r->groupname][(int) $r->lessonno] = $r;
+        $maxles = 0;
+        foreach (array_keys($panjara) as $k) {
+            $maxles = max($maxles, (int) substr($k, strrpos($k, '|') + 1));
         }
-        ksort($perguruh);
 
-        $t = new html_table();
-        $t->head = array_merge([get_string('group', 'local_targetzenit')],
-            array_map(fn($i) => (string) $i, range(1, $maxles)));
-        $t->attributes['class'] = 'generaltable tz-all';
-        foreach ($perguruh as $gnom => $darslar) {
-            $qator = [html_writer::tag('strong', format_string($gnom))];
-            for ($i = 1; $i <= $maxles; $i++) {
-                if (isset($darslar[$i])) {
-                    $r = $darslar[$i];
-                    $toliq = format_string($r->subjectname) . ' — ' . format_string($r->teachername) .
-                        ($r->room ? ' · ' . s($r->room) : '');
-                    $qator[] = html_writer::div(
-                        html_writer::div(format_string($r->subjectname), 'tz-subj') .
-                        html_writer::div(format_string($r->teachername), 'tz-meta') .
-                        ($r->room ? html_writer::div(s($r->room), 'tz-meta') : ''),
-                        '', ['title' => $toliq]);
-                } else {
-                    $qator[] = '';
+        // Fan nomidan barqaror rang: bir fan kun bo'yi bir xil rangda
+        // ko'rinadi, ya'ni ko'z panjarani rang bo'yicha o'qiydi.
+        $hue = function (string $fan): int {
+            $h = 0;
+            foreach (preg_split('//u', $fan, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+                $h = ($h * 31 + mb_ord($ch)) % 360;
+            }
+            return $h;
+        };
+
+        $bosh = html_writer::tag('th', '№', ['class' => 'tz-no']);
+        foreach ($sinflar as $s) {
+            $qisqa = preg_replace('/\s*\((full|hybrid)\)\s*/i', '', $s);
+            $tur = stripos($s, 'hybrid') !== false ? 'hybrid' : 'full';
+            $bosh .= html_writer::tag('th',
+                s($qisqa) . html_writer::tag('span', $tur));
+        }
+
+        $tana = '';
+        for ($i = 1; $i <= $maxles; $i++) {
+            // Vaqt: shu darsdagi birinchi topilgan yozuvdan (qo'ng'iroq
+            // jadvali sinfga qarab farq qilsa ham, ustun bitta)
+            $vaqt = '';
+            foreach ($sinflar as $s) {
+                foreach ($panjara[$s . '|' . $i] ?? [] as $r) {
+                    if ($r->starttime) {
+                        $vaqt = $r->starttime . ($r->endtime ? '–' . $r->endtime : '');
+                        break 2;
+                    }
                 }
             }
-            $t->data[] = $qator;
+            $qator = html_writer::tag('th',
+                html_writer::tag('b', (string) $i) . html_writer::tag('span', s($vaqt)),
+                ['class' => 'tz-no']);
+
+            foreach ($sinflar as $s) {
+                $list = $panjara[$s . '|' . $i] ?? [];
+                if (!$list) {
+                    $qator .= html_writer::tag('td', '', ['class' => 'tz-bosh']);
+                    continue;
+                }
+                $ichi = '';
+                foreach ($list as $r) {
+                    $h = $hue((string) $r->subjectkey);
+                    // Blok darsida DARAJA so'zi fan yoniga qo'shiladi
+                    // («ENGLISH High»), ostida esa o'qituvchi. Bitta katakda
+                    // bir fan bir necha daraja bilan turishi mumkin va qaysi
+                    // qator kimga tegishli ekani faqat shundan bilinadi.
+                    //
+                    // FAQAT daraja so'zi olinadi, to'liq guruh nomi emas:
+                    // «ENGLISH High 8-9» -> «High». Sinf diapazoni ustun
+                    // sarlavhasidan allaqachon ma'lum, uni takrorlash katakni
+                    // to'ldirib yuboradi. To'liq nom `title` da qoladi.
+                    // Frappe'dagi panel ham aynan shunday ko'rsatadi.
+                    $tag = '';
+                    if (isset($bloklar[$r->groupkey])) {
+                        $d = local_targetzenit_daraja_sozi(
+                            (string) $r->groupname, (string) $r->subjectkey);
+                        if ($d !== '') {
+                            $tag = ' ' . html_writer::tag('span', s($d), ['class' => 'tz-bk']);
+                        }
+                    }
+                    $ichi .= html_writer::div(
+                        html_writer::div(format_string($r->subjectname) . $tag, 'tz-g-fan') .
+                        html_writer::div(format_string($r->teachername ?: '—'), 'tz-g-oqit') .
+                        ($r->room ? html_writer::div(s($r->room), 'tz-g-oqit') : ''),
+                        'tz-lesson', [
+                            'style' => '--h:' . $h,
+                            'title' => format_string($r->subjectname) . ' · '
+                                . format_string($r->groupname) . ' · '
+                                . format_string($r->teachername),
+                        ]);
+                }
+                $qator .= html_writer::tag('td', $ichi,
+                    ['class' => count($list) > 1 ? 'tz-multi' : '']);
+            }
+            $tana .= html_writer::tag('tr', $qator);
         }
+
         echo html_writer::div(
             html_writer::tag('span',
-                get_string('tt_classcount', 'local_targetzenit', count($perguruh)),
+                get_string('tt_classcount', 'local_targetzenit', count($sinflar)),
                 ['id' => 'tz-all-hisob']),
             'text-muted small mb-1');
-        echo html_writer::div(html_writer::table($t), 'tz-all-scroll');
+        echo html_writer::div(
+            html_writer::tag('table',
+                html_writer::tag('thead', html_writer::tag('tr', $bosh)) .
+                html_writer::tag('tbody', $tana),
+                ['class' => 'tz-grid']),
+            'tz-all-scroll tz-grid-wrap');
     }
 
 } else {

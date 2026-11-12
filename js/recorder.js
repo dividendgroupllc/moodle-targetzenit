@@ -477,8 +477,10 @@
             .catch(function () { /* ruxsat berilmadi — standart mikrofon ishlatiladi */ });
     };
 
-    TzRecorder.prototype.start = function () {
+    TzRecorder.prototype.start = function (rejim) {
         var self = this;
+        // 'davom' — tugallanmagan yozuv ustiga qo'shish; 'yangi' — boshidan.
+        self.rejim = rejim === 'yangi' ? 'yangi' : 'davom';
 
         // IKKI MARTA BOSISH HIMOYASI: tugma yashirilishi `getUserMedia` dan
         // keyin bo'ladi, ya'ni shu oraliqda ikkinchi bosish ikki
@@ -513,7 +515,9 @@
 
             self.sid = '';   // yangi sessiya so'rayapmiz
             return self.qoldiqniYubor().then(function () {
-                return fetch(self.url('start', '&mime=' + encodeURIComponent(mime.split(';')[0])), {
+                return fetch(self.url('start', '&mime='
+                    + encodeURIComponent(mime.split(';')[0])
+                    + '&rejim=' + self.rejim), {
                     method: 'POST'
                 });
             }).then(function (r) { return r.json(); }).then(function (j) {
@@ -599,6 +603,10 @@
                 self.rec.start(SLICE_MS);
 
                 qs('tz-audio-start').classList.add('hidden');
+                var by = qs('tz-audio-yangi');
+                if (by) { by.classList.add('hidden'); }
+                var bq = qs('tz-audio-qoldiq');
+                if (bq) { bq.classList.add('hidden'); }
                 qs('tz-audio-stop').classList.remove('hidden');
                 qs('tz-audio-stop').disabled = false;
                 var bp = qs('tz-audio-pause');
@@ -1020,7 +1028,15 @@
         var r = new TzRecorder(cfg);
         r.qurilmalar();
         var b1 = qs('tz-audio-start'), b2 = qs('tz-audio-stop'), b3 = qs('tz-audio-pause');
-        if (b1) { b1.addEventListener('click', function () { r.start(); }); }
+        if (b1) {
+            b1.addEventListener('click', function () {
+                r.start(b1.getAttribute('data-rejim') || 'davom');
+            });
+        }
+        var b4 = qs('tz-audio-yangi');
+        if (b4) {
+            b4.addEventListener('click', function () { r.start('yangi'); });
+        }
         if (b2) { b2.addEventListener('click', function () { r.stop(); }); }
         if (b3) {
             b3.addEventListener('click', function () {

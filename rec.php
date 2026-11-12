@@ -72,8 +72,37 @@ echo html_writer::tag('select', '',
     ['id' => 'tz-audio-device', 'class' => 'form-control form-control-sm']);
 echo html_writer::end_div();
 
-echo html_writer::tag('button', '🎙 Yozishni boshlash',
-    ['type' => 'button', 'id' => 'tz-audio-start', 'class' => 'btn btn-danger btn-lg btn-block']);
+// ============ TUGALLANMAGAN YOZUV BO'LSA — TANLOV BERAMIZ
+//
+// NEGA (dars 201, 2026-11-12): tizim "sahifam qayta yuklandi, davom et" va
+// "noto'g'ri boshladim, boshidan yozaman" holatlarini ajrata olmaydi —
+// ikkisida ham tugallanmagan bo'laklar qoladi. Avval kod HAR DOIM davom
+// ettirardi, natijada 33 soniyalik noto'g'ri boshlangan parcha 20 daqiqalik
+// darsning oldiga ulanib, faylda "ikki xil ovoz" paydo bo'lgan.
+// Qarorni O'QITUVCHI qabul qiladi.
+$qoldiq = ($yozuv && $yozuv->status === 'recording')
+    ? count(\local_targetzenit\audio::parts($lessonid)) : 0;
+$qoldiq_sek = $qoldiq * \local_targetzenit\audio::SLICE_SEC;
+
+if ($qoldiq) {
+    echo html_writer::tag('div',
+        get_string('rc_resume', 'local_targetzenit',
+            (object) ['soni' => $qoldiq, 'vaqt' => format_time($qoldiq_sek)]),
+        ['class' => 'alert alert-warning small mb-2']);
+
+    echo html_writer::tag('button',
+        '▶ ' . get_string('rc_continue', 'local_targetzenit', format_time($qoldiq_sek)),
+        ['type' => 'button', 'id' => 'tz-audio-start', 'data-rejim' => 'davom',
+         'class' => 'btn btn-danger btn-lg btn-block']);
+    echo html_writer::tag('button',
+        '🔄 ' . get_string('rc_fresh', 'local_targetzenit'),
+        ['type' => 'button', 'id' => 'tz-audio-yangi',
+         'class' => 'btn btn-outline-danger btn-block mt-2']);
+} else {
+    echo html_writer::tag('button', '🎙 Yozishni boshlash',
+        ['type' => 'button', 'id' => 'tz-audio-start', 'data-rejim' => 'davom',
+         'class' => 'btn btn-danger btn-lg btn-block']);
+}
 echo html_writer::tag('button', '⏸ Pauza',
     ['type' => 'button', 'id' => 'tz-audio-pause', 'class' => 'btn btn-warning btn-block hidden mt-2']);
 echo html_writer::tag('button', get_string('rc_stop', 'local_targetzenit'),
@@ -84,19 +113,6 @@ echo html_writer::tag('div', '', ['id' => 'tz-audio-holat', 'class' => 'tz-audio
 echo html_writer::tag('div',
     get_string('rc_hint', 'local_targetzenit', $kun),
     ['class' => 'text-muted small']);
-
-// TUGALLANMAGAN YOZUV: sahifa qayta yuklangan yoki brauzer yiqilgan bo'lsa
-// bo'laklar serverda qolgan. "Boshlash" ularni O'CHIRMAYDI — yozuv keyingi
-// avlod sifatida davom etadi. O'qituvchi buni bosishdan OLDIN bilishi kerak,
-// aks holda "hammasi yo'qoldimi?" deb darsni boshqatdan yozishga urinardi.
-if ($yozuv && $yozuv->status === 'recording') {
-    $qolgan = count(\local_targetzenit\audio::parts($lessonid));
-    if ($qolgan) {
-        echo html_writer::tag('div',
-            get_string('rc_resume', 'local_targetzenit', $qolgan),
-            ['class' => 'alert alert-warning mt-3 small']);
-    }
-}
 
 if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {
     echo html_writer::tag('div',

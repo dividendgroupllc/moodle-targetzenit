@@ -58,10 +58,18 @@ class audio {
     const SLICE_SEC = 15;
 
     /**
+     * Maktab vaqt mintaqasi. Fayl nomlari va diagnostika SHU vaqtda yoziladi:
+     * server UTC da ishlaydi, sayt sozlamasi esa o'zgarib ketishi mumkin
+     * (2026-11-12 ga qadar u Europe/London edi va hamma soat 5 soat orqada
+     * ko'rinardi). O'zbekistonda yozgi vaqt yo'q, ya'ni siljish bo'lmaydi.
+     */
+    const MAKTAB_TZ = 'Asia/Tashkent';
+
+    /**
      * Tashlab ketilgan bo'laklarni YANGI yozuvga qo'shib yuborish chegarasi.
      * Shundan oshgan qoldiq boshqa darsga tegishli deb hisoblanadi.
      */
-    const RESUME_WINDOW = 10800;    // 3 soat
+    const RESUME_WINDOW = 3600;     // 1 soat (bitta dars davomidan uzun emas)
 
     /**
      * Fayl HALI BOR deb hisoblanadigan holatlar.
@@ -223,6 +231,29 @@ class audio {
         return $natija;
     }
 
+    /**
+     * Tugallanmagan bo'laklarni CHETGA OLISH (o'chirmasdan).
+     *
+     * O'qituvchi "boshidan yozish" ni tanlaganda eski bo'laklar yo'qolmasin:
+     * ular `tashlandi-<vaqt>/` papkasiga ko'chiriladi. Bu papkani Moodle'ning
+     * vaqtinchalik fayl tozalagichi o'zi olib tashlaydi, lekin yaqin
+     * kunlarda qo'lda tiklash mumkin bo'lib qoladi.
+     */
+    protected static function archive_parts(int $lessonid, array $bolaklar): void {
+        $dir = self::tempdir($lessonid);
+        $arxiv = $dir . '/tashlandi-' . date('Ymd-His');
+        if (!is_dir($arxiv) && !@mkdir($arxiv, 0777, true)) {
+            // Ko'chirib bo'lmadi — eski xatti-harakat (o'chirish)
+            self::wipe($lessonid);
+            return;
+        }
+        foreach ($bolaklar as $b) {
+            @rename($b->yol, $arxiv . '/' . basename($b->yol));
+        }
+        debugging('local_targetzenit: dars ' . $lessonid . ' — ' . count($bolaklar)
+            . ' bo\'lak chetga olindi: ' . $arxiv, DEBUG_DEVELOPER);
+    }
+
     /** Papkani bo'laklardan tozalash. */
     protected static function wipe(int $lessonid): void {
         foreach (glob(self::tempdir($lessonid) . '/*') ?: [] as $f) {
@@ -243,7 +274,8 @@ class audio {
      *
      * @return \stdClass baza qatori + `_avlod`, `_davom`, `_bolaklar`
      */
-    public static function start(int $lessonid, string $mime, int $teacherid): \stdClass {
+    public static function start(int $lessonid, string $mime, int $teacherid,
+            string $rejim = 'davom'): \stdClass {
         global $DB;
 
         self::tempdir($lessonid);
@@ -257,16 +289,30 @@ class audio {
         }
         $yangi_qoldiq = $oxirgi > time() - self::RESUME_WINDOW;
 
-        $davom = $bolaklar && $yangi_qoldiq && $rec && $rec->status === 'recording';
+        // ============ DAVOM ETTIRISH YOKI BOSHIDAN? — O'QITUVCHI TANLAYDI
+        //
+        // 2026-11-12 da bilib olindi (dars 201): tizim "sahifam qayta
+        // yuklandi, davom et" va "noto'g'ri boshladim, boshidan yozaman"
+        // holatlarini AJRATA OLMAYDI — ikkisida ham tugallanmagan bo'laklar
+        // qoladi va "Boshlash" bosiladi.
+        //
+        // Avval kod HAR DOIM davom ettirardi. Natijada 33 soniyalik noto'g'ri
+        // boshlangan parcha 20 daqiqalik darsning OLDIGA ulanib qolgan va
+        // faylda "ikki xil ovoz" paydo bo'lgan.
+        //
+        // Endi tanlov `rejim` bilan keladi: `davom` yoki `yangi`.
+        $qoldiq_bor = $bolaklar && $yangi_qoldiq && $rec && $rec->status === 'recording';
+        $davom = $qoldiq_bor && $rejim !== 'yangi';
 
         if ($davom) {
             $avlod = (int) end($bolaklar)->avlod + 1;
         } else {
             if ($bolaklar) {
-                debugging('local_targetzenit: dars ' . $lessonid . ' — eski bo\'laklar tozalandi ('
-                    . count($bolaklar) . ' dona)', DEBUG_DEVELOPER);
+                // BO'LAKLAR O'CHIRILMAYDI — chetga olinadi. Agar o'qituvchi
+                // adashib "boshidan" tanlasa, yozuv tiklanadigan bo'lib
+                // qolsin (`tashlandi-<vaqt>/` papkasida).
+                self::archive_parts($lessonid, $bolaklar);
             }
-            self::wipe($lessonid);
             $avlod = 1;
             $bolaklar = [];
         }
@@ -274,11 +320,24 @@ class audio {
         $sessionid = bin2hex(random_bytes(8));
 
         if ($rec) {
+            // BOSHQA FOYDALANUVCHI qoldig'i ustiga yozilyaptimi? Bu holda
+            // faylda ikki xil ovoz bo'lishi mumkin — belgilab qo'yamiz, aks
+            // holda keyin sababini jurnaldan qidirishga to'g'ri keladi
+            // (2026-11-12 da aynan shunday bo'ldi).
+            $ogoh = null;
+            if ($davom && $rec->teacherid && (int) $rec->teacherid !== $teacherid) {
+                $ogoh = 'DIQQAT: yozuvni ikki xil foydalanuvchi boshlagan '
+                    . '(' . (int) $rec->teacherid . ' va ' . $teacherid . ') — '
+                    . 'faylda ikki xil ovoz bo\'lishi mumkin';
+                debugging('local_targetzenit: dars ' . $lessonid . ' — ' . $ogoh,
+                    DEBUG_DEVELOPER);
+            }
+
             $rec->status = 'recording';
             $rec->sessionid = $sessionid;
             $rec->mimetype = $mime;
             $rec->teacherid = $teacherid;
-            $rec->warning = null;
+            $rec->warning = $ogoh;
             $rec->timemodified = time();
             $DB->update_record('local_targetzenit_audio', $rec);
         } else {
@@ -605,7 +664,13 @@ class audio {
             $eskilar = $fs->get_area_files($context->id, self::COMPONENT, self::FILEAREA,
                 $lessonid, 'id', false);
 
-            $filename = 'dars-' . $lessonid . '-' . date('Ymd-His') . '.' . $ext;
+            // FAYL NOMI MAKTAB VAQTIDA (Asia/Tashkent) — server UTC da ishlasa
+            // ham. 2026-11-12 da sayt vaqt mintaqasi Europe/London edi va
+            // nomlardagi soat 5 soat orqada chiqardi; nom tarixda qoladi,
+            // shuning uchun uni sozlamaga bog'lamaymiz.
+            $filename = 'dars-' . $lessonid . '-'
+                . (new \DateTime('now', new \DateTimeZone(self::MAKTAB_TZ)))->format('Ymd-His')
+                . '.' . $ext;
             $fs->create_file_from_pathname([
                 'contextid' => $context->id,
                 'component' => self::COMPONENT,

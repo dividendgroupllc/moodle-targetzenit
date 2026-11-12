@@ -135,6 +135,65 @@
 .tz-filter { max-width: 280px; }
 .tz-row-hidden { display: none; }
 
+/* ---------------- Panjara: ustunlar = sinflar, qatorlar = darslar ----------
+   Frappe'dagi «Dars jadvali» paneli bilan bir xil shakl. Avval qatorlar
+   GURUH edi (40 ta blok nomi) va bir sinfning kunini o'qib bo'lmasdi.      */
+.tz-grid-wrap { --tz-cell-w: 128px; }
+.tz-grid { border-collapse: separate; border-spacing: 0; width: 100%;
+    font-size: var(--tz-font); margin: 0; }
+
+.tz-grid th { position: sticky; top: 0; z-index: 3; background: #f7f9fc; color: #131a29;
+    border-bottom: 1px solid #d3dae6; border-right: 1px solid #e3e8f0;
+    padding: 6px 5px; font-weight: 700; text-align: center; white-space: nowrap; }
+.tz-grid th span { display: block; font-size: .72em; font-weight: 400; color: #8a93a6; }
+
+/* Dars raqami ustuni — gorizontal aylantirishda joyida turadi */
+.tz-grid th.tz-no { left: 0; min-width: 62px; }
+.tz-grid thead th.tz-no { z-index: 4; }
+.tz-grid tbody th.tz-no { position: sticky; left: 0; z-index: 2; top: auto; }
+.tz-grid tbody th.tz-no b { font-size: 1.15em; }
+.tz-grid tbody th.tz-no span { font-size: .7em; color: #8a93a6; font-weight: 400; }
+
+.tz-grid td { border-bottom: 1px solid #e3e8f0; border-right: 1px solid #e3e8f0;
+    padding: 3px; vertical-align: top;
+    min-width: var(--tz-cell-w); max-width: var(--tz-cell-w); }
+/* Bo'sh katak — chiziqcha naqsh: "dars yo'q" ni "joy qoldi" dan ajratadi */
+.tz-grid td.tz-bosh { background: repeating-linear-gradient(45deg,
+    transparent, transparent 6px, #f2f5f9 6px, #f2f5f9 12px); }
+.tz-grid td.tz-multi { background: #f7f9fc; }
+
+/* Dars kartochkasi: fan rangi barqaror (hue fan nomidan hisoblanadi) */
+.tz-lesson { border-radius: 6px; padding: 3px 5px; margin-bottom: 3px;
+    background: hsl(var(--h) 62% 94%); border-left: 3px solid hsl(var(--h) 55% 48%); }
+.tz-lesson:last-child { margin-bottom: 0; }
+.tz-g-fan { font-weight: 700; line-height: 1.15; color: hsl(var(--h) 60% 28%); }
+.tz-g-oqit { font-size: .78em; line-height: 1.25; color: #566175;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Daraja so'zi — fan bilan BIR QATORDA («ENGLISH High») */
+.tz-bk { font-size: .82em; font-weight: 600; opacity: .75; }
+/* Qidiruvda mos kelmagan dars — yashirilmaydi, xiralashadi */
+.tz-lesson.tz-dim { opacity: .18; }
+
+@media (max-width: 900px) {
+    .tz-grid-wrap { --tz-cell-w: 104px; }
+}
+
+/* Qorong'i tema */
+@media (prefers-color-scheme: dark) {
+    .tz-grid th { background: #1b2434; color: #eef1f7;
+        border-bottom-color: #2e3b52; border-right-color: #243044; }
+    .tz-grid th span, .tz-grid tbody th.tz-no span { color: #6f7c92; }
+    .tz-grid tbody th.tz-no { background: #1b2434; }
+    .tz-grid td { border-bottom-color: #243044; border-right-color: #243044; }
+    .tz-grid td.tz-bosh { background: repeating-linear-gradient(45deg,
+        transparent, transparent 6px, #141c29 6px, #141c29 12px); }
+    .tz-grid td.tz-multi { background: #141c29; }
+    .tz-lesson { background: hsl(var(--h) 40% 18%); border-left-color: hsl(var(--h) 60% 55%); }
+    .tz-g-fan { color: hsl(var(--h) 70% 78%); }
+    .tz-bk { color: hsl(var(--h) 60% 70%); }
+    .tz-g-oqit { color: #9aa6ba; }
+}
+
 /* ---------------- O'quvchining baholari ---------------- */
 .tz-baho-qator { display: flex; flex-wrap: wrap; gap: 4px; }
 .tz-baho-qator .tz-g { min-width: 26px; text-align: center; cursor: help; }

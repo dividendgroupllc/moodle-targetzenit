@@ -153,6 +153,67 @@ class timetable {
     }
 
     /**
+     * Maktabdagi SINFLAR ro'yxati, tabiiy tartibda (1A, 1B, 2A … 11B).
+     *
+     * Manba — `memberclasses`: har dars qaysi sinflarga tegishli ekani shunda
+     * turadi (`|8 A(full)|8 B(hybrid)|`). `groupkey` dan olish mumkin emas,
+     * chunki blok darsida u blok nomi bo'ladi.
+     *
+     * Tartib ARALASH SATR sifatida emas, raqam+harf bo'yicha: aks holda
+     * «10 A(full)» «2 A(full)» dan oldin kelib qolardi.
+     */
+    public static function sinflar(string $year): array {
+        global $DB;
+        $rows = $DB->get_fieldset_sql(
+            'SELECT DISTINCT memberclasses FROM {local_targetzenit_timetable}
+              WHERE academicyear = :y AND memberclasses IS NOT NULL AND memberclasses <> :bosh',
+            ['y' => $year, 'bosh' => '']
+        );
+        $toplam = [];
+        foreach ($rows as $mc) {
+            foreach (explode('|', (string) $mc) as $s) {
+                $s = trim($s);
+                if ($s !== '') {
+                    $toplam[$s] = true;
+                }
+            }
+        }
+        $out = array_keys($toplam);
+        usort($out, function ($a, $b) {
+            $pa = preg_match('/^\s*(\d+)\s*([A-Za-z])/', $a, $ma) ? [(int) $ma[1], $ma[2]] : [999, $a];
+            $pb = preg_match('/^\s*(\d+)\s*([A-Za-z])/', $b, $mb) ? [(int) $mb[1], $mb[2]] : [999, $b];
+            return $pa <=> $pb;
+        });
+        return $out;
+    }
+
+    /**
+     * Bir kunlik panjara: "<sinf>|<dars №>" -> shu katakdagi darslar.
+     *
+     * Bitta katakda bir nechta dars bo'lishi MUMKIN va bu xato emas: sinf
+     * daraja guruhlariga bo'linsa (ENGLISH High/Middle/Low) har daraja
+     * alohida qator bo'ladi.
+     */
+    public static function panjara(string $year, int $dayno): array {
+        global $DB;
+        $rows = $DB->get_records('local_targetzenit_timetable',
+            ['academicyear' => $year, 'dayno' => $dayno], 'lessonno ASC, groupname ASC');
+        $out = [];
+        foreach ($rows as $r) {
+            $sinflar = array_filter(array_map('trim', explode('|', (string) $r->memberclasses)));
+            if (!$sinflar) {
+                // `memberclasses` bo'sh (eski push) — hech bo'lmasa guruhning
+                // o'zi ustun bo'lib turadi, dars yo'qolib ketmasin.
+                $sinflar = [$r->groupkey];
+            }
+            foreach ($sinflar as $s) {
+                $out[$s . '|' . (int) $r->lessonno][] = $r;
+            }
+        }
+        return $out;
+    }
+
+    /**
      * Blok (qo'shma/daraja) guruhlarining kalitlari.
      *
      * Blok darsi — `memberclasses` da o'z `groupkey` idan boshqa sinflar

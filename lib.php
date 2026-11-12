@@ -198,6 +198,42 @@ function local_targetzenit_pluginfile($course, $cm, $context, $filearea, $args,
 }
 
 /**
+ * Blok guruhi nomidan DARAJA so'zini ajratadi: «ENGLISH High 8-9» -> «High».
+ *
+ * NEGA KERAK: panjara katagida fan yoniga daraja yoziladi («ENGLISH High»),
+ * chunki bitta katakda bir fan bir necha daraja bilan turishi mumkin va
+ * qaysi qator kimga tegishli ekani faqat shundan bilinadi.
+ *
+ * NEGA SHUNCHAKI 2-SO'Z EMAS: guruh nomining ikkinchi so'zini olish
+ * daraja guruhlarida ishlaydi, lekin qo'shma guruhlarda bema'ni chiqadi —
+ * «P.E - GYM 1A+1B (qo'shma)» dan «-», «SCIENCE 5A+5B (qo'shma)» dan
+ * «5A+5B». Shuning uchun:
+ *   1) qo'shma guruhda daraja YO'Q — bo'sh qaytariladi (sinflar ustun
+ *      sarlavhasida allaqachon ko'rinadi);
+ *   2) daraja guruhida fan kodi boshidan, sinf diapazoni oxiridan
+ *      olib tashlanadi, qolgani — daraja.
+ *
+ * Tekshirilgan (prodda 50 blok guruhi): ENGLISH High 8-9 -> High,
+ * IT CyberSecurity 10-11 -> CyberSecurity, EXTRA Math 5-6 -> Math,
+ * ENGLISH High 3 -> High, *(qo'shma) -> ''.
+ */
+function local_targetzenit_daraja_sozi(string $guruhnomi, string $fankodi): string {
+    $nom = trim($guruhnomi);
+    if ($nom === '' || preg_match('/\(qo.?shma\)\s*$/ui', $nom)) {
+        return '';
+    }
+    // Fan kodi boshida bo'lsa olib tashlaymiz (nomi `-`/`/` bilan farq
+    // qilishi mumkin, shuning uchun uzunlik bo'yicha kesiladi).
+    if ($fankodi !== '' && \core_text::strtolower(\core_text::substr($nom, 0,
+            \core_text::strlen($fankodi))) === \core_text::strtolower($fankodi)) {
+        $nom = trim(\core_text::substr($nom, \core_text::strlen($fankodi)));
+    }
+    // Oxiridagi sinf diapazoni: «8-9», «10-11», «3», «5-6»
+    $nom = trim(preg_replace('/\s*\d+(\s*-\s*\d+)?\s*$/', '', $nom));
+    return $nom;
+}
+
+/**
  * Jadval o'lchamini moslash tugmalari (50% – 150%).
  * Tanlov brauzerda eslab qolinadi; $kalit har sahifa uchun alohida.
  */
