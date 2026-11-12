@@ -24,6 +24,13 @@ class ai {
     const MAX_BYTES = 15728640;   // 15 MB
 
     /**
+     * Bo'lak uchun ENG KICHIK hajm. Shundan kichigi modelga yuborilmaydi.
+     * 24 kbps da 1 soniya ~3 KB; 8 KB ~ 2.5 soniya. Bundan kichik bo'lak
+     * amalda faqat sarlavha bo'ladi va API 400 qaytaradi.
+     */
+    const MIN_BOLAK_BAYT = 8192;
+
+    /**
      * Kategoriya nomi foydalanuvchining tilida.
      *
      * `CATEGORIES` dagi `nom` o'zbekcha qotib yozilgan va u faqat zaxira:
@@ -939,6 +946,8 @@ class ai {
             $qismlar = [];
             $eshitilgan = 0;
             $jim = 0;
+            $xatolar = 0;
+            $oxirgixato = '';
             foreach ($bolaklar as $i => $yol) {
                 if (filesize($yol) > self::MAX_BYTES) {
                     continue;   // g'ayrioddiy katta bo'lak — o'tkazamiz
@@ -957,13 +966,28 @@ class ai {
                     continue;
                 }
 
-                $matn = self::so_rov(
-                    self::prompt_transcribe($boshlanish, $daq, $ovozsek),
-                    base64_encode(file_get_contents($yol)),
-                    $mime,
-                    false
-                );
-                $matn = trim($matn);
+                // BO'LAK XATOSI BUTUN TAHLILNI O'LDIRMASIN.
+                //
+                // 2026-11-12 da prodda: bitta bo'lakda zaxira model
+                // "HTTP 400: invalid argument" qaytardi va istisno butun
+                // tsikldan chiqib ketdi — 36 daqiqalik darsning 7 ta SOG'LOM
+                // bo'lagi ham behuda ketdi, tahlil umuman bo'lmadi.
+                // Endi xato FAQAT o'sha bo'lakni yo'qotadi.
+                try {
+                    $matn = trim((string) self::so_rov(
+                        self::prompt_transcribe($boshlanish, $daq, $ovozsek),
+                        base64_encode(file_get_contents($yol)),
+                        $mime,
+                        false
+                    ));
+                } catch (\Throwable $e) {
+                    $xatolar++;
+                    $oxirgixato = $e->getMessage();
+                    debugging('local_targetzenit: ' . $belgi . ' bo\'lagi o\'qilmadi — '
+                        . $oxirgixato, DEBUG_DEVELOPER);
+                    $qismlar[] = $belgi . "\n(bu bo'lak o'qilmadi — texnik xato)";
+                    continue;
+                }
 
                 // Model o'zi "audio yo'q" deb aytgan holatlar ham bor —
                 // ularni nutq deb sanamaymiz.
@@ -979,14 +1003,26 @@ class ai {
             }
 
             if (!$eshitilgan) {
-                return self::fail($audio, 'Yozuvda eshitiladigan nutq yo\'q — '
-                    . 'tahlil qilinmadi (' . $jim . ' bo\'lak jim)');
+                // Sababni ANIQ yozamiz: jimlikmi yoki texnik xatomi.
+                return self::fail($audio, $xatolar
+                    ? sprintf('Birorta bo\'lak o\'qilmadi (%d jim, %d xato). Oxirgi xato: %s',
+                        $jim, $xatolar, $oxirgixato)
+                    : 'Yozuvda eshitiladigan nutq yo\'q — tahlil qilinmadi ('
+                        . $jim . ' bo\'lak jim)');
             }
 
             // YETARLI QOPLAMA TEKSHIRUVI: yozuvning yarmidan ko'pi jim bo'lsa,
             // qolgan qismiga qarab butun darsga baho berish NOTO'G'RI. Transkript
             // saqlanadi (eshitilgani ko'rinib turadi), lekin BAHO BERILMAYDI.
-            $jami = $eshitilgan + $jim;
+            // Bir qism bo'lak texnik xato bergan bo'lsa — buni YASHIRMAYMIZ:
+            // tahlil chala dalilga tayangani ko'rinib turishi kerak.
+            if ($xatolar) {
+                $audio->warning = \core_text::substr(trim((string) $audio->warning . ' '
+                    . sprintf('%d bo\'lak o\'qilmadi (texnik xato)', $xatolar)), 0, 255);
+                $DB->update_record('local_targetzenit_audio', $audio);
+            }
+
+            $jami = $eshitilgan + $jim + $xatolar;
             if ($jami > 1 && $eshitilgan < $jami / 2) {
                 self::save_transcript_only($audio, implode("\n\n", $qismlar));
                 return self::fail($audio, sprintf(
@@ -1063,14 +1099,32 @@ class ai {
      * @return array [eshitiladimi, izoh, o'lchangan ovoz soniyasi yoki null]
      */
     protected static function ovoz_bormi(string $yol): array {
+        // 1) BAYT POLI — eng ishonchli tekshiruv, ffmpeg'ga bog'liq emas.
+        //
+        // 24 kbps da 1 soniya ~3 KB. Shundan kichik bo'lak faqat konteyner
+        // sarlavhasidan iborat bo'ladi (webm'da ~600 bayt) va uni modelga
+        // yuborsak "HTTP 400: invalid argument" qaytadi — 2026-11-12 da
+        // prodda aynan shunday bo'ldi (`hajm=0.0MB` xatosi).
+        $hajm = (int) @filesize($yol);
+        if ($hajm < self::MIN_BOLAK_BAYT) {
+            return [false, sprintf('%d bayt — bo\'sh bo\'lak', $hajm), 0.0];
+        }
+
         $sek = audio::audio_seconds($yol);
         if ($sek !== null && $sek < 3) {
             return [false, sprintf('%.1f s ovoz', $sek), $sek];
         }
 
+        // O'LCHAB BO'LMAGAN KICHIK bo'lakni YUBORMAYMIZ.
+        // Avval bu holatda "yuboramiz" deb qaytarilardi va aynan shu teshik
+        // orqali buzuq parchalar API'ga yetib borardi.
+        if ($sek === null && $hajm < 102400) {
+            return [false, sprintf('%d bayt, o\'lchab bo\'lmadi', $hajm), null];
+        }
+
         $ffmpeg = self::ffmpeg();
         if (!$ffmpeg) {
-            return [true, '', $sek];      // o'lchab bo'lmadi — yuboramiz
+            return [true, '', $sek];      // katta fayl, o'lchov yo'q — yuboramiz
         }
         $cmd = escapeshellcmd($ffmpeg) . ' -hide_banner -nostats -i ' . escapeshellarg($yol)
             . ' -af volumedetect -f null - 2>&1';
@@ -1455,11 +1509,24 @@ class ai {
                 sleep(5 * ($i + 1));     // band — kutib qayta urinamiz
                 continue;
             }
-            // Sababni keyin qidirmaslik uchun kontekstni ham yozamiz
+            // Sababni keyin qidirmaslik uchun kontekstni ham yozamiz.
+            // Hajmni KB da ko'rsatamiz: MB da kichik bo'laklar "0.0MB" bo'lib
+            // chiqib, sababni topish qiyin bo'lardi (2026-11-12 saboqi).
+            $kb = strlen((string) $b64) / 1024;
+            $qoshimcha = '';
+            if ($kod === 400 && $b64 !== null) {
+                // 400 + ikkilik ma'lumot = yoki bo'lak buzuq/bo'sh, yoki SHU
+                // MODEL bunday kirishni qabul qilmaydi (masalan "-lite"
+                // modellar audioni olmaydi). Ikkisini ham aytib qo'yamiz.
+                $qoshimcha = $kb < 16
+                    ? ' | SABAB: bo\'lak juda kichik/bo\'sh — yuborilmasligi kerak edi'
+                    : ' | SABAB: ehtimol bu model bunday kirishni (' . $mime
+                      . ') qabul qilmaydi — sozlamadagi model/zaxira modelni tekshiring';
+            }
             throw new \RuntimeException(sprintf(
-                'Gemini HTTP %d [model=%s, mime=%s, hajm=%.1fMB]: %s',
-                $kod, $model, (string) $mime, strlen((string) $b64) / 1048576,
-                \core_text::substr((string) $javob, 0, 250)
+                'Gemini HTTP %d [model=%s, mime=%s, hajm=%.1fKB]: %s%s',
+                $kod, $model, (string) $mime, $kb,
+                \core_text::substr((string) $javob, 0, 200), $qoshimcha
             ));
         }
         throw new \RuntimeException('Gemini javob bermadi (' . $model . ')');
