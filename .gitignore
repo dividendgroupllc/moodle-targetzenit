@@ -4,3 +4,7 @@
 .idea/
 .vscode/
 __pycache__/
+
+# patch chiqindilari — commitga tushmasin
+*.orig
+*.rej

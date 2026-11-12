@@ -1035,7 +1035,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111240, 'local', 'targetzenit');
     }
 
-    if ($oldversion < 2026111150) {
+    if ($oldversion < 2026111260) {
 
         // ============ YADRO FUNKSIYALARINI FRAPPE SERVISIGA BIRIKTIRISH
         //
@@ -1056,7 +1056,7 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
                 . $e->getMessage());
         }
 
-        upgrade_plugin_savepoint(true, 2026111150, 'local', 'targetzenit');
+        upgrade_plugin_savepoint(true, 2026111260, 'local', 'targetzenit');
     }
 
     return true;
