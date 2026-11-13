@@ -2658,13 +2658,12 @@ S = {
     ),
     "sh_archived": ("not in the timetable", "jadvalda yo'q", "нет в расписании"),
     "sh_archivednotice": (
-        "This group is no longer in your timetable, so you cannot write new "
-        "reviews here. What you wrote earlier stays visible and is not lost.",
-        "Bu guruh endi sizning jadvalingizda yo'q, shuning uchun bu yerda "
-        "yangi sharh yoza olmaysiz. Avval yozganlaringiz KO'RINIB TURADI va "
-        "yo'qolmagan.",
-        "Эта группа больше не в вашем расписании, поэтому новые отзывы здесь "
-        "написать нельзя. Написанное ранее остаётся видимым и не потеряно.",
+        "This group is not in your current timetable, but because you have "
+        "written reviews for it you can still read and write here.",
+        "Bu guruh sizning joriy jadvalingizda yo'q, lekin unga sharh "
+        "yozganingiz uchun bu yerda o'qish ham, yozish ham ochiq.",
+        "Этой группы нет в вашем текущем расписании, но так как вы писали "
+        "для неё отзывы, чтение и запись здесь по-прежнему доступны.",
     ),
     "sh_nocourseaccess": (
         "You neither teach this group nor have written reviews for it",

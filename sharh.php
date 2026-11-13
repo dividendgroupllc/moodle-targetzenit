@@ -50,6 +50,19 @@ $kurslar = $year ? journal::my_courses((int) $USER->id, $year) : [];
 //
 // QOIDA: «men qaysi guruhga dars beraman» va «men nima yozganman» — ikki
 // boshqa savol. Jadval birinchisini hal qiladi, ikkinchisini YOPMAYDI.
+// (a) JADVAL bo'yicha biriktirilgan kurslar — Moodle yozilishi suspend
+//     qilingan bo'lsa ham ro'yxatda turadi. Talab (2026-11-13): o'qituvchi
+//     bugun darsi bormi-yo'qmi, haftada bir kirsa ham o'z o'quvchilariga
+//     yoza olishi va ko'ra olishi SHART.
+foreach (sharh::jadval_kurslarim((int) $USER->id, $year) as $c) {
+    if (!isset($kurslar[(int) $c->id])) {
+        $kurslar[(int) $c->id] = $c->fullname;
+    }
+}
+
+// (b) ARXIV — sharh yozgan, lekin endi na yozilishi, na jadvalda o'rni bor.
+//     Bunday kursda YOZISH ham ochiq (`yozish_mumkinmi()` uchinchi yo'li),
+//     lekin guruh uning joriy jadvalida yo'qligi aytilib turadi.
 $arxiv = [];
 foreach (sharh::mening_kurslarim((int) $USER->id) as $c) {
     if (!isset($kurslar[(int) $c->id])) {

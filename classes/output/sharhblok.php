@@ -171,9 +171,12 @@ class sharhblok {
         if (!$courseid || !$studentid) {
             return '';
         }
-        if (!has_capability('local/targetzenit:teach',
-                \context_course::instance($courseid, IGNORE_MISSING)
-                    ?: \context_system::instance())) {
+        // To'siq Moodle YOZILISHIGA bog'lanmaydi: `yozish_mumkinmi()`
+        // jadvalda biriktirilgan bo'lsa ham ruxsat beradi — o'qituvchi
+        // bugun darsi bo'lmasa ham o'z o'quvchisiga yoza olishi shart
+        // (talab 2026-11-13). `handle()` da ayni tekshiruv `add_batch()`
+        // ichida turadi — forma ko'rinmasligi himoya emas.
+        if (!sharh::yozish_mumkinmi($courseid)) {
             return '';
         }
 

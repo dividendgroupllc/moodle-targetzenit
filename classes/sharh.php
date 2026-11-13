@@ -127,7 +127,13 @@ class sharh {
         // O'QUVCHISIMI — aks holda `studentid` ni qo'lda o'zgartirib butun
         // maktabdagi istalgan odam haqida yozib ketish mumkin bo'lardi
         // (formani yashirish himoya emas).
-        require_capability('local/targetzenit:teach', $context);
+        // To'siq Moodle YOZILISHIGA bog'lanmaydi (`yozish_mumkinmi()`):
+        // Frappe sinxroni yozilishni suspend qilganda o'qituvchi o'z
+        // guruhiga yoza olmay qolardi (2026-11-13 muammosi).
+        if (!self::yozish_mumkinmi($courseid)) {
+            throw new \moodle_exception('nopermissions', 'error', '',
+                get_string('sh_nocourseaccess', 'local_targetzenit'));
+        }
         if (!self::oquvchimi($courseid, $studentid)) {
             throw new \moodle_exception('nopermissions', 'error', '',
                 get_string('sh_notstudent', 'local_targetzenit'));
@@ -282,6 +288,81 @@ class sharh {
     }
 
     /**
+     * JADVAL bo'yicha shu o'qituvchiga biriktirilgan kurslar.
+     *
+     * NEGA JADVAL, Moodle yozilishi EMAS: Moodle'dagi yozilishni Frappe
+     * kurs sinxroni suspend qilib turadi (2026-11-12 da 42 ta), jadval esa
+     * «kim kimga dars beradi» ning HAQIQIY manbasi. O'qituvchi haftada bir
+     * kirsa ham, dars bugun bo'lmasa ham — jadvalda uning nomi turadi.
+     *
+     * Bog'lanish: `_timetable.teacherkey` = Employee ID = `user.idnumber`
+     * (unic-id qoidasi; ism bilan hech qachon).
+     *
+     * @return array [courseid => record]
+     */
+    public static function jadval_kurslarim(int $userid, string $year): array {
+        global $DB;
+
+        $idn = trim((string) $DB->get_field('user', 'idnumber', ['id' => $userid]));
+        if ($idn === '' || $year === '') {
+            return [];
+        }
+        return $DB->get_records_sql("
+            SELECT c.id, c.idnumber, c.fullname
+              FROM {local_targetzenit_timetable} t
+              JOIN {course} c ON c.idnumber = t.courseidnumber
+             WHERE t.academicyear = :yil AND t.teacherkey = :kalit
+          GROUP BY c.id, c.idnumber, c.fullname
+          ORDER BY c.idnumber ASC", ['yil' => $year, 'kalit' => $idn]);
+    }
+
+    /**
+     * Shu kursga SHARH YOZISH mumkinmi.
+     *
+     * TALAB (foydalanuvchi, 2026-11-13): «o'qituvchi bugun darsi bormi
+     * yo'qmi qat'i nazar, haftada bir kirsa ham yoza olishi va ko'ra olishi
+     * shart — har bir o'ziga biriktirilgan o'quvchiga».
+     *
+     * Shuning uchun UCH yo'l, va ularning HAR BIRI «bu guruh menga
+     * biriktirilgan» degan haqiqiy dalil:
+     *
+     *   1. Moodle'da `teach` ruxsati — oddiy hol;
+     *   2. JADVALDA shu (guruh x fan) uning nomiga yozilgan — Moodle
+     *      yozilishi suspend qilingan bo'lsa ham amal qiladi;
+     *   3. shu kursga ALLAQACHON sharh yozgan — demak o'qituvchi edi.
+     *
+     * Begona o'qituvchi uchunchisidan ham o'tmaydi. Qaysi O'QUVCHI haqida
+     * yozish mumkinligi esa alohida tekshiriladi (`oquvchimi()`) — u o'quvchi
+     * shu kursga yozilganini talab qiladi.
+     */
+    public static function yozish_mumkinmi(int $courseid): bool {
+        global $DB, $USER;
+
+        if (!$courseid) {
+            return false;
+        }
+
+        // (1) oddiy yo'l — Moodle ruxsati
+        $ctx = \context_course::instance($courseid, IGNORE_MISSING);
+        if ($ctx && has_capability('local/targetzenit:teach', $ctx)) {
+            return true;
+        }
+
+        // (2) jadval bo'yicha biriktirilgan
+        $idn = trim((string) $USER->idnumber);
+        $cidn = (string) $DB->get_field('course', 'idnumber', ['id' => $courseid]);
+        if ($idn !== '' && $cidn !== '' && $DB->record_exists(
+                'local_targetzenit_timetable',
+                ['courseidnumber' => $cidn, 'teacherkey' => $idn])) {
+            return true;
+        }
+
+        // (3) shu kursga o'zi sharh yozgan
+        return $DB->record_exists('local_targetzenit_sharh',
+            ['courseid' => $courseid, 'authorid' => (int) $USER->id]);
+    }
+
+    /**
      * Shu odam shu kursning sharhlarini KO'RA oladimi.
      *
      * Ikki yo'l: (a) shu kursda dars o'tadi (`teach`), yoki (b) shu kursga
@@ -290,14 +371,9 @@ class sharh {
      * kerak.
      */
     public static function kurs_korish_mumkinmi(int $courseid): bool {
-        global $DB, $USER;
-
-        $ctx = \context_course::instance($courseid, IGNORE_MISSING);
-        if ($ctx && has_capability('local/targetzenit:teach', $ctx)) {
-            return true;
-        }
-        return $DB->record_exists('local_targetzenit_sharh',
-            ['courseid' => $courseid, 'authorid' => (int) $USER->id]);
+        // Ko'rish qamrovi yozish bilan BIR XIL: kim yoza oladi, o'shaning
+        // o'zi ko'radi. Ikkisini ajratish faqat chalkashlik tug'dirardi.
+        return self::yozish_mumkinmi($courseid);
     }
 
     // =========================================================== TAHRIRLASH
@@ -345,8 +421,7 @@ class sharh {
         if ((int) $bosh->authorid !== (int) $USER->id) {
             return false;
         }
-        $ctx = \context_course::instance((int) $bosh->courseid, IGNORE_MISSING);
-        return $ctx ? has_capability('local/targetzenit:teach', $ctx) : false;
+        return self::yozish_mumkinmi((int) $bosh->courseid);
     }
 
     /**
