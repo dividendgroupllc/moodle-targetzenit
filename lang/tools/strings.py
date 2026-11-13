@@ -2601,6 +2601,27 @@ S = {
         "Bu o'quvchilarga hali ball qo'yilmagan",
         "Этим ученикам балл ещё не выставлен",
     ),
+    "bh_scorehint": (
+        "Score from 0 to {$a}. A decimal comma is accepted too: 22,3 = 22.3",
+        "0 dan {$a} gacha ball. Vergul ham qabul qilinadi: 22,3 = 22.3",
+        "Балл от 0 до {$a}. Запятая тоже принимается: 22,3 = 22.3",
+    ),
+    "bh_scoresbad": (
+        "{$a->soni} student(s) were NOT saved - the score could not be read: "
+        "{$a->ismlar}. A score must be a number (for example 22 or 22,3). "
+        "Saved: {$a->saqlandi}.",
+        "{$a->soni} ta o'quvchining bali O'QILMADI va SAQLANMADI: "
+        "{$a->ismlar}. Ball raqam bo'lishi kerak (masalan 22 yoki 22,3). "
+        "Saqlangani: {$a->saqlandi} ta.",
+        "У {$a->soni} учеников балл НЕ прочитан и НЕ сохранён: "
+        "{$a->ismlar}. Балл должен быть числом (например 22 или 22,3). "
+        "Сохранено: {$a->saqlandi}.",
+    ),
+    "bh_scoresnone": (
+        "Nothing was saved - no value changed.",
+        "Hech narsa saqlanmadi - birorta qiymat o'zgarmadi.",
+        "Ничего не сохранено - ни одно значение не изменилось.",
+    ),
     "bh_nostudents": (
         "No students are enrolled in this group, so scores cannot be entered",
         "Bu guruhga o'quvchi yozilmagan — ball kiritib bo'lmaydi",

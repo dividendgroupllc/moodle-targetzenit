@@ -284,7 +284,10 @@ $string['bh_savenext'] = 'Сохранить и задать расписани�
 $string['bh_savescores'] = 'Сохранить баллы';
 $string['bh_savetimetable'] = 'Сохранить расписание';
 $string['bh_score'] = 'Балл';
+$string['bh_scorehint'] = 'Балл от 0 до {$a}. Запятая тоже принимается: 22,3 = 22.3';
 $string['bh_scores'] = 'Баллы';
+$string['bh_scoresbad'] = 'У {$a->soni} учеников балл НЕ прочитан и НЕ сохранён: {$a->ismlar}. Балл должен быть числом (например 22 или 22,3). Сохранено: {$a->saqlandi}.';
+$string['bh_scoresnone'] = 'Ничего не сохранено - ни одно значение не изменилось.';
 $string['bh_scoressaved'] = 'Сохранено баллов: {$a->saqlandi}, пересчитано итогов четверти: {$a->chorak}';
 $string['bh_shakli_onlayn'] = 'Онлайн';
 $string['bh_shakli_qogoz'] = 'На бумаге';

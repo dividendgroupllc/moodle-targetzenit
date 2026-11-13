@@ -205,12 +205,27 @@ class ballsetka {
 
             // --- ball
             //
-            // `step=0.01`: nizomda ball butun, lekin mezonlar bo'yicha
-            // yarim ball chiqishi mumkin, shuning uchun kasr qabul qilinadi.
+            // `type="text"`, RAQAM EMAS — ataylab (2026-11-14 da tuzatildi).
+            //
+            // `type="number"` uch joyda jim yutqazardi:
+            //   · o'nlik ajratgich BRAUZER TILIGA bog'liq — «22,3» yozilsa
+            //     (o'zbek/rus klaviaturasi, Excel'dan nusxa) Chrome qiymatni
+            //     YAROQSIZ deb biladi va formaga BO'SH yuboradi; PHP esa
+            //     «ball qo'yilmagan» deb tushunadi va hisobotda
+            //     «Qatnashmagan» chiqardi;
+            //   · `max` va `step` HTML5 tekshiruvi butun formani bloklaydi —
+            //     bitta katak tufayli qolgan 24 ta ball ham saqlanmaydi;
+            //   · xatolik ekranda ko'rinmaydi, «saqlandi» yozuvi chiqaverardi.
+            //
+            // Endi tekshiruv SERVERDA: vergul nuqtaga aylanadi, chegara
+            // `exam::chegarala()` da qo'llanadi, tushunarsiz katak esa
+            // nomma-nom aytiladi. `inputmode="decimal"` telefonda raqamli
+            // klaviaturani baribir ochadi.
             $h .= \html_writer::tag('td', $yozish
                 ? \html_writer::empty_tag('input', [
-                    'type' => 'number', 'name' => 'ball[' . $k . ']',
-                    'min' => 0, 'max' => $max, 'step' => '0.01',
+                    'type' => 'text', 'name' => 'ball[' . $k . ']',
+                    'inputmode' => 'decimal', 'autocomplete' => 'off',
+                    'size' => 5, 'title' => $t('bh_scorehint', $max),
                     // Excel'dan kelgan qiymat saqlangan ballning USTIDAN
                     // ko'rsatiladi — odam fayl nima deganini ko'rishi kerak,
                     // keyin saqlash yoki tuzatish uning qarori.
@@ -549,14 +564,23 @@ class ballsetka {
         $bor = exam::results($sittingid);
         $saqlandi = 0;
         $studentids = [];
+        $xato = [];
 
         foreach ($oquvchilar as $o) {
             $sid = (int) $o->id;
             $k = 's' . $sid;
 
-            $xom = trim((string) ($ballar[$k] ?? ''));
-            if ($xom !== '' && !is_numeric($xom)) {
-                continue;              // chalkash kiritma saqlanmaydi
+            $xom = self::raqamla((string) ($ballar[$k] ?? ''));
+            if ($xom === false) {
+                // TUSHUNARSIZ KIRITMA JIM TASHLANMAYDI.
+                //
+                // Avval shunchaki `continue` edi: qator saqlanmay qolardi,
+                // ekranda esa «ballar saqlandi» chiqardi. O'qituvchi ball
+                // qo'yganiga ishonib ketardi, hisobotda esa «Qatnashmagan»
+                // turardi (2026-11-14 da shunday bo'ldi). Endi kim
+                // saqlanmagani nomma-nom aytiladi.
+                $xato[] = fullname($o);
+                continue;
             }
             $ball = ($xom === '') ? null : (float) $xom;
             $holat = $holatlar[$k] ?? 'ishladi';
@@ -609,6 +633,29 @@ class ballsetka {
             exam::status_avto((int) $sit->examid);
         }
 
-        return ['saqlandi' => $saqlandi, 'chorak' => $chorak];
+        return ['saqlandi' => $saqlandi, 'chorak' => $chorak, 'xato' => $xato];
+    }
+
+    /**
+     * Kiritilgan ballni raqamga keltiradi.
+     *
+     * NEGA KERAK: o'nlik ajratgich VERGUL bo'lishi mumkin — o'zbek/rus
+     * klaviaturasi ham, Excel ham «22,3» deb yozadi va nusxa ko'chirilganda
+     * shu ko'rinishda keladi. `is_numeric('22,3')` esa `false`, ya'ni ball
+     * JIM TASHLAB YUBORILARDI. Excel'dan nusxa ko'chirishda qiymat ichida
+     * ajratuvchi bo'shliq (shu jumladan uzilmas bo'shliq) ham bo'ladi.
+     *
+     * @return string|false raqam satri, bo'sh satr (ball yo'q) yoki
+     *                      `false` — tushunib bo'lmadi
+     */
+    protected static function raqamla(string $xom) {
+        $x = str_replace(
+            ["\u{00A0}", "\u{202F}", "\u{2009}", ' ', ','],
+            ['', '', '', '', '.'],
+            trim($xom));
+        if ($x === '') {
+            return '';
+        }
+        return is_numeric($x) ? $x : false;
     }
 }

@@ -179,9 +179,27 @@ if ($amal !== '' && confirm_sesskey()) {
         // shu kursning o'qituvchisi) — bitta joyda.
         $n = ballsetka::handle();
         if ($n) {
-            redirect(new moodle_url('/local/targetzenit/baholash.php',
-                ['view' => 'ball', 'sitting' => optional_param('sitting', 0, PARAM_INT)]),
-                $t('bh_scoressaved', (object) $n), null,
+            $qayt = new moodle_url('/local/targetzenit/baholash.php',
+                ['view' => 'ball', 'sitting' => optional_param('sitting', 0, PARAM_INT)]);
+
+            // XABAR HAQIQATNI AYTADI.
+            //
+            // Avval har qanday holatda «ballar saqlandi» chiqardi — hatto
+            // bitta ham saqlanmaganda ham (qaytarilgan massiv bo'sh emas,
+            // ya'ni shart doim rost edi). O'qituvchi ball qo'yganiga
+            // ishonib ketardi.
+            if (!empty($n['xato'])) {
+                redirect($qayt, $t('bh_scoresbad', (object) [
+                    'soni' => count($n['xato']),
+                    'ismlar' => s(implode(', ', $n['xato'])),
+                    'saqlandi' => $n['saqlandi'],
+                ]), null, \core\output\notification::NOTIFY_WARNING);
+            }
+            if (!$n['saqlandi']) {
+                redirect($qayt, $t('bh_scoresnone'), null,
+                    \core\output\notification::NOTIFY_INFO);
+            }
+            redirect($qayt, $t('bh_scoressaved', (object) $n), null,
                 \core\output\notification::NOTIFY_SUCCESS);
         }
     }
