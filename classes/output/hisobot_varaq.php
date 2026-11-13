@@ -525,16 +525,26 @@ class hisobot_varaq {
         $kuchli = array_values(array_filter($bor, fn($f) => $f['daraja'] === 'yuqori'));
         $sust = array_values(array_filter($bor, fn($f) => $f['daraja'] === 'past'));
 
+        // ENG YAXSHI / ENG PAST fanni QIYMAT bo'yicha topamiz: ro'yxat endi
+        // fan turiga qarab tartiblangan (hamma o'quvchida bir xil), ya'ni
+        // birinchi va oxirgi qator eng yuqori/eng past degani emas.
+        $tartibli = $bor;
+        usort($tartibli, fn($a, $b) => $b['foiz'] <=> $a['foiz']);
+
         if (!$kuchli) {
-            $kuchli = [$bor[0]];
+            $kuchli = [$tartibli[0]];
         }
         if (!$sust) {
-            $oxirgi = $bor[count($bor) - 1];
+            $oxirgi = $tartibli[count($tartibli) - 1];
             // Eng past fan ALLAQACHON kuchlilar ro'yxatida bo'lsa (hammasi
             // yuqori daraja) — o'ng ustun ro'yxat emas, tabrik bo'ladi.
             $sust = ($oxirgi['daraja'] === 'yuqori') ? [] : [$oxirgi];
         }
 
+        // Ikki ro'yxat ICHIDA tartib natija bo'yicha: «kuchli» da eng
+        // yuqoridan, «qo'llab-quvvatlash» da eng pastdan boshlanadi.
+        usort($kuchli, fn($a, $b) => $b['foiz'] <=> $a['foiz']);
+        usort($sust, fn($a, $b) => $a['foiz'] <=> $b['foiz']);
         $kuchli = array_slice($kuchli, 0, self::ROYXAT_MAX);
         $sust = array_slice($sust, 0, self::ROYXAT_MAX);
 
@@ -928,11 +938,24 @@ class hisobot_varaq {
                         $foiz !== null
                             ? self::chip(self::foiz($foiz) . ' · ' . self::daraja_nomi($daraja),
                                 $daraja)
-                            // QATNASHMAGAN — kulrang, uzuq hoshiyali belgi.
-                            // Daraja rangi (qizil) ataylab ishlatilmaydi:
-                            // qatnashmaslik yomon BAHO emas, ma'lumot yo'qligi.
-                            : \html_writer::tag('span', s(self::yoqlik($r)),
-                                ['class' => 'tz-hr-chip tz-hr-chipmut']),
+                            // BALL BOR, LEKIN FOIZ HISOBLANMAGAN.
+                            //
+                            // Bu faqat bitta holatda bo'ladi: baholashning
+                            // «Maksimal ball» i 0 yoki bo'sh. Avval bunday
+                            // qator «Qatnashmagan» bo'lib chiqardi — ya'ni
+                            // kiritilgan ball ota-onaga YO'Q deb
+                            // ko'rsatilardi. Endi ballning o'zi turadi,
+                            // foiz esa yo'q (uni hisoblab bo'lmaydi).
+                            : ($r->score !== null
+                                ? \html_writer::tag('span',
+                                    s(self::raqam($r->score)),
+                                    ['class' => 'tz-hr-chip tz-hr-chipmut'])
+                                // QATNASHMAGAN — kulrang, uzuq hoshiyali
+                                // belgi. Daraja rangi (qizil) ataylab
+                                // ishlatilmaydi: qatnashmaslik yomon BAHO
+                                // emas, ma'lumot yo'qligi.
+                                : \html_writer::tag('span', s(self::yoqlik($r)),
+                                    ['class' => 'tz-hr-chip tz-hr-chipmut'])),
                         ['class' => 'tz-hr-num'])
                     . \html_writer::tag('td',
                         $f['sinf'] !== null ? s(self::foiz($f['sinf']))

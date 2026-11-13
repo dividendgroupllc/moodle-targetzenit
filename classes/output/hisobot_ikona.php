@@ -238,6 +238,39 @@ class hisobot_ikona {
     ];
 
     /**
+     * ASOSIY FANLAR — hisobotda birinchi turadigan turlar, SHU TARTIBDA.
+     *
+     * Talab (2026-11-14): «avval asosiy fanlar — math, english, science va
+     * hokazo — keyin finance, mental kabilar», va ketma-ketlik HAMMA
+     * o'quvchida bir xil bo'lsin.
+     *
+     * Ro'yxat TUR kodlari bo'yicha, fan NOMI bo'yicha emas: shunda
+     * «ENGLISH», «IELTS», «CHINESE» — hammasi bitta qoidaga bo'ysunadi.
+     * Tartibni o'zgartirish kerak bo'lsa — faqat shu ro'yxat tahrirlanadi.
+     */
+    const ASOSIY = [
+        'matematika', 'ingliz', 'adabiyot', 'kimyo', 'fizika',
+        'biologiya', 'informatika', 'tarix', 'geografiya',
+    ];
+
+    /** Fan asosiymi. */
+    public static function asosiymi(string $fan): bool {
+        return in_array(self::fan($fan)['kod'], self::ASOSIY, true);
+    }
+
+    /**
+     * Fanning hisobotdagi O'RNI — kichik raqam oldinda turadi.
+     *
+     * Raqam FAQAT fan turiga bog'liq, o'quvchining natijasiga emas —
+     * shuning uchun ketma-ketlik hamma varaqda bir xil chiqadi.
+     */
+    public static function tartib(string $fan): int {
+        $o = array_search(self::fan($fan)['kod'], self::ASOSIY, true);
+        return ($o === false) ? 100 : (int) $o;
+    }
+
+
+    /**
      * Fan nomidan tur va rang.
      *
      * IKKI BOSQICHLI MOSLIK — jadvaldagi nomlar qisqartma (`BIO`, `ECO`,

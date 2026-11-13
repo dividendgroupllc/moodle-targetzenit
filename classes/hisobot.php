@@ -169,10 +169,10 @@ class hisobot {
         $xom = [];
         $sittingid = [];
         foreach (exam::for_student($studentid, $year, $term->name) as $r) {
+            // `$cid` 0 bo'lishi mumkin — kursi ro'yxatda yo'q (yozilish
+            // suspend qilingan). Qator TASHLANMAYDI: quyida kurs ro'yxatga
+            // qo'shiladi va bog'lanadi.
             $cid = $idn[(string) $r->courseidnumber] ?? 0;
-            if (!$cid) {
-                continue;
-            }
 
             // BEKOR QILINGAN GURUH — hisobotda umuman yo'q.
             //
@@ -187,6 +187,46 @@ class hisobot {
             }
             $xom[] = [$cid, $r];
             $sittingid[(int) $r->sittingid] = true;
+        }
+
+        // NATIJASI BOR, LEKIN RO'YXATDA YO'Q KURSNI QO'SHAMIZ.
+        //
+        // `$kurslar` FAOL yozilishdan quriladi (`enrol_get_users_courses(...,
+        // true)`), natijalar esa endi yozilishdan qat'i nazar o'qiladi
+        // (`exam::for_student()` dagi 2-so'rov). Ikkisi mos kelmasa — guruh
+        // almashgan yoki yozilish suspend qilingan bo'lsa — ball topiladi-yu
+        // fani ro'yxatda bo'lmaydi va qator jimgina tushib qolardi.
+        // Shuning uchun natija ko'rsatgan kurs ro'yxatga QO'SHILADI.
+        $yetishmas = [];
+        foreach ($xom as [$cid0, $r0]) {
+            if (!$cid0) {
+                $yetishmas[(string) $r0->courseidnumber] = true;
+            }
+        }
+        if ($yetishmas) {
+            $qoshilgan = [];
+            foreach ($DB->get_records_list('course', 'idnumber',
+                    array_keys($yetishmas), '', 'id, fullname, shortname, idnumber') as $c) {
+                $qism = explode('::', (string) $c->idnumber);
+                if (count($qism) < 3 || $qism[0] !== $year || isset($kurslar[(int) $c->id])) {
+                    continue;
+                }
+                $c->zguruh = $qism[1];
+                $c->zfan = $qism[2];
+                $kurslar[(int) $c->id] = $c;
+                $idn[(string) $c->idnumber] = (int) $c->id;
+                $qoshilgan[] = (int) $c->id;
+            }
+            // Yangi kurslarning o'qituvchisi ham aniqlanadi.
+            if ($qoshilgan) {
+                $oqituvchilar += self::oqituvchilar($qoshilgan, $year, $term);
+                // `$xom` dagi kurs raqamlari qayta bog'lanadi.
+                foreach ($xom as $i => [$cid0, $r0]) {
+                    if (!$cid0) {
+                        $xom[$i][0] = $idn[(string) $r0->courseidnumber] ?? 0;
+                    }
+                }
+            }
         }
 
         // GURUHDAN TEST OLINGANMI — shu savol hal qiluvchi (2026-11-14).
@@ -205,6 +245,9 @@ class hisobot {
         $natijalar = [];
         $sittinglar = [];
         foreach ($xom as [$cid, $r]) {
+            if (!$cid) {
+                continue;         // kursi topilmadi (boshqa o'quv yili)
+            }
             $guruhdan_olingan = isset($olingan[(int) $r->sittingid]);
             if ($r->score === null && !$guruhdan_olingan) {
                 continue;                 // (a) holat
@@ -291,17 +334,28 @@ class hisobot {
             $d->jami->sharh += $sharh_soni[$cid] ?? 0;
         }
 
-        // NATIJASI BOR FAN BIRINCHI, keyin foiz bo'yicha YUQORIDAN PASTGA.
+        // TARTIB HAMMA O'QUVCHIDA BIR XIL (talab 2026-11-14).
         //
-        // Tartib shu hisobotning ASOSIY savoliga javob beradi: «qaysi fanda
-        // yaxshi, qaysida sust». Alifbo tartibi bu savolni yashirardi —
-        // ota-ona sakkizta qatorni solishtirib chiqishi kerak bo'lardi.
+        // Avval fanlar FOIZ bo'yicha tartiblanardi — ya'ni har varaqda
+        // boshqacha ketma-ketlik chiqardi. Majlisda varaqlar yonma-yon
+        // solishtiriladi va bu chalkashtirardi: ota-ona «mening bolamda
+        // nega Math pastda?» deb o'ylardi, holbuki bu shunchaki natija
+        // tartibi edi.
+        //
+        // Endi tartib FAN TURIGA bog'liq va o'quvchidan o'quvchiga
+        // o'zgarmaydi:
+        //   1) asosiy fanlar — `hisobot_ikona::ASOSIY` dagi tartibda
+        //      (matematika, ingliz, adabiyot, kimyo/science, fizika,
+        //      biologiya, informatika, tarix, geografiya);
+        //   2) qolganlari (finance, mental, chess, art, ...) — keyin,
+        //      alifbo tartibida.
+        // «Qaysi fanda yaxshi, qaysida sust» savoliga esa «Kuchli
+        // tomonlar / Qo'llab-quvvatlash kerak» bloklari javob beradi.
         uasort($d->fanlar, function($a, $b) {
-            if (($a['foiz'] === null) !== ($b['foiz'] === null)) {
-                return $a['foiz'] === null ? 1 : -1;
-            }
-            if ($a['foiz'] !== null && $a['foiz'] != $b['foiz']) {
-                return $b['foiz'] <=> $a['foiz'];
+            $ta = \local_targetzenit\output\hisobot_ikona::tartib($a['fan']);
+            $tb = \local_targetzenit\output\hisobot_ikona::tartib($b['fan']);
+            if ($ta !== $tb) {
+                return $ta <=> $tb;
             }
             return strnatcasecmp($a['fan'], $b['fan']);
         });
@@ -314,10 +368,21 @@ class hisobot {
             $d->jami->sinf_foiz = round($sinfball / $sinfmaks * 100, 1);
         }
 
+        // ENG KUCHLI / ENG PAST — QIYMAT bo'yicha, ro'yxatdagi O'RIN bo'yicha
+        // emas. Ro'yxat endi fan turiga qarab tartiblangan, ya'ni birinchi
+        // qator «eng yaxshi» degani EMAS.
         $bor = array_values(array_filter($d->fanlar, fn($f) => $f['foiz'] !== null));
         if ($bor) {
             $d->jami->kuchli = $bor[0];
-            $d->jami->sust = $bor[count($bor) - 1];
+            $d->jami->sust = $bor[0];
+            foreach ($bor as $f) {
+                if ($f['foiz'] > $d->jami->kuchli['foiz']) {
+                    $d->jami->kuchli = $f;
+                }
+                if ($f['foiz'] < $d->jami->sust['foiz']) {
+                    $d->jami->sust = $f;
+                }
+            }
         }
         return $d;
     }

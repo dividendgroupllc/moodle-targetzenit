@@ -1518,16 +1518,21 @@ class exam {
             $shart[] = 'e.termname = :chorak';
             $params['chorak'] = $termname;
         }
-
-        return $DB->get_records_sql("
-            SELECT s.id AS sittingid, e.id AS examid, e.turi, e.name, e.shakli,
+        $maydonlar = "s.id AS sittingid, e.id AS examid, e.turi, e.name, e.shakli,
                    COALESCE(s.examdate, e.examdate) AS sana,
                    COALESCE(s.starttime, e.starttime) AS vaqt,
                    COALESCE(s.room, e.room) AS xona,
                    e.duration, e.maxscore, e.termname, e.subjectkey,
                    s.status AS sitting_status,
                    c.fullname AS coursename, c.idnumber AS courseidnumber,
-                   r.score, r.holat, r.capped, r.retake
+                   r.score, r.holat, r.capped, r.retake";
+
+        // (1) YOZILISHGA TAYANGAN QATORLAR — o'quvchi HOZIR qaysi guruhlarda
+        //     bo'lsa, o'sha guruhlarning baholashlari. Ball bo'lmasa ham
+        //     qator keladi: «guruh test topshirdi, bu o'quvchi qatnashmadi»
+        //     degan holatni faqat shu yo'l ko'rsata oladi.
+        $rows = $DB->get_records_sql("
+            SELECT $maydonlar
               FROM {local_targetzenit_exam_sitting} s
               JOIN {local_targetzenit_exam} e ON e.id = s.examid
               JOIN {course} c ON c.id = s.courseid
@@ -1537,5 +1542,33 @@ class exam {
                 ON r.sittingid = s.id AND r.studentid = ue.userid
              WHERE " . implode(' AND ', $shart) . " AND ue.status = 0
           ORDER BY COALESCE(s.examdate, e.examdate) DESC, e.id DESC", $params);
+
+        // (2) NATIJAGA TAYANGAN QATORLAR — KIRITILGAN BALL YO'QOLMASLIGI UCHUN.
+        //
+        // 2026-11-14 da chiqqan muammo: ball setkada 8.9 / 12.6 turibdi,
+        // hisobotda esa yo'q. Sabab — (1) FAOL yozilishni talab qiladi
+        // (`ue.status = 0`), kurs sinxroni esa jadvalda yo'q guruhlarda
+        // yozilishni SUSPEND qiladi (prodda 42 ta shunday bo'lgan). Natijada
+        // ball bazada turganda ham uning qatori butunlay yo'qolardi va
+        // o'rnida boshqa guruhning bo'sh qatori «Qatnashmagan» bo'lib
+        // ko'rinardi.
+        //
+        // QOIDA: KIRITILGAN BALL — FAKT. U yozilish holatiga, guruh
+        // almashganiga yoki jadvalga bog'liq bo'lmasligi kerak. Shuning
+        // uchun natijalar ALOHIDA, yozilishsiz o'qiladi va (1) ning ustiga
+        // qo'yiladi (kalit — `sittingid`, ya'ni dublikat bo'lmaydi).
+        $rows2 = $DB->get_records_sql("
+            SELECT $maydonlar
+              FROM {local_targetzenit_exam_result} r
+              JOIN {local_targetzenit_exam_sitting} s ON s.id = r.sittingid
+              JOIN {local_targetzenit_exam} e ON e.id = s.examid
+              JOIN {course} c ON c.id = s.courseid
+             WHERE " . implode(' AND ', $shart) . " AND r.studentid = :u
+          ORDER BY COALESCE(s.examdate, e.examdate) DESC, e.id DESC", $params);
+
+        foreach ($rows2 as $k => $r) {
+            $rows[$k] = $r;
+        }
+        return $rows;
     }
 }

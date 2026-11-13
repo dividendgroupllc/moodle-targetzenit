@@ -3163,20 +3163,20 @@ S = {
         "Результат теста по предметам",
     ),
     "hr_chart_hint": (
-        "Subjects are ordered from the strongest to the weakest. The bar is your "
-        "child's result, the triangle mark is the class average in the same test.",
-        "Fanlar eng kuchlisidan eng sustigacha tartiblangan. Ustun - farzandingiz "
-        "natijasi, uchburchak belgi - shu testdagi sinf o'rtachasi.",
-        "Предметы расположены от самого сильного к самому слабому. Столбец - "
-        "результат вашего ученика, треугольник - средний балл класса в том же тесте.",
+        "The bar is your child's result, the triangle mark is the class average "
+        "in the same test. The order of subjects is the same on every report.",
+        "Ustun - farzandingiz natijasi, uchburchak belgi - shu testdagi sinf "
+        "o'rtachasi. Fanlar ketma-ketligi hamma hisobotda bir xil.",
+        "Столбец - результат вашего ученика, треугольник - средний балл класса "
+        "в том же тесте. Порядок предметов одинаков во всех отчётах.",
     ),
     "hr_chart_hint_nocls": (
-        "Subjects are ordered from the strongest to the weakest; the bar shows "
-        "the percentage of correct answers.",
-        "Fanlar eng kuchlisidan eng sustigacha tartiblangan; ustun to'g'ri "
-        "javoblar foizini ko'rsatadi.",
-        "Предметы расположены от самого сильного к самому слабому; столбец "
-        "показывает процент правильных ответов.",
+        "The bar shows the percentage of correct answers. The order of subjects "
+        "is the same on every report.",
+        "Ustun to'g'ri javoblar foizini ko'rsatadi. Fanlar ketma-ketligi hamma "
+        "hisobotda bir xil.",
+        "Столбец показывает процент правильных ответов. Порядок предметов "
+        "одинаков во всех отчётах.",
     ),
     "hr_radar_title": (
         "Balance across subjects",
