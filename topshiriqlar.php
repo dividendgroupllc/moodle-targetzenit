@@ -107,8 +107,8 @@ echo html_writer::end_div();
 echo html_writer::start_tag('table', ['class' => 'tz-dir-table']);
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr');
-foreach (['tp_group', 'tp_name', 'tp_due', 'tp_progress', 'tp_visible',
-		'tp_actions'] as $k) {
+foreach (['tp_group', 'tp_kind', 'tp_name', 'tp_due', 'tp_progress',
+		'tp_visible', 'tp_actions'] as $k) {
 	echo html_writer::tag('th', $t($k));
 }
 echo html_writer::end_tag('tr');
@@ -125,8 +125,13 @@ foreach ($rows as $r) {
 	}
 	echo html_writer::tag('td', $guruh);
 
-	// --- nomi + belgilar
-	$nom = html_writer::link(topshiriq::baholash_url($r->cmid), s($r->name));
+	// --- turi: odam «topshiriq» deb ikkisini ham ataydi, lekin natijalar
+	// va sozlamalar ekranlari boshqa — turni ko'rsatish shart.
+	echo html_writer::tag('td',
+		ui::chip('none', $t($r->turi === 'quiz' ? 'tp_kind_quiz' : 'tp_kind_assign')));
+
+	// --- nomi + belgilar (nom faoliyatning o'z sahifasiga)
+	$nom = html_writer::link(topshiriq::ochish_url($r), s($r->name));
 	$belgi = '';
 	if (!$r->visible) {
 		// Yashirin faoliyat: o'quvchi uni umuman ko'rmaydi. Bu «draft»
@@ -165,13 +170,23 @@ foreach ($rows as $r) {
 	}
 	echo html_writer::tag('td', ui::chip($holat, $matn, $t($kalit)));
 
-	// --- amallar: ikkisi ham Moodle yadrosining sahifasi
-	$amal = html_writer::link(topshiriq::baholash_url($r->cmid), $t('tp_grade'),
+	// --- amallar: hammasi Moodle yadrosining sahifalariga olib boradi.
+	// Bu sahifa o'zi hech narsa o'zgartirmaydi — yozish mantiqi yadroda
+	// qoladi, biz faqat TO'G'RI manzilni beramiz (odam tab qidirmasin).
+	$modctx = context_module::instance($r->cmid);
+	$amal = html_writer::link(topshiriq::ochish_url($r), $t('tp_open'),
 		['class' => 'tz-tp-btn']);
-	if (has_capability('moodle/course:manageactivities',
-			context_module::instance($r->cmid))) {
+	$amal .= ' ' . html_writer::link(topshiriq::baholash_url($r),
+		$t($r->turi === 'quiz' ? 'tp_results' : 'tp_grade'),
+		['class' => 'tz-tp-btn']);
+	if (has_capability('moodle/course:manageactivities', $modctx)) {
 		$amal .= ' ' . html_writer::link(topshiriq::sozlama_url($r->cmid),
 			$t('tp_settings'), ['class' => 'tz-tp-btn']);
+		// O'chirish Moodle'ning tasdiqlash sahifasiga boradi, darhol
+		// o'chirmaydi — shuning uchun oddiy havola yetarli.
+		$amal .= ' ' . html_writer::link(topshiriq::ochirish_url($r->cmid),
+			$t('tp_delete'), ['class' => 'tz-tp-btn tz-tp-del',
+				'title' => $t('tp_deletehint')]);
 	}
 	echo html_writer::tag('td', $amal);
 

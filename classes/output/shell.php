@@ -215,13 +215,18 @@ class shell {
         $u = fn(string $fayl, array $p = []) =>
             new \moodle_url('/local/targetzenit/' . $fayl, $p);
 
+        // Baholash sahifasi fan o'qituvchisiga ham ochiq (o'z guruhlari),
+        // lekin YARATISH faqat koordinatorda — aks holda menyu o'qituvchini
+        // ruxsati yo'q formaga olib borardi.
         $asosiy = [
             ['royxat', $t('bh_navall'), $u('baholash.php', ['view' => 'royxat'])],
-            ['yangi', $t('bh_new'), $u('baholash.php', ['view' => 'yangi'])],
-            // Moodle topshiriqlari (mod_assign) — summativ baholashdan
-            // ALOHIDA tizim, lekin koordinator ikkisini ham yuritadi.
-            ['topshiriq', $t('tp_nav'), $u('topshiriqlar.php')],
         ];
+        if (has_capability('local/targetzenit:manageexams', $ctx)) {
+            $asosiy[] = ['yangi', $t('bh_new'), $u('baholash.php', ['view' => 'yangi'])];
+        }
+        // Moodle topshiriqlari (mod_assign/mod_quiz) — summativ baholashdan
+        // ALOHIDA tizim, lekin ikkisini bir odam yuritadi.
+        $asosiy[] = ['topshiriq', $t('tp_nav'), $u('topshiriqlar.php')];
         $boshqa = [
             ['jadval', $t('timetable'), $u('index.php')],
         ];

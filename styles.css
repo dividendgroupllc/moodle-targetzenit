@@ -1242,3 +1242,14 @@
 .tz-tp-btn:hover { background: var(--tz-line); text-decoration: none; }
 .tz-dir-empty { background: var(--tz-card); border: 1px solid var(--tz-line);
     border-radius: 12px; padding: 22px; text-align: center; color: var(--tz-ink-2); }
+.tz-tp-del { color: var(--tz-critical); border-color: var(--tz-critical-bg); }
+.tz-tp-del:hover { background: var(--tz-critical-bg); }
+
+/* Arxiv kurs — o'qituvchi sharh yozgan, lekin endi jadvalida yo'q.
+   Ko'zga tashlanib turishi kerak: «nega yangi sharh yozolmayman» degan
+   savol javobsiz qolmasligi uchun. */
+.tz-sh-tabarx { border-style: dashed; opacity: .9; }
+.tz-sh-arxchip { display: inline-block; margin-left: 5px; padding: 0 6px;
+    border-radius: 8px; background: var(--tz-warning-bg);
+    color: var(--tz-warning); font-size: .68rem; font-weight: 700;
+    white-space: nowrap; }

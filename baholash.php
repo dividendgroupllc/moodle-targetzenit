@@ -25,7 +25,20 @@ use local_targetzenit\timetable;
 require_login();
 
 $context = context_system::instance();
-require_capability('local/targetzenit:manageexams', $context);
+
+// IKKI AUDITORIYA, BITTA SAHIFA:
+//   koordinator (`manageexams`) — yaratadi, tahrirlaydi, hammasini ko'radi;
+//   fan o'qituvchisi (`gradeexam` KURS kontekstida) — faqat o'z guruhlarining
+//   natijasini ko'radi va ball kiritadi.
+// Nizom shuni talab qiladi: summativ ishni fan o'qituvchisi tekshiradi.
+// Shuning uchun sahifani ikkiga bo'lish emas, QAMROVNI kesish to'g'ri —
+// aks holda ikki ekran vaqt o'tib bir-biridan ajralib ketardi.
+$boshqarish = has_capability('local/targetzenit:manageexams', $context);
+$mening = $boshqarish ? null : exam::mening_kurslarim($USER->id);
+if (!$boshqarish && !$mening) {
+    throw new moodle_exception('nopermissions', 'error', '',
+        get_string('bh_nav', 'local_targetzenit'));
+}
 
 $view = optional_param('view', 'royxat', PARAM_ALPHA);
 $id = optional_param('id', 0, PARAM_INT);
@@ -35,6 +48,10 @@ $fan = optional_param('fan', '', PARAM_TEXT);
 $sitting = optional_param('sitting', 0, PARAM_INT);
 
 if (!in_array($view, ['royxat', 'yangi', 'jadval', 'ball'], true)) {
+    $view = 'royxat';
+}
+// Yaratish/tahrirlash formasi — faqat koordinator.
+if ($view === 'yangi' && !$boshqarish) {
     $view = 'royxat';
 }
 
@@ -71,6 +88,8 @@ $impblokchoose = null;
 if ($amal !== '' && confirm_sesskey()) {
 
     if ($amal === 'saqla') {
+        // Baholash yaratish/tahrirlash — faqat koordinator.
+        require_capability('local/targetzenit:manageexams', $context);
         // --- baholashni yaratish / tahrirlash
         $d = (object) [
             'id' => optional_param('examid', 0, PARAM_INT),
@@ -109,6 +128,8 @@ if ($amal !== '' && confirm_sesskey()) {
     }
 
     if ($amal === 'guruhlar' && $id) {
+        // Guruh biriktirish — boshqaruv amali, fan o'qituvchisi uchun emas.
+        require_capability('local/targetzenit:manageexams', $context);
         $n = exam::ensure_sittings($id);
         redirect($url(['view' => 'jadval', 'id' => $id]),
             $t('bh_groupsadded', (object) $n), null,
@@ -116,6 +137,8 @@ if ($amal !== '' && confirm_sesskey()) {
     }
 
     if ($amal === 'jadval' && $id) {
+        // Imtihon jadvali (guruh x sana x vaqt x xona) — koordinator ishi.
+        require_capability('local/targetzenit:manageexams', $context);
         // --- imtihon jadvalini saqlash: har guruhga sana/vaqt/xona
         //
         // QOIDA: forma massiv kalitlari faqat [a-z0-9_-] bo'lishi kerak —
@@ -260,6 +283,7 @@ if ($amal !== '' && confirm_sesskey()) {
     }
 
     if ($amal === 'status' && $id) {
+        require_capability('local/targetzenit:manageexams', $context);
         exam::status($id, optional_param('yangistatus', '', PARAM_ALPHA));
         redirect($url(['view' => 'jadval', 'id' => $id]),
             $t('bh_saved'), null, \core\output\notification::NOTIFY_SUCCESS);
@@ -290,8 +314,10 @@ $darajalar = exam::darajalar($year);
 // ================================================================== RO'YXAT
 if ($view === 'royxat') {
 
-    echo html_writer::div(html_writer::link($url(['view' => 'yangi']),
-        '+ ' . $t('bh_new'), ['class' => 'btn btn-primary']), 'mb-3');
+    if ($boshqarish) {
+        echo html_writer::div(html_writer::link($url(['view' => 'yangi']),
+            '+ ' . $t('bh_new'), ['class' => 'btn btn-primary']), 'mb-3');
+    }
 
     // --- filtrlar (yozuvlar lentasi bilan bir xil ko'rinish)
     echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'tz-dir-filters',
@@ -315,8 +341,11 @@ if ($view === 'royxat') {
             $t('rec_reset'), ['class' => 'btn btn-sm btn-link']), 'tz-dir-f');
     echo html_writer::end_tag('form');
 
-    $rows = exam::royxat($year, ['termname' => $chorak, 'turi' => $turi,
-                                 'subjectkey' => $fan]);
+    $filtr = ['termname' => $chorak, 'turi' => $turi, 'subjectkey' => $fan];
+    if ($mening) {
+        $filtr['courseids'] = $mening;   // o'qituvchi qamrovi
+    }
+    $rows = exam::royxat($year, $filtr);
 
     // Plitalar ro'yxatning O'ZIDAN hisoblanadi — alohida so'rov yozilsa u
     // filtrdan uzilib qoladi.
@@ -408,6 +437,17 @@ if ($view === 'yangi') {
 
     echo html_writer::start_div('tz-bh-grid');
 
+    // NOM — ERKIN MATN, qoida esa TUR bo'yicha yuradi.
+    //
+    // Nega ikkisi ayrim: maktab ishni «Oktabr imtihon» deb ataydi, hisob
+    // esa nizomga bog'langan (CHSB = chorakning 40%). Nomni turga
+    // bog'lasak, nomni o'zgartirish hisobni buzardi. Bo'sh qoldirilsa
+    // `taklif_nom()` avtomatik nom yasaydi.
+    echo $maydon($t('bh_name'), html_writer::empty_tag('input',
+        ['type' => 'text', 'name' => 'f_nom', 'maxlength' => 255,
+         'class' => 'form-control', 'value' => $e ? $e->name : '',
+         'placeholder' => $t('bh_nameph')]), $t('bh_namehint'));
+
     echo $maydon($t('bh_type'), html_writer::select(exam::turlar_menu(), 'f_turi',
         $e ? $e->turi : 'CHSB', false), $t('bh_typehint'));
 
@@ -474,8 +514,9 @@ if ($view === 'jadval') {
     echo html_writer::div(
         html_writer::link($url(['view' => 'royxat']), '← ' . $t('bh_navall'),
             ['class' => 'btn btn-sm btn-outline-secondary'])
-        . ' ' . html_writer::link($url(['view' => 'yangi', 'id' => $e->id]),
-            $t('bh_edit'), ['class' => 'btn btn-sm btn-outline-secondary']),
+        . ($boshqarish ? ' ' . html_writer::link(
+            $url(['view' => 'yangi', 'id' => $e->id]), $t('bh_edit'),
+            ['class' => 'btn btn-sm btn-outline-secondary']) : ''),
         'mb-2');
 
     echo html_writer::tag('h4', s($e->name), ['class' => 'tz-dir-cardtitle'])
@@ -511,6 +552,11 @@ if ($view === 'jadval') {
     }
 
     $sittings = exam::sittings((int) $e->id);
+    if ($mening) {
+        // O'qituvchi boshqa guruhning imtihon jadvalini ko'rmaydi.
+        $sittings = array_filter($sittings,
+            fn($s) => in_array((int) $s->courseid, $mening, true));
+    }
 
     echo html_writer::start_tag('form', ['method' => 'post',
         'action' => (new moodle_url('/local/targetzenit/baholash.php'))->out(false)]);
@@ -597,17 +643,24 @@ if ($view === 'jadval') {
     echo html_writer::end_tag('form');
 
     // --- Guruhlarni qayta biriktirish (yangi guruh qo'shilgan bo'lsa)
-    echo html_writer::div(html_writer::link(
-        $url(['view' => 'jadval', 'id' => $e->id, 'amal' => 'guruhlar',
-              'sesskey' => sesskey()]),
-        $t('bh_refreshgroups'), ['class' => 'btn btn-sm btn-outline-secondary'])
-        . ' ' . html_writer::tag('span', $t('bh_refreshhint'),
-            ['class' => 'tz-dir-sub']), 'mt-4');
+    if ($boshqarish) {
+        echo html_writer::div(html_writer::link(
+            $url(['view' => 'jadval', 'id' => $e->id, 'amal' => 'guruhlar',
+                  'sesskey' => sesskey()]),
+            $t('bh_refreshgroups'), ['class' => 'btn btn-sm btn-outline-secondary'])
+            . ' ' . html_writer::tag('span', $t('bh_refreshhint'),
+                ['class' => 'tz-dir-sub']), 'mt-4');
+    }
 }
 
 // ========================================================= BALL SETKASI
 if ($view === 'ball') {
     $sit = $sitting ? exam::sitting($sitting) : null;
+    // Boshqa guruhning ball setkasiga `sitting=N` ni qo'lda yozib kirishni
+    // to'samiz. Forma ko'rinmasligi himoya EMAS.
+    if ($sit && !exam::sitting_ruxsat($sit)) {
+        $sit = null;
+    }
     if (!$sit) {
         echo $OUTPUT->notification($t('bh_noexam'), 'warn');
         echo html_writer::end_div();

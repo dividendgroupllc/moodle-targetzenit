@@ -34,15 +34,37 @@ class topshiriq {
 	 *               jami, uyvazifa (bool)
 	 */
 	public static function royxat(?string $year, ?array $courseids = null): array {
+		$out = array_merge(
+			self::turi_boyicha('assign', $year, $courseids),
+			self::turi_boyicha('quiz', $year, $courseids)
+		);
+		// Muddat bo'yicha kamayish tartibida — yaqin ish yuqorida.
+		usort($out, fn($a, $b) => ($b->duedate <=> $a->duedate)
+			?: strcmp($a->guruh, $b->guruh));
+		return $out;
+	}
+
+	/**
+	 * Bitta faoliyat turi bo'yicha ro'yxat.
+	 *
+	 * NEGA IKKI TUR: odam «topshiriq» deganda Moodle'ning `assign` ini ham,
+	 * `quiz` ini ham tushunadi va ularni ayirmaydi. Faqat `assign` ni
+	 * ko'rsatganda sahifa «hech narsa yo'q» deb turardi, holbuki maktabda
+	 * test (quiz) yaratilgan edi. Ikki jadval tuzilishi boshqa, shuning
+	 * uchun so'rov ham alohida, lekin natija BIR XIL shaklda qaytadi.
+	 *
+	 * @param string $modul 'assign' yoki 'quiz'
+	 */
+	protected static function turi_boyicha(string $modul, ?string $year,
+											?array $courseids): array {
 		global $DB;
 
-		$modid = $DB->get_field('modules', 'id', ['name' => 'assign']);
+		$modid = $DB->get_field('modules', 'id', ['name' => $modul]);
 		if (!$modid) {
-			return [];   // mod_assign o'chirilgan
+			return [];   // modul o'chirilgan
 		}
 
 		$params = ['modid' => $modid];
-		$where = '';
 		if ($courseids !== null) {
 			if (!$courseids) {
 				return [];
@@ -59,39 +81,53 @@ class topshiriq {
 			$params['siteid'] = SITEID;
 		}
 
-		// Sanoqlar subquery'da: har topshiriq uchun alohida so'rov qilsak
-		// 300 topshiriq = 900 so'rov bo'lardi.
-		//
-		// `latest = 1` — Moodle bir o'quvchining bir necha urinishini
-		// saqlaydi, bizga oxirgisi kerak. `grade >= 0` — baholanmagan
-		// qator `-1` bilan yoziladi, `IS NOT NULL` yolg'iz yetmaydi.
-		$sql = "SELECT cm.id AS cmid, a.id AS assignid, a.name, a.duedate,
-					   a.allowsubmissionsfromdate, a.submissiondrafts,
-					   a.markingworkflow, a.grade AS bahoturi,
+		if ($modul === 'assign') {
+			// `latest = 1` — bir o'quvchining bir necha urinishi bo'ladi.
+			// `grade >= 0` — baholanmagan qator -1 bilan yoziladi.
+			$qism = "a.duedate, a.allowsubmissionsfromdate AS ochilish,
+					 a.submissiondrafts, a.markingworkflow,
+					 (SELECT COUNT(DISTINCT s.userid) FROM {assign_submission} s
+					   WHERE s.assignment = a.id AND s.latest = 1
+						 AND s.status = 'submitted') AS topshirgan,
+					 (SELECT COUNT(DISTINCT s.userid) FROM {assign_submission} s
+					   WHERE s.assignment = a.id AND s.latest = 1
+						 AND s.status = 'draft') AS qoralama,
+					 (SELECT COUNT(DISTINCT g.userid) FROM {assign_grades} g
+					   WHERE g.assignment = a.id AND g.grade IS NOT NULL
+						 AND g.grade >= 0) AS baholangan,
+					 (SELECT COUNT(DISTINCT uf.userid) FROM {assign_user_flags} uf
+					   WHERE uf.assignment = a.id
+						 AND uf.workflowstate = 'released') AS elon";
+		} else {
+			// Quiz'da «qoralama» = boshlangan, tugatilmagan urinish
+			// (`inprogress`/`overdue`) — assign'dagi draft bilan bir xil ma'no.
+			// Marking workflow quiz'da YO'Q, shuning uchun 0.
+			$qism = "a.timeclose AS duedate, a.timeopen AS ochilish,
+					 0 AS submissiondrafts, 0 AS markingworkflow,
+					 (SELECT COUNT(DISTINCT qa.userid) FROM {quiz_attempts} qa
+					   WHERE qa.quiz = a.id AND qa.preview = 0
+						 AND qa.state = 'finished') AS topshirgan,
+					 (SELECT COUNT(DISTINCT qa.userid) FROM {quiz_attempts} qa
+					   WHERE qa.quiz = a.id AND qa.preview = 0
+						 AND qa.state IN ('inprogress', 'overdue')) AS qoralama,
+					 (SELECT COUNT(DISTINCT qg.userid) FROM {quiz_grades} qg
+					   WHERE qg.quiz = a.id AND qg.grade IS NOT NULL) AS baholangan,
+					 0 AS elon";
+		}
+
+		$sql = "SELECT cm.id AS cmid, a.id AS instanceid, a.name, a.grade AS bahoturi,
+					   $qism,
 					   cm.visible, c.id AS courseid, c.fullname AS coursename,
 					   c.idnumber, c.showgrades, gi.hidden AS itemhidden,
-					   (SELECT COUNT(DISTINCT uf.userid) FROM {assign_user_flags} uf
-						 WHERE uf.assignment = a.id
-						   AND uf.workflowstate = 'released') AS elon,
-					   (SELECT COUNT(DISTINCT s.userid) FROM {assign_submission} s
-						 WHERE s.assignment = a.id AND s.latest = 1
-						   AND s.status = 'submitted') AS topshirgan,
-					   (SELECT COUNT(DISTINCT s.userid) FROM {assign_submission} s
-						 WHERE s.assignment = a.id AND s.latest = 1
-						   AND s.status = 'draft') AS qoralama,
-					   (SELECT COUNT(DISTINCT g.userid) FROM {assign_grades} g
-						 WHERE g.assignment = a.id AND g.grade IS NOT NULL
-						   AND g.grade >= 0) AS baholangan,
 					   l.id AS lessonid
-				  FROM {assign} a
+				  FROM {" . $modul . "} a
 				  JOIN {course_modules} cm ON cm.instance = a.id AND cm.module = :modid
 				  JOIN {course} c ON c.id = cm.course
-			 LEFT JOIN {local_targetzenit_lesson} l ON l.assigncmid = cm.id
 			 LEFT JOIN {grade_items} gi ON gi.courseid = c.id
-					   AND gi.itemtype = 'mod' AND gi.itemmodule = 'assign'
+					   AND gi.itemtype = 'mod' AND gi.itemmodule = '" . $modul . "'
 					   AND gi.iteminstance = a.id AND gi.itemnumber = 0
-				 WHERE $where
-			  ORDER BY a.duedate DESC, c.fullname ASC";
+			 LEFT JOIN {local_targetzenit_lesson} l ON l.assigncmid = cm.id
+				 WHERE $where";
 
 		$rows = $DB->get_records_sql($sql, $params);
 		if (!$rows) {
@@ -105,10 +141,11 @@ class topshiriq {
 		foreach ($rows as $r) {
 			list($guruh, $fan) = self::guruh_fan((string) $r->idnumber, (string) $r->coursename);
 			$out[] = (object) [
+				'turi' => $modul,
 				'cmid' => (int) $r->cmid,
 				'name' => (string) $r->name,
 				'duedate' => (int) $r->duedate,
-				'ochilish' => (int) $r->allowsubmissionsfromdate,
+				'ochilish' => (int) $r->ochilish,
 				'draftrejim' => (int) $r->submissiondrafts,
 				'visible' => (int) $r->visible,
 				'courseid' => (int) $r->courseid,
@@ -209,7 +246,8 @@ class topshiriq {
 	 * ko'rib chalkashadi.
 	 *
 	 * @param object $r `royxat()` qatori
-	 * @return array [holat, sabab_kaliti] — holat: ok|warning|critical|none
+	 * @return array [holat, sabab_kaliti] — holat chip klassi:
+	 *         good|warning|critical|none (`ui::chip()` konvensiyasi)
 	 */
 	public static function korinish(\stdClass $r): array {
 		if ($r->bahoturi == 0) {
@@ -232,7 +270,7 @@ class topshiriq {
 		if (!$r->baholangan) {
 			return ['none', 'tp_vis_nomarks'];
 		}
-		return ['ok', 'tp_vis_ok'];
+		return ['good', 'tp_vis_ok'];
 	}
 
 	/**
@@ -260,14 +298,42 @@ class topshiriq {
 		return (object) ['jami' => $assign, 'kurslar' => $kurslar, 'quiz' => $quiz];
 	}
 
-	/** Baholash sahifasi (Moodle yadrosi). */
-	public static function baholash_url(int $cmid): \moodle_url {
-		return new \moodle_url('/mod/assign/view.php',
-			['id' => $cmid, 'action' => 'grading']);
+	/** Faoliyatning o'z sahifasi — «ochish». */
+	public static function ochish_url(\stdClass $r): \moodle_url {
+		return new \moodle_url('/mod/' . $r->turi . '/view.php', ['id' => $r->cmid]);
 	}
 
-	/** Sozlamalar sahifasi (muddat shu yerda o'zgaradi). */
+	/**
+	 * Natijalar/baholash sahifasi — tur bo'yicha BOSHQA manzil.
+	 *
+	 * Moodle 4.3+ da assign'dagi «View all submissions» tugmasi olib
+	 * tashlangan va tab'ga ko'chgan, quiz'da esa natijalar umuman boshqa
+	 * sahifada (`report.php`). Shuning uchun to'g'ri manzilni shu yerda
+	 * qotib yozamiz — odam tab qidirmasligi kerak.
+	 */
+	public static function baholash_url(\stdClass $r): \moodle_url {
+		if ($r->turi === 'quiz') {
+			return new \moodle_url('/mod/quiz/report.php',
+				['id' => $r->cmid, 'mode' => 'overview']);
+		}
+		return new \moodle_url('/mod/assign/view.php',
+			['id' => $r->cmid, 'action' => 'grading']);
+	}
+
+	/** Sozlamalar — muddat shu yerda o'zgaradi (ikki tur uchun bir xil). */
 	public static function sozlama_url(int $cmid): \moodle_url {
 		return new \moodle_url('/course/modedit.php', ['update' => $cmid, 'return' => 1]);
+	}
+
+	/**
+	 * O'chirish — Moodle'ning TASDIQLASH sahifasiga olib boradi.
+	 *
+	 * Ataylab to'g'ridan-to'g'ri o'chirmaydi: `sesskey` bo'lsa ham Moodle
+	 * avval «rostdan o'chirilsinmi?» deb so'raydi. Buzg'unchi amal bir
+	 * bosishda bajarilmasligi kerak.
+	 */
+	public static function ochirish_url(int $cmid): \moodle_url {
+		return new \moodle_url('/course/mod.php',
+			['delete' => $cmid, 'sesskey' => sesskey()]);
 	}
 }

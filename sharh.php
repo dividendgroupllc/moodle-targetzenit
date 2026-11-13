@@ -40,6 +40,24 @@ shell::setup($PAGE, get_string('sh_nav', 'local_targetzenit'));
 $year = timetable::current_year();
 $kurslar = $year ? journal::my_courses((int) $USER->id, $year) : [];
 
+// ARXIV KURSLAR — o'qituvchi SHARH YOZGAN, lekin endi jadvalida yo'q.
+//
+// NEGA KERAK (2026-11-13 da chiqqan muammo): Frappe kurs sinxroni jadvalda
+// yo'q (guruh x fan) juftliklaridan o'qituvchini OLIB TASHLAYDI (jurnalda
+// «Jadvalda yo'q, lekin kursi bor guruh: 63 ta»; 2026-11-12 da 42 yozilish
+// suspend qilingan). `journal::my_courses()` faol yozilishni talab qilgani
+// uchun o'qituvchi kecha yozgan sharhlarini bugun KO'RMAY QOLDI.
+//
+// QOIDA: «men qaysi guruhga dars beraman» va «men nima yozganman» — ikki
+// boshqa savol. Jadval birinchisini hal qiladi, ikkinchisini YOPMAYDI.
+$arxiv = [];
+foreach (sharh::mening_kurslarim((int) $USER->id) as $c) {
+    if (!isset($kurslar[(int) $c->id])) {
+        $arxiv[(int) $c->id] = $c;
+        $kurslar[(int) $c->id] = $c->fullname;
+    }
+}
+
 // Tanlangan kurs ro'yxatda bo'lishi SHART: `cid` ni qo'lda o'zgartirib
 // begona kursni ochishga yo'l qo'yilmaydi (yozish tekshiruvi `sharh::add()`
 // da ham bor, lekin ro'yxatni ham ko'rsatmaslik kerak).
@@ -131,15 +149,37 @@ $idnumberlar = $kurslar
 echo html_writer::start_div('tz-dir-tabs tz-sh-tabs');
 foreach ($kurslar as $cid => $nom) {
     $yorliq = sharh::kurs_yorlig($idnumberlar[$cid]->idnumber ?? '', $nom);
+    // Arxiv kurs ko'zga tashlanib turishi kerak: o'qituvchi NEGA u yerda
+    // yangi sharh yoza olmayotganini tushunishi uchun.
+    $arxivmi = isset($arxiv[(int) $cid]);
     echo html_writer::link(
         new moodle_url('/local/targetzenit/sharh.php', ['cid' => $cid]),
-        s($yorliq),
-        ['class' => 'tz-dir-tab' . ($courseid === (int) $cid ? ' tz-on' : '')]);
+        s($yorliq) . ($arxivmi
+            ? ' ' . html_writer::tag('span', get_string('sh_archived', 'local_targetzenit'),
+                ['class' => 'tz-sh-arxchip']) : ''),
+        ['class' => 'tz-dir-tab' . ($courseid === (int) $cid ? ' tz-on' : '')
+            . ($arxivmi ? ' tz-sh-tabarx' : '')]);
 }
 echo html_writer::end_div();
 
 $context = context_course::instance($courseid);
-require_capability('local/targetzenit:teach', $context);
+
+// RUXSAT: shu kursda dars o'tadi YOKI shu kursga o'zi sharh yozgan.
+// Ikkinchi yo'l yozilish suspend qilinganda ham ochiq qoladi — o'qituvchi
+// o'z so'zini ko'rishdan mahrum bo'lmasligi kerak. Yozish esa baribir
+// `teach` talab qiladi (`sharh::add()` ichida), ya'ni arxiv kursda forma
+// o'zi chizilmaydi.
+if (!sharh::kurs_korish_mumkinmi($courseid)) {
+    throw new moodle_exception('nopermissions', 'error', '',
+        get_string('sh_nocourseaccess', 'local_targetzenit'));
+}
+
+// Arxiv kursda nima bo'layotganini OCHIQ aytamiz, aks holda «nega yozolmayman»
+// degan savol javobsiz qoladi.
+if (isset($arxiv[$courseid])) {
+    echo $OUTPUT->notification(get_string('sh_archivednotice', 'local_targetzenit'),
+        'info');
+}
 
 $oquvchilar = lesson::students($context);
 

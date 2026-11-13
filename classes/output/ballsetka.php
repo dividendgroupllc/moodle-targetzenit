@@ -482,6 +482,21 @@ class ballsetka {
         if (!$sit) {
             throw new \moodle_exception('bh_noexam', 'local_targetzenit');
         }
+
+        // RUXSAT SHU YERDA TEKSHIRILADI, SAHIFADA EMAS.
+        //
+        // Nega: `sitting` so'rov parametri — odam uni qo'lda o'zgartirib
+        // boshqa guruhning setkasiga yozishi mumkin. Sahifa avval butunlay
+        // `manageexams` bilan to'silgandi va shu tekshiruv ortiqcha
+        // ko'rinardi; sahifa fan o'qituvchisiga ochilgandan keyin esa
+        // ANIQ KERAK bo'ldi. Yozuvchi funksiya o'z ruxsatini o'zi
+        // tekshirishi kerak — «forma ko'rinmasligi himoya emas».
+        if (!exam::sitting_ruxsat($sit)) {
+            throw new \required_capability_exception(
+                \context_course::instance((int) $sit->courseid),
+                'local/targetzenit:gradeexam', 'nopermissions', '');
+        }
+
         $context = \context_course::instance((int) $sit->courseid);
         $oquvchilar = lesson::students($context);
 
@@ -498,7 +513,14 @@ class ballsetka {
         // BALLARDAN OLDIN: chegaralash va tekshiruv yangi maksimalga
         // nisbatan ishlashi kerak, aks holda 18/20 ball 100 ballik shkalada
         // qabul qilinib, keyin maksimal 20 ga tushirilsa — chalkashlik.
+        // MAKSIMAL BALL — BUTUN baholashga tegishli, ya'ni HAMMA guruhning
+        // foizini o'zgartiradi. Shuning uchun uni o'z guruhi setkasidan
+        // fan o'qituvchisi o'zgartira olmaydi: faqat koordinator.
         $setmax = optional_param('setmax', 0, PARAM_INT);
+        if ($setmax > 0 && !has_capability('local/targetzenit:manageexams',
+                \context_system::instance())) {
+            $setmax = 0;
+        }
         if ($setmax > 0) {
             exam::maxscore_ozgartir((int) $sit->examid, $setmax);
             $sit = exam::sitting($sittingid);        // yangilangan maxscore

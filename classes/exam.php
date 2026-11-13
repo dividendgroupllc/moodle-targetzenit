@@ -283,6 +283,16 @@ class exam {
             $shart[] = 'e.examdate <= :to';
             $params['to'] = $filtr['to'];
         }
+        // O'QITUVCHI QAMROVI: faqat o'zi dars beradigan kursda sitting'i
+        // bor baholashlar. Ro'yxatni kesish MAJBURIY — aks holda fan
+        // o'qituvchisi butun maktabning imtihon jadvalini ko'rib qolardi.
+        if (!empty($filtr['courseids'])) {
+            list($in, $p) = $DB->get_in_or_equal($filtr['courseids'],
+                SQL_PARAMS_NAMED, 'oc');
+            $shart[] = "EXISTS (SELECT 1 FROM {local_targetzenit_exam_sitting} ss
+                                 WHERE ss.examid = e.id AND ss.courseid $in)";
+            $params += $p;
+        }
 
         // Sitting va natija sanog'i bitta so'rovda — ro'yxat sahifasida har
         // qator uchun alohida so'rov yozilsa 50 baholash = 100 so'rov.
@@ -473,6 +483,44 @@ class exam {
      * shakli baholashda; guruh va kurs sittingda), shuning uchun bitta
      * so'rovda olinadi.
      */
+    /**
+     * Foydalanuvchi ball kiritadigan/ko'radigan kurslar.
+     *
+     * Manba — `gradeexam` KURS kontekstida: nizom bo'yicha summativ ishni
+     * fan o'qituvchisi tekshiradi, ya'ni ruxsat kursga bog'langan.
+     * Koordinatorda bu ruxsat tizim darajasida bor, shuning uchun unga
+     * bu ro'yxat kerak emas (u hammasini ko'radi).
+     */
+    public static function mening_kurslarim(int $userid): array {
+        $out = [];
+        foreach (enrol_get_users_courses($userid, true, 'id') as $c) {
+            if (has_capability('local/targetzenit:gradeexam',
+                    \context_course::instance($c->id), $userid)) {
+                $out[] = (int) $c->id;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Shu sitting'ga kirish mumkinmi (ball ko'rish/kiritish).
+     *
+     * QOIDA: koordinator — hammasiga; o'qituvchi — faqat o'z kursiga.
+     * Tekshiruv SAHIFADA emas, shu yerda: ball setkasi ikki joydan
+     * chaqiriladi va tekshiruvni takrorlash — unutish demak.
+     */
+    public static function sitting_ruxsat(\stdClass $sit, int $userid = 0): bool {
+        global $USER;
+
+        $userid = $userid ?: (int) $USER->id;
+        if (has_capability('local/targetzenit:manageexams',
+                \context_system::instance(), $userid)) {
+            return true;
+        }
+        return has_capability('local/targetzenit:gradeexam',
+            \context_course::instance((int) $sit->courseid), $userid);
+    }
+
     public static function sitting(int $sittingid): ?\stdClass {
         global $DB;
 

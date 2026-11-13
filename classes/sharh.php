@@ -254,6 +254,52 @@ class sharh {
         return $out;
     }
 
+    /**
+     * Shu o'qituvchi SHARH YOZGAN kurslar: [courseid => record].
+     *
+     * NEGA KERAK — 2026-11-13 da chiqqan muammo. `journal::my_courses()`
+     * FAOL YOZILISHNI (`ue.status = 0`) talab qiladi, Frappe kurs sinxroni
+     * esa jadvalda yo'q (guruh x fan) juftliklaridan o'qituvchini OLIB
+     * TASHLAYDI («Jadvalda yo'q, lekin kursi bor guruh: 63 ta», 2026-11-12
+     * da 42 yozilish suspend qilingan). Natijada o'qituvchi kecha yozgan
+     * sharhlarini bugun KO'RMAY QOLDI — ma'lumot joyida, faqat kurs uning
+     * ro'yxatidan tushib ketgan.
+     *
+     * QOIDA: «men qaysi guruhlarga dars beraman» va «men nima yozganman» —
+     * IKKI BOSHQA SAVOL. Jadval birinchisini hal qiladi, ikkinchisini
+     * HECH QACHON yopmasligi kerak.
+     */
+    public static function mening_kurslarim(int $authorid): array {
+        global $DB;
+
+        return $DB->get_records_sql("
+            SELECT c.id, c.idnumber, c.fullname, COUNT(1) AS soni
+              FROM {local_targetzenit_sharh} s
+              JOIN {course} c ON c.id = s.courseid
+             WHERE s.authorid = :a
+          GROUP BY c.id, c.idnumber, c.fullname
+          ORDER BY c.idnumber ASC", ['a' => $authorid]);
+    }
+
+    /**
+     * Shu odam shu kursning sharhlarini KO'RA oladimi.
+     *
+     * Ikki yo'l: (a) shu kursda dars o'tadi (`teach`), yoki (b) shu kursga
+     * o'zi sharh yozgan. Ikkinchi yo'l yozilish suspend qilinganda ham
+     * ochiq qoladi — o'qituvchi o'z so'zini ko'rishdan mahrum bo'lmasligi
+     * kerak.
+     */
+    public static function kurs_korish_mumkinmi(int $courseid): bool {
+        global $DB, $USER;
+
+        $ctx = \context_course::instance($courseid, IGNORE_MISSING);
+        if ($ctx && has_capability('local/targetzenit:teach', $ctx)) {
+            return true;
+        }
+        return $DB->record_exists('local_targetzenit_sharh',
+            ['courseid' => $courseid, 'authorid' => (int) $USER->id]);
+    }
+
     // =========================================================== TAHRIRLASH
 
     /**

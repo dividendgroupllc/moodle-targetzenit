@@ -2240,6 +2240,11 @@ S = {
         "0 — bankdagi hamma savol. Faqat onlayn shaklda.",
         "0 — все вопросы банка. Только для онлайн-формы.",
     ),
+    "bh_nameph": (
+        "e.g. October exam (leave empty for an automatic name)",
+        "masalan: Oktabr imtixon (bo'sh qoldirsangiz avtomatik nomlanadi)",
+        "например: Октябрьский экзамен (оставьте пустым для автоназвания)",
+    ),
     "bh_namehint": (
         "Leave empty and the system will compose it from the quarter, subject "
         "and class",
@@ -2651,6 +2656,21 @@ S = {
         "Bu kategoriyalar bo'sh qoldi: {$a}. Beshtasi ham to'ldirilishi shart.",
         "Эти категории не заполнены: {$a}. Все пять обязательны.",
     ),
+    "sh_archived": ("not in the timetable", "jadvalda yo'q", "нет в расписании"),
+    "sh_archivednotice": (
+        "This group is no longer in your timetable, so you cannot write new "
+        "reviews here. What you wrote earlier stays visible and is not lost.",
+        "Bu guruh endi sizning jadvalingizda yo'q, shuning uchun bu yerda "
+        "yangi sharh yoza olmaysiz. Avval yozganlaringiz KO'RINIB TURADI va "
+        "yo'qolmagan.",
+        "Эта группа больше не в вашем расписании, поэтому новые отзывы здесь "
+        "написать нельзя. Написанное ранее остаётся видимым и не потеряно.",
+    ),
+    "sh_nocourseaccess": (
+        "You neither teach this group nor have written reviews for it",
+        "Siz bu guruhga dars bermaysiz va unga sharh ham yozmagansiz",
+        "Вы не преподаёте в этой группе и не писали для неё отзывов",
+    ),
     "sh_edit": ("Edit", "Tahrirlash", "Редактировать"),
     "sh_cancel": ("Cancel editing", "Tahrirni bekor qilish", "Отменить редактирование"),
     "sh_savechanges": ("Save the changes", "O'zgarishni saqlash", "Сохранить изменения"),
@@ -2728,18 +2748,15 @@ S = {
         "\"Require students to click submit button\" = No.",
     ),
     "tp_diag": (
-        "Moodle currently holds {$a->jami} assignment(s) across {$a->kurslar} course(s), "
-        "and {$a->quiz} quiz(zes). If you expected to see your work here: an "
-        "<b>Assignment</b> is what this page lists - a <b>Quiz</b> is a different "
-        "activity and will not appear.",
-        "Moodle'da hozir {$a->kurslar} kursda {$a->jami} ta topshiriq (Assignment) "
-        "va {$a->quiz} ta test (Quiz) bor. Agar o'z ishingizni shu yerda ko'rishni "
-        "kutgan bo'lsangiz: bu sahifa <b>Assignment</b> larni ko'rsatadi - "
-        "<b>Quiz</b> boshqa faoliyat va bu yerda chiqmaydi.",
-        "В Moodle сейчас {$a->jami} заданий (Assignment) в {$a->kurslar} курсах и "
-        "{$a->quiz} тестов (Quiz). Если вы ожидали увидеть здесь свою работу: эта "
-        "страница показывает <b>Assignment</b> - <b>Quiz</b> это другой элемент и "
-        "здесь не появится.",
+        "Moodle currently holds {$a->jami} assignment(s) and {$a->quiz} quiz(zes), "
+        "across {$a->kurslar} course(s) with assignments. If you still see nothing, "
+        "the activity may be in a course you cannot access.",
+        "Moodle'da hozir {$a->jami} ta topshiriq (Assignment) va {$a->quiz} ta test "
+        "(Quiz) bor; topshiriqli kurslar soni {$a->kurslar}. Agar hamon hech nima "
+        "ko'rinmasa, faoliyat siz kira olmaydigan kursda bo'lishi mumkin.",
+        "В Moodle сейчас {$a->jami} заданий (Assignment) и {$a->quiz} тестов (Quiz); "
+        "курсов с заданиями: {$a->kurslar}. Если всё ещё ничего не видно, элемент "
+        "может быть в курсе, к которому у вас нет доступа.",
     ),
 
     "tp_visible": ("Student sees grade", "O'quvchi ko'radi", "Ученик видит оценку"),
@@ -2747,7 +2764,7 @@ S = {
     "tp_notvisiblehint": (
         "Assignments where a grade exists but the student cannot see it. "
         "The reason is shown in the \"Student sees grade\" column.",
-        "Baho qo'yilgan, lekin o'quvchi ko'ra olmaydigan topshiriqlar. "
+        "Baho qo'yilgan, lekin o'quvchi ko'ra olmaydigan ishlar. "
         "Sababi \"O'quvchi ko'radi\" ustunida yozilgan.",
         "Задания, где оценка выставлена, но ученик её не видит. "
         "Причина указана в столбце \"Ученик видит оценку\".",
@@ -2766,12 +2783,12 @@ S = {
     ),
     "tp_vis_nograde_s": ("not graded", "baholanmaydi", "без оценки"),
     "tp_vis_nograde": (
-        "This assignment has no grade type set (Grade = None), so it never "
-        "produces a grade. Settings -> Grade -> Type.",
-        "Bu topshiriqda baho turi qo'yilmagan (Grade = None), ya'ni u umuman "
-        "baho bermaydi. Settings -> Grade -> Type.",
-        "У этого задания не задан тип оценки (Grade = None), оценка не "
-        "выставляется вообще. Settings -> Grade -> Type.",
+        "This activity has no grade type set (Grade = None), so it never "
+        "produces a grade. Settings -> Grade.",
+        "Bu faoliyatda baho turi qo'yilmagan (Grade = None), ya'ni u umuman "
+        "baho bermaydi. Settings -> Grade.",
+        "У этого элемента не задан тип оценки (Grade = None), оценка не "
+        "выставляется вообще. Settings -> Grade.",
     ),
     "tp_vis_notreleased_s": ("not released", "e'lon qilinmagan", "не опубликовано"),
     "tp_vis_notreleased": (
@@ -2805,6 +2822,20 @@ S = {
         "bormaydi. Kurs sozlamalari -> Appearance -> Show gradebook to students = Yes.",
         "Оценки отключены для всего курса, ни одна оценка не доходит до ученика. "
         "Настройки курса -> Appearance -> Show gradebook to students = Yes.",
+    ),
+
+    "tp_kind": ("Type", "Turi", "Тип"),
+    "tp_kind_assign": ("Assignment", "Topshiriq", "Задание"),
+    "tp_kind_quiz": ("Quiz", "Test", "Тест"),
+    "tp_open": ("Open", "Ochish", "Открыть"),
+    "tp_results": ("Results", "Natijalar", "Результаты"),
+    "tp_delete": ("Delete", "O'chirish", "Удалить"),
+    "tp_deletehint": (
+        "Opens Moodle's confirmation page - nothing is deleted until you confirm.",
+        "Moodle'ning tasdiqlash sahifasini ochadi - tasdiqlamaguningizcha "
+        "hech nima o'chmaydi.",
+        "Откроет страницу подтверждения Moodle - ничего не удалится, пока вы "
+        "не подтвердите.",
     ),
 
     "tp_group": ("Group", "Guruh", "Группа"),
