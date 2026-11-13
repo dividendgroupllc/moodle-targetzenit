@@ -2602,9 +2602,34 @@ S = {
         "Этим ученикам балл ещё не выставлен",
     ),
     "bh_nostudents": (
-        "No students are enrolled in this course",
-        "Bu kursga o'quvchi yozilmagan",
-        "В этот курс ученики не записаны",
+        "No students are enrolled in this group, so scores cannot be entered",
+        "Bu guruhga o'quvchi yozilmagan — ball kiritib bo'lmaydi",
+        "В эту группу не записаны ученики — балл внести нельзя",
+    ),
+    "bh_nostudents_hint": (
+        "Course membership comes from the Student Group in Frappe. Add the "
+        "students to the group \"{$a}\" there and run the course sync - the "
+        "list will appear here.",
+        "Kursdagi a'zolik Frappe'dagi Student Group'dan keladi. O'quvchilarni "
+        "o'sha yerda \"{$a}\" guruhiga qo'shing va kurs sinxronini ishga "
+        "tushiring - ro'yxat shu yerda paydo bo'ladi.",
+        "Состав курса берётся из Student Group во Frappe. Добавьте учеников в "
+        "группу \"{$a}\" там и запустите синхронизацию курсов - список "
+        "появится здесь.",
+    ),
+    "bh_nostudents_block": (
+        "\"{$a}\" is a level group. Such groups usually have no lessons of their "
+        "own in the timetable, so their membership is filled in Frappe by hand "
+        "(Student Group -> members) or with the group assignment tool. After "
+        "that run the course sync and the list will appear here.",
+        "\"{$a}\" - daraja guruhi. Bunday guruhlarning jadvalda o'z darsi "
+        "bo'lmaydi, shuning uchun a'zoligi Frappe'da qo'lda (Student Group -> "
+        "a'zolar) yoki guruhga biriktirish vositasi bilan to'ldiriladi. "
+        "Keyin kurs sinxronini ishga tushiring - ro'yxat shu yerda chiqadi.",
+        "\"{$a}\" - уровневая группа. У таких групп обычно нет собственных "
+        "уроков в расписании, поэтому состав заполняется во Frappe вручную "
+        "(Student Group -> участники) или инструментом привязки. Затем "
+        "запустите синхронизацию курсов - список появится здесь.",
     ),
     "bh_nocourse": (
         "The course of this sitting was not found",
@@ -3016,6 +3041,16 @@ S = {
     "hr_studentid": ("Student ID", "O'quvchi ID", "ID ученика"),
     "hr_period": ("Period", "Davr", "Период"),
     "hr_notest": ("no test yet", "test topshirilmagan", "тест не сдавался"),
+    "hr_notaken": (
+        "Did not sit",
+        "Qatnashmagan",
+        "Не писал(а)",
+    ),
+    "hr_noscore": (
+        "Score not entered",
+        "Ball kiritilmagan",
+        "Балл не внесён",
+    ),
     "hr_notests": (
         "No test result has been entered for this student yet.",
         "Bu o'quvchi uchun hali test natijasi kiritilmagan.",

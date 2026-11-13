@@ -114,7 +114,21 @@ class ballsetka {
             'tz-dir-hero');
 
         if (!$oquvchilar) {
-            return $h . \html_writer::div($t('bh_nostudents'), 'tz-dir-sub');
+            // BO'SH GURUH — SABABINI AYTAMIZ.
+            //
+            // «Bu kursga o'quvchi yozilmagan» yolg'iz o'zi boshi berk xabar:
+            // koordinator ball kirita olmaydi va nima qilishni bilmaydi.
+            // Sabab deyarli doim bitta — Moodle kursidagi a'zolik Frappe'dagi
+            // Student Group a'zoligidan keladi, ya'ni guruh Frappe'da bo'sh.
+            // Bu ayniqsa DARAJA GURUHLARIDA uchraydi (ENGLISH High 6-7):
+            // ular jadvalda alohida dars sifatida turmaydi.
+            $sabab = \local_targetzenit\exam::blok_qism((string) $sit->groupname)
+                ? 'bh_nostudents_block' : 'bh_nostudents_hint';
+            return $h . \html_writer::div(
+                \html_writer::tag('b', $t('bh_nostudents'))
+                . \html_writer::div($t($sabab, s((string) $sit->groupname)),
+                    'tz-dir-sub mt-1'),
+                'alert alert-warning');
         }
 
         // O'zgarish sanoqlari BITTA so'rovda — halqa ichida `count_records`

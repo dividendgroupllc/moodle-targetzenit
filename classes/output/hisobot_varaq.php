@@ -919,16 +919,20 @@ class hisobot_varaq {
                         $r->score !== null
                             ? \html_writer::tag('b', self::raqam($r->score))
                               . ' / ' . self::raqam($maks)
-                            : \html_writer::tag('span',
-                                s(self::t('bh_holat_' . $r->holat)), ['class' => 'tz-hr-mut']),
+                            : \html_writer::tag('span', '—', ['class' => 'tz-hr-mut']),
                         ['class' => 'tz-hr-num'])
-                    . \html_writer::tag('td', self::svg_mini($foiz, $daraja),
+                    . \html_writer::tag('td',
+                        $foiz !== null ? self::svg_mini($foiz, $daraja) : '',
                         ['class' => 'tz-hr-ul'])
                     . \html_writer::tag('td',
                         $foiz !== null
                             ? self::chip(self::foiz($foiz) . ' · ' . self::daraja_nomi($daraja),
                                 $daraja)
-                            : \html_writer::tag('span', '—', ['class' => 'tz-hr-mut']),
+                            // QATNASHMAGAN — kulrang, uzuq hoshiyali belgi.
+                            // Daraja rangi (qizil) ataylab ishlatilmaydi:
+                            // qatnashmaslik yomon BAHO emas, ma'lumot yo'qligi.
+                            : \html_writer::tag('span', s(self::yoqlik($r)),
+                                ['class' => 'tz-hr-chip tz-hr-chipmut']),
                         ['class' => 'tz-hr-num'])
                     . \html_writer::tag('td',
                         $f['sinf'] !== null ? s(self::foiz($f['sinf']))
@@ -956,6 +960,25 @@ class hisobot_varaq {
                 \html_writer::tag('thead', $bosh) . \html_writer::tag('tbody', $qatorlar),
                 ['class' => 'tz-hr-table']),
             'tz-hr-card tz-hr-flow');
+    }
+
+    /**
+     * Ball o'rniga nima yozilishi: «Uzrsiz yo'q», «Qatnashmagan»...
+     *
+     * Qator bu yerga faqat GURUHDAN TEST OLINGAN bo'lsa yetib keladi
+     * (`hisobot::olingan_sittinglar()`), ya'ni bu o'quvchi haqiqatan
+     * qatnashmagan — ota-ona buni bilishi kerak.
+     *
+     * Holat nomi BO'SH bo'lishi mumkin: natija qatori umuman yaratilmagan
+     * bo'lsa `for_student()` dagi LEFT JOIN null qaytaradi. `bh_holat_`
+     * bo'sh qo'shimcha bilan chaqirilsa til satri topilmasdi.
+     */
+    protected static function yoqlik(\stdClass $r): string {
+        $holat = (string) ($r->holat ?? '');
+        if ($holat !== '' && $holat !== 'ishladi') {
+            return self::t('bh_holat_' . $holat);
+        }
+        return self::t($holat === '' ? 'hr_notaken' : 'hr_noscore');
     }
 
     /**

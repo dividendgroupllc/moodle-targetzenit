@@ -165,8 +165,9 @@ class hisobot {
         foreach ($kurslar as $cid => $c) {
             $idn[(string) $c->idnumber] = $cid;
         }
-        $natijalar = [];
-        $sittinglar = [];
+        // --- 1-BOSQICH: xom qatorlar (bekor qilingan guruhlar chiqariladi)
+        $xom = [];
+        $sittingid = [];
         foreach (exam::for_student($studentid, $year, $term->name) as $r) {
             $cid = $idn[(string) $r->courseidnumber] ?? 0;
             if (!$cid) {
@@ -176,29 +177,48 @@ class hisobot {
             // BEKOR QILINGAN GURUH — hisobotda umuman yo'q.
             //
             // Baholash sinf darajasi bo'yicha yaratiladi: «2-sinf» tanlansa
-            // 2A ham, 2B ham sitting oladi. Agar fan faqat bitta sinfda
-            // o'tilsa, koordinator ikkinchisini «Guruhni olib tashlash»
-            // bilan bekor qiladi. `for_student()` esa SITTING bo'yicha qator
-            // qaytaradi va bekor qilinganini tekshirmaydi — natijada 2A
-            // varag'ida o'sha fan bo'sh baho bilan turardi (2026-11-14).
+            // 2A ham, 2B ham sitting oladi. Fan faqat bitta sinfda o'tilsa,
+            // koordinator ikkinchisini «Guruhni olib tashlash» bilan bekor
+            // qiladi. `for_student()` esa SITTING bo'yicha qator qaytaradi
+            // va bekor qilinganini tekshirmaydi — natijada 2A varag'ida
+            // o'sha fan bo'sh baho bilan turardi (2026-11-14).
             if ((string) ($r->sitting_status ?? '') === 'bekor') {
                 continue;
             }
+            $xom[] = [$cid, $r];
+            $sittingid[(int) $r->sittingid] = true;
+        }
 
-            // BALL KIRITILMAGAN TEST HAM KO'RSATILMAYDI (talab 2026-11-14).
-            //
-            // Sitting mavjud bo'lsa-yu ball kiritilmagan bo'lsa, `score`
-            // NULL keladi. Ota-onaga «ART — / —» qatori hech narsa demaydi,
-            // aksincha «bola topshirmaganmi yoki unutilganmi?» degan savol
-            // tug'diradi. Varaqda faqat HAQIQATDA bahosi bor test turadi.
-            if ($r->score === null) {
-                continue;
+        // GURUHDAN TEST OLINGANMI — shu savol hal qiluvchi (2026-11-14).
+        //
+        // Avval «ball yo'q -> ko'rsatilmaydi» edi va bu ikki BOSHQA holatni
+        // bir xil yashirardi:
+        //   (a) guruhdan test umuman olinmagan (sitting bor, hech kimda ball
+        //       yo'q) -> varaqda ko'rinmasligi KERAK;
+        //   (b) guruhdan test olingan, lekin SHU o'quvchi qatnashmagan ->
+        //       aynan shu ota-onaga aytilishi kerak bo'lgan ma'lumot.
+        // Shuning uchun qaror qatorning o'ziga emas, SITTINGGA qarab
+        // chiqariladi: guruhda birorta ball bo'lsa, qator qoladi.
+        $olingan = self::olingan_sittinglar(array_keys($sittingid));
+
+        // --- 2-BOSQICH: saralash
+        $natijalar = [];
+        $sittinglar = [];
+        foreach ($xom as [$cid, $r]) {
+            $guruhdan_olingan = isset($olingan[(int) $r->sittingid]);
+            if ($r->score === null && !$guruhdan_olingan) {
+                continue;                 // (a) holat
             }
-            // Shu yerdan keyin `score` ALBATTA bor (yuqorida filtrlandi).
+
             $maks = (float) $r->maxscore;
-            $r->zfoiz = $maks > 0 ? round((float) $r->score / $maks * 100, 1) : null;
+            $r->zfoiz = ($r->score !== null && $maks > 0)
+                ? round((float) $r->score / $maks * 100, 1) : null;
+            // (b) holat — jadvalda «qatnashmagan» deb ko'rsatiladi.
+            $r->zqatnashmadi = ($r->score === null);
             $natijalar[$cid][] = $r;
-            $sittinglar[(int) $r->sittingid] = $maks;
+            if ($r->score !== null) {
+                $sittinglar[(int) $r->sittingid] = $maks;
+            }
         }
         $sinfort = self::sinf_ortacha(array_keys($sittinglar));
 
@@ -300,6 +320,34 @@ class hisobot {
             $d->jami->sust = $bor[count($bor) - 1];
         }
         return $d;
+    }
+
+    /**
+     * Shu sittinglardan qaysilarida HAQIQATDA ball bor.
+     *
+     * «Guruhdan test olinganmi?» degan savolga javob: guruhda kamida bitta
+     * kiritilgan ball bo'lsa, test o'tgan deb hisoblanadi.
+     *
+     * @return array [sittingid => nechta ball kiritilgan]
+     */
+    protected static function olingan_sittinglar(array $sittingids): array {
+        global $DB;
+
+        if (!$sittingids) {
+            return [];
+        }
+        list($in, $params) = $DB->get_in_or_equal($sittingids, SQL_PARAMS_NAMED, 's');
+        $rows = $DB->get_records_sql("
+            SELECT r.sittingid, COUNT(r.score) AS soni
+              FROM {local_targetzenit_exam_result} r
+             WHERE r.sittingid $in AND r.score IS NOT NULL
+          GROUP BY r.sittingid", $params);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(int) $r->sittingid] = (int) $r->soni;
+        }
+        return $out;
     }
 
     /**

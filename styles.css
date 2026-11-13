@@ -1448,6 +1448,12 @@
     display: inline-block; padding: 1px 7px; border: 1.5px solid var(--hr-line);
     border-radius: 20px; font-size: 10.5px; font-weight: 700; white-space: nowrap;
 }
+/* «Qatnashmagan» — ma'lumot YO'QLIGI, yomon baho emas: kulrang va uzuq
+   hoshiya bilan, daraja ranglaridan ataylab farq qiladi. */
+.tz-hr-chipmut {
+    border-style: dashed; color: var(--hr-mut); font-weight: 650;
+    white-space: normal; max-width: 30mm;
+}
 
 /* --------------------------------------------------------- FAN BELGILARI */
 /* Har fanning o'z chizma belgisi va rangi bor (`output\hisobot_ikona`).
