@@ -995,7 +995,9 @@ class hisobot_varaq {
      */
     protected static function daraja_chip(string $guruh): string {
         $p = exam::blok_qism($guruh);
-        if (!$p) {
+        // Qo'shma guruhda daraja yo'q («ENGLISH 6-7») — unda belgi ham
+        // chizilmaydi: «· 6-7» yolg'iz o'zi ota-onaga hech narsa demaydi.
+        if (!$p || $p['daraja'] === '') {
             return '';
         }
         return \html_writer::div(

@@ -128,27 +128,41 @@ class exam {
      */
     const BLOK_PREFIKS = 'D-';
 
-    /** High / Middle / Low tartibi — alifbo tartibi ma'nosiz bo'lardi. */
-    const BLOK_TARTIB = ['high' => 1, 'middle' => 2, 'mid' => 2, 'low' => 3];
+    /**
+     * Tartib: qo'shma guruh birinchi, keyin High -> Middle -> Low.
+     * Alifbo tartibi ma'nosiz bo'lardi («Low» «Middle» dan oldin turib qolardi).
+     */
+    const BLOK_TARTIB = ['' => 0, 'high' => 1, 'middle' => 2, 'mid' => 2, 'low' => 3];
 
     /**
      * Daraja guruhining nomini qismlarga ajratadi.
      *
-     * Nom Frappe import'ida shunday yasaladi (`import_excel._guruh_nomi`):
-     *     `<FAN> <Daraja> <sinflar oralig'i>`  ->  «ENGLISH High 8-9»
-     * Daraja nomi doim High/Middle/Low emas: IT da u «VibeCoding», «Python»,
-     * EXTRA da «English», «Math» bo'ladi — shuning uchun o'rta qism erkin.
+     * Frappe import'i (`import_excel`) IKKI XIL nom yasaydi:
+     *   · `<FAN> <Daraja> <oraliq>` — daraja guruhi: «ENGLISH High 8-9»
+     *     (`_guruh_nomi`);
+     *   · `<FAN> <oraliq>`          — QO'SHMA guruh: «ENGLISH 6-7», «SAT 11»
+     *     (`_blok_nomi`) — sinflar birlashtirilgan, darajaga bo'linmagan.
      *
-     * Oddiy sinf guruhi («7 A») ATAYLAB mos kelmaydi: unda uchta qism yo'q.
+     * Ikkinchisi avval E'TIBORDAN CHETDA QOLGAN edi va natijada bunday
+     * guruhga baholash YARATIB BO'LMASDI: sinf darajasi yo'li ham
+     * («ENGLISH 6-7» harf bilan boshlanadi), daraja yo'li ham (uchta qism
+     * yo'q) uni topmasdi. Shuning uchun o'rta qism — IXTIYORIY.
      *
-     * @return array|null ['fan','daraja','oraliq'] yoki null
+     * Daraja nomi doim High/Middle/Low emas: IT da «VibeCoding», «Python»,
+     * EXTRA da «English», «Math» — shuning uchun o'rta qism erkin matn.
+     *
+     * Oddiy sinf guruhi («7 A», «10 B») ATAYLAB mos kelmaydi: nom raqam
+     * bilan TUGAMAYDI.
+     *
+     * @return array|null ['fan','daraja','oraliq'] — qo'shma guruhda
+     *                    `daraja` bo'sh satr
      */
     public static function blok_qism(string $groupname): ?array {
         $g = trim($groupname);
-        if (!preg_match('/^(\S+)\s+(.+?)\s+(\d{1,2}(?:-\d{1,2})?)$/u', $g, $m)) {
+        if (!preg_match('/^(\S+)(?:\s+(.+?))?\s+(\d{1,2}(?:-\d{1,2})?)$/u', $g, $m)) {
             return null;
         }
-        return ['fan' => $m[1], 'daraja' => trim($m[2]), 'oraliq' => $m[3]];
+        return ['fan' => $m[1], 'daraja' => trim($m[2] ?? ''), 'oraliq' => $m[3]];
     }
 
     /** `gradelevel` daraja guruhlarinimi — ha bo'lsa oraliqni qaytaradi. */
@@ -234,7 +248,49 @@ class exam {
         foreach ($rows as $r) {
             $out[$r->subjectkey] = $r->nomi ?: $r->subjectkey;
         }
+
+        // JADVALDA YO'Q, LEKIN KURSI BOR FANLAR.
+        //
+        // Ro'yxat avval faqat jadvaldan olinardi. Lekin baholash uchun
+        // kerak bo'lgan narsa — KURS (sitting unga bog'lanadi), jadval
+        // emas. Masalan SAT 11-sinfda imtihon sifatida o'tkaziladi, haftalik
+        // darsi yo'q — shunday fan ro'yxatda umuman ko'rinmasdi va unga
+        // baholash yaratib bo'lmasdi (2026-11-14).
+        //
+        // Nomi noma'lum bo'lsa kalitning o'zi ko'rsatiladi: «SAT».
+        foreach (self::kurs_guruhlari($year) as $q) {
+            if (!isset($out[$q['fan']])) {
+                $out[$q['fan']] = $q['fan'];
+            }
+        }
         \core_collator::asort($out);
+        return $out;
+    }
+
+    /**
+     * Shu o'quv yilining kurslaridan [fan, guruh] juftliklari.
+     *
+     * Manba — `course.idnumber` (`<yil>::<guruh>::<fan>`), ya'ni HAQIQATDA
+     * mavjud kurslar. Jadval (`_timetable`) rejani ko'rsatadi; baholash esa
+     * kursga bog'lanadi, shuning uchun ro'yxatlar shu yerdan ham to'ldiriladi.
+     *
+     * @return array har biri ['fan' => ..., 'guruh' => ...]
+     */
+    public static function kurs_guruhlari(string $year): array {
+        global $DB;
+
+        $naqsh = $DB->sql_like_escape($year) . '::%';
+        $rows = $DB->get_fieldset_select('course',
+            'idnumber', $DB->sql_like('idnumber', ':p'), ['p' => $naqsh]);
+
+        $out = [];
+        foreach ($rows as $idn) {
+            $q = explode('::', (string) $idn);
+            if (count($q) < 3 || $q[1] === '' || $q[2] === '') {
+                continue;
+            }
+            $out[] = ['fan' => $q[2], 'guruh' => $q[1]];
+        }
         return $out;
     }
 
@@ -251,6 +307,12 @@ class exam {
             SELECT DISTINCT groupname
               FROM {local_targetzenit_timetable}
              WHERE academicyear = :yil", ['yil' => $year]);
+
+        // Kursi bor, lekin jadvalda yo'q guruhlar ham qamrovga tushsin
+        // (`fanlar()` dagi bilan bir xil sabab: baholash kursga bog'lanadi).
+        foreach (self::kurs_guruhlari($year) as $q) {
+            $nomlar[] = $q['guruh'];
+        }
 
         $sinflar = [];
         $bloklar = [];
