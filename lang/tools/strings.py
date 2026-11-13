@@ -2697,6 +2697,69 @@ S = {
     "app_murojaat": ("Parent issues", "Murojaatlar", "Обращения"),
     "app_murojaatim": ("My issues", "Murojaatlarim", "Мои обращения"),
 
+    # ---------------------------------------------------- topshiriqlar (mod_assign)
+    "tp_nav": ("Assignments", "Topshiriqlar", "Задания"),
+    "tp_hint": (
+        "Moodle assignments across all your groups: who submitted, who is graded",
+        "Guruhlardagi Moodle topshiriqlari: kim topshirdi, kim baholandi",
+        "Задания Moodle по всем группам: кто сдал, кто оценён",
+    ),
+    "tp_empty": (
+        "No assignments yet. They appear here as soon as a teacher creates one "
+        "in a course, or writes homework in the lesson cockpit.",
+        "Hozircha topshiriq yo'q. O'qituvchi kursda topshiriq yaratsa yoki dars "
+        "kokpitida uy vazifa yozsa, shu yerda paydo bo'ladi.",
+        "Заданий пока нет. Они появятся здесь, как только преподаватель создаст "
+        "задание в курсе или запишет домашнее задание в кокпите урока.",
+    ),
+    "tp_total": ("Assignments", "Topshiriq", "Заданий"),
+    "tp_submitted": ("Submitted", "Topshirgan", "Сдали"),
+    "tp_graded": ("Graded", "Baholangan", "Оценено"),
+    "tp_draft": ("In draft", "Qoralamada", "В черновике"),
+    "tp_drafthint": (
+        "The student uploaded work but did not press \"Submit assignment\". "
+        "To remove this step: Settings -> Submission settings -> "
+        "\"Require students to click submit button\" = No.",
+        "O'quvchi ishini yuklagan, lekin \"Submit assignment\" tugmasini "
+        "bosmagan. Bu qadamni olib tashlash: Settings -> Submission settings -> "
+        "\"Require students to click submit button\" = No.",
+        "Ученик загрузил работу, но не нажал \"Submit assignment\". Убрать этот "
+        "шаг: Settings -> Submission settings -> "
+        "\"Require students to click submit button\" = No.",
+    ),
+    "tp_group": ("Group", "Guruh", "Группа"),
+    "tp_name": ("Assignment", "Topshiriq", "Задание"),
+    "tp_due": ("Due", "Muddat", "Срок"),
+    "tp_nodue": ("no deadline", "muddat yo'q", "без срока"),
+    "tp_progress": ("Status", "Holat", "Статус"),
+    "tp_actions": ("Actions", "Amallar", "Действия"),
+    "tp_subshort": ("subm", "topsh", "сдали"),
+    "tp_draftshort": ("draft", "qoralama", "черновик"),
+    "tp_gradeshort": ("graded", "baho", "оценено"),
+    "tp_grade": ("Grade", "Baholash", "Оценить"),
+    "tp_settings": ("Settings", "Sozlamalar", "Настройки"),
+    "tp_hidden": ("hidden", "yashirin", "скрыто"),
+    "tp_hiddenhint": (
+        "Hidden from students - they do not see this assignment at all. "
+        "Course page -> the activity menu -> Availability -> Show on course page.",
+        "O'quvchidan yashirilgan - ular bu topshiriqni umuman ko'rmaydi. "
+        "Kurs sahifasi -> faoliyat menyusi -> Availability -> Show on course page.",
+        "Скрыто от учеников - они вообще не видят это задание. "
+        "Страница курса -> меню элемента -> Availability -> Show on course page.",
+    ),
+    "tp_hw": ("homework", "uy vazifa", "домашнее задание"),
+    "tp_hwhint": (
+        "Created from the lesson cockpit homework field. Changing the due date "
+        "in Moodle will NOT stick - saving the lesson again overwrites it. "
+        "Change the lesson date or the homework in the cockpit instead.",
+        "Dars kokpitidagi uy vazifa maydonidan yaratilgan. Muddatni Moodle'da "
+        "o'zgartirish SAQLANMAYDI - darsni qayta saqlash uni qaytadan yozadi. "
+        "Buning o'rniga dars sanasini yoki kokpitdagi uy vazifani o'zgartiring.",
+        "Создано из поля домашнего задания в кокпите урока. Изменение срока в "
+        "Moodle НЕ сохранится - повторное сохранение урока перезапишет его. "
+        "Вместо этого измените дату урока или домашнее задание в кокпите.",
+    ),
+
     # Oy nomlari — sana formatiga bog'liq emas, tabel oyi uchun
     "month_1": ("January", "Yanvar", "Январь"),
     "month_2": ("February", "Fevral", "Февраль"),

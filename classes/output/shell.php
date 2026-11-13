@@ -108,6 +108,7 @@ class shell {
             ['yozuvlar', $t('recordings'), $u('yozuvlar.php')],
             ['sharhlar', $t('sh_navall'), $u('sharhlar.php')],
             ['oqituvchi', $t('oq_mypanel'), $u('oqituvchi.php')],
+            ['topshiriq', $t('tp_nav'), $u('topshiriqlar.php')],
         ];
         $boshqaruv = [
             ['tutorlar', $t('dir_tutors'), $u('tutorlar.php')],
@@ -179,6 +180,12 @@ class shell {
             // 2026-11-06): oylik oyda bir ochiladi, sharh esa o'quv ishining
             // qismi va menyuda dars narsalari yonida turishi kerak.
             $mening[] = ['sharh', $t('sh_nav'), $u('sharh.php')];
+            // Topshiriqlar — faqat baholaydigan kursi bor o'qituvchiga.
+            // Aks holda havola bo'sh sahifaga olib borardi (sahifa o'zi
+            // ham shu shartni tekshiradi).
+            if (\local_targetzenit\topshiriq::mening_kurslarim((int) $userid)) {
+                $mening[] = ['topshiriq', $t('tp_nav'), $u('topshiriqlar.php')];
+            }
             if (\local_targetzenit\payroll::has_any((int) $userid)) {
                 $mening[] = ['oylik', $t('mypayroll'), $u('oylik.php')];
             }
@@ -211,6 +218,9 @@ class shell {
         $asosiy = [
             ['royxat', $t('bh_navall'), $u('baholash.php', ['view' => 'royxat'])],
             ['yangi', $t('bh_new'), $u('baholash.php', ['view' => 'yangi'])],
+            // Moodle topshiriqlari (mod_assign) — summativ baholashdan
+            // ALOHIDA tizim, lekin koordinator ikkisini ham yuritadi.
+            ['topshiriq', $t('tp_nav'), $u('topshiriqlar.php')],
         ];
         $boshqa = [
             ['jadval', $t('timetable'), $u('index.php')],

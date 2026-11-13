@@ -1232,3 +1232,13 @@
 /* «tahrirlangan» belgisi — ota-ona bir matnni ko'rgan bo'lishi mumkin,
    keyin u o'zgargan. Shuning uchun belgi HAMMAGA ko'rinadi. */
 .tz-sh-editedchip { background: var(--tz-warning-bg); color: var(--tz-warning); }
+
+/* ---------------- topshiriqlar (mod_assign ustidan ko'rinish) ---------------- */
+.tz-tp-due { white-space: nowrap; color: var(--tz-ink-2); font-size: .82rem; }
+.tz-tp-btn { display: inline-block; height: 28px; line-height: 26px; padding: 0 11px;
+    border: 1px solid var(--tz-line); border-radius: 7px; background: var(--tz-card);
+    color: var(--tz-ink); font-size: .78rem; font-weight: 600; text-decoration: none;
+    white-space: nowrap; }
+.tz-tp-btn:hover { background: var(--tz-line); text-decoration: none; }
+.tz-dir-empty { background: var(--tz-card); border: 1px solid var(--tz-line);
+    border-radius: 12px; padding: 22px; text-align: center; color: var(--tz-ink-2); }
