@@ -415,6 +415,34 @@ class hisobot {
      *
      * @return array [userid => user] familiya bo'yicha
      */
+    /**
+     * Natija KIRITILGAN eng oxirgi chorak nomi (yoki null).
+     *
+     * NEGA KERAK: varaq standart holatda BUGUNGI chorakni ochadi. Maktab
+     * imtihonni oktabrda (1-chorak) o'tkazib, ballarni noyabrda (2-chorak)
+     * kiritsa, varaq bo'sh chiqadi — baho ham, diagramma ham yo'q
+     * (`svg_bar()` `foiz === null` da bo'sh qaytaradi). Odam buni «hisobot
+     * ishlamayapti» deb tushunadi, aslida shunchaki boshqa chorakka qarab
+     * turgan bo'ladi.
+     *
+     * Shuning uchun bugungi chorakda natija bo'lmasa, natija BOR eng
+     * oxirgi chorakka o'tamiz. Odam aniq chorak tanlasa — unga tegilmaydi.
+     */
+    public static function oxirgi_natijali_chorak(string $year): ?string {
+        global $DB;
+
+        $r = $DB->get_record_sql("
+            SELECT e.termname, MAX(e.examdate) AS oxirgi
+              FROM {local_targetzenit_exam_result} r
+              JOIN {local_targetzenit_exam_sitting} s ON s.id = r.sittingid
+              JOIN {local_targetzenit_exam} e ON e.id = s.examid
+             WHERE e.academicyear = :yil AND r.score IS NOT NULL
+          GROUP BY e.termname
+          ORDER BY oxirgi DESC", ['yil' => $year], IGNORE_MULTIPLE);
+
+        return $r ? (string) $r->termname : null;
+    }
+
     public static function guruh_oquvchilari(string $year, string $groupkey): array {
         global $DB;
 

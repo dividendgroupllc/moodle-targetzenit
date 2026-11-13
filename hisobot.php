@@ -69,6 +69,27 @@ if ($termidx < 0 || !isset($terms[$termidx])) {
             }
         }
     }
+
+    // BALL QAYSI CHORAKDA BO'LSA — O'SHANI OCHAMIZ.
+    //
+    // Imtihon oktabrda (1-chorak) o'tkazilib, ballar noyabrda (2-chorak)
+    // kiritilsa, yuqoridagi mantiq bugungi chorakni tanlaydi va varaq
+    // BO'SH chiqadi: baho ham, diagramma ham yo'q (`svg_bar()` `foiz`
+    // null bo'lsa bo'sh qaytaradi). Odam buni «hisobot ishlamayapti» deb
+    // tushunadi. Shuning uchun tanlangan chorakda maktab bo'ylab umuman
+    // natija bo'lmasa, natija BOR oxirgi chorakka o'tamiz.
+    //
+    // Faqat STANDART tanlovda: odam chorakni o'zi tanlagan bo'lsa
+    // (`?term=N`), bu blokka umuman kirmaydi.
+    $natijali = hisobot::oxirgi_natijali_chorak($year);
+    if ($natijali !== null && $natijali !== $terms[$termidx]->name) {
+        foreach ($terms as $i => $t) {
+            if ($t->name === $natijali) {
+                $termidx = $i;
+                break;
+            }
+        }
+    }
 }
 $term = $terms[$termidx];
 

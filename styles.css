@@ -1283,7 +1283,7 @@
     --hr-red: #ff1100;
     --hr-ink: #1d2a38;
     --hr-mut: #5b6b7c;
-    --hr-line: #c9d2db;
+    --hr-line: #b8c6d4;
     color: var(--hr-ink);
     background: #e9edf1;
     padding: 18px 0 40px;
@@ -1300,7 +1300,7 @@
     background: #fff;
     border: 1px solid #d7dee6;
     box-shadow: 0 2px 16px rgba(0, 25, 60, .10);
-    font-size: 13px;
+    font-size: 13.5px;
     line-height: 1.45;
 }
 
@@ -1336,42 +1336,20 @@
     border-left: 4px solid var(--hr-red); padding-left: 8px;
 }
 .tz-hr-hbig { font-size: 15px; }
-.tz-hr-hint { font-size: 11px; color: var(--hr-mut); margin: 0 0 8px 12px; }
+.tz-hr-hint { font-size: 11.5px; color: var(--hr-mut); margin: 0 0 8px 12px; }
 .tz-hr-runner {
     font-size: 10px; color: var(--hr-mut); text-align: right; letter-spacing: .3px;
     margin-bottom: 3px; border-bottom: 1px dotted var(--hr-line); padding-bottom: 2px;
 }
 .tz-hr-empty { color: var(--hr-mut); font-size: 12px; text-align: center; padding: 16px; }
 .tz-hr-mut { color: var(--hr-mut); }
-.tz-hr-sub { font-size: 10.5px; color: var(--hr-mut); }
+.tz-hr-sub { font-size: 11px; color: var(--hr-mut); }
 
-/* ------------------------------------------------------- O'QUVCHI KARTI */
-.tz-hr-person { display: flex; align-items: center; gap: 14px; padding: 12px 13px; }
-.tz-hr-av { flex: 0 0 auto; }
-.tz-hr-avsvg { width: 19mm; height: 19mm; display: block; }
-.tz-hr-who { flex: 1 1 auto; min-width: 0; }
-.tz-hr-name {
-    font-size: 21px; font-weight: 800; color: var(--hr-navy); line-height: 1.1;
-    margin-bottom: 6px;
-}
-.tz-hr-kvs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 20px; }
-.tz-hr-kv { font-size: 12px; }
-.tz-hr-k { color: var(--hr-mut); }
-.tz-hr-k::after { content: ":"; }
-.tz-hr-v { font-weight: 650; margin-left: 5px; }
-
-/* ----------------------------------------------------------------- KPI */
-.tz-hr-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 10px; }
-.tz-hr-tile {
-    border: 1px solid var(--hr-line); border-radius: 6px; padding: 0 10px 9px;
-    overflow: hidden; break-inside: avoid;
-}
-.tz-hr-tilebar { display: block; width: calc(100% + 20px); height: 4px; margin: 0 -10px 8px; }
-.tz-hr-tilenum { font-size: 26px; font-weight: 800; line-height: 1.05; color: var(--hr-navy); }
-/* Fan nomi raqamdan uzunroq — plita ichida sig'ishi kerak */
-.tz-hr-tilesm { font-size: 17px; line-height: 1.15; }
-.tz-hr-tilelab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-.tz-hr-tilehint { font-size: 10.5px; color: var(--hr-mut); line-height: 1.3; margin-top: 2px; }
+/* ------------------------------------------------------------------ HERO */
+/* Bosh blok bitta SVG: gradient fon, oq matn va halqali diagramma CSS
+   bilan qilinsa qog'ozda yo'qolardi (brauzer fonni bosmaydi). */
+.tz-hr-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.tz-hr-hero { display: block; width: 100%; height: auto; margin-top: 10px; }
 
 /* -------------------------------------------------------- QISQACHA XULOSA */
 /* Varaqning eng ko'p o'qiladigan joyi: diagrammani hamma ham o'qimaydi,
@@ -1382,7 +1360,7 @@
     font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px;
     color: var(--hr-navy); margin-bottom: 3px;
 }
-.tz-hr-sumtext { font-size: 13.5px; line-height: 1.5; }
+.tz-hr-sumtext { font-size: 14px; line-height: 1.5; }
 
 /* ------------------------------------------------- KUCHLI / SUST TOMONLAR */
 .tz-hr-sw { grid-template-columns: 1fr 1fr; }
@@ -1404,7 +1382,20 @@
 
 /* ---------------------------------------------------------- DIAGRAMMA */
 .tz-hr-svg { display: block; width: 100%; height: auto; }
-.tz-hr-radar { display: block; margin: 2px auto 0; max-width: 74mm; }
+.tz-hr-radar { display: block; margin: 0 auto; max-width: 58mm; }
+/* Radar kartasi: chapda izoh, o'ngda shakl — alohida tepa-past turganda
+   karta cho'zilib, varaqning yarmini yeb qo'yardi. */
+.tz-hr-radarcard { display: grid; grid-template-columns: 1fr 1.15fr; gap: 12px;
+    align-items: center; }
+.tz-hr-radartext .tz-hr-hint { margin-left: 12px; }
+.tz-hr-spread {
+    margin: 10px 0 0 12px; padding: 8px 11px; border-radius: 8px;
+    border: 1px solid var(--hr-line); border-left: 4px solid var(--hr-navy);
+}
+.tz-hr-spk { font-size: 11px; color: var(--hr-mut); }
+.tz-hr-spv { font-size: 19px; font-weight: 800; color: var(--hr-navy); margin-left: 8px; }
+.tz-hr-spw { font-size: 11.5px; margin-top: 2px; }
+.tz-hr-radarwrap { min-width: 0; }
 
 /* Ikki blokli qator: radar + nizom shkalasi. Varaq balandligini
    tejaydi (30 nusxada bu 30 ta varaq). */
@@ -1414,12 +1405,11 @@
 .tz-hr-row .tz-hr-scales { flex-direction: column; gap: 7px; }
 /* Yonidagi radar balandroq: shkala kartasi cho'zilib qolmasin, mazmuni
    o'rtada tursin. */
-.tz-hr-row .tz-hr-legend { display: flex; flex-direction: column; justify-content: center; }
-.tz-hr-radarcard { display: flex; flex-direction: column; justify-content: center; }
 
 /* ------------------------------------------------------------- SHKALA */
-.tz-hr-legend { padding: 11px 13px; }
-.tz-hr-legend .tz-hr-hint { margin: 9px 0 0; }
+/* Shkala — diagramma tagidagi tasma (alohida karta emas) */
+.tz-hr-legend { margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--hr-line); }
+.tz-hr-legend .tz-hr-hint { margin: 6px 0 0; }
 .tz-hr-scales { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .tz-hr-scale { font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
 .tz-hr-dot { width: 11px; height: 11px; flex: 0 0 auto; }
@@ -1432,15 +1422,15 @@
 .tz-hr-flow tr { break-inside: avoid; page-break-inside: avoid; }
 
 /* ------------------------------------------------------------- JADVAL */
-.tz-hr-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.tz-hr-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .tz-hr-table th {
-    text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
+    text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px;
     color: var(--hr-navy); border-bottom: 2px solid var(--hr-navy);
     padding: 0 6px 5px; vertical-align: bottom; font-weight: 800;
 }
 .tz-hr-table th span { font-weight: 400; color: var(--hr-mut); }
 .tz-hr-table td {
-    padding: 6px; border-bottom: 1px solid #e4e9ee; vertical-align: middle;
+    padding: 6px; border-bottom: 1px solid #dde5ed; vertical-align: middle;
 }
 .tz-hr-table tr:last-child td { border-bottom: none; }
 .tz-hr-fan { width: 24%; }
@@ -1452,39 +1442,52 @@
     border-radius: 20px; font-size: 10.5px; font-weight: 700; white-space: nowrap;
 }
 
+/* --------------------------------------------------------- FAN BELGILARI */
+/* Har fanning o'z chizma belgisi va rangi bor (`output\hisobot_ikona`).
+   RANG FAQAT BELGIDA: ustun rangi — DARAJA (yuqori/o'rta/past), ikkisi
+   aralashsa rang ikki narsani anglatib qolardi. */
+.tz-hr-nishon { display: block; flex: 0 0 auto; }
+.tz-hr-katikon { flex: 0 0 auto; margin-top: 1px; }
+.tz-hr-fancell { display: flex; align-items: center; gap: 9px; }
+.tz-hr-swname { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tz-hr-swname span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ------------------------------------------------------------ SHARHLAR */
 /* Sharhlar YANGI BETDAN boshlanadi: birinchi bet — raqamlar, keyingisi —
    so'z. Majlisda ota-ona aynan shu betni o'qiydi. */
 .tz-hr-break { break-before: page; page-break-before: always; }
 .tz-hr-section { margin-top: 16px; }
-.tz-hr-review { padding: 0; }
+.tz-hr-review { padding: 0; border-left: 4px solid var(--fan, var(--hr-navy)); }
 /* Uzun sharh bloki bet oxirida sig'masa BO'LINADI, lekin kategoriya
    ichidan emas: `.tz-hr-kat` bus-butun ko'chadi, fan sarlavhasi esa
    o'z matnidan ajralmaydi (`break-after: avoid`). Shunday qilmasak
    har betning pastida 4-5 sm bo'sh joy qolardi. */
 .tz-hr-review { break-inside: auto; page-break-inside: auto; }
 .tz-hr-rhead {
-    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     padding: 8px 12px; border-bottom: 1px solid var(--hr-line);
 }
+.tz-hr-rbadge { display: flex; align-items: center; }
 .tz-hr-rhead { break-after: avoid; page-break-after: avoid; }
 .tz-hr-rsubject { font-size: 14px; font-weight: 800; color: var(--hr-navy); }
-.tz-hr-rteacher { font-size: 11.5px; }
+.tz-hr-rteacher { font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
+.tz-hr-rname { font-weight: 700; }
 .tz-hr-rright { margin-left: auto; white-space: nowrap; }
 .tz-hr-rdate { font-size: 10.5px; color: var(--hr-mut); }
 .tz-hr-kats { padding: 4px 12px 10px; }
 .tz-hr-kat {
-    display: grid; grid-template-columns: 42mm 1fr; gap: 10px;
+    display: grid; grid-template-columns: 50mm 1fr; gap: 10px;
     padding: 7px 0; border-bottom: 1px dotted #dde3e9;
     break-inside: avoid; page-break-inside: avoid;
 }
 .tz-hr-kat:last-child { border-bottom: none; }
 .tz-hr-katlab {
-    font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px;
-    color: var(--hr-navy); border-left: 3px solid var(--hr-navy); padding-left: 7px;
-    line-height: 1.25;
+    display: flex; align-items: flex-start; gap: 6px;
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px;
+    color: var(--hr-navy); border-left: 3px solid var(--fan, var(--hr-navy));
+    padding-left: 7px; line-height: 1.25;
 }
-.tz-hr-kattext { font-size: 12px; line-height: 1.5; white-space: pre-line; }
+.tz-hr-kattext { font-size: 12.5px; line-height: 1.52; white-space: pre-line; }
 
 /* --------------------------------------------------------------- IMZO */
 .tz-hr-sigcard { margin-top: 14px; }
@@ -1515,6 +1518,57 @@
 .tz-hr-pick h3 { font-size: 18px; color: #00214a; margin-bottom: 6px; }
 .tz-hr-pickitem { display: inline-block; margin: 0 8px 8px 0; min-width: 72px; text-align: center; }
 
+/* ========================================================== EKRANDAGI HAYOT */
+/* Varaq avval EKRANDA ko'riladi (o'qituvchi, tutor, ota-ona), keyin
+   bosiladi. Shuning uchun ekranda u tirik: ustunlar o'sib chiqadi,
+   kartaga sichqoncha tekkanda ko'tariladi, diagrammada esa qalqib
+   chiquvchi izoh bor (SVG `<title>`). Bularning HAMMASI bosmada
+   o'chiriladi — qog'ozda harakat yo'q, soyalar esa kerak emas. */
+@media screen {
+    .tz-hr-doc { transition: box-shadow .25s ease; }
+    .tz-hr-doc:hover { box-shadow: 0 6px 28px rgba(0, 25, 60, .16); }
+
+    .tz-hr-card { transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+    .tz-hr-card:hover {
+        border-color: #a9bed3; box-shadow: 0 3px 14px rgba(0, 33, 74, .10);
+        transform: translateY(-1px);
+    }
+    .tz-hr-table tbody tr { transition: background-color .15s ease; }
+    .tz-hr-table tbody tr:hover { background: #f4f8fc; }
+    .tz-hr-swrow { transition: background-color .15s ease; }
+    .tz-hr-swrow:hover { background: #f4f8fc; }
+
+    /* Ustunlar chapdan o'ngga ochiladi. Kenglik SVG ichida hisoblangani
+       uchun har ustunni alohida jonlantirish o'rniga butun diagramma
+       niqob bilan ochiladi — bitta qoida, hamma diagrammaga yetadi. */
+    .tz-hr-svg, .tz-hr-hero { animation: tz-hr-ochil .7s cubic-bezier(.2, .7, .3, 1) both; }
+    @keyframes tz-hr-ochil {
+        from { clip-path: inset(0 100% 0 0); opacity: .4; }
+        to { clip-path: inset(0 0 0 0); opacity: 1; }
+    }
+    /* Diagramma qatori: ustiga kelinganda yengil yoritiladi va izoh
+       (SVG `<title>`) chiqadi. */
+    .tz-hr-hit { transition: fill-opacity .15s ease; }
+    .tz-hr-qator:hover .tz-hr-hit { fill-opacity: .055; }
+    /* Fan nomiga bosilsa — shu fanning sharhiga o'tadi */
+    .tz-hr-bosiladi { cursor: pointer; }
+    .tz-hr-bosiladi:hover .tz-hr-hit { fill-opacity: .10; }
+    /* Havoladan kelingan sharh bloki bir zumga ajralib turadi */
+    .tz-hr-review:target {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--fan, #00214a) 30%, transparent);
+        animation: tz-hr-urgu 1.6s ease-out 1;
+    }
+    @keyframes tz-hr-urgu { from { box-shadow: 0 0 0 7px rgba(0, 33, 74, .22); } }
+
+    /* Vositalar paneli yuqorida qolib turadi: uzun guruh ro'yxatida
+       «Chop etish» tugmasini qidirib yuqoriga chiqish kerak bo'lmasin. */
+    .tz-hr-tools { position: sticky; top: 0; z-index: 5; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tz-hr-svg, .tz-hr-hero { animation: none; }
+    .tz-hr-card, .tz-hr-doc { transition: none; }
+}
+
 /* ================================================================ BOSMA */
 @media print {
     /* Moodle qobig'i qog'ozga tushmaydi */
@@ -1540,7 +1594,9 @@
     /* Oxirgi o'quvchidan keyin bo'sh bet chiqmasligi kerak */
     .tz-hr-doc.tz-hr-oxirgi { break-after: auto; page-break-after: auto; }
 
-    .tz-hr-card { break-inside: avoid; page-break-inside: avoid; }
+    .tz-hr-card { break-inside: avoid; page-break-inside: avoid;
+        box-shadow: none !important; transform: none !important; }
+    .tz-hr-svg, .tz-hr-hero { animation: none !important; clip-path: none !important; }
     /* Sarlavha o'z bo'limidan ajralib, bet oxirida yolg'iz qolmasin */
     .tz-hr-h2 { break-after: avoid; page-break-after: avoid; }
 }

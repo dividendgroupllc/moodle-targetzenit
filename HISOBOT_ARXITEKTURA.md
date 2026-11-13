@@ -56,12 +56,11 @@ Chegaralar: `hisobot::DARAJA_YUQORI` / `DARAJA_ORTA`.
 | Blok | Nima uchun |
 |---|---|
 | sarlavha (logotip, davr) | hujjat kimniki ekani |
-| o'quvchi karti | ism, sinf, sinf rahbari, ID |
-| **4 ko'rsatkich** | umumiy natija · eng kuchli fan · e'tibor kerak fan · sinfga nisbatan |
+| **HERO** — bitta katta SVG | o'quvchi + halqali ko'rsatkich (umumiy natija) + uchta raqam: eng kuchli fan · e'tibor kerak fan · sinfga nisbatan |
 | **«Qisqacha»** | raqamlar GAP shaklida — diagrammani hamma o'qimaydi, gapni hamma o'qiydi |
 | **Kuchli / Qo'llab-quvvatlash kerak** | majlisdan eslab qolinadigan ikki ro'yxat |
 | ustun diagramma | fanlar **kuchlisidan sustigacha** tartiblangan + sinf o'rtachasi belgisi |
-| radar + shkala | muvozanat va «80% nima degani» |
+| radar + tarqoqlik | muvozanat: shakl va «eng yuqori va eng past fan orasidagi farq» |
 | testlar jadvali | har bir test: ball, foiz, daraja, sinf o'rtachasi |
 | **o'qituvchilar sharhi** | 5 kategoriya, yonida shu fanning foizi |
 | izoh + imzo | shkala izohi, «past natija hukm emas», imzo chiziqlari |
@@ -69,7 +68,65 @@ Chegaralar: `hisobot::DARAJA_YUQORI` / `DARAJA_ORTA`.
 Natija umuman yo'q bo'lsa diagramma va shkala **chizilmaydi** — bo'sh
 o'qlar varaqni to'ldiradi, lekin hech narsa aytmaydi.
 
+## 4.1 Fan belgilari (`output\hisobot_ikona`)
+
+Har fanning **o'z chizma belgisi va rangi** bor: matematika — π,
+ingliz/chet tili — globus, ona tili/adabiyot — ochiq kitob, IT —
+monitor va kod, biznes — portfel, iqtisod — o'suvchi grafik, fizika —
+atom, kimyo — kolba, biologiya — barg, tarix — qum soati, geografiya —
+xarita, jismoniy tarbiya — to'p, san'at/musiqa — nota. Topilmasa —
+neytral kitob.
+
+Belgi **varaq bo'ylab bir xil joylarda** takrorlanadi: diagramma qatori,
+kuchli/sust ro'yxati, testlar jadvali, sharh bloki sarlavhasi va
+**o'qituvchi ismi oldida** — kim qaysi fandan dars berishi ismning
+o'zidan ko'rinib tursin. Besh kategoriya belgisi (qalpoq, pufak, ikki
+odam, ro'yxat, lampochka) shu fanning rangida chiziladi.
+
+**NEGA EMOJI EMAS:** emoji har tizimda boshqacha chiziladi (ba'zan
+kvadrat bo'lib qoladi), bosmada rastr bo'lib loyqalanadi va hujjat
+palitrasiga bo'ysunmaydi. SVG chizma belgi vektorda bosiladi, rangi
+bizniki.
+
+**RANG QOIDASI:** fan rangi FAQAT belgida. Ustun rangi — DARAJA
+(yuqori/o'rta/past). Ikkisi aralashsa rang ikki narsani anglatib
+qolardi: «yashil» — yaxshimi yoki matematikami?
+
+Moslik fan nomidagi **kalit so'zlar** bo'yicha, uch tilda (`English`,
+`Ona tili va adabiyoti`, `Математика`) — Frappe'dan nom erkin matn
+bo'lib keladi.
+
+## 4.2 Diagrammadan sharhga o'tish
+
+Diagrammadagi fan qatori — **havola**: bosilsa shu fanning o'qituvchi
+sharhiga tushadi (`<a href="#hr3-fan-412">`), blok bir zumga ajralib
+turadi. Ota-ona past natijani ko'rib, darhol o'qituvchi nima
+yozganini o'qiy oladi. Bosmada havola zararsiz.
+
 ## 5. Uchta qat'iy qoida
+
+### 5.0.1 Varaq YORUG' — bu did emas, bosma talabi
+Hero bloki dastlab to'q ko'k fon + oq matn edi. Ikki bosqichda
+ochartirildi va oxirida umuman yorug' qilindi (2026-11-13):
+
+- to'q maydon lazer/siyoh printerda ko'p bo'yoq yeydi va yo'l-yo'l
+  (banding) bo'lib chiqadi;
+- **oq matn to'q fonda** bosilganda harf chetida bo'yoq yoyilib, mayda
+  yozuv «semiradi»; to'q matn oq fonda esa doim tiniqroq.
+
+Shuning uchun: fon oqqa yaqin, matn to'q ko'k (`HERO_INK`), rang esa
+faqat ma'no tashiydigan joyda (daraja, fan belgisi) va to'yingan holda.
+Brend urg'usi — chap chetdagi qizil tasma va logotip. Soyalar ham
+ataylab juda yengil (`flood-opacity 0.16`): kuchli soya ustun atrofida
+kulrang halqa bo'lib, chekkani loyqalatadi.
+
+### 5.0 Hajm (3D) ham SVG ichida
+Gradient, soya va yorug'lik chizig'i — `defs()` dagi
+`linearGradient` / `feDropShadow` orqali. CSS `box-shadow` va
+`background: linear-gradient` qog'ozga **tushmaydi**, SVG esa rasm.
+Gradient `id` lari har hujjatda prefiksli (`hr3-bar-yuqori`): guruh
+rejimida bitta sahifada 30 hujjat bo'ladi va bir xil `id` lar
+bir-birini bosib ketardi.
 
 ### 5.1 Rang CSS fonida emas, SVG ichida
 Brauzerda «Print background graphics» standart holatda **o'chiq** —
@@ -117,6 +174,16 @@ yo'lga olib borardi. Bir urinishda eng ko'pi **60** o'quvchi.
 | `classes/output/hisobot_varaq.php` | chizish (so'rov YO'Q): HTML + SVG |
 | `styles.css` → `tz-hr-*` | qog'oz maketi, `@media print` |
 | `pix/logo.png` | maktab logotipi |
+
+## 8.1 Ekrandagi ko'rinish
+
+Varaq avval ekranda ko'riladi, keyin bosiladi. `@media screen` da:
+ustunlar chapdan o'ngga ochiladi (`clip-path` animatsiyasi), kartaga
+sichqoncha tekkanda ko'tariladi, diagramma qatorida qalqib chiquvchi
+izoh bor (SVG `<title>`: fan, foiz, daraja, sinf o'rtachasi), vositalar
+paneli yopishib turadi. `@media print` da bularning hammasi
+**o'chiriladi** — qog'ozda harakat ham, soya ham kerak emas.
+`prefers-reduced-motion` hurmat qilinadi.
 
 ## 9. Chop etish
 

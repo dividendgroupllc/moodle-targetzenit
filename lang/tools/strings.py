@@ -3016,12 +3016,12 @@ S = {
     "hr_sum_title": ("In short", "Qisqacha", "Кратко"),
     "hr_sum_none": (
         "No test result has been entered for this period yet, so the subject "
-        "chart is empty. The teachers' reviews below still describe the child.",
+        "chart is empty. The teachers' reviews below still describe the student.",
         "Bu davr uchun test natijasi hali kiritilmagan, shuning uchun fanlar "
-        "diagrammasi bo'sh. Quyidagi o'qituvchilar sharhi bola haqida baribir "
+        "diagrammasi bo'sh. Quyidagi o'qituvchilar sharhi o'quvchi haqida baribir "
         "to'liq gapiradi.",
         "За этот период результаты тестов ещё не внесены, поэтому диаграмма по "
-        "предметам пуста. Отзывы учителей ниже всё равно рассказывают о ребёнке.",
+        "предметам пуста. Отзывы учителей ниже всё равно рассказывают о ученике.",
     ),
     "hr_sum_s1": (
         "{$a->ism} took {$a->testlar} test(s) in {$a->fan} subject(s); the overall "
@@ -3048,16 +3048,16 @@ S = {
         "({$a->sinf}).",
     ),
     "hr_sum_s4": (
-        "{$a} subject teacher(s) have written a review about the child.",
-        "{$a} fan o'qituvchisi bola haqida sharh yozgan.",
-        "{$a} учитель(-я) написали отзыв о ребёнке.",
+        "{$a} subject teacher(s) have written a review about the student.",
+        "{$a} fan o'qituvchisi o'quvchi haqida fikr bildirgan.",
+        "{$a} учитель(-я) написали отзыв о ученике.",
     ),
 
     "hr_strong": ("Strengths", "Kuchli tomonlar", "Сильные стороны"),
     "hr_strong_hint": (
-        "Subjects the child is doing well in - worth praising.",
-        "Bola yaxshi o'zlashtirgan fanlar - maqtashga arziydi.",
-        "Предметы, которые ребёнок усвоил хорошо - стоит похвалить.",
+        "Subjects the student is doing well in - worth praising.",
+        "O'quvchi yaxshi o'zlashtirgan fanlar - maqtashga arziydi.",
+        "Предметы, которые ученик усвоил хорошо - стоит похвалить.",
     ),
     "hr_weak": ("Needs support", "Qo'llab-quvvatlash kerak", "Нужна поддержка"),
     "hr_weak_hint": (
@@ -3082,7 +3082,7 @@ S = {
         "Fanlar eng kuchlisidan eng sustigacha tartiblangan. Ustun - farzandingiz "
         "natijasi, uchburchak belgi - shu testdagi sinf o'rtachasi.",
         "Предметы расположены от самого сильного к самому слабому. Столбец - "
-        "результат вашего ребёнка, треугольник - средний балл класса в том же тесте.",
+        "результат вашего ученика, треугольник - средний балл класса в том же тесте.",
     ),
     "hr_chart_hint_nocls": (
         "Subjects are ordered from the strongest to the weakest; the bar shows "
@@ -3098,9 +3098,34 @@ S = {
         "Баланс по предметам",
     ),
     "hr_radar_hint": (
-        "The wider and more even the shape, the more evenly the child performs.",
-        "Shakl qanchalik keng va tekis bo'lsa, bola shunchalik bir tekis o'qiyapti.",
-        "Чем шире и ровнее фигура, тем равномернее успевает ребёнок.",
+        "The wider and more even the shape, the more evenly the student performs.",
+        "Shakl qanchalik keng va tekis bo'lsa, o'quvchi shunchalik bir tekis o'zlashtirgan.",
+        "Чем шире и ровнее фигура, тем равномернее успевает ученик.",
+    ),
+    "hr_spread": (
+        "Gap between the highest and the lowest subject",
+        "Eng yuqori va eng past fan orasidagi farq",
+        "Разрыв между самым высоким и самым низким предметом",
+    ),
+    "hr_spread_tekis": (
+        "the student performs evenly across subjects",
+        "o'quvchi fanlar bo'yicha bir tekis o'qiyapti",
+        "ученик успевает ровно по всем предметам",
+    ),
+    "hr_spread_orta": (
+        "there is a noticeable difference between subjects",
+        "fanlar orasida sezilarli farq bor",
+        "между предметами есть заметная разница",
+    ),
+    "hr_spread_katta": (
+        "the difference is large - the weaker subjects need support",
+        "farq katta - orqada qolgan fanlarga yordam kerak",
+        "разница большая - отстающим предметам нужна поддержка",
+    ),
+    "hr_gotoreview": (
+        "click to read the teacher's review",
+        "o'qituvchi sharhini o'qish uchun bosing",
+        "нажмите, чтобы прочитать отзыв учителя",
     ),
     "hr_classavg": ("Class average", "Sinf o'rtachasi", "Средний балл класса"),
     "hr_scale_hint": (
@@ -3114,9 +3139,9 @@ S = {
 
     "hr_table_title": ("Test detail", "Testlar tafsiloti", "Детали тестов"),
     "hr_table_hint": (
-        "Every test the child took in this period.",
-        "Bola shu davrda topshirgan har bir test.",
-        "Каждый тест, который ребёнок сдал в этот период.",
+        "Every test the student took in this period.",
+        "O'quvchi shu davrda topshirgan har bir test.",
+        "Каждый тест, который ученик сдал в этот период.",
     ),
     "hr_col_subject": ("Subject / teacher", "Fan / o'qituvchi", "Предмет / учитель"),
     "hr_col_exam": ("Test", "Test", "Тест"),
@@ -3126,17 +3151,20 @@ S = {
     "hr_col_class": ("Class", "Sinf", "Класс"),
 
     "hr_reviews_title": (
-        "What the teachers write about the child",
-        "O'qituvchilar bola haqida nima deb yozdi",
-        "Что пишут учителя о ребёнке",
+        "Teachers' view",
+        "O'qituvchilar fikri",
+        "Мнение учителей",
     ),
     "hr_reviews_hint": (
-        "Each subject teacher writes on five areas. The most recent review for "
-        "each subject is shown.",
-        "Har bir fan o'qituvchisi besh yo'nalish bo'yicha yozadi. Har fandan "
-        "eng oxirgi sharh ko'rsatilgan.",
-        "Каждый учитель-предметник пишет по пяти направлениям. Показан последний "
-        "отзыв по каждому предмету.",
+        "Each subject teacher writes on five areas. These reviews come from "
+        "watching the student in lessons all term - they are NOT derived from the "
+        "test score. The most recent review for each subject is shown.",
+        "Har bir fan o'qituvchisi besh yo'nalish bo'yicha yozadi. Sharh test "
+        "baliga qarab emas, o'qituvchining chorak davomida darsdagi kuzatuviga "
+        "asoslangan. Har fandan eng oxirgi sharh ko'rsatilgan.",
+        "Каждый учитель-предметник пишет по пяти направлениям. Отзыв основан на "
+        "наблюдении за учеником на уроках в течение четверти, а НЕ на балле "
+        "теста. Показан последний отзыв по каждому предмету.",
     ),
     "hr_teacher_of": (
         "teacher of {$a}",
@@ -3153,17 +3181,17 @@ S = {
         "The result is the percentage of correct answers in the tests of this "
         "period; the level follows the school's scale (80% and above - High, "
         "50-79% - Middle, below 50% - Needs support). A low result in one test "
-        "is not a verdict about the child: read it together with the teachers' "
+        "is not a verdict about the student: read it together with the teachers' "
         "reviews. If you have a question, please speak to the class tutor or "
         "write through the school feedback page.",
         "Natija - shu davrdagi testlarda to'g'ri javoblar foizi; daraja maktab "
         "shkalasi bo'yicha (80% va undan yuqori - Yuqori, 50-79% - O'rta, 50% dan "
-        "past - Past). Bitta testdagi past natija bola haqidagi hukm emas: uni "
+        "past - Past). Bitta testdagi past natija o'quvchi haqidagi hukm emas: uni "
         "o'qituvchilar sharhi bilan birga o'qing. Savolingiz bo'lsa, sinf "
         "rahbariga murojaat qiling yoki maktabning murojaat sahifasi orqali yozing.",
         "Результат - это процент правильных ответов в тестах данного периода; "
         "уровень - по школьной шкале (80% и выше - Высокий, 50-79% - Средний, "
-        "ниже 50% - Низкий). Низкий результат одного теста - не приговор ребёнку: "
+        "ниже 50% - Низкий). Низкий результат одного теста - не приговор ученику: "
         "читайте его вместе с отзывами учителей. При вопросах обратитесь к "
         "классному руководителю или напишите через страницу обращений школы.",
     ),

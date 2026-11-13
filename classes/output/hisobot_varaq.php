@@ -48,6 +48,9 @@ class hisobot_varaq {
     const QIZIL = '#ff1100';
 
     const INK = '#1d2a38';
+
+    /** Hero kartasidagi asosiy matn — logotip ko'kidan biroz ochroq. */
+    const HERO_INK = '#0b3f7d';
     const MUTED = '#5b6b7c';
     const LINE = '#c9d2db';
 
@@ -74,6 +77,110 @@ class hisobot_varaq {
 
     /** «Kuchli» / «sust» ro'yxatida nechtagacha fan ko'rsatiladi. */
     const ROYXAT_MAX = 4;
+
+    /**
+     * Hujjat raqami — SVG gradient `id` lari uchun.
+     *
+     * NEGA KERAK: guruh rejimida bitta sahifada 30 ta hujjat bo'ladi.
+     * `id` HTML'da hujjat bo'ylab yagona, ya'ni «bar-high» gradienti 30
+     * marta takrorlansa brauzer birinchisini oladi va qolganlari jim
+     * buziladi. Shuning uchun har hujjatning o'z prefiksi bor.
+     */
+    protected static $uid = 0;
+
+    /** Shu hujjatdagi `id` — `hr3-bar-yuqori`. */
+    protected static function id(string $nom): string {
+        return 'hr' . self::$uid . '-' . $nom;
+    }
+
+    protected static function url(string $nom): string {
+        return 'url(#' . self::id($nom) . ')';
+    }
+
+    /**
+     * GRADIENT VA SOYALAR — hujjat boshida bir marta.
+     *
+     * Hajm (3D his) CSS bilan EMAS, SVG bilan beriladi: CSS soyasi va
+     * gradienti qog'ozga tushmaydi («Print background graphics» o'chiq),
+     * SVG esa rasm sifatida doim bosiladi. Shuning uchun har bir
+     * gradient shu yerda e'lon qilinadi va diagrammalar unga `url(#...)`
+     * bilan murojaat qiladi — bitta joyda turgani uchun ranglar hamma
+     * diagrammada bir xil bo'ladi.
+     */
+    protected static function defs(): string {
+        $g = '';
+        foreach (self::DARAJA_RANG as $kod => $rang) {
+            // Ustunning yuqori qirrasi ochroq, pasti to'qroq — yorug'lik
+            // tepadan tushgandek. Shu bitta narsa tekis ustunga hajm beradi.
+            $g .= '<linearGradient id="' . self::id('bar-' . $kod) . '" x1="0" y1="0"'
+                . ' x2="0" y2="1">'
+                . '<stop offset="0" stop-color="' . self::ochroq($rang, 0.30) . '"/>'
+                . '<stop offset="0.45" stop-color="' . $rang . '"/>'
+                . '<stop offset="1" stop-color="' . self::toqroq($rang, 0.18) . '"/>'
+                . '</linearGradient>';
+            // Halqa endi YORUG' fonda turadi, ya'ni daraja rangining o'zi
+            // to'g'ri keladi — yorqin variant oqarib ketardi.
+            $g .= '<linearGradient id="' . self::id('arc-' . $kod) . '" x1="0" y1="0"'
+                . ' x2="1" y2="1">'
+                . '<stop offset="0" stop-color="' . self::ochroq($rang, 0.18) . '"/>'
+                . '<stop offset="1" stop-color="' . self::toqroq($rang, 0.10) . '"/>'
+                . '</linearGradient>';
+        }
+        // HERO FONI — OQQA YAQIN.
+        //
+        // Ikki marta ochartirildi va oxirida umuman yorug' qilindi
+        // (foydalanuvchi talabi 2026-11-13: «A4 ga chiqarganda real aniq
+        // ko'rinsin»). Sabab texnik, did emas:
+        //   · to'q maydon lazer/siyoh printerda ko'p bo'yoq yeydi va
+        //     yo'l-yo'l (banding) bo'lib chiqadi;
+        //   · OQ matn to'q fonda bosilganda harf chetida bo'yoq yoyilib,
+        //     mayda yozuv «semirib» ketadi — to'q matn oq fonda esa
+        //     har doim tiniqroq.
+        // Shuning uchun hero endi yorug' karta: fon oqqa yaqin, matn to'q
+        // ko'k. Brend esa chap chetdagi qizil tasma va logotipda qoladi.
+        $g .= '<linearGradient id="' . self::id('hero') . '" x1="0" y1="0" x2="1" y2="1">'
+            . '<stop offset="0" stop-color="#ffffff"/>'
+            . '<stop offset="1" stop-color="#eff6fd"/></linearGradient>';
+        $g .= '<linearGradient id="' . self::id('track') . '" x1="0" y1="0" x2="0" y2="1">'
+            . '<stop offset="0" stop-color="#dfe6ee"/>'
+            . '<stop offset="1" stop-color="#f2f6fa"/></linearGradient>';
+        $g .= '<linearGradient id="' . self::id('radar') . '" x1="0" y1="0" x2="0" y2="1">'
+            . '<stop offset="0" stop-color="#1b5f9e" stop-opacity="0.34"/>'
+            . '<stop offset="1" stop-color="#00214a" stop-opacity="0.12"/></linearGradient>';
+        $g .= '<filter id="' . self::id('soya') . '" x="-20%" y="-40%"'
+            . ' width="140%" height="200%">'
+            // Soya ataylab JUDA YENGIL: qog'ozda kuchli soya ustun
+            // atrofida kulrang halqa bo'lib chiqadi va chekkani loyqalatadi.
+            . '<feDropShadow dx="0" dy="1.2" stdDeviation="1.1"'
+            . ' flood-color="#00214a" flood-opacity="0.16"/></filter>';
+        $g .= '<filter id="' . self::id('soya2') . '" x="-30%" y="-30%"'
+            . ' width="160%" height="160%">'
+            . '<feDropShadow dx="0" dy="3" stdDeviation="4"'
+            . ' flood-color="#000000" flood-opacity="0.35"/></filter>';
+
+        return '<svg class="tz-hr-defs" width="0" height="0" aria-hidden="true">'
+            . '<defs>' . $g . '</defs></svg>';
+    }
+
+    /** Rangni oqartiradi (gradientning yuqori qirrasi uchun). */
+    protected static function ochroq(string $hex, float $k): string {
+        return self::aralash($hex, 255, $k);
+    }
+
+    /** Rangni qoraytiradi (gradientning pastki qirrasi uchun). */
+    protected static function toqroq(string $hex, float $k): string {
+        return self::aralash($hex, 0, $k);
+    }
+
+    protected static function aralash(string $hex, int $maqsad, float $k): string {
+        $hex = ltrim($hex, '#');
+        $out = '#';
+        for ($i = 0; $i < 3; $i++) {
+            $c = hexdec(substr($hex, $i * 2, 2));
+            $out .= str_pad(dechex((int) round($c + ($maqsad - $c) * $k)), 2, '0', STR_PAD_LEFT);
+        }
+        return $out;
+    }
 
     protected static function t(string $kalit, $a = null): string {
         return get_string($kalit, 'local_targetzenit', $a);
@@ -110,10 +217,11 @@ class hisobot_varaq {
             return '';
         }
 
+        self::$uid++;
         $o = \html_writer::start_div('tz-hr-doc' . ($oxirgi ? ' tz-hr-oxirgi' : ''));
+        $o .= self::defs();
         $o .= self::masthead($d);
-        $o .= self::shaxs($d);
-        $o .= self::kpi($d);
+        $o .= self::hero($d);
         $o .= self::xulosa($d);
         $o .= self::kuchli_sust($d);
         $o .= self::ustun_diagramma($d);
@@ -149,107 +257,167 @@ class hisobot_varaq {
             'tz-hr-mast');
     }
 
-    // ======================================================== O'QUVCHI KARTI
+    // ================================================================ HERO
 
-    protected static function shaxs(\stdClass $d): string {
-        $u = $d->oquvchi;
-        $ism = fullname($u);
-
-        $qatorlar = [
-            [self::t('hr_group'), $d->guruh !== '' ? $d->guruh : '—'],
-            [self::t('hr_tutor'), $d->tutor !== '' ? $d->tutor : '—'],
-            [self::t('hr_studentid'), (string) ($u->idnumber ?: '—')],
-            [self::t('hr_period'), $d->term->name . ' · '
-                . self::sana($d->term->startdate) . ' – ' . self::sana($d->term->enddate)],
-        ];
-        $matn = '';
-        foreach ($qatorlar as $q) {
-            $matn .= \html_writer::div(
-                \html_writer::tag('span', s($q[0]), ['class' => 'tz-hr-k'])
-                . \html_writer::tag('span', s($q[1]), ['class' => 'tz-hr-v']),
-                'tz-hr-kv');
-        }
-
-        return \html_writer::div(
-            \html_writer::div(self::bosh_harf($ism), 'tz-hr-av')
-            . \html_writer::div(
-                \html_writer::tag('div', s($ism), ['class' => 'tz-hr-name'])
-                . \html_writer::div($matn, 'tz-hr-kvs'),
-                'tz-hr-who'),
-            'tz-hr-card tz-hr-person');
-    }
-
-    /** Ism bosh harflari — SVG doira (rasm yo'q o'quvchida ham varaq to'liq). */
-    protected static function bosh_harf(string $ism): string {
-        $h = '';
-        foreach (preg_split('/\s+/u', trim($ism)) as $b) {
-            if ($b !== '' && \core_text::strlen($h) < 2) {
-                $h .= \core_text::strtoupper(\core_text::substr($b, 0, 1));
-            }
-        }
-        return '<svg class="tz-hr-avsvg" viewBox="0 0 80 80" role="img" aria-hidden="true">'
-            . '<circle cx="40" cy="40" r="39" fill="' . self::NAVY . '"/>'
-            . '<text x="40" y="40" fill="#ffffff" font-size="30" font-weight="700"'
-            . ' text-anchor="middle" dominant-baseline="central"'
-            . ' font-family="Arial, Helvetica, sans-serif">' . s($h) . '</text></svg>';
-    }
-
-    // ================================================================= KPI
-
-    protected static function kpi(\stdClass $d): string {
+    /**
+     * BOSH BLOK: o'quvchi + umumiy natija + uchta asosiy raqam.
+     *
+     * NEGA BITTA KATTA SVG: bu yerda gradient fon, oq matn va halqali
+     * diagramma bor — ularning hammasi CSS bilan qilinsa qog'ozda YO'QOLADI
+     * (brauzer fonni bosmaydi) va varaqning yuqori qismi bo'm-bo'sh chiqadi.
+     * SVG esa rasm: qanday ko'rinsa, shunday bosiladi. Shuning uchun blokning
+     * O'ZI diagramma qilib chizilgan.
+     *
+     * Ichidagi tartib tasodifiy emas: ota-ona varaqni qo'lga olganda
+     * birinchi ko'radigan narsa — bolaning ismi va bitta katta raqam,
+     * keyin «qaysi fan kuchli / qaysi fan sust».
+     */
+    protected static function hero(\stdClass $d): string {
         $j = $d->jami;
+        $u = $d->oquvchi;
+        $w = 1000;
+        $h = 276;
         $rang = self::rang($j->daraja);
 
-        $plitalar = [];
+        $s = '<svg class="tz-hr-hero" viewBox="0 0 ' . $w . ' ' . $h . '" role="img">';
+        $s .= '<rect x="1" y="1" width="' . ($w - 2) . '" height="' . ($h - 2)
+            . '" rx="16" fill="' . self::url('hero') . '" stroke="#cfdff0"'
+            . ' stroke-width="1.5"/>';
 
-        // 1. Umumiy natija — varaqning bosh raqami.
-        $plitalar[] = [
-            self::foiz($j->foiz),
-            self::t('hr_kpi_result'),
-            $j->daraja ? self::daraja_nomi($j->daraja) : self::t('hr_notest'),
-            $rang,
-        ];
+        // Fondagi yumshoq shakllar — juda past shaffoflikda: ular maydonga
+        // chuqurlik beradi, lekin bosmada deyarli bo'yoq yemaydi.
+        $s .= '<circle cx="880" cy="20" r="170" fill="' . self::NAVY
+            . '" fill-opacity="0.04"/>'
+            . '<circle cx="880" cy="20" r="110" fill="' . self::NAVY
+            . '" fill-opacity="0.035"/>'
+            . '<circle cx="70" cy="286" r="130" fill="' . self::NAVY
+            . '" fill-opacity="0.03"/>'
+            . '<rect x="1" y="1" width="7" height="' . ($h - 2) . '" rx="3.5" fill="'
+            . self::QIZIL . '"/>';
 
-        // 2-3. Kuchli va sust fan — ota-onaning ASOSIY savoli, shuning
-        // uchun u diagrammani o'qishdan OLDIN javobini oladi.
-        $plitalar[] = $j->kuchli
-            ? [self::qisqart($j->kuchli['fan'], 14), self::t('hr_kpi_best'),
+        // --- avatar
+        $bosh = '';
+        foreach (preg_split('/\s+/u', trim(fullname($u))) as $qism) {
+            if ($qism !== '' && \core_text::strlen($bosh) < 2) {
+                $bosh .= \core_text::strtoupper(\core_text::substr($qism, 0, 1));
+            }
+        }
+        // Avatar — kichik to'q doira. Bitta mayda maydon bosmaga og'irlik
+        // qilmaydi, lekin varaqqa urg'u beradi.
+        $s .= '<circle cx="92" cy="92" r="46" fill="' . self::HERO_INK . '"/>'
+            . self::matn($bosh, 92, 92, 34, '#ffffff', 'middle', 700);
+
+        // --- ism va ma'lumot
+        $s .= self::matn(self::qisqart(fullname($u), 26), 160, 74, 40,
+            self::HERO_INK, 'start', 800);
+
+        $qator2 = array_filter([
+            $d->guruh !== '' ? $d->guruh : null,
+            $d->tutor !== '' ? self::t('hr_tutor') . ': ' . $d->tutor : null,
+        ]);
+        $s .= self::matn(self::qisqart(implode('   ·   ', $qator2), 48), 160, 118, 21,
+            '#14559b', 'start', 600);
+
+        $qator3 = array_filter([
+            $u->idnumber ? self::t('hr_studentid') . ': ' . $u->idnumber : null,
+            $d->term->name,
+            self::sana($d->term->startdate) . ' – ' . self::sana($d->term->enddate),
+        ]);
+        $s .= self::matn(self::qisqart(implode('   ·   ', $qator3), 74), 160, 150, 16,
+            self::MUTED, 'start', 400);
+
+        // --- halqali diagramma (umumiy natija)
+        $s .= self::gauge(860, 104, 70, $j->foiz, $j->daraja, $rang);
+
+        // --- ajratuvchi va uchta raqam
+        $s .= '<line x1="40" y1="186" x2="960" y2="186" stroke="#cfdff0"'
+            . ' stroke-width="1.5"/>';
+
+        $stat = [];
+        $stat[] = $j->kuchli
+            ? [self::t('hr_kpi_best'), self::qisqart($j->kuchli['fan'], 16),
                self::foiz($j->kuchli['foiz']) . ' · ' . self::daraja_nomi($j->kuchli['daraja']),
                self::DARAJA_RANG['yuqori']]
-            : ['—', self::t('hr_kpi_best'), self::t('hr_notest'), self::MUTED];
-
-        $plitalar[] = $j->sust
-            ? [self::qisqart($j->sust['fan'], 14), self::t('hr_kpi_weak'),
+            : [self::t('hr_kpi_best'), '—', self::t('hr_notest'), '#b6cde8'];
+        $stat[] = $j->sust
+            ? [self::t('hr_kpi_weak'), self::qisqart($j->sust['fan'], 16),
                self::foiz($j->sust['foiz']) . ' · ' . self::daraja_nomi($j->sust['daraja']),
                self::rang($j->sust['daraja'])]
-            : ['—', self::t('hr_kpi_weak'), self::t('hr_notest'), self::MUTED];
+            : [self::t('hr_kpi_weak'), '—', self::t('hr_notest'), '#b6cde8'];
 
-        // 4. Sinf bilan qiyos — yolg'iz foiz ma'nosiz, o'lchov kerak.
         if ($j->sinf_foiz !== null && $j->foiz !== null) {
             $farq = round($j->foiz - $j->sinf_foiz, 1);
-            $plitalar[] = [
+            $stat[] = [self::t('hr_kpi_vsclass'),
                 ($farq > 0 ? '+' : '') . self::foiz($farq),
-                self::t('hr_kpi_vsclass'),
                 self::t('hr_kpi_vsclass_hint', self::foiz($j->sinf_foiz)),
-                $farq >= 0 ? self::DARAJA_RANG['yuqori'] : self::DARAJA_RANG['past'],
-            ];
+                self::DARAJA_RANG[$farq >= 0 ? 'yuqori' : 'past']];
         } else {
-            $plitalar[] = [(string) $j->testlar, self::t('hr_kpi_tests'),
-                self::t('hr_kpi_tests_hint', $j->fan), self::NAVY];
+            $stat[] = [self::t('hr_kpi_tests'), (string) $j->testlar,
+                self::t('hr_kpi_tests_hint', $j->fan), self::HERO_INK];
         }
 
-        $o = '';
-        foreach ($plitalar as $p) {
-            $o .= \html_writer::div(
-                '<svg class="tz-hr-tilebar" viewBox="0 0 100 4" preserveAspectRatio="none">'
-                . '<rect width="100" height="4" fill="' . $p[3] . '"/></svg>'
-                . \html_writer::div(s($p[0]), 'tz-hr-tilenum'
-                    . (\core_text::strlen((string) $p[0]) > 6 ? ' tz-hr-tilesm' : ''))
-                . \html_writer::div(s($p[1]), 'tz-hr-tilelab')
-                . \html_writer::div(s($p[2]), 'tz-hr-tilehint'),
-                'tz-hr-tile');
+        $x = 46;
+        foreach ($stat as $i => $st) {
+            if ($i > 0) {
+                $s .= '<line x1="' . ($x - 24) . '" y1="206" x2="' . ($x - 24)
+                    . '" y2="264" stroke="#cfdff0" stroke-width="1.5"/>';
+            }
+            $s .= self::matn($st[0], $x, 220, 15, self::MUTED, 'start', 700, 1.1)
+                . self::matn($st[1], $x, 248, 26, $st[3], 'start', 800)
+                . self::matn($st[2], $x, 268, 15, self::MUTED, 'start', 400);
+            $x += 304;
         }
-        return \html_writer::div($o, 'tz-hr-tiles');
+
+        return $s . '</svg>';
+    }
+
+    /**
+     * Halqali ko'rsatkich (gauge) — umumiy natija.
+     *
+     * Doira `stroke-dasharray` bilan to'ldiriladi: yoyni `path` bilan
+     * chizishdan sodda va burchak hisobida xato qilish imkoni yo'q.
+     */
+    protected static function gauge(int $cx, int $cy, int $r, ?float $foiz,
+                                     ?string $daraja, string $rang): string {
+        $aylana = 2 * M_PI * $r;
+        $uzun = $foiz === null ? 0 : $aylana * max(0, min(100, $foiz)) / 100;
+
+        $s = '<circle cx="' . $cx . '" cy="' . $cy . '" r="' . $r . '" fill="none"'
+            . ' stroke="#dbe7f4" stroke-width="17"/>';
+        if ($uzun > 0) {
+            $s .= '<g>'
+                . '<circle cx="' . $cx . '" cy="' . $cy . '" r="' . $r . '" fill="none"'
+                . ' stroke="' . self::url('arc-' . $daraja) . '" stroke-width="17"'
+                . ' stroke-linecap="round" stroke-dasharray="' . round($uzun, 1) . ' '
+                . round($aylana, 1) . '"'
+                . ' transform="rotate(-90 ' . $cx . ' ' . $cy . ')"/></g>';
+        }
+        // Uchala satr HALQA ICHIDA: tashqarida ular hero chetiga yoki
+        // ajratuvchi chiziqqa urilib qolardi.
+        $s .= self::matn(\core_text::strtoupper(self::t('hr_kpi_result')),
+                $cx, $cy - 33, 11, self::MUTED, 'middle', 700)
+            . self::matn($foiz === null ? '—' : self::foiz($foiz),
+                $cx, $cy + 2, 44, self::HERO_INK, 'middle', 800)
+            // Natija yo'q bo'lsa halqa ichida FAQAT chiziqcha qoladi:
+            // «test topshirilmagan» matni doiradan oshib ketardi, buni
+            // «Qisqacha» bloki baribir to'liq gap bilan aytadi.
+            . ($foiz === null ? ''
+                : self::matn(self::daraja_nomi($daraja), $cx, $cy + 40, 17,
+                    self::rang($daraja), 'middle', 700));
+        return $s;
+    }
+
+    /** SVG matn — takrorlanadigan atributlarni bir joyga yig'adi. */
+    protected static function matn(string $matn, $x, $y, int $olcham, string $rang,
+                                    string $anchor = 'start', int $ogirlik = 400,
+                                    float $sp = 0): string {
+        return '<text x="' . $x . '" y="' . $y . '" font-size="' . $olcham
+            . '" fill="' . $rang . '" text-anchor="' . $anchor
+            . '" font-weight="' . $ogirlik . '"'
+            . ($sp ? ' letter-spacing="' . $sp . '"' : '')
+            . ' dominant-baseline="' . ($anchor === 'middle' && $olcham > 20
+                ? 'central' : 'alphabetic') . '"'
+            . ' font-family="Arial, Helvetica, sans-serif">' . s($matn) . '</text>';
     }
 
     // ============================================================== XULOSA
@@ -347,7 +515,9 @@ class hisobot_varaq {
         $ichi = '';
         foreach ($fanlar as $f) {
             $ichi .= \html_writer::div(
-                \html_writer::div(s($f['fan']), 'tz-hr-swname')
+                \html_writer::div(
+                    hisobot_ikona::nishon($f['fan'], 22)
+                    . \html_writer::tag('span', s($f['fan'])), 'tz-hr-swname')
                 . \html_writer::div(self::svg_mini((float) $f['foiz'], $f['daraja']),
                     'tz-hr-swbar')
                 . \html_writer::div(s(self::foiz($f['foiz'])), 'tz-hr-swpct'),
@@ -371,12 +541,15 @@ class hisobot_varaq {
     /** Kichik foiz chizig'i (ro'yxat va jadval uchun). */
     protected static function svg_mini(?float $foiz, ?string $daraja): string {
         $w = 200;
-        $s = '<svg class="tz-hr-ulush" viewBox="0 0 ' . $w . ' 12"'
+        $s = '<svg class="tz-hr-ulush" viewBox="0 0 ' . $w . ' 14"'
             . ' preserveAspectRatio="none" role="img">'
-            . '<rect width="' . $w . '" height="12" rx="2" fill="#eef2f6"/>';
+            . '<rect width="' . $w . '" height="14" rx="7" fill="' . self::url('track') . '"/>';
         if ($foiz !== null) {
-            $s .= '<rect width="' . round($w * max(0, min(100, $foiz)) / 100, 1)
-                . '" height="12" rx="2" fill="' . self::rang($daraja) . '"/>';
+            $uzun = round(max(14, $w * max(0, min(100, $foiz)) / 100), 1);
+            $s .= '<rect width="' . $uzun . '" height="14" rx="7" fill="'
+                . self::url('bar-' . $daraja) . '"/>'
+                . '<rect x="4" y="3" width="' . round(max(2, $uzun - 8), 1)
+                . '" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.30"/>';
         }
         return $s . '</svg>';
     }
@@ -397,18 +570,28 @@ class hisobot_varaq {
             \html_writer::tag('h2', self::t('hr_chart_title'), ['class' => 'tz-hr-h2'])
             . \html_writer::div($sinfbor
                 ? self::t('hr_chart_hint') : self::t('hr_chart_hint_nocls'), 'tz-hr-hint')
-            . self::svg_bar($qatorlar),
+            . self::svg_bar($qatorlar)
+            // Shkala aynan SHU diagrammani tushuntiradi, shuning uchun u
+            // alohida karta emas, diagrammaning tagidagi tasma. Alohida
+            // turganda u «yana bir blok» bo'lib, varaqni uzaytirardi.
+            . self::shkala(),
             'tz-hr-card');
     }
 
     /** Diagramma qatorlari — `hisobot::student()` dagi tartibda (yuqoridan pastga). */
     protected static function qatorlar(\stdClass $d): array {
         $out = [];
-        foreach ($d->fanlar as $f) {
+        foreach ($d->fanlar as $cid => $f) {
             $out[] = ['nom' => $f['fan'], 'foiz' => $f['foiz'],
-                      'daraja' => $f['daraja'], 'sinf' => $f['sinf']];
+                      'daraja' => $f['daraja'], 'sinf' => $f['sinf'],
+                      'cid' => (int) $cid, 'sharhli' => !empty($f['sharh'])];
         }
         return $out;
+    }
+
+    /** Fan sharhi blokining langari — diagrammadan unga o'tiladi. */
+    protected static function langar(int $cid): string {
+        return self::id('fan-' . $cid);
     }
 
     /**
@@ -424,81 +607,109 @@ class hisobot_varaq {
         $x0 = 300;
         $x1 = 895;
         $kw = $x1 - $x0;
-        $qh = 32;
-        $yust = 36;
-        $past = 18;
+        $qh = 34;
+        $yust = 40;
+        $past = 14;
         $h = $yust + count($qatorlar) * $qh + $past;
+        $pastki = $yust + count($qatorlar) * $qh;
 
         $px = fn(float $ball) => $x0 + $kw * max(0, min(100, $ball)) / 100;
         $s = '<svg class="tz-hr-svg" viewBox="0 0 ' . $w . ' ' . $h . '" role="img">';
 
-        // Daraja bandlari fon sifatida (SVG ichida — doim bosiladi)
-        foreach (self::BANDLAR as [$dan, $gacha, $kod, $och]) {
-            $s .= '<rect x="' . round($px($dan), 1) . '" y="' . $yust
-                . '" width="' . round($px($gacha) - $px($dan), 1)
-                . '" height="' . (count($qatorlar) * $qh) . '" fill="' . $och . '"/>';
+        // DARAJA CHEGARALARI — rangli maydon emas, nozik uzuq chiziq.
+        //
+        // Avval butun trek uchta rangli bandga bo'lingan edi; har qatorda
+        // uch rang takrorlanib, ustunning O'Z rangi ularning ichida
+        // yo'qolib ketardi. Chiziq bir xil ma'noni beradi va diagramma
+        // toza qoladi — daraja baribir ustun rangi, belgisi va shkalada bor.
+        foreach ([hisobot::DARAJA_ORTA, hisobot::DARAJA_YUQORI] as $tik) {
+            $x = round($px($tik), 1);
+            $s .= '<line x1="' . $x . '" y1="' . ($yust - 4) . '" x2="' . $x . '" y2="'
+                . $pastki . '" stroke="#c9d2db" stroke-width="1.2"'
+                . ' stroke-dasharray="4 4"/>';
         }
         foreach ([0, hisobot::DARAJA_ORTA, hisobot::DARAJA_YUQORI, 100] as $tik) {
-            $x = round($px($tik), 1);
-            $s .= '<line x1="' . $x . '" y1="' . $yust . '" x2="' . $x . '" y2="'
-                . ($yust + count($qatorlar) * $qh)
-                . '" stroke="#ffffff" stroke-width="1.5"/>'
-                . '<text x="' . $x . '" y="' . ($yust - 11) . '" font-size="15" fill="'
-                . self::MUTED . '" text-anchor="middle"'
-                . ' font-family="Arial, Helvetica, sans-serif">' . $tik . '%</text>';
+            $s .= self::matn($tik . '%', round($px($tik), 1), $yust - 14, 15,
+                self::MUTED, 'middle', 600);
         }
 
         $y = $yust;
         foreach ($qatorlar as $q) {
             $yc = $y + $qh / 2;
 
-            $s .= '<text x="' . ($x0 - 14) . '" y="' . $yc . '" font-size="16" fill="'
-                . self::INK . '" text-anchor="end" dominant-baseline="central"'
-                . ' font-family="Arial, Helvetica, sans-serif">'
-                . s(self::qisqart($q['nom'], 32)) . '</text>';
+            // Har qator alohida GURUH: `<title>` shu guruhga tegishli
+            // bo'ladi, ya'ni izoh aynan ustiga kelingan fan uchun chiqadi.
+            // Ildiz `<svg>` ga qo'yilsa butun diagrammaning nomi bo'lib
+            // qolardi.
+            $izoh = $q['nom'] . ': '
+                . ($q['foiz'] === null
+                    ? self::t('hr_notest')
+                    : self::foiz($q['foiz']) . ' · ' . self::daraja_nomi($q['daraja'])
+                      . ($q['sinf'] !== null
+                          ? ' · ' . self::t('hr_classavg') . ' ' . self::foiz($q['sinf'])
+                          : ''));
+            // SHARHGA HAVOLA: ekranda fan nomiga bosilsa shu fanning
+            // o'qituvchi sharhiga o'tadi. Bu diagrammani «o'qiladigan»
+            // qiladi — ota-ona past natijani ko'rib, darhol o'qituvchi
+            // nima deganini o'qiy oladi. Bosmada havola zararsiz.
+            $havola = $q['sharhli'];
+            $s .= $havola ? '<a href="#' . self::langar($q['cid']) . '">' : '';
+            $s .= '<g class="tz-hr-qator' . ($havola ? ' tz-hr-bosiladi' : '')
+                . '"><title>' . s($izoh)
+                . ($havola ? ' · ' . s(self::t('hr_gotoreview')) : '') . '</title>';
+            // Ko'rinmas «ushlash maydoni»: sichqoncha qatorning istalgan
+            // joyiga kelganda izoh chiqadi, faqat ustunning o'ziga emas.
+            $s .= '<rect class="tz-hr-hit" x="0" y="' . $y . '" width="' . $w
+                . '" height="' . $qh . '" rx="8" fill="' . self::NAVY
+                . '" fill-opacity="0"/>';
+
+            // Fan belgisi — trekning chap chetida, ustun bilan bir qatorda.
+            // Doimiy ustunda turgani uchun ko'z ularni pastga qarab
+            // «o'qiy» oladi va fan nomini o'qimay ham taniydi.
+            $s .= hisobot_ikona::nishon_svg($q['nom'], $x0 - 42, $yc - 14, 28);
+            $s .= self::matn(self::qisqart($q['nom'], 27), $x0 - 52, $yc + 6, 17,
+                self::INK, 'end', 650);
+
+            // Trek — yengil gradient, yumaloq uchli. Ustun bo'sh joyda ham
+            // «qancha qolgani» ko'rinib tursin.
+            $s .= '<rect x="' . $x0 . '" y="' . ($yc - 11) . '" width="' . $kw
+                . '" height="22" rx="11" fill="' . self::url('track') . '"/>';
 
             if ($q['foiz'] === null) {
-                // Testi yo'q fan YASHIRILMAYDI (ota-ona «nega bu fan yo'q?»
-                // demasligi uchun), lekin rangli band ostida qolmaydi.
-                $s .= '<rect x="' . $x0 . '" y="' . $y . '" width="' . $kw
-                    . '" height="' . $qh . '" fill="#ffffff"/>'
-                    . '<text x="' . ($x0 + 10) . '" y="' . $yc . '" font-size="14" fill="'
-                    . self::MUTED . '" dominant-baseline="central"'
-                    . ' font-family="Arial, Helvetica, sans-serif">'
-                    . s(self::t('hr_notest')) . '</text>';
+                $s .= self::matn(self::t('hr_notest'), $x0 + 14, $yc + 5, 14,
+                    self::MUTED, 'start', 400) . '</g>' . ($havola ? '</a>' : '');
                 $y += $qh;
                 continue;
             }
 
-            $rang = self::rang($q['daraja']);
-            $uzun = max(2, $px((float) $q['foiz']) - $x0);
-            $s .= '<rect x="' . $x0 . '" y="' . ($yc - 9) . '" width="' . round($uzun, 1)
-                . '" height="18" rx="3" fill="' . $rang . '"/>';
+            $uzun = max(22, $px((float) $q['foiz']) - $x0);
+            $grad = self::url('bar-' . $q['daraja']);
 
-            // SINF O'RTACHASI — uchburchak belgi va nozik chiziq.
-            // Ustunning USTIDA turadi, ya'ni ustun uni bekitmaydi.
+            // Ustun + soya + yuqori qirradagi yorug'lik chizig'i: shu
+            // uchtasi birgalikda tekis to'rtburchakka hajm beradi.
+            $s .= '<g filter="' . self::url('soya') . '">'
+                . '<rect x="' . $x0 . '" y="' . ($yc - 11) . '" width="' . round($uzun, 1)
+                . '" height="22" rx="11" fill="' . $grad . '"/></g>'
+                . '<rect x="' . ($x0 + 6) . '" y="' . ($yc - 7) . '" width="'
+                . round(max(2, $uzun - 12), 1) . '" height="4" rx="2"'
+                . ' fill="#ffffff" fill-opacity="0.28"/>';
+
+            // SINF O'RTACHASI — uchburchak va qisqa chiziq, oq hoshiya bilan
+            // (ham rangli ustun, ham och trek ustida ko'rinishi kerak).
             if ($q['sinf'] !== null) {
                 $xs = round($px((float) $q['sinf']), 1);
-                // OQ HOSHIYA: belgi ham rangli ustun ustida, ham och band
-                // ustida turadi — ikkala fonda ham ko'rinishi uchun avval
-                // qalin oq, ustiga ingichka to'q chiziq chiziladi.
-                // Belgi ustunning O'ZIDA turadi: uchburchak tepada, ostida
-                // faqat ustun balandligidagi qisqa chiziq. Oq hoshiya —
-                // belgi rangli ustunda ham, och bandda ham ko'rinsin.
-                $s .= '<line x1="' . $xs . '" y1="' . ($yc - 9) . '" x2="' . $xs
-                    . '" y2="' . ($yc + 9) . '" stroke="#ffffff" stroke-width="5"/>'
-                    . '<line x1="' . $xs . '" y1="' . ($yc - 9) . '" x2="' . $xs
-                    . '" y2="' . ($yc + 9) . '" stroke="' . self::NAVY
+                $s .= '<line x1="' . $xs . '" y1="' . ($yc - 11) . '" x2="' . $xs
+                    . '" y2="' . ($yc + 11) . '" stroke="#ffffff" stroke-width="5"/>'
+                    . '<line x1="' . $xs . '" y1="' . ($yc - 11) . '" x2="' . $xs
+                    . '" y2="' . ($yc + 11) . '" stroke="' . self::NAVY
                     . '" stroke-width="2.5"/>'
-                    . '<polygon points="' . ($xs - 6) . ',' . ($yc - 18) . ' '
-                    . ($xs + 6) . ',' . ($yc - 18) . ' ' . $xs . ',' . ($yc - 10)
+                    . '<polygon points="' . ($xs - 6) . ',' . ($yc - 20) . ' '
+                    . ($xs + 6) . ',' . ($yc - 20) . ' ' . $xs . ',' . ($yc - 12)
                     . '" fill="' . self::NAVY . '"/>';
             }
 
-            $s .= '<text x="' . ($x1 + 16) . '" y="' . $yc . '" font-size="17"'
-                . ' font-weight="700" fill="' . self::INK . '" dominant-baseline="central"'
-                . ' font-family="Arial, Helvetica, sans-serif">'
-                . s(self::foiz($q['foiz'])) . '</text>';
+            $s .= self::matn(self::foiz($q['foiz']), $x1 + 16, $yc + 6, 18,
+                self::INK, 'start', 800) . '</g>' . ($havola ? '</a>' : '');
             $y += $qh;
         }
 
@@ -516,20 +727,32 @@ class hisobot_varaq {
         $bor = array_values(array_filter(self::qatorlar($d), fn($q) => $q['foiz'] !== null));
         $n = count($bor);
 
-        if (!$n) {
-            return '';            // diagramma yo'q — shkala ham keraksiz
-        }
+        // Radar ikki fanda ko'pburchak bo'lmaydi, 12 tadan ortiqda esa
+        // yorliqlar bir-birining ustiga chiqadi — ikkala holatda ham
+        // chizilmaydi.
         if ($n < self::RADAR_MIN || $n > self::RADAR_MAX) {
-            return \html_writer::div(self::shkala(), 'tz-hr-row tz-hr-row1');
+            return '';
         }
 
-        $radar = \html_writer::div(
-            \html_writer::tag('h2', self::t('hr_radar_title'), ['class' => 'tz-hr-h2'])
-            . \html_writer::div(self::t('hr_radar_hint'), 'tz-hr-hint')
-            . self::svg_radar($bor),
-            'tz-hr-card tz-hr-radarcard');
+        // TARQOQLIK — «muvozanat» so'zining raqamli o'lchovi. Shaklga
+        // qarab «keng/tor» deyish subyektiv, farqni esa ota-ona o'zi
+        // tekshira oladi: eng yuqori va eng past fan orasidagi masofa.
+        $foizlar = array_map(fn($q) => (float) $q['foiz'], $bor);
+        $tarqoq = (int) round(max($foizlar) - min($foizlar));
+        $baho = $tarqoq <= 15 ? 'tekis' : ($tarqoq <= 35 ? 'orta' : 'katta');
 
-        return \html_writer::div($radar . self::shkala(), 'tz-hr-row');
+        return \html_writer::div(
+            \html_writer::div(
+                \html_writer::tag('h2', self::t('hr_radar_title'), ['class' => 'tz-hr-h2'])
+                . \html_writer::div(self::t('hr_radar_hint'), 'tz-hr-hint')
+                . \html_writer::div(
+                    \html_writer::tag('span', s(self::t('hr_spread')), ['class' => 'tz-hr-spk'])
+                    . \html_writer::tag('span', $tarqoq . '%', ['class' => 'tz-hr-spv'])
+                    . \html_writer::div(s(self::t('hr_spread_' . $baho)), 'tz-hr-spw'),
+                    'tz-hr-spread'),
+                'tz-hr-radartext')
+            . \html_writer::div(self::svg_radar($bor), 'tz-hr-radarwrap'),
+            'tz-hr-card tz-hr-radarcard');
     }
 
     /** Fanlar muvozanati — ko'pburchak (radar). */
@@ -578,8 +801,9 @@ class hisobot_varaq {
         for ($i = 0; $i < $n; $i++) {
             $p[] = implode(',', $nuqta($i, (float) $qatorlar[$i]['foiz']));
         }
-        $s .= '<polygon points="' . implode(' ', $p) . '" fill="' . self::NAVY
-            . '" fill-opacity="0.16" stroke="' . self::NAVY . '" stroke-width="2.5"/>';
+        $s .= '<polygon points="' . implode(' ', $p) . '" fill="' . self::url('radar')
+            . '" stroke="' . self::NAVY . '" stroke-width="2.5"'
+            . ' stroke-linejoin="round" filter="' . self::url('soya') . '"/>';
         for ($i = 0; $i < $n; $i++) {
             [$x, $y] = $nuqta($i, (float) $qatorlar[$i]['foiz']);
             $s .= '<circle cx="' . $x . '" cy="' . $y . '" r="6" fill="'
@@ -615,7 +839,7 @@ class hisobot_varaq {
         return \html_writer::div(
             \html_writer::div($o, 'tz-hr-scales')
             . \html_writer::div(self::t('hr_scale_hint'), 'tz-hr-hint'),
-            'tz-hr-card tz-hr-legend');
+            'tz-hr-legend');
     }
 
     // ============================================================== JADVAL
@@ -631,8 +855,13 @@ class hisobot_varaq {
 
                 $qatorlar .= \html_writer::tag('tr',
                     \html_writer::tag('td',
-                        \html_writer::tag('b', s($f['fan']))
-                        . \html_writer::div(s($f['oqituvchi'] ?: '—'), 'tz-hr-sub'),
+                        \html_writer::div(
+                            hisobot_ikona::nishon($f['fan'], 24)
+                            . \html_writer::div(
+                                \html_writer::tag('b', s($f['fan']))
+                                . \html_writer::div(s($f['oqituvchi'] ?: '—'),
+                                    'tz-hr-sub')),
+                            'tz-hr-fancell'),
                         ['class' => 'tz-hr-fan'])
                     . \html_writer::tag('td',
                         s($r->name)
@@ -717,6 +946,11 @@ class hisobot_varaq {
             $tp = $f['sharh'];
             $bosh = $tp['bosh'];
 
+            // Kategoriya belgilari SHU FANNING rangida chiziladi: besh
+            // qator bir fanga tegishli ekani ko'rinib tursin va varaq
+            // bo'ylab har fan o'z rangi bilan tanilsin.
+            $fanrang = hisobot_ikona::rang($f['fan']);
+
             $qatorlar = '';
             foreach ($tartib as $kat) {
                 if (empty($tp['matnlar'][$kat])) {
@@ -727,7 +961,10 @@ class hisobot_varaq {
                     continue;
                 }
                 $qatorlar .= \html_writer::div(
-                    \html_writer::div(s($yorliq[$kat] ?? $kat), 'tz-hr-katlab')
+                    \html_writer::div(
+                        hisobot_ikona::kat($kat, $fanrang)
+                        . \html_writer::tag('span', s($yorliq[$kat] ?? $kat)),
+                        'tz-hr-katlab')
                     . \html_writer::div(s($matn), 'tz-hr-kattext'),
                     'tz-hr-kat');
             }
@@ -736,25 +973,47 @@ class hisobot_varaq {
             }
 
             $muallif = trim(($bosh->afirstname ?? '') . ' ' . ($bosh->alastname ?? ''));
-            $meta = s($muallif !== '' ? $muallif : ($f['oqituvchi'] ?: '—'))
-                . ' · ' . s(self::t('hr_teacher_of', $f['fan']));
+            if ($muallif === '') {
+                $muallif = $f['oqituvchi'] ?: '—';
+            }
 
-            // Fan natijasi sharh yonida: o'qituvchining so'zi va raqam bir
-            // joyda turganda ota-ona ularni bog'lab o'qiydi.
-            $natija = ($f['foiz'] !== null)
-                ? self::chip(self::foiz($f['foiz']), $f['daraja']) : '';
+            // SHARH YONIDA FOIZ KO'RSATILMAYDI (aniqlashtirildi 2026-11-13).
+            //
+            // Avval shu yerda fanning test foizi turardi. Bu YOLG'ON bog'lanish
+            // yasardi: o'qituvchi sharhni test baliga qarab emas, butun chorak
+            // davomida darsda kuzatganidan kelib chiqib yozadi. Raqam yonida
+            // turganda esa ota-ona «40% olgani uchun shunday yozibdi» deb
+            // o'qiydi va sharhning o'z qiymati yo'qoladi.
+            //
+            // Raqam varaqning yuqori qismida — diagramma va jadvalda; sharh
+            // esa ALOHIDA dalil sifatida turadi.
 
+            $bloklar .= \html_writer::start_div('tz-hr-card tz-hr-review',
+                ['id' => self::langar((int) $f['courseid']),
+                 'style' => '--fan: ' . $fanrang]);
             $bloklar .= \html_writer::div(
                 \html_writer::div(
-                    \html_writer::div(s($f['fan']), 'tz-hr-rsubject')
-                    . \html_writer::div($meta, 'tz-hr-rteacher')
-                    . \html_writer::div($natija . ' '
+                    // To'ldirilgan nishon — fan nomi yonida; o'qituvchi
+                    // ismi oldida esa kichik, ochiq nishon (foydalanuvchi
+                    // talabi 2026-11-13): kim qaysi fandan dars berishi
+                    // ismning o'zidan ko'rinib tursin.
+                    \html_writer::div(hisobot_ikona::nishon($f['fan'], 30, true),
+                        'tz-hr-rbadge')
+                    . \html_writer::div(s($f['fan']), 'tz-hr-rsubject')
+                    . \html_writer::div(
+                        hisobot_ikona::nishon($f['fan'], 18)
+                        . \html_writer::tag('span', s($muallif), ['class' => 'tz-hr-rname'])
                         . \html_writer::tag('span',
+                            ' · ' . s(self::t('hr_teacher_of', $f['fan']))),
+                        'tz-hr-rteacher')
+                    . \html_writer::div(
+                        \html_writer::tag('span',
                             s(self::sana(date('Y-m-d', (int) $bosh->timecreated))),
                             ['class' => 'tz-hr-rdate']), 'tz-hr-rright'),
                     'tz-hr-rhead')
                 . \html_writer::div($qatorlar, 'tz-hr-kats'),
-                'tz-hr-card tz-hr-review');
+                'tz-hr-rbody');
+            $bloklar .= \html_writer::end_div();
         }
 
         $ichi = self::yugurish($d)
