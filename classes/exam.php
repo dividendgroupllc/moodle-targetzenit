@@ -112,6 +112,59 @@ class exam {
         return '';
     }
 
+    /**
+     * DARAJA GURUHLARI (blok) uchun `gradelevel` prefiksi.
+     *
+     * `gradelevel` ikki xil narsani saqlaydi:
+     *   · `7`      — SINF darajasi: 7 A, 7 B ... hammasi qamraladi;
+     *   · `D-8-9`  — DARAJA GURUHLARI: «ENGLISH High 8-9», «ENGLISH Middle 8-9»,
+     *                «ENGLISH Low 8-9» — ya'ni 8 va 9-sinflar qo'shilib,
+     *                bilim darajasi bo'yicha qayta bo'lingan guruhlar.
+     *
+     * NEGA PREFIKS: sinf darajasi ham, blok oralig'i ham raqam bilan
+     * boshlanadi («5» va «5») — ularni ajratmasak, ENGLISH uchun «5» ni
+     * tanlaganda qaysi biri nazarda tutilgani noma'lum bo'lardi.
+     * Prefiks URL va bazaga xavfsiz (CHAR(10) ga `D-10-11` sig'adi).
+     */
+    const BLOK_PREFIKS = 'D-';
+
+    /** High / Middle / Low tartibi — alifbo tartibi ma'nosiz bo'lardi. */
+    const BLOK_TARTIB = ['high' => 1, 'middle' => 2, 'mid' => 2, 'low' => 3];
+
+    /**
+     * Daraja guruhining nomini qismlarga ajratadi.
+     *
+     * Nom Frappe import'ida shunday yasaladi (`import_excel._guruh_nomi`):
+     *     `<FAN> <Daraja> <sinflar oralig'i>`  ->  «ENGLISH High 8-9»
+     * Daraja nomi doim High/Middle/Low emas: IT da u «VibeCoding», «Python»,
+     * EXTRA da «English», «Math» bo'ladi — shuning uchun o'rta qism erkin.
+     *
+     * Oddiy sinf guruhi («7 A») ATAYLAB mos kelmaydi: unda uchta qism yo'q.
+     *
+     * @return array|null ['fan','daraja','oraliq'] yoki null
+     */
+    public static function blok_qism(string $groupname): ?array {
+        $g = trim($groupname);
+        if (!preg_match('/^(\S+)\s+(.+?)\s+(\d{1,2}(?:-\d{1,2})?)$/u', $g, $m)) {
+            return null;
+        }
+        return ['fan' => $m[1], 'daraja' => trim($m[2]), 'oraliq' => $m[3]];
+    }
+
+    /** `gradelevel` daraja guruhlarinimi — ha bo'lsa oraliqni qaytaradi. */
+    public static function blok_oraliq(string $gradelevel): ?string {
+        return (strncmp($gradelevel, self::BLOK_PREFIKS, 2) === 0)
+            ? substr($gradelevel, 2) : null;
+    }
+
+    /** `gradelevel` ning odam o'qiydigan nomi: «7-sinf» yoki «8-9 daraja guruhlari». */
+    public static function daraja_yorliq(string $gradelevel): string {
+        $oraliq = self::blok_oraliq($gradelevel);
+        return $oraliq !== null
+            ? get_string('bh_blockgroup', 'local_targetzenit', $oraliq)
+            : get_string('bh_class', 'local_targetzenit', $gradelevel);
+    }
+
     /** «HH:MM» -> daqiqa. Noto'g'ri bo'lsa null. «9:00» ham qabul qilinadi. */
     public static function daqiqa(?string $hhmm): ?int {
         if (!$hhmm || !preg_match('/^(\d{1,2}):(\d{2})/', trim($hhmm), $m)) {
@@ -199,15 +252,32 @@ class exam {
               FROM {local_targetzenit_timetable}
              WHERE academicyear = :yil", ['yil' => $year]);
 
-        $out = [];
+        $sinflar = [];
+        $bloklar = [];
         foreach ($nomlar as $n) {
+            // DARAJA GURUHI BIRINCHI tekshiriladi: «ENGLISH High 8-9» da
+            // raqam oxirida turadi, ya'ni `daraja()` undan hech narsa
+            // topmaydi va u sinf darajasi bo'lib hisoblanmaydi.
+            $p = self::blok_qism((string) $n);
+            if ($p) {
+                $bloklar[$p['oraliq']] = true;
+                continue;
+            }
             $d = self::daraja((string) $n);
             if ($d !== '') {
-                $out[$d] = get_string('bh_class', 'local_targetzenit', $d);
+                $sinflar[$d] = get_string('bh_class', 'local_targetzenit', $d);
             }
         }
         // Raqamli tartib: 10-sinf 2-sinfdan KEYIN turishi kerak
-        uksort($out, fn($a, $b) => (int) $a <=> (int) $b);
+        uksort($sinflar, fn($a, $b) => (int) $a <=> (int) $b);
+
+        // Oraliqlar ham raqam bo'yicha: 5, 6-7, 8-9, 10-11
+        uksort($bloklar, fn($a, $b) => (int) $a <=> (int) $b);
+        $out = $sinflar;
+        foreach (array_keys($bloklar) as $oraliq) {
+            $out[self::BLOK_PREFIKS . $oraliq] =
+                get_string('bh_blockgroup', 'local_targetzenit', $oraliq);
+        }
         return $out;
     }
 
@@ -241,7 +311,10 @@ class exam {
     /** Taklif qilinadigan nom — koordinator har safar qo'lda yozmasin. */
     public static function taklif_nom(string $turi, string $termname,
                                        string $fan, string $daraja): string {
-        return trim($termname . ' · ' . $turi . ' · ' . $fan . ' · ' . $daraja);
+        // Nomda `D-8-9` emas, «8-9 daraja guruhlari» turadi: nom ro'yxatda
+        // va ota-ona hisobotida ko'rinadi, kod ko'rinmasligi kerak.
+        return trim($termname . ' · ' . $turi . ' · ' . $fan . ' · '
+            . ($daraja !== '' ? self::daraja_yorliq($daraja) : ''));
     }
 
     // ============================================================= BAHOLASH
@@ -612,26 +685,53 @@ class exam {
             $DB->sql_like('idnumber', ':p'), ['p' => $naqsh],
             '', 'id, idnumber, fullname');
 
+        $blok = self::blok_oraliq($gradelevel);
+
         $out = [];
         foreach ($rows as $c) {
             $q = explode('::', (string) $c->idnumber);
             if (count($q) < 3 || $q[2] !== $subjectkey) {
                 continue;              // LIKE `%` ichida `::` bo'lishi mumkin
             }
-            if (self::daraja($q[1]) !== $gradelevel) {
-                continue;
+
+            if ($blok !== null) {
+                // DARAJA GURUHLARI: «ENGLISH High 8-9» — nomning oxirgi
+                // qismi oraliqqa, birinchi qismi esa FANGA mos kelishi
+                // kerak. Fan tekshiruvi ortiqcha emas: `EXTRA English 2`
+                // kabi guruhlar ham bor va ular boshqa fanga tegishli.
+                $p = self::blok_qism($q[1]);
+                if (!$p || $p['oraliq'] !== $blok
+                        || \core_text::strtolower($p['fan'])
+                           !== \core_text::strtolower($subjectkey)) {
+                    continue;
+                }
+                $tartib = self::BLOK_TARTIB[\core_text::strtolower($p['daraja'])] ?? 4;
+            } else {
+                if (self::daraja($q[1]) !== $gradelevel) {
+                    continue;
+                }
+                $tartib = 0;
             }
+
             $out[(int) $c->id] = [
                 'courseid' => (int) $c->id,
                 'groupkey' => $q[1],
                 'groupname' => $q[1],
                 'idnumber' => (string) $c->idnumber,
+                'tartib' => $tartib,
             ];
         }
 
         // Tartib TABIIY: «2 A» dan keyin «10 A» keladi, aks holda alifbo
-        // tartibida «10 A» «2 A» dan oldin turib qolardi.
-        uasort($out, fn($a, $b) => strnatcasecmp($a['groupname'], $b['groupname']));
+        // tartibida «10 A» «2 A» dan oldin turib qolardi. Daraja guruhlari
+        // esa High -> Middle -> Low bo'yicha: alifbo tartibida «Low»
+        // «Middle» dan oldin turib qolardi, bu esa ma'nosiz.
+        uasort($out, function($a, $b) {
+            if ($a['tartib'] !== $b['tartib']) {
+                return $a['tartib'] <=> $b['tartib'];
+            }
+            return strnatcasecmp($a['groupname'], $b['groupname']);
+        });
         return $out;
     }
 

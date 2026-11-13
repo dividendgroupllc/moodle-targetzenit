@@ -36,6 +36,7 @@
 
 namespace local_targetzenit\output;
 
+use local_targetzenit\exam;
 use local_targetzenit\hisobot;
 use local_targetzenit\sharh;
 
@@ -906,6 +907,7 @@ class hisobot_varaq {
                             hisobot_ikona::nishon($f['fan'], 24)
                             . \html_writer::div(
                                 \html_writer::tag('b', s($f['fan']))
+                                . self::daraja_chip($f['guruh'])
                                 . \html_writer::div(s($f['oqituvchi'] ?: '—'),
                                     'tz-hr-sub')),
                             'tz-hr-fancell'),
@@ -954,6 +956,27 @@ class hisobot_varaq {
                 \html_writer::tag('thead', $bosh) . \html_writer::tag('tbody', $qatorlar),
                 ['class' => 'tz-hr-table']),
             'tz-hr-card tz-hr-flow');
+    }
+
+    /**
+     * Daraja guruhi belgisi: «High · 8-9».
+     *
+     * ENGLISH va MATH sinf bo'yicha emas, BILIM DARAJASI bo'yicha
+     * guruhlanadi («ENGLISH High 8-9»). Ota-ona uchun bu muhim: 8-sinf
+     * o'quvchisi ingliz tilini 9-sinflar bilan birga, o'z darajasida
+     * o'qiydi — fan nomining yonida shu turmasa, varaqdagi natija
+     * «qaysi guruhniki?» degan savol qoldiradi.
+     *
+     * Oddiy sinf guruhi («7 A») uchun hech narsa chizilmaydi — u
+     * varaqning yuqorisida allaqachon bor.
+     */
+    protected static function daraja_chip(string $guruh): string {
+        $p = exam::blok_qism($guruh);
+        if (!$p) {
+            return '';
+        }
+        return \html_writer::div(
+            s($p['daraja'] . ' · ' . $p['oraliq']), 'tz-hr-daraja');
     }
 
     /** Rangli belgi — SVG emas, matn uzunligi oldindan noma'lum. */

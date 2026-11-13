@@ -2188,8 +2188,28 @@ S = {
     "bh_group": ("Group", "Guruh", "Группа"),
     "bh_scores": ("Scores", "Ballar", "Баллы"),
     "bh_status": ("Status", "Holat", "Состояние"),
-    "bh_level": ("Class level", "Sinf darajasi", "Уровень класса"),
+    "bh_level": (
+        "Scope: class level or level group",
+        "Qamrov: sinf darajasi yoki daraja guruhi",
+        "Охват: уровень класса или уровневая группа",
+    ),
     "bh_class": ("Grade {$a}", "{$a}-sinf", "{$a} класс"),
+    "bh_nogroupsfound": (
+        "The assessment was created, but no group matched: this subject has "
+        "nothing under \"{$a}\". Check the scope, or pick a class level instead "
+        "of a level group.",
+        "Baholash yaratildi, lekin birorta guruh mos kelmadi: bu fanda "
+        "\"{$a}\" bo'yicha guruh yo'q. Qamrovni tekshiring yoki daraja guruhi "
+        "o'rniga sinf darajasini tanlang.",
+        "Оценивание создано, но ни одна группа не подошла: у этого предмета "
+        "нет групп по \"{$a}\". Проверьте охват или выберите уровень класса "
+        "вместо уровневой группы.",
+    ),
+    "bh_blockgroup": (
+        "Level groups {$a} (High / Middle / Low)",
+        "{$a} daraja guruhlari (High / Middle / Low)",
+        "Уровневые группы {$a} (High / Middle / Low)",
+    ),
     "bh_room": ("Room", "Xona", "Кабинет"),
     "bh_duration": ("Duration, minutes", "Davomiyligi, daqiqa", "Длительность, минут"),
     "bh_maxscore": ("Maximum score", "Maksimal ball", "Максимальный балл"),
@@ -2202,9 +2222,19 @@ S = {
         "CHSB проводится один раз в конце четверти, BSB — до трёх раз в течение",
     ),
     "bh_levelhint": (
-        "All groups of this level are included: 7 means 7 A, 7 B, 7 C...",
-        "Shu darajadagi hamma guruh qamraladi: 7 degani 7 A, 7 B, 7 C...",
-        "Охватываются все группы этого уровня: 7 значит 7 A, 7 B, 7 C...",
+        "A class level covers all its classes: 7 means 7 A, 7 B, 7 C. A level "
+        "group covers the ability groups of those classes: 8-9 means ENGLISH "
+        "High 8-9, Middle 8-9, Low 8-9 - each with its own students. Remove "
+        "the groups that did not take the test.",
+        "Sinf darajasi barcha sinflarni qamraydi: 7 degani 7 A, 7 B, 7 C. "
+        "Daraja guruhi esa o'sha sinflarning bilim darajasi bo'yicha "
+        "guruhlarini qamraydi: 8-9 degani ENGLISH High 8-9, Middle 8-9, "
+        "Low 8-9 - har biri o'z o'quvchilari bilan. Test olinmagan guruhni "
+        "keyin olib tashlaysiz.",
+        "Уровень класса охватывает все классы: 7 значит 7 A, 7 B, 7 C. "
+        "Уровневая группа охватывает группы по уровню знаний: 8-9 значит "
+        "ENGLISH High 8-9, Middle 8-9, Low 8-9 - у каждой свои ученики. "
+        "Группу, которая не писала тест, потом удалите.",
     ),
     "bh_formhint": (
         "Online means Moodle marks it automatically; on paper the score is "

@@ -126,7 +126,19 @@ if ($amal !== '' && confirm_sesskey()) {
         // narsa ko'rinmayapti» holatiga tushmasligi kerak. Sitting yaratish
         // yengil amal (bir nechta INSERT) — quiz yaratish esa 6-bosqichda,
         // adhoc vazifada.
-        exam::ensure_sittings($yangiid);
+        $sit = exam::ensure_sittings($yangiid);
+
+        // BIRORTA GURUH TOPILMASA — JIM QOLMAYMIZ.
+        //
+        // Fan va qamrov mos kelmasligi mumkin: masalan BIO tanlanib,
+        // qamrov «8-9 daraja guruhlari» qo'yilsa (BIO daraja guruhlariga
+        // bo'linmaydi) hech qanday kurs topilmaydi. Baholash yaratiladi-yu,
+        // ichi bo'sh qoladi — koordinator buni darhol bilishi kerak.
+        if ((int) $sit['kurslar'] === 0) {
+            redirect($url(['view' => 'jadval', 'id' => $yangiid]),
+                $t('bh_nogroupsfound', exam::daraja_yorliq($d->gradelevel)),
+                null, \core\output\notification::NOTIFY_WARNING);
+        }
 
         redirect($url(['view' => 'jadval', 'id' => $yangiid]),
             $t('bh_saved'), null, \core\output\notification::NOTIFY_SUCCESS);
