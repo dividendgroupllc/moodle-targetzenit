@@ -59,10 +59,10 @@ Chegaralar: `hisobot::DARAJA_YUQORI` / `DARAJA_ORTA`.
 | **HERO** — bitta katta SVG | o'quvchi + halqali ko'rsatkich (umumiy natija) + uchta raqam: eng kuchli fan · e'tibor kerak fan · sinfga nisbatan |
 | **«Qisqacha»** | raqamlar GAP shaklida — diagrammani hamma o'qimaydi, gapni hamma o'qiydi |
 | **Kuchli / Qo'llab-quvvatlash kerak** | majlisdan eslab qolinadigan ikki ro'yxat |
-| ustun diagramma | fanlar **kuchlisidan sustigacha** tartiblangan + sinf o'rtachasi belgisi |
+| ustun diagramma | **faqat testi bor** fanlar, kuchlisidan sustigacha tartiblangan + sinf o'rtachasi belgisi |
 | radar + tarqoqlik | muvozanat: shakl va «eng yuqori va eng past fan orasidagi farq» |
 | testlar jadvali | har bir test: ball, foiz, daraja, sinf o'rtachasi |
-| **o'qituvchilar sharhi** | 5 kategoriya, yonida shu fanning foizi |
+| **o'qituvchilar fikri** | 5 kategoriya; foiz KO'RSATILMAYDI — sharh test baliga emas, dars davomidagi kuzatuvga asoslanadi |
 | izoh + imzo | shkala izohi, «past natija hukm emas», imzo chiziqlari |
 
 Natija umuman yo'q bo'lsa diagramma va shkala **chizilmaydi** — bo'sh
@@ -70,12 +70,33 @@ o'qlar varaqni to'ldiradi, lekin hech narsa aytmaydi.
 
 ## 4.1 Fan belgilari (`output\hisobot_ikona`)
 
-Har fanning **o'z chizma belgisi va rangi** bor: matematika — π,
-ingliz/chet tili — globus, ona tili/adabiyot — ochiq kitob, IT —
-monitor va kod, biznes — portfel, iqtisod — o'suvchi grafik, fizika —
-atom, kimyo — kolba, biologiya — barg, tarix — qum soati, geografiya —
-xarita, jismoniy tarbiya — to'p, san'at/musiqa — nota. Topilmasa —
-neytral kitob.
+Har fanning **o'z chizma belgisi va rangi** bor. Ro'yxat maktabning
+HAQIQIY jadvalidan olingan (`Umumiy_dars_jadvali` dagi 24 ta nom), ya'ni
+belgisiz fan qolmagan:
+
+| Fan | Belgi | Fan | Belgi |
+|---|---|---|---|
+| MATH | π | MENTAL.M | abak |
+| ENGLISH · CHINESE | globus | RUS · UZBEK | ochiq kitob |
+| IT | monitor + kod | AI | mikrosxema |
+| ROBOTICS | robot | CHESS | shaxmat piyodasi |
+| HOMEWORK | daftar | EXTRA | soat |
+| FINANCE | tangalar | ECO | o'suvchi grafik |
+| BUS | portfel | PER DEV | odam + o'sish |
+| G PRES | doska | MOR EDU | yurak |
+| P.E / GYM | to'p | PHYSICS | atom |
+| SCIENCE | kolba | BIO | barg |
+| HIST.U / HIST.W | qum soati | GEO | xarita |
+| MUSIC | nota | ART | palitra |
+
+**Moslik IKKI BOSQICHLI** (`hisobot_ikona::fan()`):
+1. **butun so'z** bo'yicha (`kod`) — jadvaldagi qisqartmalar uchun;
+   qism-satr qidiruvi bu yerda xato berardi: `art` «start» ichida,
+   `ai` «main» ichida, `it` «british» ichida bor;
+2. **qism-satr** bo'yicha (`sozlar`) — to'liq nomlar uchun
+   («Ona tili va adabiyoti», «Физкультура»).
+
+Aniq kod har doim ustun turadi. Topilmasa — neytral kitob.
 
 Belgi **varaq bo'ylab bir xil joylarda** takrorlanadi: diagramma qatori,
 kuchli/sust ro'yxati, testlar jadvali, sharh bloki sarlavhasi va
@@ -102,6 +123,15 @@ Diagrammadagi fan qatori — **havola**: bosilsa shu fanning o'qituvchi
 sharhiga tushadi (`<a href="#hr3-fan-412">`), blok bir zumga ajralib
 turadi. Ota-ona past natijani ko'rib, darhol o'qituvchi nima
 yozganini o'qiy oladi. Bosmada havola zararsiz.
+
+### 4.3 O'quvchining ismi hech qachon qisqartirilmaydi
+
+Hero'dagi ism `…` bilan kesilmaydi — **shrift kichrayadi**
+(`hisobot_varaq::olcham()`), ism esa butun qoladi. Sabab maket emas:
+hujjat ota-onaga beriladi va farzandining ismi to'liq turishi hurmat
+belgisi (talab 2026-11-13). Xuddi shu qoida sinf rahbarining ismiga ham
+tegishli. SVG matni o'ralmagani uchun kenglik bahosi ehtiyotkor
+(0.62 em): 37 harfli qo'sh familiya ham halqaga tegmaydi.
 
 ## 5. Uchta qat'iy qoida
 

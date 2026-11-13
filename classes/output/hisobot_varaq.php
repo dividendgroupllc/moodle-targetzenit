@@ -308,14 +308,22 @@ class hisobot_varaq {
             . self::matn($bosh, 92, 92, 34, '#ffffff', 'middle', 700);
 
         // --- ism va ma'lumot
-        $s .= self::matn(self::qisqart(fullname($u), 26), 160, 74, 40,
-            self::HERO_INK, 'start', 800);
+        // ISM TO'LIQ YOZILADI — hech qachon qisqartirilmaydi.
+        //
+        // Avval uzun ism «…» bilan kesilardi. Bu shunchaki maket emas:
+        // hujjat ota-onaga beriladi va farzandining ismi to'liq turishi
+        // hurmat belgisi (foydalanuvchi talabi 2026-11-13). Shuning uchun
+        // matn kesilmaydi — SHRIFT KICHRAYADI, ism esa butun qoladi.
+        $s .= self::matn(fullname($u), 160, 74,
+            self::olcham(fullname($u), 560, 38, 20), self::HERO_INK, 'start', 800);
 
         $qator2 = array_filter([
             $d->guruh !== '' ? $d->guruh : null,
             $d->tutor !== '' ? self::t('hr_tutor') . ': ' . $d->tutor : null,
         ]);
-        $s .= self::matn(self::qisqart(implode('   ·   ', $qator2), 48), 160, 118, 21,
+        // Sinf rahbarining ismi ham kesilmaydi — xuddi shu sabab.
+        $qator2 = implode('   ·   ', $qator2);
+        $s .= self::matn($qator2, 160, 118, self::olcham($qator2, 600, 21, 13),
             '#14559b', 'start', 600);
 
         $qator3 = array_filter([
@@ -323,7 +331,8 @@ class hisobot_varaq {
             $d->term->name,
             self::sana($d->term->startdate) . ' – ' . self::sana($d->term->enddate),
         ]);
-        $s .= self::matn(self::qisqart(implode('   ·   ', $qator3), 74), 160, 150, 16,
+        $qator3 = implode('   ·   ', $qator3);
+        $s .= self::matn($qator3, 160, 150, self::olcham($qator3, 600, 16, 10),
             self::MUTED, 'start', 400);
 
         // --- halqali diagramma (umumiy natija)
@@ -405,6 +414,33 @@ class hisobot_varaq {
                 : self::matn(self::daraja_nomi($daraja), $cx, $cy + 40, 17,
                     self::rang($daraja), 'middle', 700));
         return $s;
+    }
+
+    /**
+     * Matn berilgan kenglikka sig'adigan shrift o'lchami.
+     *
+     * SVG matni o'z-o'zidan o'ralmaydi va sig'masa chetidan chiqib ketadi.
+     * Brauzerdan haqiqiy kenglikni so'rab bo'lmaydi (server tomonida
+     * chizilmoqda), shuning uchun baho: Arial bold harfning o'rtacha
+     * kengligi ~0.62 em. Baho ataylab EHTIYOTKOR (biroz kattaroq) —
+     * natijada matn kerakdan bir oz kichik chiqishi mumkin, lekin hech
+     * qachon chetga chiqmaydi.
+     *
+     * 0.58 bilan boshlangan edi va «Muhammadsobira Abdurahmonova» (28 ta
+     * harf) halqaga tegib ketdi: keng harflar (m, b, d) ko'p bo'lsa
+     * o'rtacha kenglik oshadi. 0.62 + kichikroq maydon bilan 40 harfli
+     * ism ham sig'adi.
+     *
+     * @param string $matn matn
+     * @param float $kenglik mavjud joy (viewBox birligida)
+     * @param int $maks odatdagi o'lcham
+     * @param int $min bundan kichraymaydi (o'qilishi kerak)
+     */
+    protected static function olcham(string $matn, float $kenglik, int $maks,
+                                      int $min): int {
+        $uzunlik = max(1, \core_text::strlen($matn));
+        $kerak = (int) floor($kenglik / ($uzunlik * 0.62));
+        return max($min, min($maks, $kerak));
     }
 
     /** SVG matn — takrorlanadigan atributlarni bir joyga yig'adi. */
@@ -582,6 +618,17 @@ class hisobot_varaq {
     protected static function qatorlar(\stdClass $d): array {
         $out = [];
         foreach ($d->fanlar as $cid => $f) {
+            // TESTI YO'Q FAN DIAGRAMMAGA TUSHMAYDI (talab 2026-11-13).
+            //
+            // Avval bunday fan bo'sh qator bo'lib turardi («nega bu fan
+            // yo'q?» degan savol bo'lmasin deb). Amalda esa jadvalda
+            // 24 ta fan bor va ko'pchiligidan test olinmagan — natijada
+            // diagramma bo'sh qatorlar bilan to'lib, mavjud natijalar
+            // ko'rinmay qolardi. Fanning to'liq ro'yxati baribir
+            // «Testlar tafsiloti» jadvalida.
+            if ($f['foiz'] === null) {
+                continue;
+            }
             $out[] = ['nom' => $f['fan'], 'foiz' => $f['foiz'],
                       'daraja' => $f['daraja'], 'sinf' => $f['sinf'],
                       'cid' => (int) $cid, 'sharhli' => !empty($f['sharh'])];
