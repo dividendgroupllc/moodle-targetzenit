@@ -196,6 +196,25 @@ if (isset($arxiv[$courseid])) {
 
 $oquvchilar = lesson::students($context);
 
+// BUTUN SINFNI CHOP ETISH — majlisga tayyorgarlik.
+//
+// Guruh kurs `idnumber` ining ikkinchi bo'lagi (`<yil>::<guruh>::<fan>`).
+// Havola faqat ruxsati borga ko'rsatiladi (sahifa o'zi ham tekshiradi):
+// fan o'qituvchisi butun sinfning hamma fani bo'yicha hisobotini ocha
+// olmaydi, bu tutor va zavuchning ishi.
+$kursidn = (string) ($idnumberlar[$courseid]->idnumber ?? '');
+$qism = explode('::', $kursidn);
+if (count($qism) >= 3 && \local_targetzenit\hisobot::guruh_mumkinmi($year, $qism[1])) {
+    echo html_writer::div(
+        html_writer::link(
+            new moodle_url('/local/targetzenit/hisobot.php',
+                ['guruh' => $qism[1], 'hammasi' => 1]),
+            get_string('hr_printgroup', 'local_targetzenit', $qism[1]),
+            ['class' => 'btn btn-sm btn-outline-primary',
+             'target' => '_blank', 'rel' => 'noopener']),
+        'mb-3');
+}
+
 // Ism/familiya bo'yicha filtr — SERVERDA, chunki ro'yxat sahifalanishi
 // mumkin va qidiruv natijasi havolada saqlanishi kerak (JS filtri sahifa
 // yangilanganda yo'qoladi).
@@ -300,9 +319,18 @@ foreach ($oquvchilar as $o) {
         $yorliq = get_string('sh_write', 'local_targetzenit');
         $sinf = 'btn btn-sm btn-primary';
     }
+    // «Hisobot» — majlisda ota-onaga beriladigan varaq. O'qituvchi uni shu
+    // yerdan ko'radi: o'z sharhi qog'ozda qanday chiqishini yozishdan oldin
+    // bilgani ma'qul.
     echo html_writer::tag('td',
         html_writer::link($url(['open' => $ochiq ? 0 : $sid]), $yorliq,
-            ['class' => $sinf]),
+            ['class' => $sinf])
+        . ' '
+        . html_writer::link(
+            new moodle_url('/local/targetzenit/hisobot.php', ['userid' => $sid]),
+            get_string('hr_nav', 'local_targetzenit'),
+            ['class' => 'btn btn-sm btn-outline-secondary',
+             'target' => '_blank', 'rel' => 'noopener']),
         ['class' => 'tz-sh-actcell']);
 
     echo html_writer::end_tag('tr');

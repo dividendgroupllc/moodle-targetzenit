@@ -107,6 +107,7 @@ class shell {
             ['murojaat', $t('mur_nav'), $u('murojaat.php')],
             ['yozuvlar', $t('recordings'), $u('yozuvlar.php')],
             ['sharhlar', $t('sh_navall'), $u('sharhlar.php')],
+            ['hisobot', $t('hr_nav'), $u('hisobot.php', ['hammasi' => 1])],
             ['oqituvchi', $t('oq_mypanel'), $u('oqituvchi.php')],
             ['topshiriq', $t('tp_nav'), $u('topshiriqlar.php')],
         ];
@@ -180,6 +181,14 @@ class shell {
             // 2026-11-06): oylik oyda bir ochiladi, sharh esa o'quv ishining
             // qismi va menyuda dars narsalari yonida turishi kerak.
             $mening[] = ['sharh', $t('sh_nav'), $u('sharh.php')];
+            // OTA-ONA HISOBOTI — faqat SINF RAHBARIGA (yoki ruxsati borga).
+            // Majlis varag'ini butun sinf bo'yicha u chop etadi; fan
+            // o'qituvchisiga havola boshi berk yo'l bo'lardi, shuning
+            // uchun shart `hisobot::guruh_mumkinmi()` bilan bir xil.
+            if (\local_targetzenit\hisobot::tutormi((int) $userid)) {
+                $mening[] = ['hisobot', $t('hr_nav'),
+                    $u('hisobot.php', ['hammasi' => 1])];
+            }
             // Topshiriqlar — faqat baholaydigan kursi bor o'qituvchiga.
             // Aks holda havola bo'sh sahifaga olib borardi (sahifa o'zi
             // ham shu shartni tekshiradi).
@@ -227,6 +236,7 @@ class shell {
         // Moodle topshiriqlari (mod_assign/mod_quiz) — summativ baholashdan
         // ALOHIDA tizim, lekin ikkisini bir odam yuritadi.
         $asosiy[] = ['topshiriq', $t('tp_nav'), $u('topshiriqlar.php')];
+        $asosiy[] = ['hisobot', $t('hr_nav'), $u('hisobot.php', ['hammasi' => 1])];
         $boshqa = [
             ['jadval', $t('timetable'), $u('index.php')],
         ];

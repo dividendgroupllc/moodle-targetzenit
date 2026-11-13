@@ -78,6 +78,17 @@ echo $OUTPUT->header();
 
 $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
 
+// OTA-ONALAR MAJLISI HISOBOTI — sharh bilan baho BIR VARAQDA.
+//
+// Havola sharhi yo'q o'quvchida ham chiqadi: hisobotda baho, davomat va
+// imtihon natijalari ham bor, ya'ni u sharhsiz ham to'la ma'noga ega.
+echo html_writer::div(
+    html_writer::link(
+        new moodle_url('/local/targetzenit/hisobot.php', $ozim ? [] : ['userid' => $userid]),
+        $t('hr_openreport'), ['class' => 'btn btn-primary mr-2'])
+    . html_writer::tag('span', $t('hr_subtitle'), ['class' => 'text-muted small']),
+    'mb-3');
+
 if (!$rows) {
     echo $OUTPUT->notification($t('sh_emptymine'), 'info');
     echo $OUTPUT->footer();

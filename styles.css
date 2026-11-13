@@ -1253,3 +1253,294 @@
     border-radius: 8px; background: var(--tz-warning-bg);
     color: var(--tz-warning); font-size: .68rem; font-weight: 700;
     white-space: nowrap; }
+
+/* =====================================================================
+   OTA-ONA UCHUN O'QUVCHI HISOBOTI (hisobot.php)
+   ---------------------------------------------------------------------
+   QOG'OZ BIRINCHI. Bu blok ekran uchun emas, A4 uchun yozilgan; ekran
+   ko'rinishi esa qog'ozning oldindan ko'rinishi.
+
+   UCHTA QOIDA (buzilsa varaq printerdan oq chiqadi):
+
+   1) MA'LUMOT TASHIYDIGAN RANG `background` DA BO'LMAYDI.
+      Brauzer standart holatda fonni BOSMAYDI («Background graphics»
+      belgisi o'chiq). CHEGARA (`border`) va SVG `fill` esa doim bosiladi.
+      Shuning uchun diagramma — SVG, ajratuvchi va urg'u — border.
+      `print-color-adjust: exact` qo'shilgan (Chrome fonni ham bosadi),
+      lekin unga TAYANMAYDI: u faqat qo'shimcha.
+
+   2) TOKEN (`--tz-*`) ISHLATILMAYDI. Tokenlar qorong'i rejimda
+      almashadi — varaq qora fon bilan bosilib ketardi. Bu yerda ranglar
+      QO'LDA yozilgan va doim yorug'.
+
+   3) MAJBURIY BET UZILISHI IKKI JOYDA: sharhlar bo'limidan oldin va har
+      o'quvchidan keyin. Qolgan hamma narsa `break-inside: avoid` bilan
+      oqadi — fan soni ham, sharh uzunligi ham oldindan noma'lum.
+   ===================================================================== */
+
+.tz-hr {
+    --hr-navy: #00214a;
+    --hr-red: #ff1100;
+    --hr-ink: #1d2a38;
+    --hr-mut: #5b6b7c;
+    --hr-line: #c9d2db;
+    color: var(--hr-ink);
+    background: #e9edf1;
+    padding: 18px 0 40px;
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* Bitta o'quvchining butun hujjati */
+.tz-hr-doc {
+    width: 190mm;
+    margin: 0 auto 22px;
+    padding: 9mm 9mm 10mm;
+    background: #fff;
+    border: 1px solid #d7dee6;
+    box-shadow: 0 2px 16px rgba(0, 25, 60, .10);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+/* ---------------------------------------------------------- SARLAVHA */
+.tz-hr-mast {
+    display: flex; align-items: flex-end; gap: 18px;
+    padding-bottom: 7px; border-bottom: 2.5px solid var(--hr-navy);
+}
+.tz-hr-mlogo { flex: 0 0 auto; }
+.tz-hr-logo { height: 13mm; width: auto; display: block; }
+.tz-hr-mtitle { flex: 1 1 auto; padding-bottom: 2px; }
+.tz-hr-h1 {
+    margin: 0; font-size: 17px; font-weight: 800; letter-spacing: .2px;
+    color: var(--hr-navy); text-transform: uppercase; line-height: 1.15;
+}
+.tz-hr-h1sub { font-size: 10.5px; color: var(--hr-mut); margin-top: 2px; }
+.tz-hr-mmeta { flex: 0 0 auto; text-align: right; font-size: 11px; color: var(--hr-mut); }
+.tz-hr-mline { white-space: nowrap; }
+.tz-hr-strong { color: var(--hr-navy); font-weight: 700; font-size: 13px; }
+/* Logotipning qizili varaqda bir marta takrorlanadi — hujjat "brendlangan"
+   bo'lishi kerak, lekin qizil ko'p bo'lsa baho ranglariga aralashib ketadi. */
+.tz-hr-mast + .tz-hr-card { border-top: 3px solid var(--hr-red); margin-top: 0; }
+
+/* ------------------------------------------------------------- BLOKLAR */
+.tz-hr-card {
+    margin-top: 10px; padding: 11px 13px;
+    border: 1px solid var(--hr-line); border-radius: 6px;
+    break-inside: avoid; page-break-inside: avoid;
+}
+.tz-hr-h2 {
+    margin: 0 0 2px; font-size: 12.5px; font-weight: 800; letter-spacing: .6px;
+    text-transform: uppercase; color: var(--hr-navy);
+    border-left: 4px solid var(--hr-red); padding-left: 8px;
+}
+.tz-hr-hbig { font-size: 15px; }
+.tz-hr-hint { font-size: 11px; color: var(--hr-mut); margin: 0 0 8px 12px; }
+.tz-hr-runner {
+    font-size: 10px; color: var(--hr-mut); text-align: right; letter-spacing: .3px;
+    margin-bottom: 3px; border-bottom: 1px dotted var(--hr-line); padding-bottom: 2px;
+}
+.tz-hr-empty { color: var(--hr-mut); font-size: 12px; text-align: center; padding: 16px; }
+.tz-hr-mut { color: var(--hr-mut); }
+.tz-hr-sub { font-size: 10.5px; color: var(--hr-mut); }
+
+/* ------------------------------------------------------- O'QUVCHI KARTI */
+.tz-hr-person { display: flex; align-items: center; gap: 14px; padding: 12px 13px; }
+.tz-hr-av { flex: 0 0 auto; }
+.tz-hr-avsvg { width: 19mm; height: 19mm; display: block; }
+.tz-hr-who { flex: 1 1 auto; min-width: 0; }
+.tz-hr-name {
+    font-size: 21px; font-weight: 800; color: var(--hr-navy); line-height: 1.1;
+    margin-bottom: 6px;
+}
+.tz-hr-kvs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 20px; }
+.tz-hr-kv { font-size: 12px; }
+.tz-hr-k { color: var(--hr-mut); }
+.tz-hr-k::after { content: ":"; }
+.tz-hr-v { font-weight: 650; margin-left: 5px; }
+
+/* ----------------------------------------------------------------- KPI */
+.tz-hr-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 10px; }
+.tz-hr-tile {
+    border: 1px solid var(--hr-line); border-radius: 6px; padding: 0 10px 9px;
+    overflow: hidden; break-inside: avoid;
+}
+.tz-hr-tilebar { display: block; width: calc(100% + 20px); height: 4px; margin: 0 -10px 8px; }
+.tz-hr-tilenum { font-size: 26px; font-weight: 800; line-height: 1.05; color: var(--hr-navy); }
+/* Fan nomi raqamdan uzunroq — plita ichida sig'ishi kerak */
+.tz-hr-tilesm { font-size: 17px; line-height: 1.15; }
+.tz-hr-tilelab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.tz-hr-tilehint { font-size: 10.5px; color: var(--hr-mut); line-height: 1.3; margin-top: 2px; }
+
+/* -------------------------------------------------------- QISQACHA XULOSA */
+/* Varaqning eng ko'p o'qiladigan joyi: diagrammani hamma ham o'qimaydi,
+   gapni esa hamma o'qiydi. Shuning uchun u yirik va chap chetida urg'u
+   chizig'i bilan turadi. */
+.tz-hr-sum { border-left: 4px solid var(--hr-navy); }
+.tz-hr-sumlab {
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px;
+    color: var(--hr-navy); margin-bottom: 3px;
+}
+.tz-hr-sumtext { font-size: 13.5px; line-height: 1.5; }
+
+/* ------------------------------------------------- KUCHLI / SUST TOMONLAR */
+.tz-hr-sw { grid-template-columns: 1fr 1fr; }
+.tz-hr-swcard { padding: 10px 12px; }
+.tz-hr-swhead { display: flex; align-items: center; gap: 7px; }
+.tz-hr-swtitle {
+    font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--hr-navy);
+}
+.tz-hr-swcard .tz-hr-hint { margin: 2px 0 7px; }
+.tz-hr-swrow {
+    display: grid; grid-template-columns: 1fr 34mm auto; gap: 9px;
+    align-items: center; padding: 4px 0; border-top: 1px dotted #dde3e9;
+}
+.tz-hr-swname { font-size: 12.5px; font-weight: 650; }
+.tz-hr-swbar { min-width: 0; }
+.tz-hr-swpct { font-size: 12.5px; font-weight: 800; }
+.tz-hr-swempty { font-size: 11.5px; color: var(--hr-mut); padding: 6px 0 2px; }
+
+/* ---------------------------------------------------------- DIAGRAMMA */
+.tz-hr-svg { display: block; width: 100%; height: auto; }
+.tz-hr-radar { display: block; margin: 2px auto 0; max-width: 74mm; }
+
+/* Ikki blokli qator: radar + nizom shkalasi. Varaq balandligini
+   tejaydi (30 nusxada bu 30 ta varaq). */
+.tz-hr-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; align-items: stretch; }
+.tz-hr-row1 { grid-template-columns: 1fr; }
+.tz-hr-row > .tz-hr-card { margin-top: 10px; }
+.tz-hr-row .tz-hr-scales { flex-direction: column; gap: 7px; }
+/* Yonidagi radar balandroq: shkala kartasi cho'zilib qolmasin, mazmuni
+   o'rtada tursin. */
+.tz-hr-row .tz-hr-legend { display: flex; flex-direction: column; justify-content: center; }
+.tz-hr-radarcard { display: flex; flex-direction: column; justify-content: center; }
+
+/* ------------------------------------------------------------- SHKALA */
+.tz-hr-legend { padding: 11px 13px; }
+.tz-hr-legend .tz-hr-hint { margin: 9px 0 0; }
+.tz-hr-scales { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.tz-hr-scale { font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
+.tz-hr-dot { width: 11px; height: 11px; flex: 0 0 auto; }
+
+/* Uzun jadval betlar orasida bo'linishi MUMKIN: aks holda u butunicha
+   keyingi betga ko'chib, oldingi betning yarmi bo'sh qolardi. Qator esa
+   bo'linmaydi va sarlavha har betda takrorlanadi. */
+.tz-hr-flow { break-inside: auto; page-break-inside: auto; }
+.tz-hr-flow thead { display: table-header-group; }
+.tz-hr-flow tr { break-inside: avoid; page-break-inside: avoid; }
+
+/* ------------------------------------------------------------- JADVAL */
+.tz-hr-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.tz-hr-table th {
+    text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
+    color: var(--hr-navy); border-bottom: 2px solid var(--hr-navy);
+    padding: 0 6px 5px; vertical-align: bottom; font-weight: 800;
+}
+.tz-hr-table th span { font-weight: 400; color: var(--hr-mut); }
+.tz-hr-table td {
+    padding: 6px; border-bottom: 1px solid #e4e9ee; vertical-align: middle;
+}
+.tz-hr-table tr:last-child td { border-bottom: none; }
+.tz-hr-fan { width: 24%; }
+.tz-hr-num { text-align: right; white-space: nowrap; }
+.tz-hr-ul { width: 15%; }
+.tz-hr-ulush { display: block; width: 100%; height: 11px; }
+.tz-hr-chip {
+    display: inline-block; padding: 1px 7px; border: 1.5px solid var(--hr-line);
+    border-radius: 20px; font-size: 10.5px; font-weight: 700; white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ SHARHLAR */
+/* Sharhlar YANGI BETDAN boshlanadi: birinchi bet — raqamlar, keyingisi —
+   so'z. Majlisda ota-ona aynan shu betni o'qiydi. */
+.tz-hr-break { break-before: page; page-break-before: always; }
+.tz-hr-section { margin-top: 16px; }
+.tz-hr-review { padding: 0; }
+/* Uzun sharh bloki bet oxirida sig'masa BO'LINADI, lekin kategoriya
+   ichidan emas: `.tz-hr-kat` bus-butun ko'chadi, fan sarlavhasi esa
+   o'z matnidan ajralmaydi (`break-after: avoid`). Shunday qilmasak
+   har betning pastida 4-5 sm bo'sh joy qolardi. */
+.tz-hr-review { break-inside: auto; page-break-inside: auto; }
+.tz-hr-rhead {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 8px 12px; border-bottom: 1px solid var(--hr-line);
+}
+.tz-hr-rhead { break-after: avoid; page-break-after: avoid; }
+.tz-hr-rsubject { font-size: 14px; font-weight: 800; color: var(--hr-navy); }
+.tz-hr-rteacher { font-size: 11.5px; }
+.tz-hr-rright { margin-left: auto; white-space: nowrap; }
+.tz-hr-rdate { font-size: 10.5px; color: var(--hr-mut); }
+.tz-hr-kats { padding: 4px 12px 10px; }
+.tz-hr-kat {
+    display: grid; grid-template-columns: 42mm 1fr; gap: 10px;
+    padding: 7px 0; border-bottom: 1px dotted #dde3e9;
+    break-inside: avoid; page-break-inside: avoid;
+}
+.tz-hr-kat:last-child { border-bottom: none; }
+.tz-hr-katlab {
+    font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px;
+    color: var(--hr-navy); border-left: 3px solid var(--hr-navy); padding-left: 7px;
+    line-height: 1.25;
+}
+.tz-hr-kattext { font-size: 12px; line-height: 1.5; white-space: pre-line; }
+
+/* --------------------------------------------------------------- IMZO */
+.tz-hr-sigcard { margin-top: 14px; }
+.tz-hr-foot { font-size: 10.5px; color: var(--hr-mut); margin-bottom: 14px; }
+.tz-hr-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.tz-hr-line { border-bottom: 1px solid var(--hr-ink); height: 16px; }
+.tz-hr-linelab { font-size: 10.5px; color: var(--hr-mut); margin-top: 3px; }
+
+/* ---------------------------------------------------------- VOSITALAR */
+.tz-hr-tools {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 16px; background: #fff; border-bottom: 1px solid #d7dee6;
+}
+.tz-hr-tool { margin: 0; }
+.tz-hr-tool select { padding: 5px 9px; border: 1px solid #c9d2db; border-radius: 7px; }
+.tz-hr-btn {
+    display: inline-block; padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    background: #00214a; color: #fff; border: 1px solid #00214a;
+    font-size: 13px; font-weight: 650; text-decoration: none;
+}
+.tz-hr-btn:hover { background: #003a7a; color: #fff; text-decoration: none; }
+.tz-hr-btn2 { background: #fff; color: #00214a; }
+.tz-hr-btn2:hover { background: #eef3f9; color: #00214a; }
+.tz-hr-toolhint { font-size: 11.5px; color: #5b6b7c; flex: 1 1 220px; }
+
+/* Sinf tanlagich — menyudan `?hammasi=1` bilan kelganda */
+.tz-hr-pick { padding: 20px 22px; max-width: 900px; }
+.tz-hr-pick h3 { font-size: 18px; color: #00214a; margin-bottom: 6px; }
+.tz-hr-pickitem { display: inline-block; margin: 0 8px 8px 0; min-width: 72px; text-align: center; }
+
+/* ================================================================ BOSMA */
+@media print {
+    /* Moodle qobig'i qog'ozga tushmaydi */
+    body#page-local-targetzenit-hisobot #page-header,
+    body#page-local-targetzenit-hisobot .navbar,
+    body#page-local-targetzenit-hisobot #page-footer,
+    body#page-local-targetzenit-hisobot footer,
+    body#page-local-targetzenit-hisobot .tz-hr-tools { display: none !important; }
+
+    body#page-local-targetzenit-hisobot,
+    body#page-local-targetzenit-hisobot #page,
+    body#page-local-targetzenit-hisobot #region-main,
+    body#page-local-targetzenit-hisobot [role="main"] {
+        margin: 0 !important; padding: 0 !important;
+        background: #fff !important; box-shadow: none !important;
+    }
+
+    .tz-hr { background: #fff; padding: 0; }
+    .tz-hr-doc {
+        width: auto; margin: 0; padding: 0; border: none; box-shadow: none;
+        break-after: page; page-break-after: always;
+    }
+    /* Oxirgi o'quvchidan keyin bo'sh bet chiqmasligi kerak */
+    .tz-hr-doc.tz-hr-oxirgi { break-after: auto; page-break-after: auto; }
+
+    .tz-hr-card { break-inside: avoid; page-break-inside: avoid; }
+    /* Sarlavha o'z bo'limidan ajralib, bet oxirida yolg'iz qolmasin */
+    .tz-hr-h2 { break-after: avoid; page-break-after: avoid; }
+}

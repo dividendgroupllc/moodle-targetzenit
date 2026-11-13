@@ -80,6 +80,21 @@ $select = new single_select(
 $select->set_label(get_string('mg_term', 'local_targetzenit') . ': ');
 echo html_writer::div($OUTPUT->render($select), 'mb-2');
 
+// OTA-ONALAR MAJLISI HISOBOTI — birinchi havola.
+//
+// NEGA ENG YUQORIDA: ota-ona aynan shu sahifadan bolasining holatini
+// qidiradi, hisobot esa shu sahifadagi hamma narsani (baho, davomat,
+// o'qituvchi sharhi, imtihon) bitta chop etiladigan varaqqa yig'adi.
+echo html_writer::div(
+    html_writer::link(
+        new moodle_url('/local/targetzenit/hisobot.php',
+            ($userid == $USER->id) ? [] : ['userid' => $userid]),
+        get_string('hr_openreport', 'local_targetzenit'),
+        ['class' => 'btn btn-primary mr-2'])
+    . html_writer::tag('span', get_string('hr_subtitle', 'local_targetzenit'),
+        ['class' => 'text-muted small']),
+    'mb-3');
+
 // Asosiy manba — Moodle'ning STANDART baholar hisoboti. Bu sahifa esa
 // qulaylik: baholar, davomat va uy vazifa bir joyda, chorak kesimida.
 echo html_writer::div(

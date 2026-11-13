@@ -2965,6 +2965,254 @@ S = {
         "Вместо этого измените дату урока или домашнее задание в кокпите.",
     ),
 
+    # ------------------------------------------- Ota-ona hisoboti (hisobot.php)
+    "hr_nav": ("Student report", "O'quvchi hisoboti", "Отчёт об ученике"),
+    "hr_title": (
+        "Student progress report",
+        "O'quvchining rivojlanish hisoboti",
+        "Отчёт о развитии ученика",
+    ),
+    "hr_subtitle": (
+        "For the parent meeting - test results by subject and the teachers' reviews",
+        "Ota-onalar majlisi uchun - fanlar bo'yicha test natijalari va "
+        "o'qituvchilar sharhi",
+        "Для родительского собрания - результаты тестов по предметам и "
+        "отзывы учителей",
+    ),
+    "hr_year": ("Academic year", "O'quv yili", "Учебный год"),
+    "hr_printed": ("Printed", "Chop etildi", "Напечатано"),
+    "hr_group": ("Class", "Sinf", "Класс"),
+    "hr_tutor": ("Class tutor", "Sinf rahbari", "Классный руководитель"),
+    "hr_studentid": ("Student ID", "O'quvchi ID", "ID ученика"),
+    "hr_period": ("Period", "Davr", "Период"),
+    "hr_notest": ("no test yet", "test topshirilmagan", "тест не сдавался"),
+    "hr_notests": (
+        "No test result has been entered for this student yet.",
+        "Bu o'quvchi uchun hali test natijasi kiritilmagan.",
+        "Для этого ученика ещё не внесены результаты тестов.",
+    ),
+
+    # Daraja - maktabning O'Z shkalasi (test natijalari jadvalidagi Low/Middle/High)
+    "hr_lvl_yuqori": ("High", "Yuqori", "Высокий"),
+    "hr_lvl_orta": ("Middle", "O'rta", "Средний"),
+    "hr_lvl_past": ("Needs support", "Past", "Низкий"),
+
+    "hr_kpi_result": ("Overall result", "Umumiy natija", "Общий результат"),
+    "hr_kpi_best": ("Strongest subject", "Eng kuchli fan", "Самый сильный предмет"),
+    "hr_kpi_weak": ("Needs attention", "E'tibor kerak fan", "Требует внимания"),
+    "hr_kpi_vsclass": ("Compared to the class", "Sinfga nisbatan", "По сравнению с классом"),
+    "hr_kpi_vsclass_hint": (
+        "class average {$a}",
+        "sinf o'rtachasi {$a}",
+        "средний балл класса {$a}",
+    ),
+    "hr_kpi_tests": ("Tests taken", "Topshirilgan test", "Сдано тестов"),
+    "hr_kpi_tests_hint": (
+        "in {$a} subjects",
+        "{$a} fan bo'yicha",
+        "по {$a} предметам",
+    ),
+
+    "hr_sum_title": ("In short", "Qisqacha", "Кратко"),
+    "hr_sum_none": (
+        "No test result has been entered for this period yet, so the subject "
+        "chart is empty. The teachers' reviews below still describe the child.",
+        "Bu davr uchun test natijasi hali kiritilmagan, shuning uchun fanlar "
+        "diagrammasi bo'sh. Quyidagi o'qituvchilar sharhi bola haqida baribir "
+        "to'liq gapiradi.",
+        "За этот период результаты тестов ещё не внесены, поэтому диаграмма по "
+        "предметам пуста. Отзывы учителей ниже всё равно рассказывают о ребёнке.",
+    ),
+    "hr_sum_s1": (
+        "{$a->ism} took {$a->testlar} test(s) in {$a->fan} subject(s); the overall "
+        "result is {$a->foiz} - {$a->daraja} level.",
+        "{$a->ism} {$a->fan} fandan {$a->testlar} ta test topshirdi, umumiy natija "
+        "{$a->foiz} - {$a->daraja} daraja.",
+        "{$a->ism} сдал(а) {$a->testlar} тест(ов) по {$a->fan} предметам, общий "
+        "результат {$a->foiz} - {$a->daraja} уровень.",
+    ),
+    "hr_sum_s2": (
+        "The strongest subject is {$a->kuchli} ({$a->kfoiz}), the lowest is "
+        "{$a->sust} ({$a->sfoiz}).",
+        "Eng yuqori natija - {$a->kuchli} ({$a->kfoiz}), eng past natija - "
+        "{$a->sust} ({$a->sfoiz}).",
+        "Самый высокий результат - {$a->kuchli} ({$a->kfoiz}), самый низкий - "
+        "{$a->sust} ({$a->sfoiz}).",
+    ),
+    "hr_sum_s3": (
+        "In {$a->n} subject(s) out of {$a->fan} the result is above the class "
+        "average ({$a->sinf}).",
+        "{$a->fan} fandan {$a->n} tasida natija sinf o'rtachasidan ({$a->sinf}) "
+        "yuqori.",
+        "В {$a->n} предметах из {$a->fan} результат выше среднего по классу "
+        "({$a->sinf}).",
+    ),
+    "hr_sum_s4": (
+        "{$a} subject teacher(s) have written a review about the child.",
+        "{$a} fan o'qituvchisi bola haqida sharh yozgan.",
+        "{$a} учитель(-я) написали отзыв о ребёнке.",
+    ),
+
+    "hr_strong": ("Strengths", "Kuchli tomonlar", "Сильные стороны"),
+    "hr_strong_hint": (
+        "Subjects the child is doing well in - worth praising.",
+        "Bola yaxshi o'zlashtirgan fanlar - maqtashga arziydi.",
+        "Предметы, которые ребёнок усвоил хорошо - стоит похвалить.",
+    ),
+    "hr_weak": ("Needs support", "Qo'llab-quvvatlash kerak", "Нужна поддержка"),
+    "hr_weak_hint": (
+        "Subjects to work on together with the teacher at home.",
+        "Uyda va o'qituvchi bilan birga ishlash kerak bo'lgan fanlar.",
+        "Предметы, над которыми нужно поработать дома и с учителем.",
+    ),
+    "hr_allstrong": (
+        "There is no subject below the middle level - the result is even.",
+        "O'rta darajadan past fan yo'q - natija bir tekis.",
+        "Нет предметов ниже среднего уровня - результат ровный.",
+    ),
+
+    "hr_chart_title": (
+        "Test result by subject",
+        "Fanlar bo'yicha test natijasi",
+        "Результат теста по предметам",
+    ),
+    "hr_chart_hint": (
+        "Subjects are ordered from the strongest to the weakest. The bar is your "
+        "child's result, the triangle mark is the class average in the same test.",
+        "Fanlar eng kuchlisidan eng sustigacha tartiblangan. Ustun - farzandingiz "
+        "natijasi, uchburchak belgi - shu testdagi sinf o'rtachasi.",
+        "Предметы расположены от самого сильного к самому слабому. Столбец - "
+        "результат вашего ребёнка, треугольник - средний балл класса в том же тесте.",
+    ),
+    "hr_chart_hint_nocls": (
+        "Subjects are ordered from the strongest to the weakest; the bar shows "
+        "the percentage of correct answers.",
+        "Fanlar eng kuchlisidan eng sustigacha tartiblangan; ustun to'g'ri "
+        "javoblar foizini ko'rsatadi.",
+        "Предметы расположены от самого сильного к самому слабому; столбец "
+        "показывает процент правильных ответов.",
+    ),
+    "hr_radar_title": (
+        "Balance across subjects",
+        "Fanlar muvozanati",
+        "Баланс по предметам",
+    ),
+    "hr_radar_hint": (
+        "The wider and more even the shape, the more evenly the child performs.",
+        "Shakl qanchalik keng va tekis bo'lsa, bola shunchalik bir tekis o'qiyapti.",
+        "Чем шире и ровнее фигура, тем равномернее успевает ребёнок.",
+    ),
+    "hr_classavg": ("Class average", "Sinf o'rtachasi", "Средний балл класса"),
+    "hr_scale_hint": (
+        "The result is the percentage of correct answers in the test. The levels "
+        "are the school's own scale, the same one used in the results sheet.",
+        "Natija - testdagi to'g'ri javoblar foizi. Darajalar maktabning o'z "
+        "shkalasi bo'yicha, natijalar jadvalidagi bilan bir xil.",
+        "Результат - это процент правильных ответов в тесте. Уровни - по "
+        "собственной шкале школы, той же, что и в таблице результатов.",
+    ),
+
+    "hr_table_title": ("Test detail", "Testlar tafsiloti", "Детали тестов"),
+    "hr_table_hint": (
+        "Every test the child took in this period.",
+        "Bola shu davrda topshirgan har bir test.",
+        "Каждый тест, который ребёнок сдал в этот период.",
+    ),
+    "hr_col_subject": ("Subject / teacher", "Fan / o'qituvchi", "Предмет / учитель"),
+    "hr_col_exam": ("Test", "Test", "Тест"),
+    "hr_col_score": ("Correct", "To'g'ri javob", "Правильных"),
+    "hr_col_percent": ("Result", "Natija", "Результат"),
+    "hr_col_level": ("Percent / level", "Foiz / daraja", "Процент / уровень"),
+    "hr_col_class": ("Class", "Sinf", "Класс"),
+
+    "hr_reviews_title": (
+        "What the teachers write about the child",
+        "O'qituvchilar bola haqida nima deb yozdi",
+        "Что пишут учителя о ребёнке",
+    ),
+    "hr_reviews_hint": (
+        "Each subject teacher writes on five areas. The most recent review for "
+        "each subject is shown.",
+        "Har bir fan o'qituvchisi besh yo'nalish bo'yicha yozadi. Har fandan "
+        "eng oxirgi sharh ko'rsatilgan.",
+        "Каждый учитель-предметник пишет по пяти направлениям. Показан последний "
+        "отзыв по каждому предмету.",
+    ),
+    "hr_teacher_of": (
+        "teacher of {$a}",
+        "{$a} fani o'qituvchisi",
+        "учитель предмета {$a}",
+    ),
+    "hr_noreviews": (
+        "No teacher review has been published for this student yet.",
+        "Bu o'quvchi uchun hali o'qituvchi sharhi e'lon qilinmagan.",
+        "Для этого ученика пока нет опубликованного отзыва учителя.",
+    ),
+
+    "hr_footnote": (
+        "The result is the percentage of correct answers in the tests of this "
+        "period; the level follows the school's scale (80% and above - High, "
+        "50-79% - Middle, below 50% - Needs support). A low result in one test "
+        "is not a verdict about the child: read it together with the teachers' "
+        "reviews. If you have a question, please speak to the class tutor or "
+        "write through the school feedback page.",
+        "Natija - shu davrdagi testlarda to'g'ri javoblar foizi; daraja maktab "
+        "shkalasi bo'yicha (80% va undan yuqori - Yuqori, 50-79% - O'rta, 50% dan "
+        "past - Past). Bitta testdagi past natija bola haqidagi hukm emas: uni "
+        "o'qituvchilar sharhi bilan birga o'qing. Savolingiz bo'lsa, sinf "
+        "rahbariga murojaat qiling yoki maktabning murojaat sahifasi orqali yozing.",
+        "Результат - это процент правильных ответов в тестах данного периода; "
+        "уровень - по школьной шкале (80% и выше - Высокий, 50-79% - Средний, "
+        "ниже 50% - Низкий). Низкий результат одного теста - не приговор ребёнку: "
+        "читайте его вместе с отзывами учителей. При вопросах обратитесь к "
+        "классному руководителю или напишите через страницу обращений школы.",
+    ),
+    "hr_sig_tutor": ("Class tutor", "Sinf rahbari", "Классный руководитель"),
+    "hr_sig_parent": (
+        "Parent (signature, date)",
+        "Ota-ona (imzo, sana)",
+        "Родитель (подпись, дата)",
+    ),
+
+    "hr_print": ("Print / save as PDF", "Chop etish / PDF", "Печать / PDF"),
+    "hr_printgroup": (
+        "Print the whole class ({$a})",
+        "Butun sinfni chop etish ({$a})",
+        "Напечатать весь класс ({$a})",
+    ),
+    "hr_printhint": (
+        "In Chrome: Print -> Destination \"Save as PDF\" -> Paper A4. "
+        "Turn on \"Background graphics\" so the colours of the charts come out.",
+        "Chrome'da: Chop etish -> Manzil \"PDF sifatida saqlash\" -> Qog'oz A4. "
+        "Diagramma ranglari chiqishi uchun \"Fon rasmlari\" (Background graphics) "
+        "belgisini yoqing.",
+        "В Chrome: Печать -> Принтер \"Сохранить как PDF\" -> Бумага A4. "
+        "Включите \"Фоновую графику\", чтобы цвета диаграмм пропечатались.",
+    ),
+    "hr_pickgroup": ("Choose a class", "Sinfni tanlang", "Выберите класс"),
+    "hr_pickhint": (
+        "The reports of every student in the class open one after another, "
+        "ready to print in one go.",
+        "Sinfdagi har bir o'quvchining hisoboti ketma-ket ochiladi va bir "
+        "marta bosib chop etiladi.",
+        "Отчёты всех учеников класса откроются подряд - печатаются за один раз.",
+    ),
+    "hr_noaccess": (
+        "You do not have access to this student's report.",
+        "Bu o'quvchining hisobotiga ruxsatingiz yo'q.",
+        "У вас нет доступа к отчёту этого ученика.",
+    ),
+    "hr_nostudents": (
+        "No student found for this report.",
+        "Hisobot uchun o'quvchi topilmadi.",
+        "Ученик для отчёта не найден.",
+    ),
+    "hr_openreport": (
+        "Report for the parent meeting",
+        "Ota-onalar majlisi uchun hisobot",
+        "Отчёт для родительского собрания",
+    ),
+
     # Oy nomlari — sana formatiga bog'liq emas, tabel oyi uchun
     "month_1": ("January", "Yanvar", "Январь"),
     "month_2": ("February", "Fevral", "Февраль"),
