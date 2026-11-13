@@ -326,14 +326,24 @@ class topshiriq {
 	}
 
 	/**
-	 * O'chirish — Moodle'ning TASDIQLASH sahifasiga olib boradi.
+	 * O'chirish — Moodle'ning TASDIQLASH dialogiga olib boradi.
 	 *
-	 * Ataylab to'g'ridan-to'g'ri o'chirmaydi: `sesskey` bo'lsa ham Moodle
-	 * avval «rostdan o'chirilsinmi?» deb so'raydi. Buzg'unchi amal bir
-	 * bosishda bajarilmasligi kerak.
+	 * NEGA `course/format/update.php`, `course/mod.php` EMAS:
+	 * `mod.php?delete=` Moodle 5 da DEPRECATED (MDL-83530) — ishlaydi,
+	 * lekin debug yoqilganda ogohlantirish chiqaradi va keyingi
+	 * versiyalarda olib tashlanadi.
+	 *
+	 * Bir bosishda O'CHMAYDI: `confirm` berilmagani uchun Moodle avval
+	 * `cm_delete_confirmation_dialog()` ni ko'rsatadi. `returnurl` esa
+	 * tasdiqdan keyin odamni kurs sahifasiga emas, SHU PANELGA qaytaradi.
 	 */
-	public static function ochirish_url(int $cmid): \moodle_url {
-		return new \moodle_url('/course/mod.php',
-			['delete' => $cmid, 'sesskey' => sesskey()]);
+	public static function ochirish_url(\stdClass $r): \moodle_url {
+		return new \moodle_url('/course/format/update.php', [
+			'action' => 'cm_delete',
+			'courseid' => $r->courseid,
+			'id' => $r->cmid,
+			'sesskey' => sesskey(),
+			'returnurl' => '/local/targetzenit/topshiriqlar.php',
+		]);
 	}
 }

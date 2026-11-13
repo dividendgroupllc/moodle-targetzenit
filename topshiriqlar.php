@@ -60,7 +60,16 @@ if (has_capability('local/targetzenit:manageexams', $context)) {
 	$menu = shell::oq_menu($USER->id, true);
 }
 
+// SAHIFA SKELETI (boshqa sahifalar bilan bir xil tartib):
+//   header() -> start_menu() -> .tz-dir-wrap -> kontent -> end_div() ->
+//   shell::end() -> footer()
+// `header()` BO'LMASA Moodle <head> ni umuman chiqarmaydi va sahifa
+// CSS'siz, tekis HTML bo'lib qoladi.
+echo $OUTPUT->header();
+
 shell::start_menu('topshiriq', $t('tp_nav'), $t('tp_hint'), '', $menu);
+
+echo html_writer::start_div('tz-dir-wrap tz-tp');
 
 if (!$rows) {
 	// Bo'sh ekran ikki xil ma'noni yashiradi: haqiqatan topshiriq yo'q,
@@ -74,7 +83,9 @@ if (!$rows) {
 	echo html_writer::div(
 		html_writer::div($t('tp_empty')) . html_writer::div($izoh, 'tz-dir-sub'),
 		'tz-dir-empty');
+	echo html_writer::end_div();
 	shell::end();
+	echo $OUTPUT->footer();
 	exit;
 }
 
@@ -104,6 +115,7 @@ echo ui::tile((string) $yopiq, $t('tp_notvisible'),
 	$yopiq ? $t('tp_notvisiblehint') : '');
 echo html_writer::end_div();
 
+echo html_writer::start_div('tz-dir-card');
 echo html_writer::start_tag('table', ['class' => 'tz-dir-table']);
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr');
@@ -184,7 +196,7 @@ foreach ($rows as $r) {
 			$t('tp_settings'), ['class' => 'tz-tp-btn']);
 		// O'chirish Moodle'ning tasdiqlash sahifasiga boradi, darhol
 		// o'chirmaydi — shuning uchun oddiy havola yetarli.
-		$amal .= ' ' . html_writer::link(topshiriq::ochirish_url($r->cmid),
+		$amal .= ' ' . html_writer::link(topshiriq::ochirish_url($r),
 			$t('tp_delete'), ['class' => 'tz-tp-btn tz-tp-del',
 				'title' => $t('tp_deletehint')]);
 	}
@@ -195,4 +207,7 @@ foreach ($rows as $r) {
 
 echo html_writer::end_tag('tbody');
 echo html_writer::end_tag('table');
+echo html_writer::end_div();
+echo html_writer::end_div();   // .tz-tp
 shell::end();
+echo $OUTPUT->footer();
