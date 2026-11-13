@@ -23,14 +23,17 @@ class topshiriq {
 	/**
 	 * Topshiriqlar ro'yxati.
 	 *
-	 * @param string $year o'quv yili (`2026-2027`) — kurslar `<yil>::%`
+	 * @param string|null $year o'quv yili (`2026-2027`) — kurslar `<yil>::%`.
+	 *        null bo'lsa yil bo'yicha FILTRLANMAYDI: Moodle'da qo'lda
+	 *        yaratilgan kursda `idnumber` bo'lmaydi va u yil naqshiga
+	 *        tushmaydi — shunday kursdagi topshiriq ko'rinmay qolardi.
 	 * @param array|null $courseids faqat shu kurslar (o'qituvchi uchun);
-	 *                              null — yildagi hamma kurs
+	 *                              null — qamrovdagi hamma kurs
 	 * @return array har element: cmid, name, duedate, visible, courseid,
 	 *               coursename, guruh, fan, topshirgan, qoralama, baholangan,
 	 *               jami, uyvazifa (bool)
 	 */
-	public static function royxat(string $year, ?array $courseids = null): array {
+	public static function royxat(?string $year, ?array $courseids = null): array {
 		global $DB;
 
 		$modid = $DB->get_field('modules', 'id', ['name' => 'assign']);
@@ -47,9 +50,13 @@ class topshiriq {
 			list($in, $p) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'c');
 			$where = "c.id $in";
 			$params += $p;
-		} else {
+		} else if ($year !== null) {
+			// `::%` ataylab ekranlanmaydi — bu naqsh, literal emas.
 			$where = 'c.idnumber LIKE :p';
 			$params['p'] = $DB->sql_like_escape($year) . '::%';
+		} else {
+			$where = 'c.id <> :siteid';
+			$params['siteid'] = SITEID;
 		}
 
 		// Sanoqlar subquery'da: har topshiriq uchun alohida so'rov qilsak
@@ -60,8 +67,12 @@ class topshiriq {
 		// qator `-1` bilan yoziladi, `IS NOT NULL` yolg'iz yetmaydi.
 		$sql = "SELECT cm.id AS cmid, a.id AS assignid, a.name, a.duedate,
 					   a.allowsubmissionsfromdate, a.submissiondrafts,
+					   a.markingworkflow, a.grade AS bahoturi,
 					   cm.visible, c.id AS courseid, c.fullname AS coursename,
-					   c.idnumber,
+					   c.idnumber, c.showgrades, gi.hidden AS itemhidden,
+					   (SELECT COUNT(DISTINCT uf.userid) FROM {assign_user_flags} uf
+						 WHERE uf.assignment = a.id
+						   AND uf.workflowstate = 'released') AS elon,
 					   (SELECT COUNT(DISTINCT s.userid) FROM {assign_submission} s
 						 WHERE s.assignment = a.id AND s.latest = 1
 						   AND s.status = 'submitted') AS topshirgan,
@@ -76,6 +87,9 @@ class topshiriq {
 				  JOIN {course_modules} cm ON cm.instance = a.id AND cm.module = :modid
 				  JOIN {course} c ON c.id = cm.course
 			 LEFT JOIN {local_targetzenit_lesson} l ON l.assigncmid = cm.id
+			 LEFT JOIN {grade_items} gi ON gi.courseid = c.id
+					   AND gi.itemtype = 'mod' AND gi.itemmodule = 'assign'
+					   AND gi.iteminstance = a.id AND gi.itemnumber = 0
 				 WHERE $where
 			  ORDER BY a.duedate DESC, c.fullname ASC";
 
@@ -106,6 +120,11 @@ class topshiriq {
 				'baholangan' => (int) $r->baholangan,
 				'jami' => (int) ($jami[(int) $r->courseid] ?? 0),
 				'uyvazifa' => !empty($r->lessonid),
+				'workflow' => (int) $r->markingworkflow,
+				'elon' => (int) $r->elon,
+				'itemhidden' => (int) $r->itemhidden,
+				'showgrades' => (int) $r->showgrades,
+				'bahoturi' => (float) $r->bahoturi,
 			];
 		}
 		return $out;
@@ -175,6 +194,70 @@ class topshiriq {
 			}
 		}
 		return $out;
+	}
+
+	/**
+	 * Qo'yilgan baho O'QUVCHIGA yetib bordimi?
+	 *
+	 * NIMA UCHUN KERAK: «baho qo'ydim, lekin o'quvchi ko'rmayapti» —
+	 * Moodle'da buning TO'RT xil sababi bor va ularning hech biri
+	 * baholash ekranida ko'rinmaydi. Shuning uchun ularni shu yerda
+	 * bitta javobga yig'amiz.
+	 *
+	 * Tartib muhim: eng «qattiq» to'siq birinchi aytiladi, aks holda
+	 * odam ikkinchi darajali sababni tuzatib, natija o'zgarmaganini
+	 * ko'rib chalkashadi.
+	 *
+	 * @param object $r `royxat()` qatori
+	 * @return array [holat, sabab_kaliti] — holat: ok|warning|critical|none
+	 */
+	public static function korinish(\stdClass $r): array {
+		if ($r->bahoturi == 0) {
+			// Baholanmaydigan topshiriq — ko'rsatadigan baho yo'q.
+			return ['none', 'tp_vis_nograde'];
+		}
+		if (!$r->showgrades) {
+			// Kurs darajasida baholar o'chirilgan — hamma baho yashirin.
+			return ['critical', 'tp_vis_nocourse'];
+		}
+		if ($r->itemhidden) {
+			// Gradebook'da shu ustun yashirilgan.
+			return ['critical', 'tp_vis_itemhidden'];
+		}
+		if ($r->workflow && $r->baholangan > $r->elon) {
+			// Marking workflow: baho «Released» bo'lmaguncha o'quvchi
+			// ko'rmaydi. Eng ko'p uchraydigan va eng ko'rinmas sabab.
+			return ['warning', 'tp_vis_notreleased'];
+		}
+		if (!$r->baholangan) {
+			return ['none', 'tp_vis_nomarks'];
+		}
+		return ['ok', 'tp_vis_ok'];
+	}
+
+	/**
+	 * Diagnostika: Moodle'da jami nechta topshiriq va kurs bor.
+	 *
+	 * NEGA KERAK: «topshiriq yo'q» degan bo'sh ekran ikki xil ma'noni
+	 * yashiradi — haqiqatan yo'q, yoki bizning qamrov tashqarisida.
+	 * Bo'sh holatda shu raqamlar ko'rsatiladi, shunda sababni taxmin
+	 * qilish kerak bo'lmaydi.
+	 *
+	 * @return object jami (assign soni), kurslar (assign bor kurs soni),
+	 *                quiz (quiz soni — odam «topshiriq» deb quiz yaratgan
+	 *                bo'lishi mumkin)
+	 */
+	public static function tashxis(): \stdClass {
+		global $DB;
+
+		$assign = (int) $DB->count_records('assign');
+		$kurslar = (int) $DB->count_records_sql(
+			'SELECT COUNT(DISTINCT cm.course) FROM {course_modules} cm
+			  JOIN {modules} m ON m.id = cm.module WHERE m.name = ?', ['assign']);
+		$quiz = $DB->get_manager()->table_exists('quiz')
+			? (int) $DB->count_records('quiz') : 0;
+
+		return (object) ['jami' => $assign, 'kurslar' => $kurslar, 'quiz' => $quiz];
 	}
 
 	/** Baholash sahifasi (Moodle yadrosi). */

@@ -20,7 +20,6 @@ require(__DIR__ . '/../../config.php');
 
 use local_targetzenit\output\shell;
 use local_targetzenit\output\ui;
-use local_targetzenit\timetable;
 use local_targetzenit\topshiriq;
 
 require_login();
@@ -35,7 +34,9 @@ $hammasi = has_capability('local/targetzenit:manageexams', $context)
 	|| has_capability('local/targetzenit:viewteachers', $context)
 	|| has_capability('moodle/site:config', $context);
 
-$year = timetable::current_year();
+// Yil bo'yicha FILTRLAMAYMIZ: Moodle'da qo'lda yaratilgan kursda
+// `idnumber` bo'lmaydi (`<yil>::<guruh>::<fan>` ni Frappe yozadi), ya'ni yil
+// naqshi bunday kursdagi topshiriqni yashirib qo'yardi.
 $courseids = $hammasi ? null : topshiriq::mening_kurslarim($USER->id);
 
 if (!$hammasi && !$courseids) {
@@ -47,7 +48,7 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/topshiriqlar.php'));
 shell::setup($PAGE, $t('tp_nav'));
 
-$rows = topshiriq::royxat($year, $courseids);
+$rows = topshiriq::royxat(null, $courseids);
 
 // Menyu: koordinatorga baholash menyusi, direktorga direktor menyusi,
 // qolganiga (fan o'qituvchisi) o'z paneli menyusi.
@@ -62,7 +63,17 @@ if (has_capability('local/targetzenit:manageexams', $context)) {
 shell::start_menu('topshiriq', $t('tp_nav'), $t('tp_hint'), '', $menu);
 
 if (!$rows) {
-	echo html_writer::div($t('tp_empty'), 'tz-dir-empty');
+	// Bo'sh ekran ikki xil ma'noni yashiradi: haqiqatan topshiriq yo'q,
+	// yoki bor-u qamrovimizdan tashqarida. Raqamlarni ko'rsatamiz.
+	$d = topshiriq::tashxis();
+	$izoh = $t('tp_diag', (object) [
+		'jami' => $d->jami,
+		'kurslar' => $d->kurslar,
+		'quiz' => $d->quiz,
+	]);
+	echo html_writer::div(
+		html_writer::div($t('tp_empty')) . html_writer::div($izoh, 'tz-dir-sub'),
+		'tz-dir-empty');
 	shell::end();
 	exit;
 }
@@ -78,12 +89,26 @@ echo ui::tile((string) count($rows), $t('tp_total'));
 echo ui::tile((string) $jamit, $t('tp_submitted'));
 echo ui::tile((string) $jamib, $t('tp_graded'));
 echo ui::tile((string) $jamiq, $t('tp_draft'), $jamiq ? $t('tp_drafthint') : '');
+
+// Baho qo'yilgan, lekin o'quvchi ko'rmayotgan topshiriqlar — eng muhim
+// ogohlantirish: o'qituvchi ishini bajargan deb o'ylaydi, o'quvchi esa
+// hech narsa ko'rmaydi.
+$yopiq = 0;
+foreach ($rows as $r) {
+	list($h, ) = topshiriq::korinish($r);
+	if ($h === 'critical' || $h === 'warning') {
+		$yopiq++;
+	}
+}
+echo ui::tile((string) $yopiq, $t('tp_notvisible'),
+	$yopiq ? $t('tp_notvisiblehint') : '');
 echo html_writer::end_div();
 
 echo html_writer::start_tag('table', ['class' => 'tz-dir-table']);
 echo html_writer::start_tag('thead');
 echo html_writer::start_tag('tr');
-foreach (['tp_group', 'tp_name', 'tp_due', 'tp_progress', 'tp_actions'] as $k) {
+foreach (['tp_group', 'tp_name', 'tp_due', 'tp_progress', 'tp_visible',
+		'tp_actions'] as $k) {
 	echo html_writer::tag('th', $t($k));
 }
 echo html_writer::end_tag('tr');
@@ -131,6 +156,14 @@ foreach ($rows as $r) {
 	$h .= ' ' . ui::chip($r->baholangan ? 'good' : 'none',
 		$t('tp_gradeshort') . ': ' . $r->baholangan);
 	echo html_writer::tag('td', $h);
+
+	// --- baho o'quvchiga yetib bordimi (sababi bilan)
+	list($holat, $kalit) = topshiriq::korinish($r);
+	$matn = $t($kalit . '_s');
+	if ($holat === 'warning' && $r->workflow) {
+		$matn .= ' (' . $r->elon . '/' . $r->baholangan . ')';
+	}
+	echo html_writer::tag('td', ui::chip($holat, $matn, $t($kalit)));
 
 	// --- amallar: ikkisi ham Moodle yadrosining sahifasi
 	$amal = html_writer::link(topshiriq::baholash_url($r->cmid), $t('tp_grade'),

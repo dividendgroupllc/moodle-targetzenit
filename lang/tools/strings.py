@@ -2727,6 +2727,86 @@ S = {
         "шаг: Settings -> Submission settings -> "
         "\"Require students to click submit button\" = No.",
     ),
+    "tp_diag": (
+        "Moodle currently holds {$a->jami} assignment(s) across {$a->kurslar} course(s), "
+        "and {$a->quiz} quiz(zes). If you expected to see your work here: an "
+        "<b>Assignment</b> is what this page lists - a <b>Quiz</b> is a different "
+        "activity and will not appear.",
+        "Moodle'da hozir {$a->kurslar} kursda {$a->jami} ta topshiriq (Assignment) "
+        "va {$a->quiz} ta test (Quiz) bor. Agar o'z ishingizni shu yerda ko'rishni "
+        "kutgan bo'lsangiz: bu sahifa <b>Assignment</b> larni ko'rsatadi - "
+        "<b>Quiz</b> boshqa faoliyat va bu yerda chiqmaydi.",
+        "В Moodle сейчас {$a->jami} заданий (Assignment) в {$a->kurslar} курсах и "
+        "{$a->quiz} тестов (Quiz). Если вы ожидали увидеть здесь свою работу: эта "
+        "страница показывает <b>Assignment</b> - <b>Quiz</b> это другой элемент и "
+        "здесь не появится.",
+    ),
+
+    "tp_visible": ("Student sees grade", "O'quvchi ko'radi", "Ученик видит оценку"),
+    "tp_notvisible": ("Grades not visible", "Baho ko'rinmaydi", "Оценки не видны"),
+    "tp_notvisiblehint": (
+        "Assignments where a grade exists but the student cannot see it. "
+        "The reason is shown in the \"Student sees grade\" column.",
+        "Baho qo'yilgan, lekin o'quvchi ko'ra olmaydigan topshiriqlar. "
+        "Sababi \"O'quvchi ko'radi\" ustunida yozilgan.",
+        "Задания, где оценка выставлена, но ученик её не видит. "
+        "Причина указана в столбце \"Ученик видит оценку\".",
+    ),
+    "tp_vis_ok_s": ("yes", "ha", "да"),
+    "tp_vis_ok": (
+        "The grade is visible to the student in Grades.",
+        "Baho o'quvchiga «Baholar» sahifasida ko'rinadi.",
+        "Оценка видна ученику в разделе «Оценки».",
+    ),
+    "tp_vis_nomarks_s": ("no grades", "baho yo'q", "нет оценок"),
+    "tp_vis_nomarks": (
+        "Nothing is graded yet, so there is nothing for the student to see.",
+        "Hali hech kim baholanmagan, ya'ni o'quvchi ko'radigan narsa yo'q.",
+        "Пока никто не оценён, ученику нечего видеть.",
+    ),
+    "tp_vis_nograde_s": ("not graded", "baholanmaydi", "без оценки"),
+    "tp_vis_nograde": (
+        "This assignment has no grade type set (Grade = None), so it never "
+        "produces a grade. Settings -> Grade -> Type.",
+        "Bu topshiriqda baho turi qo'yilmagan (Grade = None), ya'ni u umuman "
+        "baho bermaydi. Settings -> Grade -> Type.",
+        "У этого задания не задан тип оценки (Grade = None), оценка не "
+        "выставляется вообще. Settings -> Grade -> Type.",
+    ),
+    "tp_vis_notreleased_s": ("not released", "e'lon qilinmagan", "не опубликовано"),
+    "tp_vis_notreleased": (
+        "Marking workflow is ON: a grade stays hidden until you set its state "
+        "to \"Released\". Open Grade, set Marking workflow state = Released "
+        "(or select all students in Submissions -> With selected... -> Set "
+        "marking workflow state). The number shows released/graded.",
+        "Marking workflow YOQILGAN: baho holati \"Released\" bo'lmaguncha "
+        "o'quvchi uni ko'rmaydi. Baholash ekranida Marking workflow state = "
+        "Released qo'ying (yoki Submissions -> hammasini belgilab -> With "
+        "selected... -> Set marking workflow state). Raqam: e'lon qilingan/baholangan.",
+        "Marking workflow ВКЛЮЧЁН: оценка скрыта, пока её состояние не станет "
+        "\"Released\". Поставьте Marking workflow state = Released (или "
+        "Submissions -> выбрать всех -> With selected... -> Set marking workflow "
+        "state). Число: опубликовано/оценено.",
+    ),
+    "tp_vis_itemhidden_s": ("hidden in gradebook", "gradebook'da yashirin", "скрыто в журнале"),
+    "tp_vis_itemhidden": (
+        "This column is hidden in the gradebook, so the student does not see the "
+        "grade. Course -> Grades -> Gradebook setup -> the item menu -> Show.",
+        "Bu ustun gradebook'da yashirilgan, shuning uchun o'quvchi bahoni "
+        "ko'rmaydi. Kurs -> Grades -> Gradebook setup -> ustun menyusi -> Show.",
+        "Этот столбец скрыт в журнале оценок, поэтому ученик не видит оценку. "
+        "Курс -> Grades -> Gradebook setup -> меню элемента -> Show.",
+    ),
+    "tp_vis_nocourse_s": ("grades off", "kursda o'chirilgan", "выключено в курсе"),
+    "tp_vis_nocourse": (
+        "Grades are switched off for the whole course, so no grade reaches any "
+        "student. Course settings -> Appearance -> Show gradebook to students = Yes.",
+        "Butun kursda baholar o'chirilgan, ya'ni hech bir baho o'quvchiga "
+        "bormaydi. Kurs sozlamalari -> Appearance -> Show gradebook to students = Yes.",
+        "Оценки отключены для всего курса, ни одна оценка не доходит до ученика. "
+        "Настройки курса -> Appearance -> Show gradebook to students = Yes.",
+    ),
+
     "tp_group": ("Group", "Guruh", "Группа"),
     "tp_name": ("Assignment", "Topshiriq", "Задание"),
     "tp_due": ("Due", "Muddat", "Срок"),
