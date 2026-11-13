@@ -28,7 +28,7 @@ uchun asos bo'lib qolardi. Qiyos faqat **sinf o'rtachasi** bilan.
 
 | Nima | Qayerdan |
 |---|---|
-| test ballari | `_exam_result` + `_exam` (`exam::for_student()`) |
+| test ballari | `_exam_result` + `_exam` (`exam::for_student()`) — **ikki filtr bilan**, 2.1 ga qarang |
 | sinf o'rtachasi | `_exam_result` bo'yicha `AVG(score)` — **sitting** kesimida, 2 tadan kam natija bo'lsa qaytarilmaydi |
 | o'qituvchi sharhi | `{comments}` + `_sharh` (`sharh::mine()` — faqat **ochiq**) |
 | o'qituvchi ismi | `_slot` (haqiqatda dars o'tgan) → `_timetable` (reja) |
@@ -36,6 +36,28 @@ uchun asos bo'lib qolardi. Qiyos faqat **sinf o'rtachasi** bilan.
 
 Test natijalari Excel'dan `exam_import` orqali kiritiladi
 (`1Quarter...Test_natijalari_sinflar.xlsx` formati).
+
+### 2.1 Qaysi test hisobotga TUSHMAYDI
+
+`exam::for_student()` har bir **sitting** uchun qator qaytaradi (natija
+jadvaliga LEFT JOIN), ya'ni ball kiritilmagan bo'lsa ham qator keladi.
+Shuning uchun hisobot ikkita qatorni chetlab o'tadi:
+
+1. **`sitting_status = 'bekor'`** — koordinator «Guruhni olib tashlash»
+   bosgan sitting. Baholash SINF DARAJASI bo'yicha yaratiladi: «2-sinf»
+   tanlansa 2A ham, 2B ham sitting oladi. Fan faqat bitta sinfda o'tilsa
+   (masalan ART 2B da bor, 2A da yo'q), ikkinchisi bekor qilinadi —
+   shundan keyin u varaqda **umuman ko'rinmaydi** (2026-11-14 talabi).
+2. **`score IS NULL`** — sitting bor, lekin ball kiritilmagan. Ota-onaga
+   «ART — / —» qatori hech narsa demaydi, aksincha «topshirmaganmi yoki
+   unutilganmi?» degan savol tug'diradi.
+
+**OQIBATI (bilib turib):** «uzrli / uzrsiz» deb belgilangan test ham
+varaqqa tushmaydi — unda ball yo'q. Kerak bo'lsa, `score === null`
+filtrini `holat === 'ishladi'` sharti bilan toraytirish kifoya.
+
+Testi butunlay yo'q fan varaqda faqat **o'qituvchi fikri** bo'lsa
+ko'rinadi (sharh testdan mustaqil).
 
 ## 3. Daraja shkalasi
 

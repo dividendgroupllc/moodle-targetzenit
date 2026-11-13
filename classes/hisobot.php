@@ -172,13 +172,33 @@ class hisobot {
             if (!$cid) {
                 continue;
             }
-            $maks = (float) $r->maxscore;
-            $r->zfoiz = ($r->score !== null && $maks > 0)
-                ? round((float) $r->score / $maks * 100, 1) : null;
-            $natijalar[$cid][] = $r;
-            if ($r->score !== null) {
-                $sittinglar[(int) $r->sittingid] = $maks;
+
+            // BEKOR QILINGAN GURUH — hisobotda umuman yo'q.
+            //
+            // Baholash sinf darajasi bo'yicha yaratiladi: «2-sinf» tanlansa
+            // 2A ham, 2B ham sitting oladi. Agar fan faqat bitta sinfda
+            // o'tilsa, koordinator ikkinchisini «Guruhni olib tashlash»
+            // bilan bekor qiladi. `for_student()` esa SITTING bo'yicha qator
+            // qaytaradi va bekor qilinganini tekshirmaydi — natijada 2A
+            // varag'ida o'sha fan bo'sh baho bilan turardi (2026-11-14).
+            if ((string) ($r->sitting_status ?? '') === 'bekor') {
+                continue;
             }
+
+            // BALL KIRITILMAGAN TEST HAM KO'RSATILMAYDI (talab 2026-11-14).
+            //
+            // Sitting mavjud bo'lsa-yu ball kiritilmagan bo'lsa, `score`
+            // NULL keladi. Ota-onaga «ART — / —» qatori hech narsa demaydi,
+            // aksincha «bola topshirmaganmi yoki unutilganmi?» degan savol
+            // tug'diradi. Varaqda faqat HAQIQATDA bahosi bor test turadi.
+            if ($r->score === null) {
+                continue;
+            }
+            // Shu yerdan keyin `score` ALBATTA bor (yuqorida filtrlandi).
+            $maks = (float) $r->maxscore;
+            $r->zfoiz = $maks > 0 ? round((float) $r->score / $maks * 100, 1) : null;
+            $natijalar[$cid][] = $r;
+            $sittinglar[(int) $r->sittingid] = $maks;
         }
         $sinfort = self::sinf_ortacha(array_keys($sittinglar));
 

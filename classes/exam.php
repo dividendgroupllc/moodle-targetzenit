@@ -1339,6 +1339,13 @@ class exam {
      * chorak boshida o'quvchilarga yetkaziladi» — shuning uchun KELAJAKDAGI
      * baholashlar ham qaytariladi.
      */
+    /*
+     * DIQQAT: bu metod har bir SITTING uchun qator qaytaradi (natija
+     * jadvaliga LEFT JOIN), ya'ni ball kiritilmagan bo'lsa ham qator
+     * keladi va `score` NULL bo'ladi. Shuning uchun `sitting_status` ham
+     * tanlanadi: «bekor» qilingan guruh (koordinator «Guruhni olib
+     * tashlash» bosgan) chaqiruvchi tomonda filtrlanishi kerak.
+     */
     public static function for_student(int $studentid, string $year,
                                         string $termname = ''): array {
         global $DB;
@@ -1356,6 +1363,7 @@ class exam {
                    COALESCE(s.starttime, e.starttime) AS vaqt,
                    COALESCE(s.room, e.room) AS xona,
                    e.duration, e.maxscore, e.termname, e.subjectkey,
+                   s.status AS sitting_status,
                    c.fullname AS coursename, c.idnumber AS courseidnumber,
                    r.score, r.holat, r.capped, r.retake
               FROM {local_targetzenit_exam_sitting} s
