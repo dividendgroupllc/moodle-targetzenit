@@ -589,6 +589,12 @@ class ballsetka {
             }
         }
 
+        // Ball kiritildi -> baholash endi «qoralama» emas. Bir marta,
+        // saqlash tugagandan keyin (har o'quvchi uchun emas).
+        if ($saqlandi) {
+            exam::status_avto((int) $sit->examid);
+        }
+
         return ['saqlandi' => $saqlandi, 'chorak' => $chorak];
     }
 }

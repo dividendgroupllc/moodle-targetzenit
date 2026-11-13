@@ -273,6 +273,7 @@ $string['bh_retrohint'] = 'Keyin kiritilgan, qog\'oz shaklda';
 $string['bh_retronotice'] = 'Bu o\'tgan davr: onlayn test yaratilmaydi va bildirishnoma yuborilmaydi. Ballarni qo\'lda kiritasiz.';
 $string['bh_room'] = 'Xona';
 $string['bh_roomhint'] = 'Standart xona; har guruhga o\'zgartirish mumkin';
+$string['bh_save'] = 'Saqlash';
 $string['bh_saved'] = 'Saqlandi';
 $string['bh_savehint'] = 'Faqat o\'zgartirilgan qatorlar saqlanadi';
 $string['bh_savenext'] = 'Saqlash va jadvalni belgilash';

@@ -2342,6 +2342,7 @@ S = {
         "Saqlash va jadvalni belgilash",
         "Сохранить и задать расписание",
     ),
+    "bh_save": ("Save", "Saqlash", "Сохранить"),
     "bh_saved": ("Saved", "Saqlandi", "Сохранено"),
     "bh_fillall": (
         "Quarter, subject and class level are required",

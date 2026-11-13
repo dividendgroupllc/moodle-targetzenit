@@ -548,6 +548,30 @@ class exam {
               WHERE s.examid = ?", [$examid]);
     }
 
+    /**
+     * Ball kiritilgandan keyin holatni O'ZI «o'tkazildi» ga ko'chiradi.
+     *
+     * NEGA KERAK: holat yaratilganda `qoralama` bo'ladi va uni o'zgartiradigan
+     * hech narsa yo'q edi — `result_save()` unga tegmaydi, UI'da ham tugma
+     * yo'q edi. Natijada koordinator hamma ballni kiritib bo'lgandan keyin
+     * ham ro'yxatda «Qoralama» ko'rinardi va «nega draft?» degan savol
+     * tug'ilardi.
+     *
+     * `status()` dan FARQI: ruxsat tekshirmaydi. Chaqiruvchi (ball saqlash)
+     * o'z ruxsatini allaqachon tekshirgan, va fan o'qituvchisida
+     * `manageexams` YO'Q — `status()` ni chaqirsak uning ball saqlashi
+     * xato bilan yiqilardi.
+     *
+     * Faqat `qoralama` dan ko'chiradi: koordinator qo'lda «yopildi» qilgan
+     * bo'lsa, keyingi tahrir uni orqaga qaytarmasligi kerak.
+     */
+    public static function status_avto(int $examid): void {
+        global $DB;
+
+        $DB->set_field('local_targetzenit_exam', 'status', 'otkazildi',
+            ['id' => $examid, 'status' => 'qoralama']);
+    }
+
     public static function status(int $examid, string $status): void {
         global $DB;
         require_capability('local/targetzenit:manageexams',

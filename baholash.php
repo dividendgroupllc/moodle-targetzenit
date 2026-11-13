@@ -658,6 +658,32 @@ if ($view === 'jadval') {
             . ((int) $e->retro === 1 ? ' · ' . $t('bh_retro') : ''),
             'tz-dir-sub mb-3');
 
+    // --- HOLAT: ko'rsatiladi va shu yerdan o'zgartiriladi.
+    //
+    // Ball kiritilganda holat «o'tkazildi» ga O'ZI ko'chadi
+    // (`exam::status_avto()`), lekin «yopildi» — ataylab QO'LDA: u
+    // yakunlash belgisi va maksimal ballni o'zgartirishni bloklaydi.
+    if ($boshqarish) {
+        $holatlar = [];
+        foreach (exam::HOLATLAR as $h) {
+            $holatlar[$h] = $t('bh_status_' . $h);
+        }
+        echo html_writer::start_tag('form', ['method' => 'post', 'class' => 'mb-3',
+            'action' => (new moodle_url('/local/targetzenit/baholash.php'))->out(false)]);
+        foreach (['sesskey' => sesskey(), 'amal' => 'status', 'id' => $e->id,
+                  'view' => 'jadval'] as $nk => $nv) {
+            echo html_writer::empty_tag('input',
+                ['type' => 'hidden', 'name' => $nk, 'value' => $nv]);
+        }
+        echo html_writer::tag('span', $t('bh_status') . ': ',
+            ['class' => 'tz-dir-sub']);
+        echo html_writer::select($holatlar, 'yangistatus', $e->status, false);
+        echo ' ' . html_writer::empty_tag('input',
+            ['type' => 'submit', 'value' => $t('bh_save'),
+             'class' => 'btn btn-sm btn-outline-secondary']);
+        echo html_writer::end_tag('form');
+    }
+
     // --- O'tgan davr ogohlantirishi: nega quiz yaratilmaydi
     if ((int) $e->retro === 1) {
         echo $OUTPUT->notification($t('bh_retronotice'), 'info');

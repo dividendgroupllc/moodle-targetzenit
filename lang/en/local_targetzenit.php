@@ -273,6 +273,7 @@ $string['bh_retrohint'] = 'Entered retrospectively, on paper';
 $string['bh_retronotice'] = 'This is a past period: no online test is created and no notification is sent. Enter the scores by hand.';
 $string['bh_room'] = 'Room';
 $string['bh_roomhint'] = 'The default room; it can be changed per group';
+$string['bh_save'] = 'Save';
 $string['bh_saved'] = 'Saved';
 $string['bh_savehint'] = 'Only the rows you changed are saved';
 $string['bh_savenext'] = 'Save and set the timetable';
