@@ -254,6 +254,148 @@ class sharh {
         return $out;
     }
 
+    // =========================================================== TAHRIRLASH
+
+    /**
+     * To'plamning qatorlari: [kategoriya => qator].
+     *
+     * Tahrirlash formasini oldingi matn bilan to'ldirish uchun.
+     */
+    public static function batch_rows(string $batch): array {
+        global $DB;
+
+        if (trim($batch) === '') {
+            return [];
+        }
+        $rows = $DB->get_records_sql(self::select()
+            . ' WHERE s.batch = :b ORDER BY s.id ASC', ['b' => $batch]);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[$r->kategoriya] = $r;
+        }
+        return $out;
+    }
+
+    /**
+     * Shu to'plamni tahrirlash mumkinmi.
+     *
+     * QOIDA (foydalanuvchi qarori 2026-11-13): o'qituvchi O'ZI YOZGANINI
+     * tahrirlaydi. Boshqa o'qituvchining sharhini tahrirlash yo'q —
+     * u o'zgarmas dalil bo'lib qoladi; ma'mur esa o'chira oladi
+     * (`ochir()`), lekin boshqa odamning so'zini QAYTA YOZMAYDI.
+     *
+     * @param \stdClass $bosh to'plamning istalgan qatori
+     */
+    public static function tahrirlash_mumkinmi(\stdClass $bosh): bool {
+        global $USER;
+
+        // Eski erkin sharh (`batch` yo'q) tahrirlanmaydi: u besh
+        // kategoriyadan oldin, boshqa qoida bo'yicha yozilgan va uni
+        // beshtaga bo'lish asl matnni buzardi.
+        if (empty($bosh->batch)) {
+            return false;
+        }
+        if ((int) $bosh->authorid !== (int) $USER->id) {
+            return false;
+        }
+        $ctx = \context_course::instance((int) $bosh->courseid, IGNORE_MISSING);
+        return $ctx ? has_capability('local/targetzenit:teach', $ctx) : false;
+    }
+
+    /**
+     * To'plamni TAHRIRLAYDI (yangi to'plam yaratmaydi).
+     *
+     * NEGA USTIGA YOZILADI, YANGI TO'PLAM EMAS: o'qituvchi xatosini
+     * tuzatganda ota-ona ikki xil sharhni ko'rib «qaysi biri to'g'ri?»
+     * deb o'ylamasligi kerak.
+     *
+     * MOODLE COMMENT API SIDA TAHRIR YO'Q — `manager` da faqat `add()` va
+     * `delete()` bor. Shuning uchun matn `{comments}.content` da
+     * to'g'ridan-to'g'ri yangilanadi. O'chirib-qayta yaratish yaramaydi:
+     * comment id si o'zgarardi va `timecreated` yo'qolardi.
+     *
+     * @param array $matnlar [kategoriya => matn]
+     * @return array ['ozgardi' => int, 'qoshildi' => int]
+     */
+    public static function update_batch(string $batch, array $matnlar,
+                                         string $visibility = 'ochiq'): array {
+        global $DB;
+
+        $bor = self::batch_rows($batch);
+        if (!$bor) {
+            throw new \moodle_exception('sh_nobatch', 'local_targetzenit');
+        }
+        $bosh = reset($bor);
+
+        // Tugmani yashirish himoya EMAS — ruxsat shu yerda tekshiriladi.
+        if (!self::tahrirlash_mumkinmi($bosh)) {
+            throw new \moodle_exception('nopermissions', 'error', '',
+                get_string('sh_noedit', 'local_targetzenit'));
+        }
+        if (!in_array($visibility, self::VIS, true)) {
+            $visibility = 'ochiq';
+        }
+
+        // Beshtasi ham to'ldirilishi SHART — yozishdagi bilan bir xil qoida,
+        // aks holda tahrir orqali bo'sh kategoriya qoldirish mumkin bo'lardi.
+        $toza = [];
+        $bosh_royxat = [];
+        foreach (self::KATEGORIYALAR as $kat) {
+            $toza[$kat] = trim((string) ($matnlar[$kat] ?? ''));
+            if ($toza[$kat] === '') {
+                $bosh_royxat[] = get_string('sh_kat_' . $kat, 'local_targetzenit');
+            }
+        }
+        if ($bosh_royxat) {
+            throw new \moodle_exception('sh_allrequired', 'local_targetzenit', '',
+                implode(', ', $bosh_royxat));
+        }
+
+        $now = time();
+        $ozgardi = 0;
+        $qoshildi = 0;
+
+        foreach ($toza as $kat => $matn) {
+            $matn = \core_text::substr($matn, 0, self::MAX);
+
+            if (!isset($bor[$kat])) {
+                // Kategoriya yo'q edi (masalan kategoriyalar ro'yxati
+                // keyinroq o'sgan) — yangisini SHU to'plamga qo'shamiz.
+                if (self::add((int) $bosh->courseid, (int) $bosh->studentid,
+                        $matn, $visibility, $kat, $batch)) {
+                    $qoshildi++;
+                }
+                continue;
+            }
+
+            $r = $bor[$kat];
+            $eski = (string) $r->content;
+
+            if ($eski !== $matn) {
+                $DB->set_field('comments', 'content', $matn,
+                    ['id' => (int) $r->commentid]);
+                $ozgardi++;
+            }
+
+            $yangilash = (object) ['id' => (int) $r->id,
+                                   'visibility' => $visibility,
+                                   'timemodified' => $now];
+
+            // MATN O'ZGARGAN BO'LSA «O'QILMAGAN» holatiga qaytariladi:
+            // ota-ona eski matnni ko'rgan, yangisi esa boshqa. Yangi
+            // BILDIRISHNOMA yuborilmaydi — imlo tuzatish uchun xabar
+            // kelishi ortiqcha; panelda esa yangi bo'lib ko'rinadi.
+            if ($eski !== $matn && $visibility === 'ochiq') {
+                $yangilash->status = 'new';
+                $yangilash->seenat = 0;
+            }
+            $DB->update_record('local_targetzenit_sharh', $yangilash);
+        }
+
+        return ['ozgardi' => $ozgardi, 'qoshildi' => $qoshildi];
+    }
+
     // ============================================================= O'CHIRISH
 
     /**
@@ -373,6 +515,7 @@ class sharh {
         return "SELECT s.id, s.commentid, s.courseid, s.studentid, s.authorid,
                        s.kategoriya, s.batch,
                        s.visibility, s.status, s.seenat, s.timecreated,
+                       s.timemodified,
                        c.content, c.format,
                        a.firstname AS afirstname, a.lastname AS alastname,
                        st.firstname AS sfirstname, st.lastname AS slastname,

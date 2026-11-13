@@ -210,3 +210,62 @@ kategoriya deb yozganini bilmaymiz, taxmin qilish xato bo'lardi.
 | `sharhlar.php` | lenta **to'plamlar bo'yicha** guruhlanadi, aks holda besh barobar uzun bo'lardi |
 
 Migratsiya: `2026111030`, version 0.44.0.
+
+---
+
+## 11. TAHRIRLASH (0.51.0, 2026-11-13)
+
+Foydalanuvchi talabi: *«barcha o'qituvchilarga eddit qilishni ochib qo'yish
+kerak, ular yozganlarini taxrirlay olishlari kerak»*.
+
+| Kim | Nima qila oladi |
+|---|---|
+| **Muallif o'qituvchi** | o'zi yozgan to'plamni **tahrirlaydi** |
+| Boshqa o'qituvchi | tahrirlay olmaydi |
+| Direktor/zavuch | tahrirlay olmaydi (kuzatuvchi) |
+| Sayt ma'muri | **o'chiradi**, lekin tahrirlamaydi |
+
+**Nega ma'mur ham tahrirlamaydi:** boshqa odamning so'zini qayta yozish
+o'chirishdan ham og'ir — ota-ona «o'qituvchi shunday yozgan» deganda matn
+boshqa bo'lib chiqadi. O'chirish esa izi bilan ketadi.
+
+### Qanday ishlaydi
+
+- Zanjirdagi har to'plam yonida **«Tahrirlash»** tugmasi — faqat muallifga
+  (`sharh::tahrirlash_mumkinmi()`: muallif + shu kursda `teach`).
+- Forma **oldingi matn bilan to'ladi** — aks holda «tahrir» amalda
+  «qaytadan yozish» bo'lib qolardi.
+- `shbatch` maydoni borligi `handle()` ga «bu TAHRIR» deb aytadi — yangi
+  to'plam yaratilmaydi, matn **ustiga yoziladi**. Nega: ota-ona ikki xil
+  sharhni ko'rib «qaysi biri to'g'ri?» deb o'ylamasligi kerak.
+- Beshta kategoriya **baribir majburiy** — tahrir orqali bo'sh qoldirish yo'li
+  yopiq.
+- Tahrir formasi va yangi sharh formasi **bir vaqtda ko'rinmaydi**: ikkisi
+  ko'rinsa o'qituvchi qaysi biriga yozayotganini bilmaydi.
+
+### Tahrir izsiz qolmaydi
+
+`_sharh.timemodified` qo'shildi (migratsiya `2026111310`). Ko'rinishda
+**«tahrirlangan <sana>»** belgisi chiqadi — o'quvchiga ham, direktorga ham.
+
+Matn haqiqatan o'zgargan va sharh `ochiq` bo'lsa, holat **«o'qilmagan»ga
+qaytariladi** (ota-ona eski matnni ko'rgan, yangisi boshqa). Yangi
+**bildirishnoma yuborilmaydi** — imlo tuzatish uchun xabar kelishi ortiqcha.
+
+### Moodle comment API sida tahrir YO'Q
+
+`core_comment\manager` da faqat `add()` va `delete()` bor. Shuning uchun matn
+`{comments}.content` da **to'g'ridan-to'g'ri** yangilanadi. O'chirib-qayta
+yaratish yaramaydi: comment id si o'zgarardi (`_sharh.commentid` uzilardi) va
+`timecreated` yo'qolardi.
+
+### Chegara
+
+**Eski erkin sharhlar (`batch` yo'q) tahrirlanmaydi** — ular besh
+kategoriyadan oldin, boshqa qoida bo'yicha yozilgan; beshtaga bo'lish asl
+matnni buzardi.
+
+**Vaqt chegarasi YO'Q** — o'qituvchi istalgan paytda tahrirlay oladi.
+Baholashda 72 soatlik oyna bor (e-kundalik qoidasi), sharhda esa nizom yo'q.
+Agar keyinchalik «ota-ona ko'rgandan keyin tahrirlanmasin» kerak bo'lsa,
+`timemodified` va `seenat` allaqachon bor — oyna qo'shish oson.

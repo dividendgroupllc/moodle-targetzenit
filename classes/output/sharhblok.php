@@ -36,8 +36,9 @@ class sharhblok {
      */
     public static function thread(array $rows, bool $kimyozdi = true,
                                     bool $qaysikurs = false,
-                                    ?callable $ochirurl = null): string {
-        $t = fn(string $k) => get_string($k, 'local_targetzenit');
+                                    ?callable $ochirurl = null,
+                                    ?callable $tahrirurl = null): string {
+        $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
         $ochirsin = ($ochirurl !== null) && sharh::ochirish_mumkinmi();
 
         if (!$rows) {
@@ -80,6 +81,15 @@ class sharhblok {
                     ['class' => 'tz-dir-sub']);
             }
 
+            // TAHRIR IZSIZ QOLMAYDI: ota-ona bir matnni ko'rgan bo'lishi
+            // mumkin, keyin u o'zgargan. Shuning uchun belgi HAMMAGA
+            // ko'rinadi — o'quvchiga ham, direktorga ham.
+            if (!empty($b->timemodified)) {
+                $meta .= ' ' . \html_writer::tag('span',
+                    $t('sh_edited', userdate($b->timemodified, '%d.%m.%Y %H:%M')),
+                    ['class' => 'tz-dir-chip tz-sh-editedchip']);
+            }
+
             $h .= \html_writer::start_div('tz-sh-item' . ($maxfiy ? ' tz-sh-maxfiy' : ''));
             $h .= \html_writer::div($meta, 'tz-sh-meta');
 
@@ -110,16 +120,28 @@ class sharhblok {
                     'tz-sh-kat tz-sh-kat-old');
             }
 
-            // --- O'CHIRISH (faqat sayt ma'muri) — TO'PLAM bo'yicha
+            // --- AMALLAR: tahrirlash (muallif) va o'chirish (ma'mur)
+            $amallar = '';
+
+            // TAHRIRLASH — faqat MUALLIFGA (`tahrirlash_mumkinmi()`).
+            // Boshqa o'qituvchining so'zini qayta yozish yo'q.
+            if ($tahrirurl !== null && !empty($b->batch)
+                    && sharh::tahrirlash_mumkinmi($b)) {
+                $amallar .= \html_writer::link(
+                    $tahrirurl((string) $b->batch), $t('sh_edit'),
+                    ['class' => 'btn btn-sm btn-outline-primary']);
+            }
             if ($ochirsin) {
-                $h .= \html_writer::div(\html_writer::link(
+                $amallar .= ' ' . \html_writer::link(
                     $ochirurl((int) $b->id), $t('sh_delete'),
                     ['class' => 'btn btn-sm btn-outline-danger',
                      // Besh kategoriya birga ketadi — foydalanuvchi shuni
                      // bilib turib tasdiqlashi kerak.
                      'onclick' => 'return confirm('
-                         . json_encode($t('sh_delete_q')) . ')']),
-                    'tz-sh-del');
+                         . json_encode($t('sh_delete_q')) . ')']);
+            }
+            if ($amallar !== '') {
+                $h .= \html_writer::div($amallar, 'tz-sh-del');
             }
 
             $h .= \html_writer::end_div();
@@ -137,8 +159,11 @@ class sharhblok {
      * @param array $qaytar formadan keyin saqlanadigan qo'shimcha parametrlar
      */
     public static function form(int $courseid, int $studentid, string $action,
-                                 bool $qator = false, array $qaytar = []): string {
+                                 bool $qator = false, array $qaytar = [],
+                                 array $oldin = [], string $batch = '',
+                                 bool $maxfiy = false): string {
         $t = fn(string $k) => get_string($k, 'local_targetzenit');
+        $tahrir = ($batch !== '');
 
         // Formani ko'rsatish ham, qabul qilish ham bir xil shartga tayanadi.
         // QOIDA (fidbek modulidan): forma ko'rinmasligi himoya EMAS —
@@ -162,6 +187,12 @@ class sharhblok {
             ['type' => 'hidden', 'name' => 'shcourse', 'value' => $courseid]);
         $h .= \html_writer::empty_tag('input',
             ['type' => 'hidden', 'name' => 'shstudent', 'value' => $studentid]);
+        if ($tahrir) {
+            // `shbatch` borligi `handle()` ga «bu TAHRIR, yangi sharh emas»
+            // deb aytadi — yagona farqlovchi belgi.
+            $h .= \html_writer::empty_tag('input',
+                ['type' => 'hidden', 'name' => 'shbatch', 'value' => $batch]);
+        }
         foreach ($qaytar as $nom => $qiymat) {
             $h .= \html_writer::empty_tag('input',
                 ['type' => 'hidden', 'name' => $nom, 'value' => (string) $qiymat]);
@@ -173,13 +204,17 @@ class sharhblok {
         // QOIDA: forma massiv kalitlari faqat [a-z0-9_-] bo'lishi kerak —
         // `optional_param_array()` mos kelmaganini JIMGINA tashlab yuboradi
         // (0.9.4 saboqi). Kategoriya kalitlari shu talabga mos.
-        $h .= \html_writer::div($t('sh_allhint'), 'tz-dir-sub mb-2');
+        $h .= \html_writer::div($tahrir ? $t('sh_edithint') : $t('sh_allhint'),
+            'tz-dir-sub mb-2');
 
         foreach (sharh::kategoriyalar_menu() as $kat => $nom) {
             $h .= \html_writer::start_div('tz-sh-field');
             $h .= \html_writer::tag('label', s($nom), ['class' => 'tz-sh-katlab']);
             $h .= \html_writer::div($t('sh_hint_' . $kat), 'tz-dir-sub');
-            $h .= \html_writer::tag('textarea', '', [
+            // Tahrirda maydon OLDINGI MATN bilan to'ladi — o'qituvchi
+            // qaytadan yozmasligi kerak, aks holda «tahrir» amalda
+            // «qaytadan yozish» bo'lib qolardi.
+            $h .= \html_writer::tag('textarea', s((string) ($oldin[$kat] ?? '')), [
                 'name' => 'shkat[' . $kat . ']', 'rows' => 3,
                 'class' => 'tz-sh-text', 'maxlength' => sharh::MAX,
                 'required' => 'required',
@@ -192,10 +227,11 @@ class sharhblok {
         // STANDART — OCHIQ: sharhning maqsadi o'quvchiga va ota-onaga
         // qaytarma berish. «Maxfiy» ataylab tanlanadigan istisno.
         $h .= \html_writer::tag('label',
-            \html_writer::checkbox('shprivate', 1, false, '') . ' ' . $t('sh_privatelab'),
+            \html_writer::checkbox('shprivate', 1, $maxfiy, '') . ' ' . $t('sh_privatelab'),
             ['class' => 'tz-sh-check', 'title' => $t('sh_privatehelp')]);
         $h .= \html_writer::empty_tag('input', ['type' => 'submit',
-            'class' => 'btn btn-sm btn-primary', 'value' => $t('sh_send')]);
+            'class' => 'btn btn-sm btn-primary',
+            'value' => $tahrir ? $t('sh_savechanges') : $t('sh_send')]);
         $h .= \html_writer::end_div();
 
         $h .= \html_writer::end_tag('form');
@@ -270,14 +306,21 @@ class sharhblok {
 
         $matnlar = optional_param_array('shkat', [], PARAM_TEXT);
         $maxfiy = optional_param('shprivate', 0, PARAM_INT);
+        $batch = optional_param('shbatch', '', PARAM_ALPHANUM);
+        $vis = $maxfiy ? 'maxfiy' : 'ochiq';
 
         // Ruxsat, «shu kursning o'quvchisimi» va «beshtasi to'ldirilganmi»
-        // tekshiruvlari `sharh::add_batch()` / `add()` ICHIDA — bitta joyda,
-        // chunki yozish yo'li bitta bo'lishi kerak (veb forma bugun, mobil
-        // ilova ertaga).
-        $n = sharh::add_batch($courseid, $studentid, $matnlar,
-            $maxfiy ? 'maxfiy' : 'ochiq');
+        // tekshiruvlari `sharh::add_batch()` / `update_batch()` ICHIDA —
+        // bitta joyda, chunki yozish yo'li bitta bo'lishi kerak (veb forma
+        // bugun, mobil ilova ertaga).
+        if ($batch !== '') {
+            $n = sharh::update_batch($batch, $matnlar, $vis);
+            // O'zgarish bo'lmasa ham 1 qaytaramiz: sahifa «saqlandi» deb
+            // javob berishi kerak, aks holda tugma ishlamadi deb o'ylanadi.
+            return max(1, (int) $n['ozgardi'] + (int) $n['qoshildi']);
+        }
 
+        $n = sharh::add_batch($courseid, $studentid, $matnlar, $vis);
         return (int) $n['yozildi'];
     }
 }

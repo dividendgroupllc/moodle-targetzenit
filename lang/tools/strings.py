@@ -2651,6 +2651,28 @@ S = {
         "Bu kategoriyalar bo'sh qoldi: {$a}. Beshtasi ham to'ldirilishi shart.",
         "Эти категории не заполнены: {$a}. Все пять обязательны.",
     ),
+    "sh_edit": ("Edit", "Tahrirlash", "Редактировать"),
+    "sh_cancel": ("Cancel editing", "Tahrirni bekor qilish", "Отменить редактирование"),
+    "sh_savechanges": ("Save the changes", "O'zgarishni saqlash", "Сохранить изменения"),
+    "sh_edithint": (
+        "You are editing a review you wrote. All five categories stay "
+        "required; the text is replaced, not added alongside.",
+        "O'zingiz yozgan sharhni tahrirlayapsiz. Beshta kategoriya baribir "
+        "majburiy; matn yangisi bilan ALMASHADI, yoniga qo'shilmaydi.",
+        "Вы редактируете свой отзыв. Все пять категорий по-прежнему "
+        "обязательны; текст ЗАМЕНЯЕТСЯ, а не добавляется рядом.",
+    ),
+    "sh_edited": ("edited {$a}", "tahrirlangan {$a}", "изменено {$a}"),
+    "sh_noedit": (
+        "Only the teacher who wrote a review can edit it",
+        "Sharhni faqat uni yozgan o'qituvchi tahrirlaydi",
+        "Отзыв может редактировать только написавший его учитель",
+    ),
+    "sh_nobatch": (
+        "That review was not found",
+        "O'sha sharh topilmadi",
+        "Этот отзыв не найден",
+    ),
     "sh_delete": ("Delete the review", "Sharhni o'chirish", "Удалить отзыв"),
     "sh_delete_q": (
         "Delete this review? All five categories go together and this cannot "

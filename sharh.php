@@ -28,6 +28,7 @@ $courseid = optional_param('cid', 0, PARAM_INT);
 $qidiruv = trim(optional_param('q', '', PARAM_TEXT));
 $open = optional_param('open', 0, PARAM_INT);
 $ochir = optional_param('ochir', 0, PARAM_INT);
+$edit = optional_param('edit', '', PARAM_ALPHANUM);
 
 $syscontext = context_system::instance();
 $PAGE->set_context($syscontext);
@@ -265,12 +266,46 @@ foreach ($oquvchilar as $o) {
         echo html_writer::start_div('tz-sh-card');
         echo html_writer::div(get_string('sh_about', 'local_targetzenit', s($ism)),
             'tz-dir-lab');
-        // O'chirish havolasi — FAQAT sayt ma'muriga chiziladi (chizuvchi
-        // `sharh::ochirish_mumkinmi()` ni o'zi tekshiradi).
+        // O'chirish havolasi — FAQAT sayt ma'muriga; TAHRIRLASH — faqat
+        // muallifga. Ikkisining ham ruxsati chizuvchida tekshiriladi
+        // (`ochirish_mumkinmi()` / `tahrirlash_mumkinmi()`).
         echo sharhblok::thread($zanjir, true, false,
-            fn(int $sid) => $url(['open' => $open, 'ochir' => $sid,
-                                  'sesskey' => sesskey()]));
-        echo sharhblok::form($courseid, $sid, $action, false, ['open' => $sid]);
+            fn(int $shid) => $url(['open' => $open, 'ochir' => $shid,
+                                   'sesskey' => sesskey()]),
+            fn(string $b) => $url(['open' => $sid, 'edit' => $b]));
+
+        // TAHRIR FORMASI yoki YANGI SHARH formasi — bittasi.
+        //
+        // Ikkisi bir vaqtda ko'rinsa o'qituvchi qaysi biriga yozayotganini
+        // bilmaydi: biri mavjud sharhni o'zgartiradi, ikkinchisi yangi
+        // sharh yaratadi.
+        $tahrirlanadi = [];
+        $tahrirmaxfiy = false;
+        if ($edit !== '') {
+            $qatorlari = sharh::batch_rows($edit);
+            // Shu o'quvchiga tegishlimi va tahrirlash mumkinmi — tekshiramiz,
+            // aks holda havolani qo'lda yozib boshqa o'quvchining sharhini
+            // ochib olish mumkin bo'lardi.
+            $b = $qatorlari ? reset($qatorlari) : null;
+            if ($b && (int) $b->studentid === $sid
+                    && sharh::tahrirlash_mumkinmi($b)) {
+                foreach ($qatorlari as $kat => $r) {
+                    $tahrirlanadi[$kat] = sharh::matn($r);
+                }
+                $tahrirmaxfiy = ($b->visibility === 'maxfiy');
+            }
+        }
+
+        if ($tahrirlanadi) {
+            echo html_writer::div(
+                html_writer::link($url(['open' => $sid]),
+                    '← ' . get_string('sh_cancel', 'local_targetzenit'),
+                    ['class' => 'btn btn-sm btn-outline-secondary']), 'mt-3 mb-2');
+            echo sharhblok::form($courseid, $sid, $action, false,
+                ['open' => $sid], $tahrirlanadi, $edit, $tahrirmaxfiy);
+        } else {
+            echo sharhblok::form($courseid, $sid, $action, false, ['open' => $sid]);
+        }
         echo html_writer::end_div();
         echo html_writer::end_tag('td');
         echo html_writer::end_tag('tr');

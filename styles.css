@@ -1228,3 +1228,7 @@
 /* Fayldan kelgan, LEKIN HALI SAQLANMAGAN ball — ko'zga tashlanadi */
 .tz-bh-imported { border-color: var(--tz-brand) !important;
     background: var(--tz-brand-soft) !important; font-weight: 700; }
+
+/* «tahrirlangan» belgisi — ota-ona bir matnni ko'rgan bo'lishi mumkin,
+   keyin u o'zgargan. Shuning uchun belgi HAMMAGA ko'rinadi. */
+.tz-sh-editedchip { background: var(--tz-warning-bg); color: var(--tz-warning); }
