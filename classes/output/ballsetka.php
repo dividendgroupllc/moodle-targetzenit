@@ -491,6 +491,12 @@ class ballsetka {
         // ko'rinardi; sahifa fan o'qituvchisiga ochilgandan keyin esa
         // ANIQ KERAK bo'ldi. Yozuvchi funksiya o'z ruxsatini o'zi
         // tekshirishi kerak — «forma ko'rinmasligi himoya emas».
+        // Baholashdan CHIQARILGAN guruhga ball yozilmaydi: natijalari
+        // o'chirilgan va chorak bahosi usiz qayta hisoblangan, ya'ni yangi
+        // ball jim ravishda hisobga kirmay qolardi.
+        if (($sit->status ?? '') === 'bekor') {
+            throw new \moodle_exception('bh_sitcancelled', 'local_targetzenit');
+        }
         if (!exam::sitting_ruxsat($sit)) {
             throw new \required_capability_exception(
                 \context_course::instance((int) $sit->courseid),

@@ -47,7 +47,12 @@ $turi = optional_param('turi', '', PARAM_ALPHA);
 $fan = optional_param('fan', '', PARAM_TEXT);
 $sitting = optional_param('sitting', 0, PARAM_INT);
 
-if (!in_array($view, ['royxat', 'yangi', 'jadval', 'ball'], true)) {
+if (!in_array($view, ['royxat', 'yangi', 'jadval', 'ball', 'ochir', 'sitochir'],
+        true)) {
+    $view = 'royxat';
+}
+// O'chirish tasdiqlari ham faqat koordinatorga.
+if (in_array($view, ['ochir', 'sitochir'], true) && !$boshqarish) {
     $view = 'royxat';
 }
 // Yaratish/tahrirlash formasi — faqat koordinator.
@@ -282,6 +287,40 @@ if ($amal !== '' && confirm_sesskey()) {
         $sitting = $impsitting;
     }
 
+    if ($amal === 'ochir' && $id) {
+        // O'chirish — qaytarib bo'lmaydigan amal, shuning uchun:
+        //   1) faqat koordinator, 2) sesskey, 3) `tasdiq=1` bo'lmasa
+        //      pastda tasdiqlash ekrani ko'rsatiladi (bu yerga kelmaydi).
+        require_capability('local/targetzenit:manageexams', $context);
+        if (optional_param('tasdiq', 0, PARAM_INT) === 1) {
+            $n = exam::ochir($id);
+            redirect($url(['view' => 'royxat']),
+                $t('bh_deleted', (object) $n), null,
+                \core\output\notification::NOTIFY_SUCCESS);
+        }
+    }
+
+    if ($amal === 'sitochir' && $id) {
+        require_capability('local/targetzenit:manageexams', $context);
+        $sid = optional_param('sitting', 0, PARAM_INT);
+        if ($sid && optional_param('tasdiq', 0, PARAM_INT) === 1) {
+            $n = exam::sitting_bekor($sid);
+            redirect($url(['view' => 'jadval', 'id' => $id]),
+                $t('bh_sitremoved', (object) $n), null,
+                \core\output\notification::NOTIFY_SUCCESS);
+        }
+    }
+
+    if ($amal === 'sittiklash' && $id) {
+        require_capability('local/targetzenit:manageexams', $context);
+        $sid = optional_param('sitting', 0, PARAM_INT);
+        if ($sid) {
+            exam::sitting_tiklash($sid);
+            redirect($url(['view' => 'jadval', 'id' => $id]),
+                $t('bh_saved'), null, \core\output\notification::NOTIFY_SUCCESS);
+        }
+    }
+
     if ($amal === 'status' && $id) {
         require_capability('local/targetzenit:manageexams', $context);
         exam::status($id, optional_param('yangistatus', '', PARAM_ALPHA));
@@ -372,8 +411,12 @@ if ($view === 'royxat') {
         echo html_writer::start_div('tz-dir-tablewrap');
         echo html_writer::start_tag('table', ['class' => 'tz-dir-table']);
         echo html_writer::start_tag('thead') . html_writer::start_tag('tr');
-        foreach (['bh_date', 'bh_type', 'bh_name', 'bh_form', 'bh_groups',
-                  'bh_scores', 'bh_status'] as $k) {
+        $ustunlar = ['bh_date', 'bh_type', 'bh_name', 'bh_form', 'bh_groups',
+                     'bh_scores', 'bh_status'];
+        if ($boshqarish) {
+            $ustunlar[] = 'bh_actions';
+        }
+        foreach ($ustunlar as $k) {
             echo html_writer::tag('th', $t($k));
         }
         echo html_writer::end_tag('tr') . html_writer::end_tag('thead');
@@ -399,11 +442,98 @@ if ($view === 'royxat') {
                 $t('bh_status_' . $r->status),
                 ['class' => 'tz-dir-chip'
                     . ($r->status === 'yopildi' ? ' tz-dir-good' : '')]));
+            if ($boshqarish) {
+                // Tasdiqlash ekraniga olib boradi (`tasdiq` berilmaydi).
+                echo html_writer::tag('td', html_writer::link(
+                    $url(['view' => 'ochir', 'id' => (int) $r->id]),
+                    $t('bh_delete'), ['class' => 'tz-tp-btn tz-tp-del']));
+            }
             echo html_writer::end_tag('tr');
         }
         echo html_writer::end_tag('tbody') . html_writer::end_tag('table');
         echo html_writer::end_div() . html_writer::end_div();
     }
+}
+
+// ================================================== GURUHNI CHIQARISH TASDIG'I
+if ($view === 'sitochir') {
+    $sid = optional_param('sitting', 0, PARAM_INT);
+    $sit = $sid ? exam::sitting($sid) : null;
+    if (!$sit) {
+        echo $OUTPUT->notification($t('bh_noexam'), 'warn');
+        echo html_writer::end_div();
+        shell::end();
+        echo $OUTPUT->footer();
+        exit;
+    }
+    $nn = exam::sitting_natija_soni($sid);
+
+    echo html_writer::tag('h4', $t('bh_sitremoveq'), ['class' => 'tz-dir-cardtitle']);
+    echo html_writer::div(
+        html_writer::tag('b', s($sit->groupname))
+        . html_writer::div(s((string) ($sit->coursename ?? '')), 'tz-dir-sub'),
+        'tz-dir-card mb-3');
+
+    echo $OUTPUT->notification(
+        $t($nn ? 'bh_sitremovewarn' : 'bh_sitremoveempty', (object) ['results' => $nn]),
+        $nn ? 'warn' : 'info');
+
+    echo html_writer::div(
+        html_writer::link($url(['view' => 'sitochir', 'id' => (int) $sit->examid,
+                'sitting' => $sid, 'amal' => 'sitochir', 'tasdiq' => 1,
+                'sesskey' => sesskey()]),
+            $t('bh_sitremove'), ['class' => 'btn btn-danger'])
+        . ' ' . html_writer::link($url(['view' => 'jadval', 'id' => (int) $sit->examid]),
+            $t('bh_cancel'), ['class' => 'btn btn-secondary']),
+        'mt-3');
+
+    echo html_writer::end_div();
+    shell::end();
+    echo $OUTPUT->footer();
+    exit;
+}
+
+// ========================================================= O'CHIRISH TASDIG'I
+if ($view === 'ochir') {
+    $e = $id ? exam::get($id) : null;
+    if (!$e) {
+        echo $OUTPUT->notification($t('bh_noexam'), 'warn');
+        echo html_writer::end_div();
+        shell::end();
+        echo $OUTPUT->footer();
+        exit;
+    }
+
+    // NIMA YO'QOLISHINI RAQAM BILAN KO'RSATAMIZ. «O'chirilsinmi?» degan
+    // quruq savol yetarli emas: odam ball kiritilganini unutgan bo'lishi
+    // mumkin, va CHSB chorak bahosining 40% i.
+    $sn = count(exam::sittings((int) $e->id));
+    $nn = exam::natija_soni((int) $e->id);
+
+    echo html_writer::tag('h4', $t('bh_deleteq'), ['class' => 'tz-dir-cardtitle']);
+    echo html_writer::div(
+        html_writer::tag('b', s($e->name))
+        . html_writer::div($t('bh_turi_' . $e->turi) . ' · ' . s($e->termname)
+            . ' · ' . userdate(strtotime($e->examdate), '%d.%m.%Y'), 'tz-dir-sub'),
+        'tz-dir-card mb-3');
+
+    echo $OUTPUT->notification(
+        $t($nn ? 'bh_deletewarn' : 'bh_deleteempty',
+            (object) ['sittings' => $sn, 'results' => $nn]),
+        $nn ? 'warn' : 'info');
+
+    echo html_writer::div(
+        html_writer::link($url(['view' => 'ochir', 'id' => (int) $e->id,
+                'amal' => 'ochir', 'tasdiq' => 1, 'sesskey' => sesskey()]),
+            $t('bh_delete'), ['class' => 'btn btn-danger'])
+        . ' ' . html_writer::link($url(['view' => 'royxat']),
+            $t('bh_cancel'), ['class' => 'btn btn-secondary']),
+        'mt-3');
+
+    echo html_writer::end_div();
+    shell::end();
+    echo $OUTPUT->footer();
+    exit;
 }
 
 // ============================================================ YARATISH FORMASI
@@ -615,19 +745,38 @@ if ($view === 'jadval') {
             echo html_writer::tag('td',
                 html_writer::tag('span', $t('bh_sit_' . $s->status),
                     ['class' => 'tz-dir-chip'
-                        . ($s->status === 'xato' ? ' tz-dir-critical' : '')])
+                        . (in_array($s->status, ['xato', 'bekor'], true)
+                            ? ' tz-dir-critical' : '')])
                 . html_writer::div(userdate(strtotime($q['examdate']), '%d.%m.%Y')
                     . ($q['starttime'] ? ' · ' . s($q['starttime']) : '')
                     . ($q['room'] ? ' · ' . s($q['room']) : ''), 'tz-dir-sub')
                 . ($s->xato ? html_writer::div(s($s->xato), 'tz-dir-sub') : ''));
 
             // Ball kiritish — HAVOLA, forma ichidagi tugma emas: tugma
-            // bosilganda jadval formasi yuborilib ketardi.
-            echo html_writer::tag('td', html_writer::link(
-                new moodle_url('/local/targetzenit/baholash.php',
-                    ['view' => 'ball', 'sitting' => (int) $s->id]),
-                $t('bh_enterscores'),
-                ['class' => 'btn btn-sm btn-outline-primary']),
+            // bosilganda jadval formasi yuborilib ketardi. Shu sabab
+            // bekor/tiklash ham havola.
+            if ($s->status === 'bekor') {
+                $amallar = $boshqarish ? html_writer::link(
+                    $url(['view' => 'jadval', 'id' => $e->id, 'amal' => 'sittiklash',
+                          'sitting' => (int) $s->id, 'sesskey' => sesskey()]),
+                    $t('bh_sitrestore'), ['class' => 'btn btn-sm btn-outline-secondary'])
+                    : html_writer::tag('span', $t('bh_sit_bekor'), ['class' => 'tz-dir-sub']);
+            } else {
+                $amallar = html_writer::link(
+                    new moodle_url('/local/targetzenit/baholash.php',
+                        ['view' => 'ball', 'sitting' => (int) $s->id]),
+                    $t('bh_enterscores'),
+                    ['class' => 'btn btn-sm btn-outline-primary']);
+                if ($boshqarish) {
+                    // Guruhni baholashdan chiqarish (noto'g'ri biriktirilgan
+                    // bo'lsa). Tasdiqlash ekraniga olib boradi.
+                    $amallar .= ' ' . html_writer::link(
+                        $url(['view' => 'sitochir', 'id' => $e->id,
+                              'sitting' => (int) $s->id]),
+                        $t('bh_sitremove'), ['class' => 'tz-tp-btn tz-tp-del']);
+                }
+            }
+            echo html_writer::tag('td', $amallar,
                 ['class' => 'tz-bh-actcell']);
 
             echo html_writer::end_tag('tr');

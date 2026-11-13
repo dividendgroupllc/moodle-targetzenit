@@ -413,6 +413,141 @@ class exam {
     }
 
     /** Holatni o'zgartiradi. */
+    /**
+     * Baholashni butunlay o'chiradi: sittinglar + natijalar + o'zi.
+     *
+     * NEGA KERAK: xato yaratilgan baholash (noto'g'ri fan/sinf/chorak)
+     * ro'yxatda abadiy qolib ketardi — `status` ni «yopildi» qilish uni
+     * YASHIRMAYDI, faqat holatini o'zgartiradi.
+     *
+     * CHORAK BAHOSI QAYTA HISOBLANADI: CHSB chorakning 40% i, ya'ni uni
+     * o'chirib `_term_score` ga tegmasak, o'quvchida mavjud bo'lmagan
+     * imtihon hisobga kirgan baho qolib ketardi. Shuning uchun ta'sir
+     * ko'rgan har (o'quvchi, kurs) juftligi uchun `term_score_save()`
+     * qayta chaqiriladi — u muzlatilgan (`frozen`) yozuvga tegmaydi.
+     *
+     * @return array ['sittings' => n, 'results' => n, 'recalc' => n]
+     */
+    public static function ochir(int $examid): array {
+        global $DB;
+
+        $exam = self::get($examid);
+        if (!$exam) {
+            throw new \moodle_exception('bh_noexam', 'local_targetzenit');
+        }
+
+        $sittings = $DB->get_records('local_targetzenit_exam_sitting',
+            ['examid' => $examid], '', 'id, courseid');
+        $sids = array_keys($sittings);
+
+        // Kimning chorak bahosi qayta hisoblanishi kerakligini O'CHIRISHDAN
+        // OLDIN yig'amiz — keyin bu ma'lumot yo'qoladi.
+        $tegishli = [];
+        if ($sids) {
+            list($in, $params) = $DB->get_in_or_equal($sids, SQL_PARAMS_NAMED);
+            $natijalar = $DB->get_records_select('local_targetzenit_exam_result',
+                "sittingid $in", $params, '', 'id, sittingid, studentid');
+            foreach ($natijalar as $n) {
+                $cid = (int) $sittings[$n->sittingid]->courseid;
+                $tegishli[$cid . ':' . (int) $n->studentid] =
+                    [(int) $n->studentid, $cid];
+            }
+            $DB->delete_records_select('local_targetzenit_exam_result',
+                "sittingid $in", $params);
+            $DB->delete_records('local_targetzenit_exam_sitting', ['examid' => $examid]);
+        } else {
+            $natijalar = [];
+        }
+        $DB->delete_records('local_targetzenit_exam', ['id' => $examid]);
+
+        // Endi qayta hisoblash — exam o'chgandan KEYIN, shunda hisob uni
+        // qo'shmaydi.
+        $recalc = 0;
+        foreach ($tegishli as [$studentid, $courseid]) {
+            if (self::term_score_save($studentid, $courseid,
+                    $exam->academicyear, $exam->termname)) {
+                $recalc++;
+            }
+        }
+
+        return ['sittings' => count($sittings), 'results' => count($natijalar),
+                'recalc' => $recalc];
+    }
+
+    /**
+     * Bitta GURUHNI (sitting) baholashdan chiqaradi.
+     *
+     * NEGA O'CHIRMAYMIZ, «bekor» QILAMIZ: `ensure_sittings()` idempotent —
+     * u `courseid` bo'yicha mavjud yozuvni qidiradi va topmasa YANGI
+     * yaratadi. Ya'ni qatorni butunlay o'chirsak, «Guruhlarni qayta
+     * biriktirish» bosilgan zahoti o'chirilgan guruh qaytib kelardi.
+     * `status='bekor'` esa yozuvni joyida qoldiradi — guruh qaytmaydi.
+     *
+     * NATIJALAR HAQIQATAN O'CHIRILADI: `term_score()` ballarni `examid`
+     * bo'yicha oladi va sitting holatini TEKSHIRMAYDI, ya'ni «bekor»
+     * guruhning ballari baribir chorak bahosiga kirib ketardi.
+     *
+     * @return array ['results' => o'chirilgan ball, 'recalc' => qayta hisob]
+     */
+    public static function sitting_bekor(int $sittingid): array {
+        global $DB;
+
+        $sit = $DB->get_record('local_targetzenit_exam_sitting', ['id' => $sittingid]);
+        if (!$sit) {
+            throw new \moodle_exception('bh_noexam', 'local_targetzenit');
+        }
+        $exam = self::get((int) $sit->examid);
+        if (!$exam) {
+            throw new \moodle_exception('bh_noexam', 'local_targetzenit');
+        }
+
+        // Kim ta'sir ko'rishini O'CHIRISHDAN OLDIN yig'amiz.
+        $studentids = $DB->get_fieldset_select('local_targetzenit_exam_result',
+            'DISTINCT studentid', 'sittingid = ?', [$sittingid]);
+        $n = $DB->count_records('local_targetzenit_exam_result',
+            ['sittingid' => $sittingid]);
+
+        $DB->delete_records('local_targetzenit_exam_result', ['sittingid' => $sittingid]);
+        $DB->set_field('local_targetzenit_exam_sitting', 'status', 'bekor',
+            ['id' => $sittingid]);
+
+        $recalc = 0;
+        foreach ($studentids as $sid) {
+            if (self::term_score_save((int) $sid, (int) $sit->courseid,
+                    $exam->academicyear, $exam->termname)) {
+                $recalc++;
+            }
+        }
+        return ['results' => $n, 'recalc' => $recalc];
+    }
+
+    /** Bekor qilingan guruhni qaytaradi (xato bosilgan bo'lsa). */
+    public static function sitting_tiklash(int $sittingid): void {
+        global $DB;
+
+        $DB->set_field('local_targetzenit_exam_sitting', 'status', 'kutilmoqda',
+            ['id' => $sittingid, 'status' => 'bekor']);
+    }
+
+    /** Guruhdagi kiritilgan ball soni — bekor qilishdan oldin ogohlantirish uchun. */
+    public static function sitting_natija_soni(int $sittingid): int {
+        global $DB;
+
+        return (int) $DB->count_records('local_targetzenit_exam_result',
+            ['sittingid' => $sittingid]);
+    }
+
+    /** Baholashdagi kiritilgan natijalar soni — o'chirishdan oldin ogohlantirish uchun. */
+    public static function natija_soni(int $examid): int {
+        global $DB;
+
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(r.id)
+               FROM {local_targetzenit_exam_result} r
+               JOIN {local_targetzenit_exam_sitting} s ON s.id = r.sittingid
+              WHERE s.examid = ?", [$examid]);
+    }
+
     public static function status(int $examid, string $status): void {
         global $DB;
         require_capability('local/targetzenit:manageexams',

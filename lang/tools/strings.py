@@ -2240,6 +2240,92 @@ S = {
         "0 — bankdagi hamma savol. Faqat onlayn shaklda.",
         "0 — все вопросы банка. Только для онлайн-формы.",
     ),
+    "bh_sit_bekor": ("removed", "chiqarilgan", "исключена"),
+    "bh_sitremove": ("Remove group", "Guruhni chiqarish", "Исключить группу"),
+    "bh_sitrestore": ("Restore", "Tiklash", "Восстановить"),
+    "bh_sitremoveq": (
+        "Remove this group from the assessment?",
+        "Shu guruh baholashdan chiqarilsinmi?",
+        "Исключить эту группу из оценивания?",
+    ),
+    "bh_sitremovewarn": (
+        "<b>{$a->results} entered score(s)</b> for this group will be deleted and "
+        "the term grades of those students recalculated without them. The group "
+        "stays in the list as «removed» and will not come back when you refresh "
+        "groups. You can restore it later, but the scores will not return.",
+        "Bu guruhning <b>{$a->results} ta kiritilgan balli</b> o'chiriladi va "
+        "o'sha o'quvchilarning chorak bahosi ularsiz qayta hisoblanadi. Guruh "
+        "ro'yxatda «chiqarilgan» bo'lib qoladi va «Guruhlarni qayta biriktirish» "
+        "bosilganda qaytib kelmaydi. Keyin tiklash mumkin, lekin ballar qaytmaydi.",
+        "<b>{$a->results} введённых баллов</b> этой группы будут удалены, а "
+        "четвертные оценки этих учеников пересчитаны без них. Группа останется "
+        "в списке как «исключена» и не вернётся при обновлении групп. Её можно "
+        "восстановить, но баллы не вернутся.",
+    ),
+    "bh_sitremoveempty": (
+        "No scores have been entered for this group. It will stay in the list as "
+        "«removed» and will not come back when you refresh groups.",
+        "Bu guruhga hali ball kiritilmagan. U ro'yxatda «chiqarilgan» bo'lib "
+        "qoladi va «Guruhlarni qayta biriktirish» bosilganda qaytib kelmaydi.",
+        "Баллы для этой группы ещё не вводились. Она останется в списке как "
+        "«исключена» и не вернётся при обновлении групп.",
+    ),
+    "bh_sitremoved": (
+        "Group removed from the assessment: {$a->results} score(s) deleted, "
+        "{$a->recalc} term grade(s) recalculated.",
+        "Guruh baholashdan chiqarildi: {$a->results} ta ball o'chirildi, "
+        "{$a->recalc} ta chorak bahosi qayta hisoblandi.",
+        "Группа исключена из оценивания: удалено баллов — {$a->results}, "
+        "пересчитано четвертных оценок — {$a->recalc}.",
+    ),
+    "bh_sitcancelled": (
+        "This group has been removed from the assessment, so scores cannot be "
+        "entered. Restore it first.",
+        "Bu guruh baholashdan chiqarilgan, ball kiritib bo'lmaydi. Avval uni "
+        "tiklang.",
+        "Эта группа исключена из оценивания, баллы вводить нельзя. Сначала "
+        "восстановите её.",
+    ),
+
+    "bh_actions": ("Actions", "Amallar", "Действия"),
+    "bh_delete": ("Delete", "O'chirish", "Удалить"),
+    "bh_cancel": ("Cancel", "Bekor qilish", "Отмена"),
+    "bh_deleteq": (
+        "Delete this assessment?",
+        "Shu baholash o'chirilsinmi?",
+        "Удалить это оценивание?",
+    ),
+    "bh_deletewarn": (
+        "This will permanently delete {$a->sittings} group sitting(s) and "
+        "<b>{$a->results} entered score(s)</b>. Term grades of the affected "
+        "students will be recalculated without this assessment. This cannot "
+        "be undone.",
+        "Bu {$a->sittings} ta guruh o'tkazmasi va <b>{$a->results} ta "
+        "kiritilgan ball</b>ni butunlay o'chiradi. Ta'sir ko'rgan "
+        "o'quvchilarning chorak bahosi shu baholashsiz qayta hisoblanadi. "
+        "Buni qaytarib bo'lmaydi.",
+        "Это безвозвратно удалит {$a->sittings} групповых сессий и "
+        "<b>{$a->results} введённых баллов</b>. Четвертные оценки "
+        "затронутых учеников будут пересчитаны без этого оценивания. "
+        "Отменить нельзя.",
+    ),
+    "bh_deleteempty": (
+        "No scores have been entered yet ({$a->sittings} group sitting(s) "
+        "will be removed). This cannot be undone.",
+        "Hali hech qanday ball kiritilmagan ({$a->sittings} ta guruh "
+        "o'tkazmasi o'chadi). Buni qaytarib bo'lmaydi.",
+        "Баллы ещё не вводились (будет удалено {$a->sittings} групповых "
+        "сессий). Отменить нельзя.",
+    ),
+    "bh_deleted": (
+        "Assessment deleted: {$a->sittings} sitting(s), {$a->results} score(s); "
+        "{$a->recalc} term grade(s) recalculated.",
+        "Baholash o'chirildi: {$a->sittings} o'tkazma, {$a->results} ball; "
+        "{$a->recalc} ta chorak bahosi qayta hisoblandi.",
+        "Оценивание удалено: {$a->sittings} сессий, {$a->results} баллов; "
+        "пересчитано четвертных оценок: {$a->recalc}.",
+    ),
+
     "bh_nameph": (
         "e.g. October exam (leave empty for an automatic name)",
         "masalan: Oktabr imtixon (bo'sh qoldirsangiz avtomatik nomlanadi)",
@@ -2717,11 +2803,19 @@ S = {
     "app_murojaatim": ("My issues", "Murojaatlarim", "Мои обращения"),
 
     # ---------------------------------------------------- topshiriqlar (mod_assign)
-    "tp_nav": ("Assignments", "Topshiriqlar", "Задания"),
+    # DIQQAT: bu MOODLE faoliyatlari (assign/quiz), bizning summativ
+    # baholash EMAS. Nomlar o'xshash bo'lgani uchun foydalanuvchi o'zining
+    # CHSB imtihonlarini shu sahifada izlab adashdi — shuning uchun nomda
+    # «Moodle» so'zi turadi.
+    "tp_nav": ("Moodle activities", "Moodle faoliyatlari", "Элементы Moodle"),
     "tp_hint": (
-        "Moodle assignments across all your groups: who submitted, who is graded",
-        "Guruhlardagi Moodle topshiriqlari: kim topshirdi, kim baholandi",
-        "Задания Moodle по всем группам: кто сдал, кто оценён",
+        "Moodle assignments and quizzes across your groups: who submitted, who "
+        "is graded. Your own CHSB/BSB exams are under All assessments.",
+        "Guruhlardagi Moodle topshiriq va testlari: kim topshirdi, kim "
+        "baholandi. O'zingiz yaratgan CHSB/BSB imtihonlari «Baholashlar» "
+        "bo'limida.",
+        "Задания и тесты Moodle по вашим группам: кто сдал, кто оценён. "
+        "Ваши экзамены CHSB/BSB — в разделе «Все оценивания».",
     ),
     "tp_empty": (
         "No assignments yet. They appear here as soon as a teacher creates one "
