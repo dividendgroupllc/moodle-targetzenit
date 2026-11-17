@@ -8,8 +8,8 @@ set -Eeuo pipefail
 
 main() {
 
-PLUGIN_DIR="${PLUGIN_DIR:-/opt/moodle/public/local/targetzenit}"
-MOODLE_DIR="${MOODLE_DIR:-/opt/moodle}"
+PLUGIN_DIR="${PLUGIN_DIR:-/var/www/moodle/public/local/targetzenit}"
+MOODLE_DIR="${MOODLE_DIR:-/var/www/moodle}"
 PHP="${PHP:-/usr/bin/php8.3}"
 BRANCH="${DEPLOY_BRANCH:-main}"
 HEALTH_URL="${HEALTH_URL:-https://lms.target.erpcontrol.uz/}"

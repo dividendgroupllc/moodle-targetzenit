@@ -10,7 +10,7 @@ ichida bo'ladi — shunda Moodle'ni yangilash (git pull) xavfsiz qoladi.
 |---|---|
 | GitHub repo | `dividendgroupllc/moodle-targetzenit` |
 | Frankenstyle nomi | `local_targetzenit` |
-| Serverdagi joyi | `/opt/moodle/public/local/targetzenit` |
+| Serverdagi joyi | `/var/www/moodle/public/local/targetzenit` |
 | Moodle | 5.3+ (`$plugin->requires = 2026100500`) |
 | Sayt | https://lms.target.erpcontrol.uz |
 
@@ -37,13 +37,13 @@ Bu plagin kelgusidagi ishlar uchun uy:
 
 ```bash
 git clone https://github.com/dividendgroupllc/moodle-targetzenit.git \
-  /opt/moodle/public/local/targetzenit
-chown -R root:www-data /opt/moodle/public/local/targetzenit
-find /opt/moodle/public/local/targetzenit -type d -exec chmod 755 {} \;
-find /opt/moodle/public/local/targetzenit -type f -exec chmod 644 {} \;
+  /var/www/moodle/public/local/targetzenit
+chown -R root:www-data /var/www/moodle/public/local/targetzenit
+find /var/www/moodle/public/local/targetzenit -type d -exec chmod 755 {} \;
+find /var/www/moodle/public/local/targetzenit -type f -exec chmod 644 {} \;
 
-sudo -u www-data php8.3 /opt/moodle/admin/cli/upgrade.php --non-interactive
-sudo -u www-data php8.3 /opt/moodle/admin/cli/purge_caches.php
+sudo -u www-data php8.3 /var/www/moodle/admin/cli/upgrade.php --non-interactive
+sudo -u www-data php8.3 /var/www/moodle/admin/cli/purge_caches.php
 ```
 
 Tekshirish: `Site administration → Plugins → Plugins overview` da
@@ -84,14 +84,14 @@ Repo → Settings → Environments → **production**:
 | `SSH_PRIVATE_KEY` | deploy kalitining yopiq qismi |
 | `SSH_KNOWN_HOSTS` | `ssh-keyscan` natijasi |
 
-> `SSH_USER` — **root**, `frappe` emas. `/opt/moodle` root'niki va Frappe'ning
+> `SSH_USER` — **root**, `frappe` emas. `/var/www/moodle` root'niki va Frappe'ning
 > `frappe` useri unga tegmaydi: ikki tizim alohida OS userda yuradi, bu ataylab
 > shunday (ikkita serverdek ishlash qoidasi).
 
 ### Qo'lda deploy (zarur bo'lsa)
 
 ```bash
-bash /opt/moodle/public/local/targetzenit/scripts/deploy.sh
+bash /var/www/moodle/public/local/targetzenit/scripts/deploy.sh
 ```
 
 ## Versiya raqami
@@ -102,7 +102,7 @@ va eski kod keshda qolib ketadi.
 
 ## Lokal ishlash
 
-Lokal Moodle ham `/opt/moodle` da, ya'ni ish nusxasi **xuddi serverdagi joyda**
+Lokal Moodle `/opt/moodle` da (serverda esa `/var/www/moodle`), ish nusxasi **Moodle ichida**
 turadi — bitta farq bilan: lokalda papka `user` ga tegishli, shunda `sudo`siz
 tahrir qilinadi.
 
