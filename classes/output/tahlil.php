@@ -75,6 +75,18 @@ class tahlil {
                 'text-muted small mb-3');
         }
 
+        // TAHLIL TILI: matn o'qituvchining Moodle tilida yoziladi. Agar
+        // ko'ruvchi (masalan direktor) boshqa tilda ishlasa, "nega matn
+        // o'zbekcha?" degan savol tug'ilmasligi uchun shuni aytib qo'yamiz.
+        // Kategoriya NOMLARI esa har kimda o'z tilida chiqadi.
+        $tahliltili = (string) ($tahlil['audio']->analysislang ?? '');
+        if ($tahliltili !== '' && $tahliltili !== substr(current_language(), 0, 2)) {
+            $h .= \html_writer::div(
+                get_string('ai_lang_note', 'local_targetzenit',
+                    get_string_manager()->get_list_of_languages()[$tahliltili] ?? $tahliltili),
+                'small text-muted mb-2');
+        }
+
         // DOSKADAGI MATERIAL: AI uni ko'rgan bo'lsa shuni OSHKORA aytamiz —
         // zavuch "tahlil nimaga tayandi" degan savolga javob olishi kerak,
         // o'qituvchi esa biriktirgani hisobga olinganini ko'rsin.

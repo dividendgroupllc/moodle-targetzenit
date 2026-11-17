@@ -157,14 +157,18 @@ function local_targetzenit_myprofile_navigation(\core_user\output\myprofile\tree
 }
 
 /**
- * Dars faylini berish: AUDIO yozuvi yoki DOSKADAGI MATERIAL.
- * Faqat shu kursda dars o'tish huquqi borlar ko'radi — o'quvchilarga ochiq emas.
+ * Dars faylini berish: AUDIO yozuvi, DOSKADAGI MATERIAL yoki DARS RESURSI.
+ *
+ * Audio va doska materiali faqat o'qituvchi/rahbariyatga; dars resurslari
+ * (`lessonres`) esa aynan O'QUVCHI uchun qilingan — kursga yozilgan har kim
+ * ko'radi.
  */
 function local_targetzenit_pluginfile($course, $cm, $context, $filearea, $args,
                                       $forcedownload, array $options = []) {
     $ruxsatli = [
         \local_targetzenit\audio::FILEAREA,
         \local_targetzenit\material::FILEAREA,
+        \local_targetzenit\lessonres::FILEAREA,
     ];
     if (!in_array($filearea, $ruxsatli, true)) {
         return false;
@@ -174,13 +178,25 @@ function local_targetzenit_pluginfile($course, $cm, $context, $filearea, $args,
     }
     require_login($course, false, $cm);
 
-    // Shu kursda dars o'tadigan odam YOKI butun maktab tahlilini ko'rish
-    // huquqi borlar (direktor/zavuch). O'quvchilarga ochiq emas.
-    //
-    // NEGA IKKINCHI SHART: direktorning kurs kontekstida `teach` ruxsati
-    // yo'q (ataylab — u baho qo'ymasligi kerak), lekin tahlilni audio bilan
-    // tekshirishi kerak. Aks holda tahlil sahifasidagi pleyer 403 berardi.
-    if (!has_capability('local/targetzenit:teach', $context)) {
+    if ($filearea === \local_targetzenit\lessonres::FILEAREA) {
+        // Dars resursi: kursning o'quvchisi (yozilgan har kim), o'qituvchi
+        // yoki rahbariyat. require_login kursga kirishni allaqachon tekshirdi,
+        // lekin menejer kabi rollarga yozilish shart emas — shuning uchun
+        // uchchala yo'l ham ochiq qoldiriladi.
+        if (!is_enrolled($context)
+                && !has_capability('local/targetzenit:teach', $context)
+                && !has_capability('local/targetzenit:viewanalysis',
+                    context_system::instance())) {
+            return false;
+        }
+    } else if (!has_capability('local/targetzenit:teach', $context)) {
+        // Audio va doska materiali: shu kursda dars o'tadigan odam YOKI butun
+        // maktab tahlilini ko'rish huquqi borlar (direktor/zavuch).
+        // O'quvchilarga ochiq emas.
+        //
+        // NEGA IKKINCHI SHART: direktorning kurs kontekstida `teach` ruxsati
+        // yo'q (ataylab — u baho qo'ymasligi kerak), lekin tahlilni audio bilan
+        // tekshirishi kerak. Aks holda tahlil sahifasidagi pleyer 403 berardi.
         require_capability('local/targetzenit:viewanalysis', context_system::instance());
     }
 

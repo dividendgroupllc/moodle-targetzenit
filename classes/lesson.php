@@ -29,6 +29,12 @@ class lesson {
 
     const MAX_GRADE = 10;
 
+    /** UV tekshiruvi holatlari (kalitlar bazada saqlanadi). */
+    const HWSTATUS = ['bajardi', 'qisman', 'bajarmadi'];
+
+    /** Kechikish daqiqasining yuqori chegarasi (45 daqiqalik para). */
+    const MAX_LATEMIN = 45;
+
     /**
      * Yo'qlama belgisining tarjimasi.
      *
@@ -66,15 +72,24 @@ class lesson {
         return $rec;
     }
 
-    /** Kursdagi o'quvchilar (faqat student roli), familiya bo'yicha. */
+    /**
+     * Kursdagi o'quvchilar (faqat student roli), familiya bo'yicha.
+     *
+     * Rasm maydonlari ham tanlanadi — kokpit ro'yxatida o'quvchi FOTOSI
+     * ko'rinadi (ISH_STOLI arxitekturasining tasdiqlangan qarori): o'qituvchi
+     * ismni yuzga bog'lab o'rganadi, ayniqsa yangi guruhda.
+     */
     public static function students(\context_course $context): array {
         global $DB;
         $role = $DB->get_record('role', ['shortname' => 'student'], 'id');
         if (!$role) {
             return [];
         }
+        $rasm = implode(', ', array_map(
+            static fn($f) => 'u.' . $f,
+            \core_user\fields::get_picture_fields()));
         return get_role_users($role->id, $context, false,
-            'u.id, u.firstname, u.lastname, u.idnumber',
+            $rasm . ', u.idnumber',
             'u.lastname ASC, u.firstname ASC');
     }
 
@@ -89,8 +104,16 @@ class lesson {
         return $out;
     }
 
-    /** Bitta o'quvchining yozuvini saqlaydi (bor bo'lsa yangilaydi). */
-    public static function save_record(int $lessonid, int $userid, string $attendance, $grade, string $comment): void {
+    /**
+     * Bitta o'quvchining yozuvini saqlaydi (bor bo'lsa yangilaydi).
+     *
+     * UV maydonlari (`$hwstatus`, `$hwgrade`, `$latemin`) uchun `false`
+     * = TEGILMASIN: jurnal va mobil ilova ularni yubormaydi, kokpitda
+     * kiritilgan tekshiruv setka saqlanganda o'chib ketmasligi kerak.
+     * Bo'sh qiymat ('' yoki null) esa tozalashni bildiradi.
+     */
+    public static function save_record(int $lessonid, int $userid, string $attendance, $grade, string $comment,
+                                        $hwstatus = false, $hwgrade = false, $latemin = false): void {
         global $DB;
 
         if (!isset(self::ATTEND[$attendance])) {
@@ -99,6 +122,18 @@ class lesson {
         $grade = ($grade === '' || $grade === null) ? null : max(1, min(self::MAX_GRADE, (int) $grade));
         $comment = \core_text::substr(trim($comment), 0, 255);
 
+        if ($hwstatus !== false) {
+            $hwstatus = in_array($hwstatus, self::HWSTATUS, true) ? $hwstatus : null;
+        }
+        if ($hwgrade !== false) {
+            $hwgrade = ($hwgrade === '' || $hwgrade === null)
+                ? null : max(1, min(self::MAX_GRADE, (int) $hwgrade));
+        }
+        if ($latemin !== false) {
+            $latemin = ($latemin === '' || $latemin === null || $attendance !== 'late')
+                ? null : max(1, min(self::MAX_LATEMIN, (int) $latemin));
+        }
+
         $rec = $DB->get_record('local_targetzenit_record', ['lessonid' => $lessonid, 'userid' => $userid]);
         $eski_baho = $rec ? $rec->grade : false;
 
@@ -106,6 +141,15 @@ class lesson {
             $rec->attendance = $attendance;
             $rec->grade = $grade;
             $rec->comment = $comment;
+            if ($hwstatus !== false) {
+                $rec->hwstatus = $hwstatus;
+            }
+            if ($hwgrade !== false) {
+                $rec->hwgrade = $hwgrade;
+            }
+            if ($latemin !== false) {
+                $rec->latemin = $latemin;
+            }
             $rec->timemodified = time();
             $DB->update_record('local_targetzenit_record', $rec);
         } else {
@@ -115,6 +159,9 @@ class lesson {
                 'attendance' => $attendance,
                 'grade' => $grade,
                 'comment' => $comment,
+                'hwstatus' => $hwstatus !== false ? $hwstatus : null,
+                'hwgrade' => $hwgrade !== false ? $hwgrade : null,
+                'latemin' => $latemin !== false ? $latemin : null,
                 'timemodified' => time(),
             ]);
         }

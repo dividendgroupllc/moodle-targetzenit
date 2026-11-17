@@ -60,6 +60,29 @@ if (optional_param('materialoch', 0, PARAM_INT) && confirm_sesskey()) {
         \core\output\notification::NOTIFY_SUCCESS);
 }
 
+// ------------------------------------------ DARS RESURSLARI (o'quvchiga)
+if (optional_param('resfayl', 0, PARAM_INT) && confirm_sesskey()) {
+    $xato = \local_targetzenit\lessonres::add_file((int) $dars->id, $context,
+        'resursfayl', optional_param('restitle', '', PARAM_TEXT), (int) $USER->id);
+    redirect($PAGE->url, $xato ?: get_string('res_saved', 'local_targetzenit'),
+        null, $xato ? \core\output\notification::NOTIFY_ERROR
+                    : \core\output\notification::NOTIFY_SUCCESS);
+}
+if (optional_param('reshavola', 0, PARAM_INT) && confirm_sesskey()) {
+    $xato = \local_targetzenit\lessonres::add_link((int) $dars->id,
+        optional_param('resurl', '', PARAM_RAW_TRIMMED),
+        optional_param('restitle', '', PARAM_TEXT), (int) $USER->id);
+    redirect($PAGE->url, $xato ?: get_string('res_saved', 'local_targetzenit'),
+        null, $xato ? \core\output\notification::NOTIFY_ERROR
+                    : \core\output\notification::NOTIFY_SUCCESS);
+}
+if ($resoch = optional_param('resoch', 0, PARAM_INT)) {
+    require_sesskey();
+    \local_targetzenit\lessonres::delete($resoch, (int) $dars->id, $context);
+    redirect($PAGE->url, get_string('res_deleted', 'local_targetzenit'), null,
+        \core\output\notification::NOTIFY_SUCCESS);
+}
+
 if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
     $topic = optional_param('topic', '', PARAM_TEXT);
     $homework = optional_param('homework', '', PARAM_TEXT);
@@ -68,6 +91,9 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
     $att = optional_param_array('att', [], PARAM_ALPHA);
     $grades = optional_param_array('grade', [], PARAM_RAW_TRIMMED);
     $comments = optional_param_array('comment', [], PARAM_TEXT);
+    $hw = optional_param_array('hw', [], PARAM_ALPHA);
+    $hwgrades = optional_param_array('hwgrade', [], PARAM_RAW_TRIMMED);
+    $latemins = optional_param_array('latemin', [], PARAM_RAW_TRIMMED);
 
     foreach ($students as $s) {
         lesson::save_record(
@@ -75,7 +101,10 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
             (int) $s->id,
             $att[$s->id] ?? 'present',
             $grades[$s->id] ?? null,
-            $comments[$s->id] ?? ''
+            $comments[$s->id] ?? '',
+            $hw[$s->id] ?? null,
+            $hwgrades[$s->id] ?? null,
+            $latemins[$s->id] ?? null
         );
     }
     // Gradebook'da ko'rinishi uchun kurs yakuniy baholarini qayta hisoblash.
@@ -288,6 +317,82 @@ echo html_writer::tag('div', get_string('mt_hint', 'local_targetzenit',
 echo html_writer::end_div();
 echo html_writer::end_div();
 
+// --------------------------------------------- DARS RESURSLARI
+// Doska materialidan FARQI: u AI uchun bitta dalil-fayl, bu esa O'QUVCHIGA
+// ko'rinadigan materiallar to'plami (slayd, video, interaktiv havola) —
+// o'quvchi uyda `darsim.php` orqali ochadi.
+$resurslar = \local_targetzenit\lessonres::rows((int) $dars->id);
+
+echo html_writer::start_div('card mb-3');
+echo html_writer::start_div('card-body');
+echo html_writer::tag('h5', get_string('res_title', 'local_targetzenit'),
+    ['class' => 'card-title h6']);
+
+if ($resurslar) {
+    echo html_writer::start_tag('ul', ['class' => 'list-unstyled tz-res-list mb-2']);
+    foreach ($resurslar as $res) {
+        $rurl = \local_targetzenit\lessonres::url_for($res, $context);
+        $nom = \local_targetzenit\lessonres::nom($res, $context);
+        $belgi = \local_targetzenit\lessonres::tur_belgisi($res, $context);
+        $ochirurl = new moodle_url($PAGE->url,
+            ['resoch' => (int) $res->id, 'sesskey' => sesskey()]);
+        echo html_writer::tag('li',
+            html_writer::tag('span', s($belgi), ['class' => 'badge badge-secondary tz-res-badge mr-2'])
+            . ($rurl
+                ? html_writer::link($rurl, s($nom), ['target' => '_blank', 'rel' => 'noopener'])
+                : s($nom))
+            . ' ' . html_writer::link($ochirurl, '✕',
+                ['class' => 'text-danger small ml-2',
+                 'title' => get_string('res_delete', 'local_targetzenit'),
+                 'onclick' => 'return confirm('
+                    . json_encode(get_string('res_delete_q', 'local_targetzenit')) . ')']),
+            ['class' => 'mb-1']);
+    }
+    echo html_writer::end_tag('ul');
+} else {
+    echo html_writer::tag('div', get_string('res_empty', 'local_targetzenit'),
+        ['class' => 'text-muted small mb-2']);
+}
+
+// Fayl qo'shish (alohida forma — multipart)
+echo html_writer::start_tag('form', ['method' => 'post',
+    'action' => $PAGE->url->out(false), 'enctype' => 'multipart/form-data',
+    'class' => 'form-inline mb-2']);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'resfayl', 'value' => 1]);
+echo html_writer::empty_tag('input', ['type' => 'file', 'name' => 'resursfayl',
+    'class' => 'form-control-file mr-2', 'required' => 'required',
+    'accept' => '.pdf,.pptx,.ppt,.docx,.doc,.png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,.mp3,.m4a']);
+echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'restitle',
+    'class' => 'form-control form-control-sm mr-2', 'maxlength' => 255,
+    'placeholder' => get_string('res_titleph', 'local_targetzenit')]);
+echo html_writer::tag('button', get_string('res_add', 'local_targetzenit'),
+    ['type' => 'submit', 'class' => 'btn btn-sm btn-primary']);
+echo html_writer::end_tag('form');
+
+// Havola qo'shish
+echo html_writer::start_tag('form', ['method' => 'post',
+    'action' => $PAGE->url->out(false), 'class' => 'form-inline']);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'reshavola', 'value' => 1]);
+echo html_writer::empty_tag('input', ['type' => 'url', 'name' => 'resurl',
+    'class' => 'form-control form-control-sm mr-2 tz-res-url', 'required' => 'required',
+    'placeholder' => get_string('res_urlph', 'local_targetzenit')]);
+echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'restitle',
+    'class' => 'form-control form-control-sm mr-2', 'maxlength' => 255,
+    'placeholder' => get_string('res_titleph', 'local_targetzenit')]);
+echo html_writer::tag('button', get_string('res_addlink', 'local_targetzenit'),
+    ['type' => 'submit', 'class' => 'btn btn-sm btn-outline-primary']);
+echo html_writer::end_tag('form');
+
+echo html_writer::tag('div', get_string('res_hint', 'local_targetzenit', (object) [
+    'limit' => \local_targetzenit\lessonres::LIMIT,
+    'mb' => round(\local_targetzenit\lessonres::MAX_BYTES / 1048576),
+]), ['class' => 'text-muted small mt-2']);
+
+echo html_writer::end_div();
+echo html_writer::end_div();
+
 // ---------------------------------------------------------- AI DARS TAHLILI
 // Chizish `classes/output/tahlil.php` da — XUDDI SHU karta direktorning
 // faqat-o'qish sahifasida (dars_tahlil.php) ham ko'rinadi. Kod nusxalansa,
@@ -328,16 +433,56 @@ echo html_writer::end_div();
 echo html_writer::end_div();
 
 // ------------------------------------------------- O'QUVCHILAR: YO'QLAMA+BAHO
+// UV TEKSHIRUVI O'TGAN DARS HAQIDA: bugun tekshiriladigan uy vazifa OLDINGI
+// darsda berilgan. Shuning uchun UV matni va fayl-topshiriq holati (assign)
+// oldingi darsdan o'qiladi; `hwstatus` esa SHU darsning yozuviga saqlanadi —
+// "bugun UVni tekshirdim" fakti bugungi davomat bilan bitta qatorda turadi.
+$oldingi = null;
+$topshirgan = [];
+$rows = $DB->get_records_select('local_targetzenit_lesson',
+    "courseid = :c AND (lessondate < :d1 OR (lessondate = :d2 AND lessonno < :n))",
+    ['c' => $courseid, 'd1' => $date, 'd2' => $date, 'n' => $lessonno],
+    'lessondate DESC, lessonno DESC', '*', 0, 1);
+if ($rows) {
+    $oldingi = reset($rows);
+    if (!empty($oldingi->assigncmid)) {
+        $cm = get_coursemodule_from_id('assign', (int) $oldingi->assigncmid,
+            0, false, IGNORE_MISSING);
+        if ($cm) {
+            // latest=1 — qayta topshirishlarda faqat oxirgi urinish.
+            $topshirgan = $DB->get_records_sql_menu("
+                SELECT userid, status
+                  FROM {assign_submission}
+                 WHERE assignment = :a AND latest = 1",
+                ['a' => (int) $cm->instance]);
+        }
+    }
+}
+
 if (!$students) {
     echo $OUTPUT->notification(get_string('ck_nostudents', 'local_targetzenit'), 'warn');
 } else {
+    if ($oldingi && trim((string) $oldingi->homework) !== '') {
+        echo html_writer::div(
+            get_string('ck_hwfrom', 'local_targetzenit', (object) [
+                'sana' => userdate(strtotime($oldingi->lessondate), '%d.%m'),
+                'matn' => format_string($oldingi->homework),
+            ]),
+            'text-muted small mb-1');
+    }
+
     $t = new html_table();
     $t->head = ['#', get_string('student', 'local_targetzenit'),
         get_string('attendance', 'local_targetzenit'),
+        get_string('ck_latemin', 'local_targetzenit'),
         get_string('grade', 'local_targetzenit') . ' (1–' . lesson::MAX_GRADE . ')',
+        get_string('ck_hwcol', 'local_targetzenit'),
+        get_string('ck_hwgrade', 'local_targetzenit'),
+        get_string('ck_hwfile', 'local_targetzenit'),
         get_string('comment', 'local_targetzenit')];
     $t->attributes['class'] = 'generaltable tz-dars';
-    $t->colclasses = ['tz-n', 'tz-ism', 'tz-att', 'tz-baho', 'tz-izoh'];
+    $t->colclasses = ['tz-n', 'tz-ism', 'tz-att', 'tz-late', 'tz-baho',
+        'tz-hw', 'tz-hwbaho', 'tz-hwfayl', 'tz-izoh'];
 
     $n = 0;
     foreach ($students as $s) {
@@ -357,16 +502,60 @@ if (!$students) {
                 ['for' => $id, 'class' => 'tz-att-label tz-att-' . $kalit]);
         }
 
+        // UV holati: saqlanmagan bo'lsa-yu fayl topshirilgan bo'lsa,
+        // «bajardi» AVTO-TAKLIF qilinadi (o'qituvchi o'zgartira oladi).
+        $fayl = $topshirgan[$s->id] ?? null;
+        $hwjoriy = $y->hwstatus ?? null;
+        if ($hwjoriy === null && $fayl === 'submitted') {
+            $hwjoriy = 'bajardi';
+        }
+        $hwtanlov = html_writer::start_tag('select', [
+            'name' => "hw[{$s->id}]", 'class' => 'form-control form-control-sm tz-hw-sel']);
+        $hwtanlov .= html_writer::tag('option', '—', ['value' => '']
+            + ($hwjoriy === null ? ['selected' => 'selected'] : []));
+        foreach (lesson::HWSTATUS as $kalit) {
+            $hwtanlov .= html_writer::tag('option',
+                get_string('hw_' . $kalit, 'local_targetzenit'),
+                ['value' => $kalit] + ($hwjoriy === $kalit ? ['selected' => 'selected'] : []));
+        }
+        $hwtanlov .= html_writer::end_tag('select');
+
+        if ($fayl === 'submitted') {
+            $faylmatn = html_writer::tag('span',
+                get_string('ck_sub_ok', 'local_targetzenit'), ['class' => 'text-success']);
+        } else if ($fayl === 'draft') {
+            $faylmatn = html_writer::tag('span',
+                get_string('ck_sub_draft', 'local_targetzenit'), ['class' => 'text-warning']);
+        } else {
+            $faylmatn = html_writer::tag('span', '—', ['class' => 'text-muted']);
+        }
+
         $t->data[] = [
             $n,
-            fullname($s),
+            $OUTPUT->user_picture($s, ['size' => 28, 'link' => false])
+                . ' ' . fullname($s),
             html_writer::div($tugmalar, 'tz-att-group'),
+            html_writer::empty_tag('input', [
+                'type' => 'number', 'name' => "latemin[{$s->id}]",
+                'value' => ($y && $y->latemin !== null) ? $y->latemin : '',
+                'min' => 1, 'max' => lesson::MAX_LATEMIN, 'step' => 1,
+                'class' => 'form-control tz-late-input',
+                'title' => get_string('ck_latemin_hint', 'local_targetzenit'),
+            ]),
             html_writer::empty_tag('input', [
                 'type' => 'number', 'name' => "grade[{$s->id}]",
                 'value' => ($y && $y->grade !== null) ? $y->grade : '',
                 'min' => 1, 'max' => lesson::MAX_GRADE, 'step' => 1,
                 'class' => 'form-control tz-grade-input',
             ]),
+            $hwtanlov,
+            html_writer::empty_tag('input', [
+                'type' => 'number', 'name' => "hwgrade[{$s->id}]",
+                'value' => ($y && $y->hwgrade !== null) ? $y->hwgrade : '',
+                'min' => 1, 'max' => lesson::MAX_GRADE, 'step' => 1,
+                'class' => 'form-control tz-grade-input',
+            ]),
+            $faylmatn,
             html_writer::empty_tag('input', [
                 'type' => 'text', 'name' => "comment[{$s->id}]",
                 'value' => $y->comment ?? '', 'class' => 'form-control',
@@ -375,6 +564,15 @@ if (!$students) {
         ];
     }
     echo html_writer::div(html_writer::table($t), 'tz-scroll');
+
+    if ($oldingi && !empty($oldingi->assigncmid)) {
+        echo html_writer::div(
+            html_writer::link(new moodle_url('/mod/assign/view.php',
+                ['id' => (int) $oldingi->assigncmid, 'action' => 'grading']),
+                get_string('ck_opensub', 'local_targetzenit'),
+                ['target' => '_blank', 'rel' => 'noopener']),
+            'small mb-2');
+    }
 }
 
 echo html_writer::div(

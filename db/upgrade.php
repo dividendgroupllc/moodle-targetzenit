@@ -1078,6 +1078,84 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111310, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111610) {
+
+        // ===================== TAHLIL TILI
+        //
+        // Tahlil matni O'QITUVCHINING Moodle interfeys tilida yoziladi
+        // (2026-11-16 talabi): ingliz tilida ishlatsa inglizcha, rus tilida
+        // ruscha, o'zbekcha bo'lsa o'zbekcha. Qaysi tilda yozilgani shu
+        // ustunda qoladi — boshqa tilda ishlaydigan odam "nega matn o'zbekcha?"
+        // deb hayron bo'lmasligi uchun UI kichik izoh chiqaradi.
+        //
+        // DIQQAT (o'z xatomdan saboq, 2026-11-16): bu blok fayl OXIRIGA
+        // qo'yilgan va raqami eng katta. Moodle qadamlarni FAYL TARTIBIDA
+        // yuradi — oldinga qo'yilsa keyingi bloklar (2026111260, 2026111310)
+        // abadiy o'tkazib yuborilardi.
+        $table = new xmldb_table('local_targetzenit_audio');
+        foreach ([
+            // Tahlil matni qaysi tilda yozilgani
+            ['analysislang', XMLDB_TYPE_CHAR, '10'],
+            // Boshqa tillardagi MATN nusxasi (ball/metrika tarjima qilinmaydi)
+            ['analysis_i18n', XMLDB_TYPE_TEXT, null],
+        ] as list($nom, $turi, $uzunlik)) {
+            $field = new xmldb_field($nom, $turi, $uzunlik, null, null, null, null);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026111610, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026111710) {
+
+        // ============== KOKPIT TO'LIQ (portal 2-bosqichi, 2026-11-17)
+        //
+        // (1) `_record` ga UV tekshiruvi: o'tgan darsda berilgan uy vazifa
+        //     bajarildimi (bajardi|qisman|bajarmadi), UV bahosi (kunlik
+        //     bahodan ALOHIDA — nizomda ishtirok 6 + uy vazifa 4) va
+        //     kechikish daqiqasi (ISH_STOLI arxitekturasining tasdiqlangan,
+        //     ammo shu paytgacha qurilmagan qarorlari).
+        $table = new xmldb_table('local_targetzenit_record');
+        foreach ([
+            ['hwstatus', XMLDB_TYPE_CHAR, '10', 'comment'],
+            ['hwgrade', XMLDB_TYPE_INTEGER, '3', 'hwstatus'],
+            ['latemin', XMLDB_TYPE_INTEGER, '4', 'hwgrade'],
+        ] as list($nom, $turi, $uzunlik, $oldingi)) {
+            $field = new xmldb_field($nom, $turi, $uzunlik, null, null, null, null, $oldingi);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        // (2) `_lessonres` — dars resurslari: o'quvchiga ko'rinadigan
+        //     slayd/video/havola. Doska materiali (lessonboard, 1 fayl, AI
+        //     dalili) BUNDAN ALOHIDA qoladi — ikkisi boshqa savolga javob
+        //     beradi: material = "AI nimani ko'rsin", resurs = "o'quvchi
+        //     uyda nimani ochsin".
+        $table = new xmldb_table('local_targetzenit_lessonres');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'fayl');
+            $table->add_field('url', XMLDB_TYPE_CHAR, '1333', null, null, null, null);
+            $table->add_field('title', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('tartib', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('koringan', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('lessonid', XMLDB_KEY_FOREIGN, ['lessonid'],
+                'local_targetzenit_lesson', ['id']);
+            $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $table->add_index('lesson_tartib', XMLDB_INDEX_NOTUNIQUE, ['lessonid', 'tartib']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111710, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

@@ -1457,6 +1457,8 @@ class exam {
                                             string $termname): array {
         global $DB;
 
+        // «bekor» sitting chiqarilmaydi: koordinator guruhni olib tashlagan,
+        // natijalari ham o'chirilgan — jurnalda bo'sh ustun bo'lib turmasin.
         $rows = $DB->get_records_sql("
             SELECT s.id AS sittingid, e.id AS examid, e.turi, e.name,
                    COALESCE(s.examdate, e.examdate) AS sana,
@@ -1466,7 +1468,7 @@ class exam {
               FROM {local_targetzenit_exam_sitting} s
               JOIN {local_targetzenit_exam} e ON e.id = s.examid
              WHERE s.courseid = :c AND e.academicyear = :yil
-               AND e.termname = :chorak
+               AND e.termname = :chorak AND s.status <> 'bekor'
           ORDER BY COALESCE(s.examdate, e.examdate) ASC, e.id ASC",
             ['c' => $courseid, 'yil' => $year, 'chorak' => $termname]);
 

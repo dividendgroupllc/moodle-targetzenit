@@ -3,8 +3,10 @@
 
 require(__DIR__ . '/../../config.php');
 
+use local_targetzenit\exam;
 use local_targetzenit\journal;
 use local_targetzenit\lesson;
+use local_targetzenit\mavzu;
 use local_targetzenit\timetable;
 
 $courseid = required_param('courseid', PARAM_INT);
@@ -141,6 +143,42 @@ foreach ($darslar as $l) {
 }
 $kataklar = journal::cells($lessonids);
 
+// ---------------------------------------------- IMTIHON USTUNLARI VA KTP
+// Imtihon ustunlari jadval darslaridan ALOHIDA keladi (`exam::journal_columns`
+// izohi: imtihon kuni `lessons_in_term` ro'yxatida bo'lmasligi mumkin) va
+// quyida sana tartibida dars ustunlari orasiga qo'shiladi. Ball bu yerda
+// KIRITILMAYDI — kiritish ball setkasida qoladi, jurnal faqat ko'rsatadi.
+$imtihonlar = exam::journal_columns($courseid, $year, $term->name);
+$imtihonnatija = exam::results_for(array_map(
+    static fn($e) => (int) $e->sittingid, $imtihonlar));
+$choraknatija = exam::term_scores($courseid, $year, $term->name);
+
+// Ustunlar: dars va imtihon aralash, sana tartibida. Bir sanada avval dars,
+// keyin imtihon turadi. `usort` barqaror (PHP 8) — bir kunlik darslar
+// `lessons_in_term` bergan para tartibini saqlaydi.
+$ustunlar = [];
+foreach ($darslar as $l) {
+    $ustunlar[] = ['sana' => $l['date'], 'keyin' => 0, 'dars' => $l];
+}
+foreach ($imtihonlar as $e) {
+    $ustunlar[] = ['sana' => (string) $e->sana, 'keyin' => 1, 'imtihon' => $e];
+}
+usort($ustunlar, static fn($a, $b) =>
+    [$a['sana'], $a['keyin']] <=> [$b['sana'], $b['keyin']]);
+
+// KTP reja mavzulari — mavzu katagi bo'sh bo'lsa placeholder bo'lib turadi
+// (reja taklif qiladi, yakuniy so'z o'qituvchida). Bitta so'rov.
+$rejamavzu = [];
+$rejaslotlar = $DB->get_records_sql("
+    SELECT s.id, s.lessondate, s.lessonno, s.mavzu
+      FROM {local_targetzenit_slot} s
+     WHERE s.courseid = :c AND s.mavzuid > 0
+       AND s.lessondate >= :boshi AND s.lessondate <= :oxiri",
+    ['c' => $courseid, 'boshi' => $term->startdate, 'oxiri' => $term->enddate]);
+foreach ($rejaslotlar as $rs) {
+    $rejamavzu[$rs->lessondate . '#' . (int) $rs->lessonno] = trim((string) $rs->mavzu);
+}
+
 echo $OUTPUT->header();
 
 // Qaytish yo'li — chorak jurnali boshi berk ko'cha bo'lib qolmasin.
@@ -197,7 +235,12 @@ echo html_writer::div(local_targetzenit_zoom_panel('jurnal'), 'mb-2');
 echo html_writer::div(
     html_writer::tag('span',
         get_string('jr_celllegend', 'local_targetzenit', lesson::MAX_GRADE),
-        ['class' => 'text-muted small']),
+        ['class' => 'text-muted small'])
+    . ($imtihonlar
+        ? ' ' . html_writer::tag('span',
+            get_string('jr_examlegend', 'local_targetzenit'),
+            ['class' => 'text-muted small'])
+        : ''),
     'mb-3'
 );
 
@@ -243,7 +286,28 @@ echo html_writer::start_tag('tr');
 echo html_writer::tag('th', '#', ['class' => 'tz-col-n']);
 echo html_writer::tag('th', get_string('student', 'local_targetzenit'),
     ['class' => 'tz-col-ism']);
-foreach ($darslar as $l) {
+// Ball setkasiga havola faqat baholash huquqi borlarga ko'rsatiladi.
+$ballhuquq = has_capability('local/targetzenit:gradeexam', $context);
+foreach ($ustunlar as $ustun) {
+    if (isset($ustun['imtihon'])) {
+        $e = $ustun['imtihon'];
+        $turi = s($e->turi);
+        if ($ballhuquq) {
+            $turi = html_writer::link(
+                new moodle_url('/local/targetzenit/baholash.php',
+                    ['view' => 'ball', 'sitting' => (int) $e->sittingid]),
+                $turi, ['class' => 'tz-exam-link']);
+        }
+        echo html_writer::tag('th',
+            html_writer::div(userdate(strtotime($e->sana), '%d.%m'), 'tz-j-date') .
+            html_writer::div($turi, 'tz-meta'),
+            ['class' => 'tz-col-kun tz-col-exam',
+             'title' => get_string('jr_examtitle', 'local_targetzenit', (object) [
+                 'name' => $e->name, 'sana' => $e->sana,
+                 'max' => $e->maxscore])]);
+        continue;
+    }
+    $l = $ustun['dars'];
     $sana = userdate(strtotime($l['date']), '%d.%m');
     $bu = ($l['key'] === $bugungi_kalit);
     $tashqari = !empty($l['jadvaldan_tashqari']);
@@ -256,6 +320,14 @@ foreach ($darslar as $l) {
          'title' => $tashqari
              ? get_string('jr_offschedule', 'local_targetzenit') : ''] +
         ($bu ? ['id' => 'tz-bugun-ustun'] : []));
+}
+// Oxirida — taklif chorak bahosi (imtihon yoki saqlangan natija bo'lsagina).
+$chorakustun = ($imtihonlar || $choraknatija);
+if ($chorakustun) {
+    echo html_writer::tag('th',
+        html_writer::div(get_string('jr_termcol', 'local_targetzenit'), 'tz-j-date'),
+        ['class' => 'tz-col-kun tz-col-term',
+         'title' => get_string('jr_termtitle', 'local_targetzenit')]);
 }
 echo html_writer::end_tag('tr');
 echo html_writer::end_tag('thead');
@@ -272,7 +344,31 @@ foreach ($students as $s) {
             fullname($s),
             ['title' => get_string('jr_studentgrades', 'local_targetzenit', fullname($s))]),
         ['class' => 'tz-col-ism']);
-    foreach ($darslar as $l) {
+    foreach ($ustunlar as $ustun) {
+        if (isset($ustun['imtihon'])) {
+            $e = $ustun['imtihon'];
+            $r = $imtihonnatija[(int) $e->sittingid][(int) $s->id] ?? null;
+            $matn = '';
+            $title = '';
+            if ($r && $r->score !== null) {
+                // 42.0 -> «42», 38.25 -> «38.3» — katak tor, ortiqcha nol yo'q.
+                $q = (float) $r->score;
+                $matn = ($q == (int) $q) ? (string) (int) $q : (string) round($q, 1);
+                if (!empty($r->capped)) {
+                    $title = get_string('bh_capped', 'local_targetzenit');
+                }
+            } else if ($r && $r->holat) {
+                // Ball yo'q, lekin holat bor (uzrli/uzrsiz/...) — birinchi
+                // harfi ko'rinadi, to'lig'i title'da.
+                $matn = mb_substr((string) $r->holat, 0, 1);
+                $title = (string) $r->holat;
+            }
+            echo html_writer::tag('td', s($matn),
+                ['class' => 'tz-col-kun tz-col-exam tz-exam-cell',
+                 'title' => $title]);
+            continue;
+        }
+        $l = $ustun['dars'];
         $dars = $darsyozuv[$l['key']] ?? null;
         $rec = ($dars && isset($kataklar[$s->id][$dars->id])) ? $kataklar[$s->id][$dars->id] : null;
         echo html_writer::tag('td',
@@ -286,6 +382,14 @@ foreach ($students as $s) {
             ]),
             ['class' => 'tz-col-kun' . ($l['key'] === $bugungi_kalit ? ' tz-bugun-col' : '')]);
     }
+    if ($chorakustun) {
+        $ts = $choraknatija[(int) $s->id] ?? null;
+        $matn = ($ts && $ts->total !== null)
+            ? $ts->total . ' → ' . $ts->baho . ((int) $ts->frozen === 1 ? ' ✓' : '')
+            : '—';
+        echo html_writer::tag('td', $matn,
+            ['class' => 'tz-col-kun tz-term-cell']);
+    }
     echo html_writer::end_tag('tr');
 }
 echo html_writer::end_tag('tbody');
@@ -296,6 +400,20 @@ echo html_writer::end_div();
 echo html_writer::start_div('tz-jurnal-mavzu');
 echo html_writer::tag('h5',
     get_string('jr_topics', 'local_targetzenit', format_string($term->name)));
+
+// KTP qamrovi: shu chorak rejasidan nechta mavzu o'tildi. Guruh va fan
+// kaliti kurs idnumber'idan: "{yil}::{guruh}::{fan}".
+[, $guruhkalit, $fankalit] = array_pad(explode('::', (string) $course->idnumber), 3, '');
+if ($fankalit !== '') {
+    $qamrov = mavzu::qamrov($year, $fankalit, $guruhkalit,
+        mavzu::chorak_raqami($term->name));
+    if ($qamrov['jami'] > 0) {
+        echo html_writer::div(
+            get_string('jr_ktp', 'local_targetzenit', (object) $qamrov),
+            'tz-ktp-qamrov');
+    }
+}
+
 echo html_writer::start_div('tz-mavzu-scroll', ['id' => 'tz-mavzu-scroll']);
 echo html_writer::start_tag('table', ['class' => 'generaltable tz-mavzu']);
 echo html_writer::tag('thead',
@@ -303,20 +421,50 @@ echo html_writer::tag('thead',
         html_writer::tag('th', get_string('jr_date', 'local_targetzenit')) .
         html_writer::tag('th', get_string('jr_topichw', 'local_targetzenit'))));
 echo html_writer::start_tag('tbody');
-foreach ($darslar as $i => $l) {
+$raqam = 0;
+foreach ($ustunlar as $ustun) {
+    // Imtihon qatori: tahrirlanmaydi, jurnal ustuni bilan bir xil tartibda
+    // turadi — o'qituvchi chorakni yuqoridan ko'rganda imtihonlar mavzular
+    // oqimining ichida ko'rinadi.
+    if (isset($ustun['imtihon'])) {
+        $e = $ustun['imtihon'];
+        $sana = userdate(strtotime($e->sana), '%d.%m')
+            . ($e->vaqt ? ' · ' . s($e->vaqt) : '');
+        echo html_writer::start_tag('tr', ['class' => 'tz-m-imtihon']);
+        echo html_writer::tag('td', html_writer::div($sana, 'tz-meta'),
+            ['class' => 'tz-m-sana']);
+        echo html_writer::tag('td',
+            html_writer::tag('b', get_string('jr_examrow', 'local_targetzenit',
+                (object) ['turi' => $e->turi, 'name' => format_string($e->name)]))
+            . html_writer::div(
+                get_string('jr_exammeta', 'local_targetzenit', (object) [
+                    'max' => $e->maxscore,
+                    'shakli' => $e->shakli,
+                ]), 'tz-meta'));
+        echo html_writer::end_tag('tr');
+        continue;
+    }
+    $l = $ustun['dars'];
+    $raqam++;
     $dars = $darsyozuv[$l['key']] ?? null;
     $sana = userdate(strtotime($l['date']), '%d.%m') . ' · '
         . get_string('jr_lessonshort', 'local_targetzenit', $l['lessonno']);
     $bu = ($l['key'] === $bugungi_kalit);
+    // Mavzu bo'sh bo'lsa KTP rejasi placeholder bo'lib turadi — o'qituvchi
+    // rejani ko'radi, lekin fakt faqat o'zi yozganda saqlanadi.
+    $reja = $rejamavzu[$l['key']] ?? '';
     echo html_writer::start_tag('tr',
         ['class' => $bu ? 'tz-bugun-qator' : ''] + ($bu ? ['id' => 'tz-bugun-mavzu'] : []));
-    echo html_writer::tag('td', html_writer::div(($i + 1) . '. ' . $sana, 'tz-meta'), ['class' => 'tz-m-sana']);
+    echo html_writer::tag('td', html_writer::div($raqam . '. ' . $sana, 'tz-meta'), ['class' => 'tz-m-sana']);
     echo html_writer::tag('td',
         html_writer::empty_tag('input', [
             'type' => 'text', 'name' => 'topic[' . journal::pkey($l) . ']',
             'value' => $dars->topic ?? '', 'class' => 'form-control form-control-sm mb-1',
-            'placeholder' => get_string('jr_topicph', 'local_targetzenit'),
-        ]) .
+            'placeholder' => $reja !== ''
+                ? $reja : get_string('jr_topicph', 'local_targetzenit'),
+        ] + ($reja !== ''
+            ? ['title' => get_string('jr_rejatitle', 'local_targetzenit', $reja)]
+            : [])) .
         html_writer::empty_tag('input', [
             'type' => 'text', 'name' => 'homework[' . journal::pkey($l) . ']',
             'value' => $dars->homework ?? '', 'class' => 'form-control form-control-sm tz-hw-input',

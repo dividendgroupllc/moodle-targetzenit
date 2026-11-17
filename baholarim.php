@@ -214,11 +214,17 @@ if (!$vazifalar) {
     $bugun = date('Y-m-d');
     foreach ($vazifalar as $v) {
         $sana = userdate(strtotime($v->lessondate), '%d.%m');
-        $t->data[] = [
+        // Sana — dars sahifasiga (darsim.php) havola: u yerda materiallar,
+        // fayl topshirish tugmasi va o'z natijasi turadi (2-bosqich).
+        $sanalink = html_writer::link(
+            new moodle_url('/local/targetzenit/darsim.php', ['id' => (int) $v->id]),
             ($v->lessondate === $bugun)
                 ? html_writer::tag('strong',
                     $sana . get_string('tt_today_suffix', 'local_targetzenit'))
                 : $sana,
+            ['title' => get_string('ds_open', 'local_targetzenit')]);
+        $t->data[] = [
+            $sanalink,
             format_string($v->coursename),
             format_string($v->topic ?? ''),
             format_string($v->homework),

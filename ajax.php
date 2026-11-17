@@ -130,6 +130,8 @@ try {
                 throw new moodle_exception('Audio yo\'q — qayta tahlil qilib bo\'lmaydi.');
             }
             $rec->analysis = null;
+            $rec->analysis_i18n = null;  // tarjimalar ham qaytadan yasaladi
+            $rec->analysislang = null;
             $rec->materialdesc = null;   // material qayta ko'rib chiqiladi
             $rec->aierror = null;
             $rec->status = 'ready';

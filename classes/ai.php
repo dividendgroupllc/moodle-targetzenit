@@ -889,6 +889,174 @@ class ai {
         return null;
     }
 
+    /**
+     * Tahlil QAYSI TILDA yozilishi kerak.
+     *
+     * Foydalanuvchi talabi (2026-11-16): tahlil O'QITUVCHINING Moodle
+     * interfeys tilida bo'lsin — ingliz tilida ishlatsa ingliz tilida,
+     * rus tilida ishlatsa rus tilida, o'zbek tilida bo'lsa o'zbekcha.
+     *
+     * Moodle'da `user.lang` bo'sh bo'lsa sayt tili ishlatiladi. Kod
+     * `en_us`, `uz_cr` kabi qo'shimchali bo'lishi mumkin — faqat birinchi
+     * ikki harfni olamiz.
+     *
+     * DIQQAT: kategoriya NOMLARI bu yerda tarjima qilinmaydi — ular
+     * `ai_cat_*` til satrlaridan KO'RSATISH paytida olinadi, ya'ni har
+     * kim o'z tilida ko'radi. Model faqat ERKIN MATNNI (xulosa, dalil,
+     * tavsiya) shu tilda yozadi.
+     *
+     * @return array ['kod' => 'uz', 'nom' => '...', 'yozuv' => '...']
+     */
+    public static function tahlil_tili(?int $teacherid): array {
+        global $CFG, $DB;
+
+        $lang = '';
+        if ($teacherid) {
+            $lang = (string) $DB->get_field('user', 'lang', ['id' => $teacherid]);
+        }
+        if ($lang === '') {
+            $lang = (string) ($CFG->lang ?? 'uz');
+        }
+        $kod = strtolower(substr($lang, 0, 2));
+
+        $xarita = [
+            'uz' => [
+                'nom' => "O'ZBEK TILIDA (lotin yozuvida)",
+                'yozuv' => "o'zbek tilida",
+            ],
+            'ru' => [
+                'nom' => 'RUS TILIDA (на русском языке)',
+                'yozuv' => 'на русском языке',
+            ],
+            'en' => [
+                'nom' => 'ENGLISH (in English)',
+                'yozuv' => 'in English',
+            ],
+        ];
+        if (!isset($xarita[$kod])) {
+            $kod = 'uz';
+        }
+        return ['kod' => $kod] + $xarita[$kod];
+    }
+
+    /** Tahlil qo'llab-quvvatlanadigan tillar. */
+    const TILLAR = ['uz', 'ru', 'en'];
+
+    /**
+     * Tahlildagi ERKIN MATN maydonlarini ajratib olish (tarjima uchun).
+     *
+     * Faqat matn: ball, metrika va kodlar tarjima qilinmaydi — ular hamma
+     * tilda BIR XIL bo'lishi SHART, aks holda ingliz va o'zbek tilida
+     * boshqa-boshqa baho ko'rinardi.
+     */
+    protected static function matn_maydonlari(array $javob): array {
+        $m = [
+            'summary' => (string) ($javob['summary'] ?? ''),
+            'learned' => array_values((array) ($javob['learned'] ?? [])),
+            'wellbeing_notes' => array_values((array) ($javob['wellbeing_notes'] ?? [])),
+            'recommendations' => array_values((array) ($javob['recommendations'] ?? [])),
+            'cats' => [],
+        ];
+        foreach ((array) ($javob['categories'] ?? []) as $c) {
+            $kod = (string) ($c['code'] ?? '');
+            if ($kod === '') {
+                continue;
+            }
+            $m['cats'][$kod] = array_filter([
+                'actual_topic' => (string) ($c['actual_topic'] ?? ''),
+                'evidence' => (string) ($c['evidence'] ?? ''),
+                'advice' => (string) ($c['advice'] ?? ''),
+            ], function ($v) {
+                return $v !== '';
+            });
+        }
+        return $m;
+    }
+
+    /**
+     * Tarjima qilingan matnni tahlil massiviga qaytarib joylash.
+     * Ball va metrikalar TEGILMAYDI.
+     */
+    protected static function matnni_joylash(array $javob, array $t): array {
+        foreach (['summary', 'learned', 'wellbeing_notes', 'recommendations'] as $k) {
+            if (isset($t[$k]) && $t[$k] !== '' && $t[$k] !== []) {
+                $javob[$k] = $t[$k];
+            }
+        }
+        $cats = (array) ($t['cats'] ?? []);
+        foreach ((array) ($javob['categories'] ?? []) as $i => $c) {
+            $kod = (string) ($c['code'] ?? '');
+            if ($kod === '' || empty($cats[$kod])) {
+                continue;
+            }
+            foreach (['actual_topic', 'evidence', 'advice'] as $k) {
+                if (!empty($cats[$kod][$k])) {
+                    $javob['categories'][$i][$k] = $cats[$kod][$k];
+                }
+            }
+        }
+        return $javob;
+    }
+
+    /**
+     * Tahlil matnini BOSHQA TILGA o'girish — ALOHIDA so'rov.
+     *
+     * NEGA ALOHIDA (asosiy so'rovga qo'shib yuborilmaydi):
+     *   - asosiy tahlil javobi hozir ham ~19 KB; uch tilni bitta javobga
+     *     siqsak, model javob uzunligi chegarasiga urilib matnni O'RTASIDAN
+     *     KESADI — transkript bilan 0.13.0 da aynan shu bo'lgan;
+     *   - bu so'rov yiqilsa tahlil ASOSIY TILIDA ishlaydi, shunchaki o'sha
+     *     til yo'q bo'ladi (xavfsiz degradatsiya);
+     *   - faqat MATN yuboriladi, ball/metrika emas — so'rov kichik va arzon.
+     *
+     * @return array|null tarjima qilingan matn maydonlari yoki null
+     */
+    protected static function tarjima(array $javob, string $maqsad): ?array {
+        $til = self::til_tavsifi($maqsad);
+        if (!$til) {
+            return null;
+        }
+        $matn = self::matn_maydonlari($javob);
+        if (($matn['summary'] ?? '') === '') {
+            return null;
+        }
+
+        $prompt = "Quyida O'ZBEKISTONdagi maktabda o'tilgan darsning metodik "
+            . "tahlili JSON ko'rinishida berilgan.\n\n"
+            . "Vazifa: QIYMATLARDAGI matnni " . $til['nom'] . " o'gir.\n\n"
+            . "QAT'IY QOIDALAR:\n"
+            . "- JSON TUZILISHI o'zgarmaydi: kalitlar, massiv uzunliklari, "
+            . "kategoriya kodlari AYNAN o'sha qoladi;\n"
+            . "- KALITLARNI tarjima qilma (summary, learned, cats, evidence... "
+            . "ingliz tilida qoladi);\n"
+            . "- raqam, foiz va [MM:SS] belgilarini O'ZGARTIRMA;\n"
+            . "- transkriptdan olingan qo'shtirnoq ichidagi KO'CHIRMA asl tilida "
+            . "qoladi, atrofidagi izoh esa " . $til['yozuv'] . " bo'ladi;\n"
+            . "- hech narsa qo'shma va tushirib qoldirma — bu TARJIMA, "
+            . "qayta yozish emas.\n\n"
+            . "FAQAT JSON qaytar:\n"
+            . json_encode($matn, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        try {
+            $javobi = self::so_rov($prompt);
+            return is_array($javobi) ? $javobi : null;
+        } catch (\Throwable $e) {
+            debugging('local_targetzenit: tarjima (' . $maqsad . ') bo\'lmadi — '
+                . $e->getMessage(), DEBUG_DEVELOPER);
+            return null;
+        }
+    }
+
+    /** Til kodining tavsifi (prompt uchun). */
+    protected static function til_tavsifi(string $kod): ?array {
+        $x = [
+            'uz' => ['nom' => "O'ZBEK TILIGA (lotin yozuvida)", 'yozuv' => "o'zbek tilida"],
+            'ru' => ['nom' => 'RUS TILIGA (на русский язык)', 'yozuv' => 'на русском языке'],
+            'en' => ['nom' => 'ENGLISH (into English)', 'yozuv' => 'in English'],
+        ];
+        return $x[$kod] ?? null;
+    }
+
     /** Model ro'yxati bo'yicha so'rov: biri yiqilsa keyingisi sinaladi. */
     protected static function so_rov(string $prompt, ?string $b64 = null,
                                      ?string $mime = null, bool $json = true,
@@ -1108,9 +1276,16 @@ class ai {
             }
 
             // ---------- 2-bosqich: to'liq matn bo'yicha tahlil (audiosiz)
+            //
+            // TIL: tahlilni o'qituvchi o'qiydi, shuning uchun uning Moodle
+            // interfeys tilida yoziladi. Yozuvni kim boshlagani
+            // (`audio.teacherid`) aniqrog'i — dars qatorini boshqa odam
+            // yaratgan bo'lishi mumkin.
+            $til = self::tahlil_tili((int) ($audio->teacherid ?: $dars->teacherid));
             $javob = self::so_rov(self::prompt_analyse($dars, $course, $transkript,
-                $materialbloki));
+                $materialbloki, $til));
             $javob['transcript'] = $transkript;
+            $javob['_til'] = $til['kod'];
             $javob['materialdesc'] = $materialtavsif;
 
             // Fan oilasi: promptga ham, vazn profiliga ham shu kerak
@@ -1324,7 +1499,10 @@ class ai {
      */
     protected static function prompt_analyse(\stdClass $dars, ?\stdClass $course,
                                              string $transkript,
-                                             ?string $material = null): string {
+                                             ?string $material = null,
+                                             ?array $til = null): string {
+        $til = $til ?: ['kod' => 'uz', 'nom' => "O'ZBEK TILIDA (lotin yozuvida)",
+                        'yozuv' => "o'zbek tilida"];
         $mavzu = trim((string) $dars->topic);
         $kurs = $course ? $course->fullname : '';
 
@@ -1424,6 +1602,53 @@ class ai {
             . "Har kategoriya 0-100 FOIZDA baholanadi (ha/yo'q EMAS):\n"
             . $royxat . "\n"
 
+            // ===== BOSHLANG'ICH SINF: ARALASH TIL — KAMCHILIK EMAS
+            //
+            // Foydalanuvchi talabi (2026-11-16): 1-3 sinflarda o'quvchilarning
+            // bir qismi ingliz tilini, bir qismi rus tilini, bir qismi o'zbek
+            // tilini bilmaydi. O'qituvchi shu sababli ataylab aralash tilda
+            // gapiradi — bu tushunishni ta'minlash USULI, xato emas.
+            . ($sinf !== null && $sinf <= 4
+                ? "=== BOSHLANG'ICH SINF QOIDASI ({$sinf}-sinf) ===\n"
+                  . "Bu yoshdagi sinfda o'quvchilarning bir qismi ingliz tilini, "
+                  . "bir qismi rus tilini, bir qismi o'zbek tilini BILMAYDI. "
+                  . "Shuning uchun o'qituvchining ARALASH TILDA gapirishi "
+                  . "(code-switching), tarjima qilib takrorlashi, ona tilida "
+                  . "izohlab berishi — METODIK JIHATDAN TO'G'RI va bu yoshda "
+                  . "KUTILGAN xatti-harakat.\n"
+                  . "SHUNING UCHUN: `target_language_use`, `language_modeling` va "
+                  . "shunga o'xshash kategoriyalarda aralash til uchun ball "
+                  . "PASAYTIRMA va \"faqat chet tilida gapirmadi\" deb kamchilik "
+                  . "yozma. Baholash asosi boshqa: o'quvchi TUSHUNDIMI, ma'no "
+                  . "yetib bordimi, o'qituvchi tushunmaganlarga yetib bordimi.\n"
+                  . "Agar o'qituvchi faqat bitta tilda gapirib, bir qism "
+                  . "o'quvchi tushunmay qolgan bo'lsa — SHU kamchilik.\n\n"
+                : '')
+
+            // ===== AMALIY / MASHQ DARSI: O'QUVCHI FAOLLIGI — YAXSHI BELGI
+            //
+            // Foydalanuvchi talabi (2026-11-16): amaliy darsda o'qituvchi emas,
+            // O'QUVCHI ko'proq faol bo'ladi — misollar beriladi, masalalar
+            // ishlanadi, mashq qilinadi. Bu o'qituvchining balini TUSHIRMASLIGI
+            // kerak. (Vaznlar `DARS_TURLARI` da allaqachon shunga moslangan,
+            // lekin model buni matnda ham bilishi kerak — aks holda "o'qituvchi
+            // kam gapirdi" deb kamchilik yozib qo'yadi.)
+            . "=== AMALIY VA MASHQ DARSI QOIDASI ===\n"
+            . "Agar dars turi amaliy, mustahkamlash, takrorlash yoki nazorat "
+            . "bo'lsa (`lesson_type`), o'quvchining ko'p va o'qituvchining kam "
+            . "gapirishi — KUTILGAN NATIJA, kamchilik EMAS.\n"
+            . "- `teacher_talk_pct` pastligi (masalan 30-40%) bunday darsda "
+            . "YAXSHI belgi: demak vaqt mashqqa, masala yechishga, misol "
+            . "ishlashga ketgan;\n"
+            . "- misol berish, masala yechish, mashq qilish, doskaga chiqib "
+            . "ishlash, mustaqil topshiriq — darsning MAQSADI;\n"
+            . "- shu uchun ball PASAYTIRMA. Aksincha, `participation`, "
+            . "`embedding`, `practice_time`, `student_talk_length` da yuqori "
+            . "ball ber va buni `evidence` da ko'rsat;\n"
+            . "- \"o'qituvchi kam tushuntirdi\", \"o'qituvchi kam gapirdi\" kabi "
+            . "kamchilikni bunday darsda YOZMA — faqat o'quvchilar nima "
+            . "qilayotganini TUSHUNMAGAN bo'lsa yoz.\n\n"
+
             . "=== HALOLLIK QOIDASI ===\n"
             . ($material !== null
                 ? "Senda audio transkripti VA o'qituvchi doskada ko'rsatgan MATERIAL bor "
@@ -1476,6 +1701,25 @@ class ai {
             . "- negative_episodes: baqirish/kinoya/kamsitish epizodlari soni (aniq "
             . "eshitilgani; yo'q bo'lsa 0)\n"
             . "- language: darsda ishlatilgan tillar ulushi\n\n"
+
+            // ===== JAVOB TILI
+            //
+            // Tahlilni O'QITUVCHI o'qiydi, shuning uchun matn uning Moodle
+            // interfeys tilida bo'ladi (2026-11-16 talabi). Kategoriya
+            // NOMLARI bu yerda emas — ular til satrlaridan ko'rsatish
+            // paytida olinadi, ya'ni direktor o'z tilida ko'radi.
+            . "=== JAVOB TILI — MAJBURIY ===\n"
+            . "Quyidagi JSON maydonlaridagi ERKIN MATN " . $til['nom'] . " yozilsin: "
+            . "summary, actual_topic, evidence, advice, learned, "
+            . "wellbeing_notes, recommendations.\n"
+            . "Boshqa tilda yozma — o'qituvchi " . $til['yozuv'] . " o'qiydi.\n"
+            . "ISTISNO: transkriptdan KO'CHIRMA keltirsang, ko'chirmaning O'ZI "
+            . "asl tilida qolsin (masalan o'quvchi inglizcha gapirgan bo'lsa "
+            . "inglizcha) — ko'chirma dalil, uni tarjima qilish dalilni "
+            . "buzadi. Ko'chirmani qo'shtirnoq ichida ber, izohini esa "
+            . $til['yozuv'] . " yoz.\n"
+            . "Kod qiymatlari (code, lesson_type, confidence) INGLIZCHA "
+            . "qoladi — ular tizim kalitlari, tarjima qilinmaydi.\n\n"
 
             . "FAQAT JSON qaytar, boshqa hech qanday matn yo'q:\n"
             . '{'
@@ -1722,6 +1966,12 @@ class ai {
         $materialdesc = $javob['materialdesc'] ?? null;
         unset($javob['materialdesc']);
 
+        // Tahlil matni qaysi tilda yozilgani. Ko'rsatishda kerak: boshqa
+        // tilda ishlaydigan odam "nega matn o'zbekcha?" deb hayron
+        // bo'lmasligi uchun kichik izoh chiqaramiz.
+        $tahliltili = (string) ($javob['_til'] ?? '');
+        unset($javob['_til']);
+
         $tur = self::dars_turi($javob['lesson_type'] ?? '');
         $javob['lesson_type'] = $tur;
         $javob['subject_family'] = $oila;
@@ -1771,6 +2021,30 @@ class ai {
         $audio->transcript = $transkript;
         $audio->analysis = json_encode($javob, JSON_UNESCAPED_UNICODE);
         $audio->materialdesc = $materialdesc;
+        $audio->analysislang = $tahliltili ?: null;
+
+        // ===== UCH TIL (2026-11-16 talabi)
+        //
+        // Tahlil ASOSIY tilda yozildi; qolgan ikki tilga ALOHIDA so'rov bilan
+        // o'giriladi va `analysis_i18n` da saqlanadi. Ko'rsatishda
+        // `for_lesson()` ko'ruvchining tilini tanlaydi.
+        //
+        // Ball va metrikalar tarjima qilinmaydi — ular hamma tilda bir xil.
+        // Tarjima yiqilsa tahlil asosiy tilida ishlaydi (xavfsiz degradatsiya).
+        $i18n = [];
+        if ($tahliltili !== '') {
+            foreach (self::TILLAR as $t) {
+                if ($t === $tahliltili) {
+                    continue;
+                }
+                $tj = self::tarjima($javob, $t);
+                if ($tj) {
+                    $i18n[$t] = $tj;
+                }
+            }
+        }
+        $audio->analysis_i18n = $i18n
+            ? json_encode($i18n, JSON_UNESCAPED_UNICODE) : null;
         $audio->aimodel = \core_text::substr($model, 0, 64);
         $audio->aierror = null;
         $audio->analysedat = time();
@@ -1828,6 +2102,22 @@ class ai {
             return null;
         }
         $j = json_decode($a->analysis, true);
-        return is_array($j) ? ['audio' => $a, 'data' => $j] : null;
+        if (!is_array($j)) {
+            return null;
+        }
+
+        // KO'RUVCHINING TILI: tahlil matni uch tilda saqlanadi. Shu yerda
+        // almashtirilgani uchun sahifalar (dars.php, dars_tahlil.php,
+        // mobil ilova) o'zgarishsiz to'g'ri tilda ko'rsatadi.
+        // Ball va metrikalar almashmaydi — ular tildan qat'i nazar bir xil.
+        $men = substr(current_language(), 0, 2);
+        if ($men !== (string) $a->analysislang && !empty($a->analysis_i18n)) {
+            $i18n = json_decode($a->analysis_i18n, true);
+            if (is_array($i18n) && !empty($i18n[$men])) {
+                $j = self::matnni_joylash($j, $i18n[$men]);
+                $a->analysislang = $men;   // UI izohi endi kerak emas
+            }
+        }
+        return ['audio' => $a, 'data' => $j];
     }
 }

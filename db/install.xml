@@ -80,6 +80,9 @@
         <FIELD NAME="attendance" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="present" SEQUENCE="false" COMMENT="present|absent|late|excused"/>
         <FIELD NAME="grade" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="1-10, bo'sh bo'lishi mumkin"/>
         <FIELD NAME="comment" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="hwstatus" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="O'tgan darsda berilgan UV tekshiruvi: bajardi|qisman|bajarmadi. NULL = tekshirilmagan"/>
+        <FIELD NAME="hwgrade" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="UV bahosi 1-10, kunlik bahodan alohida"/>
+        <FIELD NAME="latemin" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="Kechikish daqiqasi (attendance=late bilan birga)"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
@@ -88,6 +91,27 @@
       <INDEXES>
         <INDEX NAME="lesson_user" UNIQUE="true" FIELDS="lessonid, userid"/>
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_lessonres" COMMENT="Dars resurslari: o'quvchiga ko'rinadigan slayd/video/havola. Doska materiali (lessonboard, AI uchun) bundan ALOHIDA.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="lessonid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="_lesson.id"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="fayl" SEQUENCE="false" COMMENT="fayl|havola"/>
+        <FIELD NAME="url" TYPE="char" LENGTH="1333" NOTNULL="false" SEQUENCE="false" COMMENT="havola turi uchun"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="ko'rsatiladigan nom (fayl uchun bo'sh bo'lsa fayl nomi)"/>
+        <FIELD NAME="tartib" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="koringan" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1 = o'quvchiga ochiq"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="kim qo'shdi"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="lessonid" TYPE="foreign" FIELDS="lessonid" REFTABLE="local_targetzenit_lesson" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="lesson_tartib" UNIQUE="false" FIELDS="lessonid, tartib"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_targetzenit_audio" COMMENT="Dars audio yozuvi. Audio VAQTINCHALIK — transkriptdan keyin yoki muddat o'tgach o'chadi, matn qoladi.">
@@ -104,6 +128,8 @@
         <FIELD NAME="warning" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Yig'ishda sezilgan nuqson: yetmagan bo'lak, qisqa davomiylik"/>
         <FIELD NAME="audiblesec" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Faylda HAQIQATAN bor ovoz (soniya). 0 = o'lchanmagan (eski yozuv)"/>
         <FIELD NAME="wallsec" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Yozuv tugmasi bosilgan turgan vaqt (devor soati). audiblesec'dan keskin katta bo'lsa yozuv kesilgan"/>
+        <FIELD NAME="analysis_i18n" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Tahlil MATNINING boshqa tillardagi nusxasi: {uz:{...},ru:{...},en:{...}}. Ball va metrika tarjima qilinmaydi — ular hamma tilda bir xil."/>
+        <FIELD NAME="analysislang" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Tahlil matni qaysi tilda yozilgan (o'qituvchining Moodle tili): uz|ru|en"/>
         <FIELD NAME="materialdesc" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI doskadagi materialni ko'rib yozgan tavsif. Zavuch 'AI nimani ko'rdi' degan savolga javob olishi uchun saqlanadi."/>
         <FIELD NAME="diag" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Brauzer tomonidagi hodisalar jurnali (QORA QUTI): oyna yashirildi/ko'rindi, internet uzildi, mikrofon o'chdi, qorovul tiklandi. Yozuv nega jim qolganini SHUNDAN aniqlanadi."/>
         <FIELD NAME="transcript" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI transkripti — audio o'chgandan keyin ham qoladi"/>

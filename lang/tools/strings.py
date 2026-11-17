@@ -166,6 +166,14 @@ S = {
         "\u0417\u0430\u043f\u0438\u0441\u0430\u0442\u044c \u0441 \u043d\u0430\u0447\u0430\u043b\u0430 (\u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442 \u0432 \u0441\u0442\u043e\u0440\u043e\u043d\u0443)",
     ),
     # ---------------------------------------- doskadagi material (AI ko'rishi uchun)
+    "ai_lang_note": (
+        "This analysis was written in {$a} \u2014 the language the teacher "
+        "uses on the platform. Category names are shown in your own language.",
+        "Bu tahlil {$a} yozilgan \u2014 o'qituvchi platformada shu tilda "
+        "ishlaydi. Kategoriya nomlari sizning tilingizda ko'rsatiladi.",
+        "\u0410\u043d\u0430\u043b\u0438\u0437 \u043d\u0430\u043f\u0438\u0441\u0430\u043d \u043d\u0430 {$a} \u2014 \u044d\u0442\u043e \u044f\u0437\u044b\u043a, \u043d\u0430 \u043a\u043e\u0442\u043e\u0440\u043e\u043c \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u0443\u0447\u0438\u0442\u0435\u043b\u044c. "
+        "\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u044f \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0439 \u043f\u043e\u043a\u0430\u0437\u0430\u043d\u044b \u043d\u0430 \u0432\u0430\u0448\u0435\u043c \u044f\u0437\u044b\u043a\u0435.",
+    ),
     "mt_title": (
         "Board material (the AI sees it in the analysis)",
         "Doskadagi material (AI tahlilda ko'radi)",

@@ -285,24 +285,41 @@ class mavzu {
         return $DB->get_record('local_targetzenit_mavzu', ['id' => $slot->mavzuid]);
     }
 
-    /** Qamrov: rejadagi mavzular va ulardan nechtasi o'tilgan. */
-    public static function qamrov(string $year, string $subjectkey, string $groupkey): array {
+    /**
+     * Qamrov: rejadagi mavzular va ulardan nechtasi o'tilgan.
+     *
+     * `$chorak > 0` bo'lsa faqat shu chorak mavzulari hisoblanadi (jurnal
+     * chorak ko'rinishida yillik foiz chalg'itadi); 0 — butun yil.
+     */
+    public static function qamrov(string $year, string $subjectkey, string $groupkey,
+                                   int $chorak = 0): array {
         global $DB;
 
-        $jami = (int) $DB->count_records('local_targetzenit_mavzu', [
-            'academicyear' => $year, 'subjectkey' => $subjectkey, 'groupkey' => $groupkey,
-        ]);
+        $shart = ['academicyear' => $year, 'subjectkey' => $subjectkey,
+                  'groupkey' => $groupkey];
+        if ($chorak > 0) {
+            $shart['chorak'] = $chorak;
+        }
+        $jami = (int) $DB->count_records('local_targetzenit_mavzu', $shart);
+
         // O'tilgan deb hisoblanadi: slotga mavzu biriktirilgan VA o'sha
         // kun/dars uchun `_lesson` qatori bor (o'qituvchi dars o'tgan)
+        $chorakshart = '';
+        $params = ['y' => $year, 'fan' => $subjectkey, 'guruh' => $groupkey];
+        if ($chorak > 0) {
+            $chorakshart = ' AND m.chorak = :chorak';
+            $params['chorak'] = $chorak;
+        }
         $otildi = (int) $DB->get_field_sql(
             "SELECT COUNT(DISTINCT s.mavzuid)
                FROM {local_targetzenit_slot} s
+               JOIN {local_targetzenit_mavzu} m ON m.id = s.mavzuid
                JOIN {local_targetzenit_lesson} l
                  ON l.courseid = s.courseid AND l.lessondate = s.lessondate
                 AND l.lessonno = s.lessonno
               WHERE s.academicyear = :y AND s.subjectkey = :fan
-                AND s.groupkey = :guruh AND s.mavzuid > 0",
-            ['y' => $year, 'fan' => $subjectkey, 'guruh' => $groupkey]);
+                AND s.groupkey = :guruh AND s.mavzuid > 0" . $chorakshart,
+            $params);
 
         return ['jami' => $jami, 'otildi' => $otildi,
                 'foiz' => $jami ? round($otildi / $jami * 100) : 0];
