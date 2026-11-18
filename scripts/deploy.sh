@@ -11,6 +11,7 @@ main() {
 PLUGIN_DIR="${PLUGIN_DIR:-/var/www/moodle/public/local/targetzenit}"
 MOODLE_DIR="${MOODLE_DIR:-/var/www/moodle}"
 PHP="${PHP:-/usr/bin/php8.3}"
+WEB_USER="${WEB_USER:-moodle}"
 BRANCH="${DEPLOY_BRANCH:-main}"
 HEALTH_URL="${HEALTH_URL:-https://lms.target.erpcontrol.uz/}"
 LOCK_FILE="/tmp/deploy-local_targetzenit.lock"
@@ -39,16 +40,16 @@ fi
 echo "Yangilanish: $PREV_COMMIT -> $NEW_COMMIT"
 
 maintenance() {  # on | off
-    sudo -u www-data "$PHP" "$MOODLE_DIR/admin/cli/maintenance.php" --"$1" >/dev/null 2>&1 || true
+    sudo -u "$WEB_USER" "$PHP" "$MOODLE_DIR/admin/cli/maintenance.php" --"$1" >/dev/null 2>&1 || true
 }
 
 apply() {  # kodni joyiga qo'yib, Moodle'ni yangilash
-    chown -R root:www-data "$PLUGIN_DIR"
+    chown -R root:"$WEB_USER" "$PLUGIN_DIR"
     find "$PLUGIN_DIR" -type d -exec chmod 755 {} \;
     find "$PLUGIN_DIR" -type f -exec chmod 644 {} \;
     chmod 755 "$PLUGIN_DIR/scripts/deploy.sh" 2>/dev/null || true
-    sudo -u www-data "$PHP" "$MOODLE_DIR/admin/cli/upgrade.php" --non-interactive
-    sudo -u www-data "$PHP" "$MOODLE_DIR/admin/cli/purge_caches.php"
+    sudo -u "$WEB_USER" "$PHP" "$MOODLE_DIR/admin/cli/upgrade.php" --non-interactive
+    sudo -u "$WEB_USER" "$PHP" "$MOODLE_DIR/admin/cli/purge_caches.php"
 }
 
 # DIQQAT: kod ORQAGA QAYTARILMAYDI.
@@ -68,7 +69,7 @@ fail() {
     echo "!!! Nima qilish kerak:"
     echo "!!!   1) Sayt ochilyaptimi tekshir: $HEALTH_URL"
     echo "!!!   2) nginx/php holati: nginx -t ; systemctl status php8.3-fpm"
-    echo "!!!   3) Moodle xatosi: sudo -u www-data $PHP $MOODLE_DIR/admin/cli/upgrade.php --non-interactive"
+    echo "!!!   3) Moodle xatosi: sudo -u "$WEB_USER" $PHP $MOODLE_DIR/admin/cli/upgrade.php --non-interactive"
     echo "!!!   4) Kod aybdor bo'lsa — TUZATIB, versiyani OSHIRIB, qaytadan deploy qil."
     maintenance disable
     echo "=== Deploy MUVAFFAQIYATSIZ: $(date -Is) ==="
