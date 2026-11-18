@@ -12,6 +12,32 @@ class hook_callbacks {
      * Mehmon va kirmagan foydalanuvchiga ko'rsatilmaydi — sahifa baribir
      * login talab qiladi, havola esa bekorga chalkashtirmasin.
      */
+    /**
+     * O'QITUVCHINI /my (Moodle Dashboard) dan PORTAL bosh sahifasiga
+     * yo'naltiradi (2026-11-18 yakuniy qarori: o'qituvchi Moodle UIni
+     * umuman ko'rmaydi — faqat maket qobig'i, bosh.php). O'quvchi,
+     * ota-ona va boshqa xodimlarga /my butunlay odatdagidek qoladi.
+     * Har qanday xato yutiladi — sahifa buzilmasligi kerak.
+     */
+    public static function before_http_headers(\core\hook\output\before_http_headers $hook): void {
+        global $PAGE, $USER;
+
+        try {
+            if (!isloggedin() || isguestuser()) {
+                return;
+            }
+            if ($PAGE->pagetype !== 'my-index') {
+                return;
+            }
+            if (!teacher::has_any((int) $USER->id)) {
+                return;
+            }
+        } catch (\Throwable $e) {
+            return;
+        }
+        redirect(new \moodle_url('/local/targetzenit/bosh.php'));
+    }
+
     public static function primary_extend(\core\hook\navigation\primary_extend $hook): void {
         // DIQQAT: `global $USER` SHART. Pastda `$USER->id` ishlatiladi va u
         // e'lon qilinmagani uchun "Mening oyligim" yuqori menyuda hech qachon

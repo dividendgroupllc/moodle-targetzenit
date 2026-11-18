@@ -45,10 +45,14 @@ class journal {
             return [];
         }
 
-        // Kun bo'yicha guruhlaymiz: [dayno => [lessonno, ...]]
+        // Kun bo'yicha guruhlaymiz: [dayno => [lessonno => true]].
+        // UNIQUE (dayno, lessonno): sinxronda bir xil juftlik takror yozilgan
+        // yoki blok guruh bir necha marta kelgan bo'lsa ham, bir kun-para
+        // uchun BITTA ustun bo'ladi (aks holda jurnalda bir sana ikki-uch
+        // marta ko'rinadi — 2026-11-18 muammosi).
         $kunlar = [];
         foreach ($jadval as $j) {
-            $kunlar[(int) $j->dayno][] = (int) $j->lessonno;
+            $kunlar[(int) $j->dayno][(int) $j->lessonno] = true;
         }
 
         $out = [];
@@ -58,7 +62,9 @@ class journal {
             $sana = date('Y-m-d', $kun);
             $dow = (int) date('N', $kun);
             if (isset($kunlar[$dow]) && !isset($holidays[$sana])) {
-                foreach ($kunlar[$dow] as $no) {
+                $paralar = array_keys($kunlar[$dow]);
+                sort($paralar);
+                foreach ($paralar as $no) {
                     $out[] = ['date' => $sana, 'lessonno' => $no, 'key' => $sana . '#' . $no];
                 }
             }

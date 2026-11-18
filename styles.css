@@ -118,6 +118,632 @@
 .tz-bugun-qator > td { background: #fff6d9; }
 .tz-bugun-qator .tz-m-sana { font-weight: 700; }
 
+/* ==================================================================
+   PORTAL DIZAYN-TIZIMI (0.68.0) — kelishilgan UI maketi
+   (~/Documents/oqituvchi-portal-ui.html) dan ko'chirilgan.
+   Qoida: UI maketniki, dvijok Moodle'niki. Barcha klasslar tzp- prefiksi
+   bilan — tema (Boost) uslublariga tegilmaydi.
+   ================================================================== */
+:root {
+    /* Brend ranglari LOGOTIPDAN (pix/logo.png): to'q ko'k #002048 + qizil
+       #f81000. Yashil emas — 2026-11-18 foydalanuvchi talabi: sayt rangi
+       logo rangiga mos bo'lsin. */
+    --tzp-brand: #002048; --tzp-brand-dk: #001332; --tzp-brand-bg: #e8edf5;
+    --tzp-logored: #f81000;
+    --tzp-line: #d6ddda; --tzp-muted: #5f6b66;
+    --tzp-ok: #15803d; --tzp-ok-bg: #e9f7ee;
+    --tzp-warn: #b45309; --tzp-warn-bg: #fdf3e3;
+    --tzp-bad: #b91c1c; --tzp-bad-bg: #fdebeb;
+    --tzp-info: #1f5fa8; --tzp-info-bg: #e9f1fa;
+    --tzp-exam: #6b3fa0; --tzp-exam-bg: #f1eafa;
+}
+/* ==================================================================
+   TO'LIQ MAKET QOBIG'I (body.tz-shell) — 2026-11-18 yakuniy qarori:
+   o'qituvchi Moodle UIni umuman ko'rmaydi. Embedded layout ustida
+   shablonning .top / nav / main qismlari aynan ko'chirilgan.
+   ================================================================== */
+body.tz-shell { background: #f3f5f4; margin: 0; }
+body.tz-shell #page, body.tz-shell #page-wrapper,
+body.tz-shell #topofscroll, body.tz-shell #region-main,
+body.tz-shell .main-inner {
+    margin: 0 !important; padding: 0 !important; max-width: none !important;
+    background: transparent; border: 0;
+}
+body.tz-shell {
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1b2420;
+}
+
+/* Yashil top-bar (maket .top) */
+.tz-top {
+    display: flex; align-items: center; gap: 18px;
+    background: var(--tzp-brand); color: #fff;
+    padding: 0 20px; height: 52px;
+}
+.tz-top-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; letter-spacing: .02em; color: #fff; text-decoration: none; }
+.tz-top-brand:hover { color: #fff; text-decoration: none; }
+.tz-top-brand small { font-weight: 400; opacity: .75; margin-left: 8px; font-size: 12px; }
+/* Oq logotip (logo_oq.png) — to'q ko'k panelda chipsiz, bevosita turadi */
+.tz-top-logo { height: 34px; width: auto; display: block; }
+.tz-top-brandtxt { font-weight: 400; opacity: .7; font-size: 12px; align-self: flex-end; margin-bottom: 3px; }
+.tz-top-sp { flex: 1; }
+.tz-top-date { font-size: 13px; opacity: .85; text-transform: capitalize; }
+.tz-top-avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: #fff;
+    color: var(--tzp-brand); font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; flex: none;
+}
+.tz-top-name { font-size: 13px; }
+.tz-top-exit { color: #fff; opacity: .75; font-size: 13px; text-decoration: none; }
+.tz-top-exit:hover { color: #fff; opacity: 1; text-decoration: none; }
+
+/* Til almashtirgich (UZ/RU/EN) — maketdagi langsw */
+.tz-top-lang { display: inline-flex; border: 1px solid rgba(255,255,255,.4); border-radius: 7px; overflow: hidden; }
+.tz-top-lang-btn { background: rgba(255,255,255,.12); color: #fff; padding: 3px 10px; font-size: 11.5px; font-weight: 800; letter-spacing: .03em; text-decoration: none; }
+.tz-top-lang-btn:hover { color: #fff; background: rgba(255,255,255,.25); text-decoration: none; }
+.tz-top-lang-btn.tz-on { background: #fff; color: var(--tzp-brand); }
+
+/* To'liq AI tahlil (kokpit pasti): yopiq = xulosa + foiz, ochiq = to'liq */
+.tz-tahlil-toliq {
+    background: #fff; border: 1.5px solid var(--tzp-line); border-radius: 10px;
+    margin: 0 0 14px; overflow: hidden;
+}
+.tz-tahlil-toliq > summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center;
+    gap: 12px; padding: 12px 16px; flex-wrap: wrap;
+}
+.tz-tahlil-toliq > summary::-webkit-details-marker { display: none; }
+.tz-tahlil-toliq[open] > summary { border-bottom: 1.5px solid var(--tzp-line); background: #fbfcfc; }
+.tz-tahlil-foiz {
+    background: var(--tzp-brand); color: #fff; font-weight: 800; font-size: 14px;
+    border-radius: 8px; padding: 4px 10px; flex: none;
+}
+.tz-tahlil-qisqa { color: var(--tzp-muted); font-size: 13.5px; flex: 1; min-width: 200px; }
+.tz-tahlil-och { color: var(--tzp-brand); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.tz-tahlil-toliq[open] .tz-tahlil-och { display: none; }
+.tz-tahlil-ich { padding: 12px 16px; }
+.tz-tahlil-ich .card { border: 0; box-shadow: none; margin: 0; }
+.tz-transkript { margin-top: 10px; border-top: 1px dashed var(--tzp-line); padding-top: 8px; }
+.tz-transkript > summary { cursor: pointer; font-weight: 700; font-size: 13px; color: var(--tzp-muted); }
+.tz-transkript-matn {
+    white-space: pre-wrap; font-size: 12.5px; background: #f7f9f8;
+    border: 1px solid var(--tzp-line); border-radius: 7px; padding: 10px;
+    max-height: 340px; overflow: auto; margin-top: 8px;
+}
+
+/* Ko'rinish almashtirgich (Hafta / Bugun / Butun maktab) — maket segmenti */
+.tz-vtabs { display: inline-flex; border: 1.5px solid var(--tzp-line); border-radius: 8px; overflow: hidden; background: #fff; }
+.tz-vtab { padding: 8px 16px; font-size: 14px; color: var(--tzp-muted); text-decoration: none; border-right: 1px solid var(--tzp-line); white-space: nowrap; }
+.tz-vtab:last-child { border-right: 0; }
+.tz-vtab:hover { color: #1b2420; text-decoration: none; background: #f6f8f7; }
+.tz-vtab.tz-on { background: var(--tzp-brand); color: #fff; font-weight: 700; }
+
+/* KTP mavzusi dars kartochkasida (maket): reja xira, fakt to'q */
+.tz-tt-mavzu { display: block; font-size: 10.5px; line-height: 1.3; color: #1b2420; margin-top: 2px; }
+.tz-tt-mavzu.tz-reja { color: var(--tzp-muted); font-style: italic; }
+
+/* «Mening haftam» — zamonaviy jadval ilovalari uslubi (Google Calendar /
+   maktab-jadval ilovalari): oq setka, nozik chiziqlar, har dars = rang-kodli
+   kartochka (fan bo'yicha barqaror pastel fon + chap chetida to'q aksent),
+   butun kartochka bosiladi. QOBIQ ichida doim yorug' (OS dark tegmaydi). */
+body.tz-shell .tz-ttweek {
+    border-collapse: separate; border-spacing: 0; width: 100%; min-width: 920px;
+    font-size: 13px; background: #fff; border: 1px solid #e9edeb;
+    border-radius: 14px; overflow: hidden; color: #1b2420;
+    table-layout: fixed;   /* kataklar matndan cho'zilmaydi, uzuni «…» */
+    box-shadow: 0 1px 3px rgba(20, 30, 45, .04);
+}
+body.tz-shell .tz-ttweek td, body.tz-shell .tz-ttweek thead th { width: 18%; }
+body.tz-shell .tz-ttweek th:first-child, body.tz-shell .tz-ttweek td:first-child { width: 66px; }
+.tz-ttweek th, .tz-ttweek td { border-right: 1px solid #f0f3f1; border-bottom: 1px solid #f0f3f1; padding: 6px; vertical-align: top; }
+.tz-ttweek th:last-child, .tz-ttweek td:last-child { border-right: 0; }
+.tz-ttweek tr:last-child td { border-bottom: 0; }
+
+/* Kun sarlavhasi: kun nomi + sana, bugun — brend «pill» (calendar UI naqshi) */
+.tz-ttweek thead th { background: #fbfcfc; text-align: center; font-weight: 600; white-space: nowrap; padding: 12px 6px 11px; vertical-align: middle; }
+.tz-ttweek thead th .tz-dname { font-size: 12.5px; font-weight: 700; color: #2c3a44; }
+.tz-ttweek thead th .tz-ddate { font-size: 11px; font-weight: 400; color: var(--tzp-muted); display: block; margin-top: 1px; }
+.tz-ttweek thead th .tz-off { color: var(--tzp-warn); font-size: 10.5px; display: block; }
+.tz-ttweek thead th.tz-istoday-th { background: #fff; }
+.tz-ttweek thead th.tz-istoday-th .tz-dname {
+    display: inline-block; background: var(--tzp-brand); color: #fff;
+    border-radius: 14px; padding: 3px 12px;
+}
+.tz-ttweek thead th.tz-istoday-th .tz-ddate { color: var(--tzp-brand); font-weight: 600; }
+
+/* Para ustuni: katta raqam + vaqt xira (tipografik ierarxiya) */
+.tz-ttweek tbody th { background: #fbfcfc; text-align: center; color: var(--tzp-muted); vertical-align: middle; }
+.tz-ttweek tbody th strong { font-size: 17px; font-weight: 700; color: #3c4a44; display: block; line-height: 1; }
+.tz-ttweek tbody th .tz-meta { font-size: 10.5px; color: var(--tzp-muted); margin-top: 3px; }
+
+.tz-ttweek td { background: #fff; }
+body.tz-shell .tz-ttweek td.tz-c-empty { background: #fcfdfd; }
+.tz-ttweek td.tz-istoday-col { background: #f5f9fd; }
+
+/* Dars kartochkasi — rang-kodli «event» (Google Calendar / Notion uslubi):
+   yumshoq pastel fon, chap chetida qalin aksent, aniq tipografik ierarxiya. */
+.tz-card {
+    display: block; text-decoration: none; color: inherit; position: relative;
+    background: hsl(var(--h), 58%, 96%);
+    border-radius: 8px; padding: 7px 9px 7px 11px; margin-bottom: 5px;
+    transition: box-shadow .14s ease, transform .14s ease;
+}
+.tz-card::before {
+    content: ''; position: absolute; left: 0; top: 5px; bottom: 5px; width: 3.5px;
+    border-radius: 3px; background: hsl(var(--h), 58%, 50%);
+}
+.tz-card:last-child { margin-bottom: 0; }
+a.tz-card:hover {
+    text-decoration: none; color: inherit;
+    box-shadow: 0 4px 14px rgba(20, 30, 45, .12); transform: translateY(-1px);
+}
+/* Guruh — eng kichik, uppercase, xira (event kategoriyasi) */
+.tz-c-guruh { display: block; font-size: 10px; font-weight: 700; color: hsl(var(--h), 32%, 46%); text-transform: uppercase; letter-spacing: .03em; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .9; }
+/* Fan + xona bitta qatorda — asosiy sarlavha (eng to'q, bold) */
+.tz-c-fanrow { display: flex; align-items: baseline; gap: 6px; margin-top: 1px; }
+.tz-c-fan { flex: 1; min-width: 0; font-weight: 700; font-size: 13.5px; color: hsl(var(--h), 45%, 24%); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tz-c-room { flex: none; font-size: 10px; font-weight: 600; color: hsl(var(--h), 25%, 48%); background: hsla(var(--h), 40%, 88%, .6); border-radius: 4px; padding: 0 5px; }
+/* Mavzu — eng kichik, bir qator (uzuni «…»); kartochkani cho'zmaydi */
+.tz-c-mavzu {
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 10.5px; line-height: 1.3; color: hsl(var(--h), 18%, 42%); margin-top: 3px;
+}
+.tz-c-mavzu.tz-reja { font-style: italic; opacity: .75; }
+.tz-c-xn { display: block; font-size: 10.5px; color: var(--tzp-muted); margin-top: 2px; }
+/* Butun maktab panjarasida O'Z darsi — brend ramka (maket .mine) */
+.tz-grid .tz-lesson.tz-mine {
+    outline: 2px solid var(--tzp-brand); outline-offset: -2px;
+    border-radius: 6px;
+}
+
+/* ============ JURNAL BAHO SETKASI (qobiq ichida) — professional ============
+   E-maktab uslubi + zamonaviy gradebook: toza oq setka, sticky o'quvchilar
+   ustuni, rangli baho kataklari (yuqori=yashil, o'rta=ko'k, past=sariq,
+   yo'q=qizil), bugungi ustun brend, imtihon binafsha, chorak yashil. */
+body.tz-shell .tz-jurnal-wrap { gap: 18px; }
+body.tz-shell .tz-jgrid {
+    border-collapse: separate; border-spacing: 0; background: #fff;
+    border: 1px solid #e9edeb; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(20,30,45,.04);
+}
+body.tz-shell .tz-jgrid th, body.tz-shell .tz-jgrid td {
+    border-right: 1px solid #f0f3f1; border-bottom: 1px solid #f0f3f1;
+    padding: 4px 5px;
+}
+body.tz-shell .tz-jgrid thead th {
+    background: #fbfcfc !important; font-size: 11px; font-weight: 700;
+    color: #3c4a44; padding: 8px 5px;
+}
+body.tz-shell .tz-jgrid thead .tz-j-date { font-size: 12px; color: #2c3a44; }
+body.tz-shell .tz-jgrid thead .tz-meta { font-size: 10px; color: var(--tzp-muted); font-weight: 400; }
+/* O'quvchi ustuni (#  +  ism) — CHAP TARAFDA QOTIB turadi: gorizontal
+   surilganda, ko'p sana/ustun bo'lsa ham ism hech qachon yo'qolmaydi. */
+body.tz-shell .tz-jgrid .tz-col-n,
+body.tz-shell .tz-jgrid .tz-col-ism {
+    position: sticky; z-index: 2;
+}
+body.tz-shell .tz-jgrid .tz-col-n {
+    left: 0; width: 34px; min-width: 34px;
+    background: #fbfcfc; color: var(--tzp-muted); font-weight: 600; text-align: center;
+}
+body.tz-shell .tz-jgrid .tz-col-ism {
+    left: 34px; min-width: 190px; max-width: 220px;
+    background: #fff; font-weight: 600; color: #1b2420; font-size: 12.5px;
+    text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    box-shadow: 2px 0 0 #e9edeb;   /* o'ng chekkasida ajratuvchi (sticky'da border o'rniga) */
+}
+body.tz-shell .tz-jgrid thead .tz-col-n,
+body.tz-shell .tz-jgrid thead .tz-col-ism { z-index: 4; }
+/* Hoverda ham sticky ustun foni saqlanadi (kataklar ostidan o'tib ketmasin) */
+body.tz-shell .tz-jgrid tbody tr:hover .tz-col-n { background: #f2f6f4; }
+body.tz-shell .tz-jgrid tbody tr:hover .tz-col-ism { background: #f7faf9; }
+body.tz-shell .tz-jgrid tbody tr:hover td { background: #fbfdfc; }
+/* Baho katagi — borderless input, markazda; qiymatga qarab rang JS'da */
+body.tz-shell .tz-jgrid .tz-cell {
+    border: 1px solid transparent; border-radius: 6px; background: transparent;
+    font-weight: 700; color: #2c3a44; transition: background .1s;
+}
+body.tz-shell .tz-jgrid .tz-cell:hover { background: #eef2f0; }
+body.tz-shell .tz-jgrid .tz-cell:focus { outline: 0; border-color: var(--tzp-brand); background: #fff; box-shadow: 0 0 0 2px var(--tzp-brand-bg); }
+/* Baho rangi (JS tz-g5/g4/g3/g2 qo'shadi) — yumshoq fon + to'q matn */
+body.tz-shell .tz-jgrid .tz-cell.tz-g5 { background: #e9f7ee; color: #15803d; }
+body.tz-shell .tz-jgrid .tz-cell.tz-g4 { background: #e9f1fa; color: #1f5fa8; }
+body.tz-shell .tz-jgrid .tz-cell.tz-g3 { background: #fdf3e3; color: #b45309; }
+body.tz-shell .tz-jgrid .tz-cell.tz-gN { background: #fdebeb; color: #b91c1c; }
+/* Bugungi ustun — brend (sariq emas) */
+body.tz-shell .tz-jgrid .tz-bugun-col { background: #f5f9fd !important; }
+body.tz-shell .tz-jgrid thead th.tz-bugun-col { box-shadow: inset 0 -3px 0 var(--tzp-brand); color: var(--tzp-brand); }
+body.tz-shell .tz-jgrid .tz-sel { background: #e3ebf5 !important; }
+body.tz-shell .tz-jgrid thead th.tz-sel { box-shadow: inset 0 -3px 0 var(--tzp-brand); }
+/* Imtihon ustuni — binafsha; chorak — yashil */
+body.tz-shell .tz-jgrid .tz-col-exam { background: #f6f1fc; }
+body.tz-shell .tz-jgrid thead th.tz-col-exam .tz-j-date,
+body.tz-shell .tz-jgrid thead th.tz-col-exam .tz-meta { color: #6b3fa0; }
+body.tz-shell .tz-jgrid .tz-exam-cell { color: #6b3fa0; font-weight: 700; }
+body.tz-shell .tz-jgrid .tz-col-term { background: #eef7f3; }
+body.tz-shell .tz-jgrid .tz-term-cell { color: #15803d; font-weight: 800; }
+/* O'ng mavzular ro'yxati — toza karta */
+body.tz-shell .tz-mavzu-scroll { border: 1px solid #e9edeb; border-radius: 10px; }
+body.tz-shell .tz-mavzu thead th { background: #fbfcfc; font-size: 11px; color: var(--tzp-muted); text-transform: uppercase; letter-spacing: .04em; }
+body.tz-shell .tz-ktp-qamrov { font-size: 12.5px; }
+
+/* O'quvchi 360 — maket «O'quvchi 360» tuzilishi */
+.tz-s360-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+.tz-s360-foto { width: 56px; height: 56px; border-radius: 50%; flex: none; }
+.tz-s360-ava { display: flex; align-items: center; justify-content: center; background: var(--tzp-brand-bg); color: var(--tzp-brand); font-weight: 700; font-size: 20px; }
+.tz-s360-inf .tzp-h1 { margin: 0; }
+/* grid2: kartalar auto-fit, keng kartalar butun qatorni egallaydi */
+.tz-s360-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; align-items: start; }
+.tz-s360-grid .tz-s360-wide { grid-column: 1 / -1; }
+/* mini jadval (maket .mini) */
+.tz-mini { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tz-mini th, .tz-mini td { border-bottom: 1px solid #eef1f0; padding: 6px 8px; text-align: center; }
+.tz-mini th { font-size: 11px; letter-spacing: .03em; text-transform: uppercase; color: var(--tzp-muted); font-weight: 700; }
+.tz-mini td:first-child, .tz-mini th:first-child { text-align: left; font-weight: 600; }
+.tz-mini tbody tr:hover td { background: #f7faf9; }
+/* pill (baho belgisi) */
+.tz-pill { display: inline-block; border-radius: 12px; padding: 1px 10px; font-size: 12.5px; font-weight: 800; }
+.tz-pill-g { background: #e9f7ee; color: #15803d; }
+.tz-pill-a { background: #fdf3e3; color: #b45309; }
+.tz-pill-r { background: #fdebeb; color: #b91c1c; }
+/* sharh elementi (maket .sharh-it) */
+.tz-s360-sh { border-left: 3px solid var(--tzp-line); padding: 5px 0 5px 11px; margin: 8px 0; font-size: 13px; line-height: 1.45; }
+.tz-s360-sh small { display: block; color: var(--tzp-muted); }
+.tz-stud-link { color: inherit; text-decoration: none; }
+.tz-stud-link:hover { color: var(--tzp-brand); text-decoration: underline; }
+
+/* «Barcha mavzular va UV» jadvali (jurnal 2-ko'rinish) */
+body.tz-shell .tz-mavjad { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+body.tz-shell .tz-mavjad th { background: #fbfcfc; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--tzp-muted); padding: 8px 10px; border-bottom: 2px solid #e9edeb; white-space: nowrap; }
+body.tz-shell .tz-mavjad td { padding: 8px 10px; border-bottom: 1px solid #f0f3f1; vertical-align: top; }
+body.tz-shell .tz-mavjad tbody tr:hover td { background: #f7faf9; }
+body.tz-shell .tz-mavjad .tz-m-num { color: var(--tzp-muted); font-weight: 700; width: 36px; }
+body.tz-shell .tz-mavjad td:nth-child(2) { white-space: nowrap; color: #3c4a44; font-weight: 600; }
+body.tz-shell .tz-mavjad .tz-m-reja { color: var(--tzp-muted); font-style: italic; }
+body.tz-shell .tz-mavjad tr.tz-m-exam-row td { background: #f6f1fc; }
+body.tz-shell .tz-mavjad tr.tz-m-exam-row:hover td { background: #f1e9fb; }
+body.tz-shell .tz-mavjad tr.tz-m-today-row td { background: #f5f9fd; }
+.tz-mst { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; border-radius: 5px; padding: 2px 8px; white-space: nowrap; }
+.tz-mst-done { background: #e9f7ee; color: #15803d; }
+.tz-mst-today { background: var(--tzp-brand); color: #fff; }
+.tz-mst-future { background: #eef1f0; color: var(--tzp-muted); }
+.tz-mst-exam { background: #6b3fa0; color: #fff; }
+
+/* Butun maktab panjarasi QOBIQ ichida — doim yorug' va nafis (OS dark
+   rejimi bu yerga tegmaydi: qobiq foni oq). Week kartochkalari uslubiga mos. */
+body.tz-shell .tz-grid { border: 1px solid var(--tzp-line); border-radius: 12px; overflow: hidden; background: #fff; }
+body.tz-shell .tz-grid th { background: #fafbfb !important; color: #2c3a44 !important; border-bottom: 1px solid #eef1f0 !important; border-right: 1px solid #eef1f0 !important; }
+body.tz-shell .tz-grid th span, body.tz-shell .tz-grid tbody th.tz-no span { color: var(--tzp-muted) !important; }
+body.tz-shell .tz-grid tbody th.tz-no { background: #fafbfb !important; }
+body.tz-shell .tz-grid td { border-bottom: 1px solid #eef1f0 !important; border-right: 1px solid #eef1f0 !important; background: #fff; }
+body.tz-shell .tz-grid td.tz-bosh { background: repeating-linear-gradient(135deg, #fcfcfd, #fcfcfd 6px, #f6f7f8 6px, #f6f7f8 12px) !important; }
+body.tz-shell .tz-grid td.tz-multi { background: #fff !important; }
+/* Panjaradagi dars kartochkasi — pastel, yorug' (week bilan bir xil) */
+body.tz-shell .tz-grid .tz-lesson {
+    background: hsl(var(--h), 62%, 96.5%) !important;
+    border-left: 3px solid hsl(var(--h), 55%, 52%) !important;
+    border-radius: 6px; padding: 5px 7px; display: block;
+    text-decoration: none; color: inherit;
+}
+body.tz-shell .tz-grid a.tz-lesson:hover { box-shadow: 0 3px 10px rgba(20,30,45,.13); transform: translateY(-1px); text-decoration: none; }
+body.tz-shell .tz-grid .tz-g-fan { font-weight: 700; font-size: 12.5px; color: hsl(var(--h), 42%, 26%) !important; line-height: 1.2; }
+body.tz-shell .tz-grid .tz-g-oqit { font-size: 10.5px; color: var(--tzp-muted) !important; line-height: 1.3; }
+body.tz-shell .tz-grid .tz-bk { font-size: 10.5px; font-weight: 700; opacity: .85; }
+body.tz-shell .tz-grid .tz-lesson.tz-mine { outline: 2px solid var(--tzp-brand); outline-offset: -2px; }
+
+/* Material tugmalari + kichik MODAL oynalar (kokpit) */
+.tz-modal {
+    position: fixed; inset: 0; z-index: 1050;
+    background: rgba(10, 20, 35, .45);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.tz-modal-quti {
+    position: relative; background: #fff; border-radius: 12px;
+    width: 640px; max-width: 96vw; max-height: 86vh; overflow: auto;
+    padding: 18px 18px 14px; box-shadow: 0 18px 50px rgba(0, 0, 0, .25);
+}
+.tz-modal-quti > .card { border: 0; box-shadow: none; margin: 0; }
+.tz-modal-quti > .card > .card-body { padding: 0 6px; }
+.tz-modal-yop {
+    position: absolute; top: 10px; right: 12px; z-index: 2;
+    border: 0; background: #eef1f0; color: var(--tzp-muted);
+    width: 30px; height: 30px; border-radius: 50%; font-size: 14px;
+    line-height: 1; cursor: pointer;
+}
+.tz-modal-yop:hover { background: var(--tzp-bad-bg); color: var(--tzp-bad); }
+
+/* O'ng «Dars yozuvi» kartidagi qisqa AI xulosa havolasi */
+.tz-ai-mini {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--tzp-brand-bg); border: 1.5px solid var(--tzp-line);
+    border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+    text-decoration: none; color: #1b2420;
+}
+.tz-ai-mini:hover { border-color: var(--tzp-brand); text-decoration: none; color: #1b2420; }
+.tz-ai-mini-matn { font-size: 12.5px; line-height: 1.45; }
+
+/* Tab-navigatsiya (maket nav) */
+.tz-nav {
+    background: #fff; border-bottom: 1.5px solid var(--tzp-line);
+    padding: 0 20px; display: flex; gap: 2px; align-items: center;
+    overflow-x: auto;
+}
+.tz-nav-tab {
+    display: inline-block; padding: 12px 14px 10px; font-size: 14px;
+    color: var(--tzp-muted); border-bottom: 3px solid transparent;
+    white-space: nowrap; text-decoration: none;
+}
+.tz-nav-tab:hover { color: #1b2420; text-decoration: none; }
+.tz-nav-tab.tz-on { color: var(--tzp-brand); border-bottom-color: var(--tzp-brand); font-weight: 700; }
+
+/* Asosiy maydon (maket main) */
+.tz-main { padding: 18px clamp(16px, 2vw, 32px) 60px; }
+/* Qobiq ichida kanvas shaffof — sahifa foni allaqachon kulrang */
+body.tz-shell .tz-ishstoli-wrap {
+    background: transparent; border: 0; border-radius: 0;
+    padding: 0; margin: 0 0 24px;
+}
+
+/* Yo'qlama — maketdagi GORIZONTAL segment (.seg): birlashgan tugmalar */
+body.tz-shell .tz-att-group {
+    display: inline-flex; flex-wrap: nowrap; gap: 0;
+    border: 1.5px solid var(--tzp-line); border-radius: 7px; overflow: hidden;
+    background: #fff;
+}
+body.tz-shell .tz-att-label {
+    margin: 0; padding: 4px 10px; border: 0;
+    border-right: 1px solid var(--tzp-line); border-radius: 0;
+    background: #fff; font-size: 12px; white-space: nowrap;
+}
+body.tz-shell .tz-att-label:last-child { border-right: 0; }
+
+/* Moodle xabarnomalari qobiqda ham ko'rinsin (embedded tepada chiqaradi) */
+body.tz-shell .alert, body.tz-shell .notifications { margin: 10px 20px 0; }
+
+/* ---- ISH STOLI /my ICHIDA (0.69.x): o'qituvchiga Moodle Dashboard'ining
+   standart bloklari yashiriladi, o'rnini bizning kontent (hook orqali
+   qo'shilgan .tz-ishstoli-wrap) egallaydi. Belgi (body.tz-ishstoli) faqat
+   o'qituvchiga qo'yiladi — o'quvchi/ota-ona dashboard'i o'z holicha. ---- */
+#page-my-index.tz-ishstoli .block { display: none !important; }
+#page-my-index.tz-ishstoli #region-main { min-height: 0; }
+/* Maketdagi kanvas: kulrang fon ustida oq kartalar, markazda, chetga yopishmaydi */
+.tz-ishstoli-wrap {
+    font-size: 14px;
+    background: #f3f5f4;
+    border: 1.5px solid var(--tzp-line);
+    border-radius: 12px;
+    padding: 16px 18px 22px;
+    margin: 6px auto 24px;
+    max-width: 1240px;
+}
+.tz-ishstoli-wrap .tzp-dlbl { text-transform: capitalize; }
+.tz-ishstoli-wrap .tzp-card { margin-bottom: 14px; }
+@media (max-width: 768px) {
+    .tz-ishstoli-wrap { padding: 12px; border-radius: 10px; }
+}
+
+/* MAKET BILAN 1:1 PARITET — o'lchamlar aynan shablondan
+   (~/Documents/oqituvchi-portal-ui.html): body 14px/1.45 system-ui,
+   wrap 1240px markazda, card 14/16px, lesson 10/12px, time/what 14px,
+   topic 12.5, btn 12.5, todo 13, kv 13. O'zgartirishdan oldin shablonga
+   solishtiring — bu blok «ko'zga qarab» emas, fayldan ko'chirilgan. */
+#page-my-index.tz-ishstoli #page-header { display: none; }
+/* ASL ILDIZ (2026-11-18): /my Moodle 5 da `limitedwidth` — Boost butun
+   .main-inner konteynerini 830px bilan cheklaydi, shuning uchun kontent
+   qancha «cho'z» desak ham tor quti ichida qolayotgan edi. O'qituvchi
+   ish stolida cheklov olib tashlanadi — sahifa BUTUN ekran enini oladi. */
+#page-my-index.tz-ishstoli .main-inner { max-width: none !important; }
+#page-my-index.tz-ishstoli #topofscroll { max-width: none !important; }
+.tz-ishstoli-wrap {
+    max-width: none; border: none; border-radius: 12px;
+    background: #f3f5f4; padding: 18px 20px 28px; margin: 6px 0 24px;
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1b2420;
+}
+/* Suyuq kenglik: tor ekranda 1240 kabi, keng ekranda qulay cho'ziladi —
+   chapdagi darslar ustuni kengayadi, o'ngdagi panel esa o'qishga qulay
+   300–400px oralig'ida qoladi (satrlar haddan ortiq uzayib ketmaydi). */
+.tz-ishstoli-ich { max-width: none; margin: 0 auto; }
+.tz-ishstoli-wrap { padding: 18px clamp(16px, 2vw, 32px) 28px; }
+.tz-ishstoli-wrap .tzp-cols {
+    /* Chap («Kun darslari») — butun qolgan enni oladi va cho'ziladi;
+       o'ng (to-do) — torroq, 280–340px, o'ng chekkaga yondoshadi. */
+    grid-template-columns: minmax(0, 1fr) clamp(280px, 22vw, 340px);
+    gap: clamp(16px, 2vw, 32px);
+}
+.tz-ishstoli-wrap .tzp-lesson { width: 100%; }
+@media (max-width: 920px) {
+    .tz-ishstoli-wrap .tzp-cols { grid-template-columns: 1fr; }
+}
+.tz-ishstoli-wrap .tzp-h1 { font-size: 22px; font-weight: 700; margin: 4px 0 2px; }
+.tz-ishstoli-wrap .tzp-sub { font-size: 13.5px; margin: 0 0 14px; }
+.tz-ishstoli-wrap .tzp-card { padding: 16px 18px; margin-bottom: 14px; }
+.tz-ishstoli-wrap .tzp-card h5 { font-size: 16px; margin: 0 0 10px; }
+.tz-ishstoli-wrap .tzp-cnt { font-size: 12px; }
+.tz-ishstoli-wrap .tzp-datebar { margin: 0 0 12px; }
+.tz-ishstoli-wrap .tzp-datebar .tzp-dlbl { font-size: 17px; min-width: 240px; }
+.tz-ishstoli-wrap .tzp-datebar .tzp-btn { padding: 7px 14px; font-size: 14px; }
+.tz-ishstoli-wrap .tzp-lesson { padding: 12px 14px; gap: 14px; margin: 9px 0; }
+.tz-ishstoli-wrap .tzp-lesson .tzp-time { min-width: 90px; }
+.tz-ishstoli-wrap .tzp-lesson .tzp-time b { font-size: 16px; }
+.tz-ishstoli-wrap .tzp-lesson .tzp-what { min-width: 180px; }
+.tz-ishstoli-wrap .tzp-lesson .tzp-what b { font-size: 15.5px; }
+.tz-ishstoli-wrap .tzp-topic { font-size: 13.5px; }
+.tz-ishstoli-wrap .tzp-st { font-size: 12px; padding: 2px 8px; }
+.tz-ishstoli-wrap .tzp-btn { font-size: 13.5px; padding: 7px 13px; }
+.tz-ishstoli-wrap .tzp-nowtag { font-size: 11px; }
+.tz-ishstoli-wrap .tzp-todo li { font-size: 14.5px; padding: 9px 2px; }
+.tz-ishstoli-wrap .tzp-todo .tzp-n { min-width: 30px; height: 30px; font-size: 14px; }
+.tz-ishstoli-wrap .tzp-kv { font-size: 14px; }
+.tz-ishstoli-wrap .tzp-empty { font-size: 14.5px; padding: 18px; }
+.tz-ishstoli-wrap a { text-decoration: none; }
+
+/* ---- Umumiy teri: PLAGINNING BARCHA sahifalari (body.path-local-targetzenit)
+   maket uslubiga o'tadi — har bir echo'ni qayta yozmasdan. Tema (Boost)
+   boshqa sahifalarda o'z holicha qoladi. ---- */
+.path-local-targetzenit #region-main { font-size: 14px; }
+/* Boost'ning limitedwidth (830px) cheklovi plagin sahifalarida olinadi —
+   jurnal setkasi va kokpit ikki ustuni keng ekranni to'liq ishlatadi. */
+.path-local-targetzenit .main-inner { max-width: none !important; }
+.path-local-targetzenit #topofscroll { max-width: none !important; }
+
+/* Kokpit ikki ustuni (maket): chap keng (forma+materiallar), o'ng panel */
+.tz-ishstoli-wrap .tz-kokpit-cols {
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 26vw, 400px);
+}
+.tz-kokpit .tzp-pagebar { margin-bottom: 14px; align-items: flex-start; }
+
+/* Guruh tanlagich: oddiy dropdown, kichikroq shrift */
+.tz-kurs-sel {
+    font-size: 15.5px; font-weight: 700; color: #1b2420;
+    border: 0; border-bottom: 2px dashed var(--tzp-line);
+    background: transparent; padding: 0 2px 2px 0; cursor: pointer;
+    max-width: 100%; font-family: inherit;
+}
+.tz-kurs-sel:hover { border-bottom-color: var(--tzp-brand); color: var(--tzp-brand); }
+.tz-kurs-sel:focus { outline: 2px solid var(--tzp-brand-bg); border-bottom-color: var(--tzp-brand); }
+
+/* Sana boshqaruvi — ‹ kalendar › qatori */
+.tz-sana-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.tz-sana-btn { padding: 2px 10px; font-size: 14px; line-height: 1.4; }
+.tz-sana-input {
+    border: 1.5px solid var(--tzp-line); border-radius: 7px;
+    padding: 2px 8px; font: inherit; font-size: 13px; color: #1b2420; background: #fff;
+}
+.tz-sana-meta { color: var(--tzp-muted); }
+
+/* tz-maket: Moodle'ning o'z sahifa sarlavhasi (katta kurs nomi, breadcrumb
+   bloki) yashiriladi — khead (h1 + meta) maketdagidek O'ZIMIZDA chiziladi. */
+body.tz-maket #page-header { display: none; }
+
+/* Kanvas ichidagi bootstrap kartalar maket .card bilan 1:1 */
+.tz-ishstoli-wrap .card {
+    border: 1.5px solid var(--tzp-line); border-radius: 10px;
+    box-shadow: none; margin-bottom: 14px; background: #fff;
+}
+.tz-ishstoli-wrap .card-body { padding: 16px 18px; }
+.tz-ishstoli-wrap .card .card-title {
+    font-size: 15.5px; font-weight: 700; margin-bottom: 10px; color: #1b2420;
+}
+
+/* Maket .field label: kichik, BOSH HARFLI, xira yorliqlar */
+.tz-kokpit .card-body > label {
+    display: block; font-size: 11.5px; font-weight: 700;
+    letter-spacing: .05em; text-transform: uppercase;
+    color: var(--tzp-muted); margin-bottom: 4px;
+}
+
+/* O'quvchilar jadvali — maket table.roster ko'rinishi */
+.tz-kokpit .tz-dars { border: 0; }
+.tz-kokpit .tz-dars thead th {
+    background: transparent; font-size: 11px; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--tzp-muted);
+    border: 0; border-bottom: 2px solid var(--tzp-line); white-space: nowrap;
+}
+.tz-kokpit .tz-dars td { border: 0; border-bottom: 1px solid #e8ecea; }
+.tz-kokpit .tz-dars tbody tr:hover td { background: #f7faf9; }
+.path-local-targetzenit .card {
+    border: 1.5px solid var(--tzp-line); border-radius: 10px;
+    box-shadow: none; margin-bottom: 14px;
+}
+.path-local-targetzenit .card-title { font-weight: 700; }
+.path-local-targetzenit .btn { border-radius: 7px; font-weight: 600; }
+.path-local-targetzenit .btn-primary,
+.path-local-targetzenit .btn-primary:focus {
+    background: var(--tzp-brand); border-color: var(--tzp-brand);
+}
+.path-local-targetzenit .btn-primary:hover { background: var(--tzp-brand-dk); border-color: var(--tzp-brand-dk); }
+.path-local-targetzenit .btn-outline-primary { color: var(--tzp-brand); border-color: var(--tzp-brand); }
+.path-local-targetzenit .btn-outline-primary:hover { background: var(--tzp-brand); border-color: var(--tzp-brand); color: #fff; }
+.path-local-targetzenit .btn-secondary,
+.path-local-targetzenit .btn-outline-secondary { color: #1b2420; border-color: var(--tzp-line); background: #fff; }
+.path-local-targetzenit .btn-secondary:hover,
+.path-local-targetzenit .btn-outline-secondary:hover { border-color: var(--tzp-brand); color: var(--tzp-brand); background: #fff; }
+.path-local-targetzenit .generaltable { border: 1px solid var(--tzp-line); }
+.path-local-targetzenit .generaltable thead th {
+    background: #eef2f0; border-color: var(--tzp-line);
+    font-size: 12px; font-weight: 700; color: #3c4844;
+}
+.path-local-targetzenit .generaltable td { border-color: #e8ecea; }
+.path-local-targetzenit .generaltable tbody tr:hover td { background: #f7faf9; }
+.path-local-targetzenit .form-control:focus,
+.path-local-targetzenit .custom-select:focus {
+    border-color: var(--tzp-brand);
+    box-shadow: 0 0 0 .2rem rgba(0, 32, 72, .15);
+}
+.path-local-targetzenit .badge-secondary { background: #eef1f0; color: var(--tzp-muted); }
+.path-local-targetzenit .nav-tabs .nav-link.active,
+.path-local-targetzenit .tz-tabs .btn-primary { background: var(--tzp-brand); border-color: var(--tzp-brand); }
+
+/* Sahifa yuqori chizig'i: chapda nom/meta, o'ngda amallar (maket khead) */
+.tzp-pagebar { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; margin: 0 0 14px; }
+.tzp-pagebar .tz-dars-bosh { margin: 0; font-size: 15px; }
+.tzp-sub { color: var(--tzp-muted); margin: -4px 0 12px; font-size: 13.5px; }
+.tzp-empty { color: var(--tzp-muted); background: #f7f9f8; border: 1.5px dashed var(--tzp-line); border-radius: 9px; padding: 14px; text-align: center; }
+@media (max-width: 680px) {
+    .tzp-lesson { align-items: flex-start; }
+    .tzp-lesson .tzp-time { min-width: 64px; }
+    .tzp-datebar .tzp-dlbl { min-width: 0; }
+}
+
+.tzp-cols { display: grid; grid-template-columns: 1.9fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 920px) { .tzp-cols { grid-template-columns: 1fr; } }
+.tzp-card { background: #fff; border: 1.5px solid var(--tzp-line); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+.tzp-card h5 { font-size: 15px; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.tzp-cnt { background: var(--tzp-brand-bg); color: var(--tzp-brand); border-radius: 10px; font-size: 11px; padding: 1px 8px; font-weight: 700; }
+
+/* Sana paneli (maket: ‹ sana › + kalendar + Bugun) */
+.tzp-datebar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+.tzp-datebar .tzp-dlbl { font-size: 15px; font-weight: 800; min-width: 220px; }
+.tzp-dnote { background: var(--tzp-warn-bg); border: 1px solid var(--tzp-warn); color: var(--tzp-warn); border-radius: 7px; padding: 5px 11px; font-size: 12.5px; margin: 0 0 10px; }
+
+/* Dars kartasi (maket: vaqt · guruh-fan · chiplar · tugmalar) */
+.tzp-lesson { border: 1.5px solid var(--tzp-line); border-radius: 9px; padding: 10px 12px; margin: 8px 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #fff; }
+.tzp-lesson.tzp-now { border-color: var(--tzp-brand); background: var(--tzp-brand-bg); box-shadow: 0 0 0 2px var(--tzp-brand-bg); }
+.tzp-lesson.tzp-past { opacity: .92; }
+.tzp-lesson .tzp-time { min-width: 86px; }
+.tzp-lesson .tzp-time b { display: block; font-size: 15px; }
+.tzp-lesson .tzp-time small { color: var(--tzp-muted); }
+.tzp-lesson .tzp-what { flex: 1; min-width: 190px; }
+.tzp-lesson .tzp-what b { font-size: 14.5px; }
+.tzp-lesson .tzp-topic { color: var(--tzp-muted); font-size: 12.5px; display: block; }
+.tzp-nowtag { background: var(--tzp-brand); color: #fff; font-size: 10.5px; font-weight: 700; border-radius: 4px; padding: 2px 7px; letter-spacing: .04em; }
+
+/* Holat chiplari */
+.tzp-st { display: inline-block; font-size: 11px; border-radius: 4px; padding: 1px 7px; margin: 1px 2px 1px 0; font-weight: 600; }
+.tzp-st.tzp-ok { background: var(--tzp-ok-bg); color: var(--tzp-ok); }
+.tzp-st.tzp-no { background: var(--tzp-bad-bg); color: var(--tzp-bad); }
+.tzp-st.tzp-wt { background: #eef1f0; color: var(--tzp-muted); }
+
+/* Tugmalar (maket brendi; bootstrap'ga tegmaymiz) */
+.tzp-btn { display: inline-block; border: 1.5px solid var(--tzp-line); background: #fff; border-radius: 7px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; color: #1b2420; text-decoration: none; }
+.tzp-btn:hover { border-color: var(--tzp-brand); color: var(--tzp-brand); text-decoration: none; }
+.tzp-btn-pri { background: var(--tzp-brand); border-color: var(--tzp-brand); color: #fff; }
+.tzp-btn-pri:hover { background: var(--tzp-brand-dk); color: #fff; }
+.tzp-btn-rec { background: var(--tzp-bad); border-color: var(--tzp-bad); color: #fff; }
+.tzp-btn-rec:hover { background: #991b1b; color: #fff; }
+
+/* Kutilayotgan ishlar ro'yxati */
+.tzp-todo { list-style: none; margin: 0; padding: 0; }
+.tzp-todo li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 2px; border-bottom: 1px dashed var(--tzp-line); font-size: 13.5px; }
+.tzp-todo li:last-child { border-bottom: none; }
+.tzp-todo .tzp-n { min-width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex: none; }
+.tzp-todo .tzp-n.tzp-r { background: var(--tzp-bad-bg); color: var(--tzp-bad); }
+.tzp-todo .tzp-n.tzp-a { background: var(--tzp-warn-bg); color: var(--tzp-warn); }
+.tzp-todo .tzp-n.tzp-b { background: var(--tzp-info-bg); color: var(--tzp-info); }
+.tzp-todo a { color: var(--tzp-brand); font-weight: 600; }
+.tzp-todo small { color: var(--tzp-muted); display: block; }
+.tzp-kv { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed var(--tzp-line); font-size: 13.5px; }
+.tzp-kv:last-child { border-bottom: none; }
+
+/* Jurnal: tanlangan kun ustuni (E-maktab maketi) — bugungi sariqdan ustun */
+.tz-jgrid th.tz-col-kun, .tz-mavzu tbody tr { cursor: pointer; }
+.tz-jgrid .tz-sel { background: #d3dcea !important; }
+.tz-jgrid thead th.tz-sel { box-shadow: inset 0 -3px 0 var(--tzp-brand); }
+.tz-jgrid .tz-col-exam.tz-sel { background: #ddc9f3 !important; }
+.tz-mavzu tr.tz-sel-row > td { background: #d3dcea; }
+.tz-mavzu tr.tz-sel-row .tz-m-sana { font-weight: 700; }
+
 /* Imtihon ustunlari (0.66.0): ball setkada kiritiladi, jurnal ko'rsatadi */
 .tz-jgrid .tz-col-exam { background: #f3ecfc; }
 .tz-jgrid thead th.tz-col-exam .tz-j-date { color: #6b3fa0; font-weight: 700; }

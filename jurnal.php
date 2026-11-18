@@ -9,8 +9,28 @@ use local_targetzenit\lesson;
 use local_targetzenit\mavzu;
 use local_targetzenit\timetable;
 
-$courseid = required_param('courseid', PARAM_INT);
+$courseid = optional_param('courseid', 0, PARAM_INT);
 $termidx = optional_param('term', -1, PARAM_INT);
+
+require_login();
+
+// Kurs ko'rsatilmagan bo'lsa (top-bar «Jurnal» tabidan to'g'ridan-to'g'ri
+// kirilganda) — o'qituvchining BIRINCHI guruhini olamiz; sahifa ichida
+// guruh tanlagich bilan boshqasiga o'tiladi.
+if ($courseid <= 0) {
+    $mening = \local_targetzenit\journal::my_courses((int) $USER->id,
+        timetable::current_year());
+    if (!$mening) {
+        $PAGE->set_context(context_system::instance());
+        $PAGE->set_pagelayout('embedded');
+        $PAGE->requires->css('/local/targetzenit/styles.css');
+        \local_targetzenit\output\maket::boshla('jurnal');
+        echo \core\notification::info(get_string('jr_nomycourses', 'local_targetzenit'));
+        \local_targetzenit\output\maket::tugat();
+        exit;
+    }
+    $courseid = (int) array_key_first($mening);
+}
 
 $course = get_course($courseid);
 require_login($course);
@@ -19,17 +39,18 @@ require_capability('local/targetzenit:teach', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]));
-$PAGE->set_pagelayout('incourse');
+// To'liq maket qobig'i (dars.php bilan bir xil model).
+$PAGE->set_pagelayout('embedded');
 $PAGE->set_title(format_string($course->fullname));
-$PAGE->set_heading(format_string($course->fullname));
+$PAGE->requires->css('/local/targetzenit/styles.css');
 
 // --- O'quv yili va choraklar
 $year = timetable::current_year();
 $terms = array_values(timetable::terms($year));
 if (!$terms) {
-    echo $OUTPUT->header();
+    \local_targetzenit\output\maket::boshla('jurnal');
     echo $OUTPUT->notification(get_string('jr_noterms', 'local_targetzenit'), 'warn');
-    echo $OUTPUT->footer();
+    \local_targetzenit\output\maket::tugat();
     exit;
 }
 
@@ -179,7 +200,12 @@ foreach ($rejaslotlar as $rs) {
     $rejamavzu[$rs->lessondate . '#' . (int) $rs->lessonno] = trim((string) $rs->mavzu);
 }
 
-echo $OUTPUT->header();
+\local_targetzenit\output\maket::boshla('jurnal');
+
+// Maket kanvasi + khead.
+echo html_writer::start_div('tz-ishstoli-wrap tz-kokpit');
+echo html_writer::tag('div', format_string($course->fullname)
+    . ' — ' . format_string($term->name), ['class' => 'tzp-h1 mb-2']);
 
 // Qaytish yo'li — chorak jurnali boshi berk ko'cha bo'lib qolmasin.
 // `Lessons` shu kursning JORIY kuniga emas, umuman bugungi darslarga olib
@@ -188,7 +214,7 @@ echo html_writer::div(
     html_writer::link(new moodle_url('/local/targetzenit/index.php',
         ['view' => 'today', 'date' => date('Y-m-d')]),
         '← ' . get_string('lessons_link', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-secondary mr-2'])
+        ['class' => 'btn btn-sm btn-outline-secondary me-2'])
     . html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'week']),
         get_string('timetable', 'local_targetzenit'),
         ['class' => 'btn btn-sm btn-outline-secondary']),
@@ -230,7 +256,16 @@ echo $OUTPUT->render($select);
 
 echo html_writer::end_div();
 
-echo html_writer::div(local_targetzenit_zoom_panel('jurnal'), 'mb-2');
+
+// Ikki ko'rinish almashtirgich (maket): baholar setkasi / barcha mavzular+UV.
+echo html_writer::div(
+    html_writer::tag('button', get_string('jr_view_grid', 'local_targetzenit'),
+        ['type' => 'button', 'class' => 'tz-vtab tz-on', 'id' => 'tz-jv-s',
+         'data-jv' => 's'])
+    . html_writer::tag('button', get_string('jr_view_topics', 'local_targetzenit'),
+        ['type' => 'button', 'class' => 'tz-vtab', 'id' => 'tz-jv-t',
+         'data-jv' => 't']),
+    'tz-vtabs mb-3');
 
 echo html_writer::div(
     html_writer::tag('span',
@@ -241,12 +276,15 @@ echo html_writer::div(
             get_string('jr_examlegend', 'local_targetzenit'),
             ['class' => 'text-muted small'])
         : ''),
-    'mb-3'
+    'mb-3', ['id' => 'tz-jv-legend']
 );
+
+echo html_writer::start_div('', ['id' => 'tz-jur-s']);   // baholar setkasi ko'rinishi
 
 if (!$darslar) {
     echo $OUTPUT->notification(get_string('jr_nolessons', 'local_targetzenit'), 'info');
-    echo $OUTPUT->footer();
+    echo html_writer::end_div();   // tz-ishstoli-wrap
+    \local_targetzenit\output\maket::tugat();
     exit;
 }
 
@@ -288,7 +326,12 @@ echo html_writer::tag('th', get_string('student', 'local_targetzenit'),
     ['class' => 'tz-col-ism']);
 // Ball setkasiga havola faqat baholash huquqi borlarga ko'rsatiladi.
 $ballhuquq = has_capability('local/targetzenit:gradeexam', $context);
+// Ustun indeksi — E-maktab uslubidagi KUN TANLASH uchun: sana ustuni
+// bosilganda o'sha ustun va o'ngdagi mavzu qatori birga ajraladi.
+$ci = -1;
+$bugunci = -1;
 foreach ($ustunlar as $ustun) {
+    $ci++;
     if (isset($ustun['imtihon'])) {
         $e = $ustun['imtihon'];
         $turi = s($e->turi);
@@ -301,7 +344,7 @@ foreach ($ustunlar as $ustun) {
         echo html_writer::tag('th',
             html_writer::div(userdate(strtotime($e->sana), '%d.%m'), 'tz-j-date') .
             html_writer::div($turi, 'tz-meta'),
-            ['class' => 'tz-col-kun tz-col-exam',
+            ['class' => 'tz-col-kun tz-col-exam', 'data-col' => $ci,
              'title' => get_string('jr_examtitle', 'local_targetzenit', (object) [
                  'name' => $e->name, 'sana' => $e->sana,
                  'max' => $e->maxscore])]);
@@ -310,6 +353,9 @@ foreach ($ustunlar as $ustun) {
     $l = $ustun['dars'];
     $sana = userdate(strtotime($l['date']), '%d.%m');
     $bu = ($l['key'] === $bugungi_kalit);
+    if ($bu) {
+        $bugunci = $ci;
+    }
     $tashqari = !empty($l['jadvaldan_tashqari']);
     echo html_writer::tag('th',
         html_writer::div($sana, 'tz-j-date') .
@@ -317,6 +363,7 @@ foreach ($ustunlar as $ustun) {
             get_string('jr_lessonshort', 'local_targetzenit', $l['lessonno'])
             . ($tashqari ? ' *' : ''), 'tz-meta'),
         ['class' => 'tz-col-kun' . ($bu ? ' tz-bugun-col' : '') . ($tashqari ? ' tz-tashqari' : ''),
+         'data-col' => $ci,
          'title' => $tashqari
              ? get_string('jr_offschedule', 'local_targetzenit') : ''] +
         ($bu ? ['id' => 'tz-bugun-ustun'] : []));
@@ -340,11 +387,13 @@ foreach ($students as $s) {
     echo html_writer::tag('td', $n, ['class' => 'tz-col-n']);
     echo html_writer::tag('td',
         html_writer::link(
-            new moodle_url('/local/targetzenit/baholarim.php', ['userid' => $s->id]),
+            new moodle_url('/local/targetzenit/oquvchi360.php', ['userid' => $s->id]),
             fullname($s),
-            ['title' => get_string('jr_studentgrades', 'local_targetzenit', fullname($s))]),
+            ['title' => get_string('s360_open', 'local_targetzenit', fullname($s))]),
         ['class' => 'tz-col-ism']);
+    $ci = -1;
     foreach ($ustunlar as $ustun) {
+        $ci++;
         if (isset($ustun['imtihon'])) {
             $e = $ustun['imtihon'];
             $r = $imtihonnatija[(int) $e->sittingid][(int) $s->id] ?? null;
@@ -365,7 +414,7 @@ foreach ($students as $s) {
             }
             echo html_writer::tag('td', s($matn),
                 ['class' => 'tz-col-kun tz-col-exam tz-exam-cell',
-                 'title' => $title]);
+                 'data-col' => $ci, 'title' => $title]);
             continue;
         }
         $l = $ustun['dars'];
@@ -380,7 +429,8 @@ foreach ($students as $s) {
                 'maxlength' => 4,
                 'autocomplete' => 'off',
             ]),
-            ['class' => 'tz-col-kun' . ($l['key'] === $bugungi_kalit ? ' tz-bugun-col' : '')]);
+            ['class' => 'tz-col-kun' . ($l['key'] === $bugungi_kalit ? ' tz-bugun-col' : ''),
+             'data-col' => $ci]);
     }
     if ($chorakustun) {
         $ts = $choraknatija[(int) $s->id] ?? null;
@@ -422,7 +472,9 @@ echo html_writer::tag('thead',
         html_writer::tag('th', get_string('jr_topichw', 'local_targetzenit'))));
 echo html_writer::start_tag('tbody');
 $raqam = 0;
+$ci = -1;
 foreach ($ustunlar as $ustun) {
+    $ci++;
     // Imtihon qatori: tahrirlanmaydi, jurnal ustuni bilan bir xil tartibda
     // turadi — o'qituvchi chorakni yuqoridan ko'rganda imtihonlar mavzular
     // oqimining ichida ko'rinadi.
@@ -430,7 +482,7 @@ foreach ($ustunlar as $ustun) {
         $e = $ustun['imtihon'];
         $sana = userdate(strtotime($e->sana), '%d.%m')
             . ($e->vaqt ? ' · ' . s($e->vaqt) : '');
-        echo html_writer::start_tag('tr', ['class' => 'tz-m-imtihon']);
+        echo html_writer::start_tag('tr', ['class' => 'tz-m-imtihon', 'data-col' => $ci]);
         echo html_writer::tag('td', html_writer::div($sana, 'tz-meta'),
             ['class' => 'tz-m-sana']);
         echo html_writer::tag('td',
@@ -454,7 +506,8 @@ foreach ($ustunlar as $ustun) {
     // rejani ko'radi, lekin fakt faqat o'zi yozganda saqlanadi.
     $reja = $rejamavzu[$l['key']] ?? '';
     echo html_writer::start_tag('tr',
-        ['class' => $bu ? 'tz-bugun-qator' : ''] + ($bu ? ['id' => 'tz-bugun-mavzu'] : []));
+        ['class' => $bu ? 'tz-bugun-qator' : '', 'data-col' => $ci]
+        + ($bu ? ['id' => 'tz-bugun-mavzu'] : []));
     echo html_writer::tag('td', html_writer::div($raqam . '. ' . $sana, 'tz-meta'), ['class' => 'tz-m-sana']);
     echo html_writer::tag('td',
         html_writer::empty_tag('input', [
@@ -479,32 +532,87 @@ echo html_writer::end_div();   // tz-jurnal-mavzu
 
 echo html_writer::end_div();   // wrap
 
-// Ochilganda bugungi kunga surish. Sahifa umuman pastga sakramasligi uchun
-// scrollIntoView ishlatilmaydi — faqat ichki qutilar suriladi.
-if ($bugungi_kalit !== null) {
-    $PAGE->requires->js_amd_inline("
-        require([], function() {
-            var surish = function() {
-                var ustun = document.getElementById('tz-bugun-ustun');
-                var setka = document.querySelector('.tz-jurnal-grid');
-                if (ustun && setka) {
-                    var qotgan = 224;   // chapdagi sticky ustunlar kengligi
-                    setka.scrollLeft = Math.max(0, ustun.offsetLeft - qotgan - 40);
-                }
-                var qator = document.getElementById('tz-bugun-mavzu');
-                var quti = document.getElementById('tz-mavzu-scroll');
-                if (qator && quti) {
-                    quti.scrollTop = Math.max(0, qator.offsetTop - quti.offsetTop - 30);
-                }
-            };
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', surish);
-            } else {
-                surish();
+// E-MAKTAB USLUBIDAGI KUN TANLASH (maket, 7.5-qaror): sana ustuni yoki
+// o'ngdagi mavzu qatori bosilganda IKKISI BIRGA to'qroq rang bilan ajraladi
+// va bir-biriga suriladi — o'qituvchi "bu baho qaysi mavzuga tegishli" degan
+// savolga bir qarashda javob oladi. Ochilganda bugungi kun tanlangan bo'ladi.
+// Sahifa umuman pastga sakramasligi uchun scrollIntoView ishlatilmaydi —
+// faqat ichki qutilar suriladi.
+$PAGE->requires->js_amd_inline("
+    require([], function() {
+        var tanla = function(i, sur) {
+            document.querySelectorAll('.tz-jgrid [data-col]').forEach(function(el) {
+                el.classList.toggle('tz-sel', el.getAttribute('data-col') === String(i));
+            });
+            document.querySelectorAll('.tz-mavzu tr[data-col]').forEach(function(el) {
+                el.classList.toggle('tz-sel-row', el.getAttribute('data-col') === String(i));
+            });
+            if (!sur) { return; }
+            var ustun = document.querySelector('.tz-jgrid thead th[data-col=\"' + i + '\"]');
+            var setka = document.querySelector('.tz-jurnal-grid');
+            if (ustun && setka) {
+                var qotgan = 224;   // chapdagi sticky ustunlar kengligi
+                setka.scrollLeft = Math.max(0, ustun.offsetLeft - qotgan - 40);
             }
+            var qator = document.querySelector('.tz-mavzu tr[data-col=\"' + i + '\"]');
+            var quti = document.getElementById('tz-mavzu-scroll');
+            if (qator && quti) {
+                quti.scrollTop = Math.max(0, qator.offsetTop - quti.offsetTop - 30);
+            }
+        };
+
+        document.querySelectorAll('.tz-jgrid thead th[data-col]').forEach(function(th) {
+            th.addEventListener('click', function() {
+                tanla(th.getAttribute('data-col'), true);
+            });
         });
-    ");
-}
+        document.querySelectorAll('.tz-mavzu tr[data-col]').forEach(function(tr) {
+            tr.addEventListener('click', function(e) {
+                // Input ichiga yozayotganda tanlov sakrab ketmasin
+                if (e.target.tagName === 'INPUT') {
+                    tanla(tr.getAttribute('data-col'), false);
+                    return;
+                }
+                tanla(tr.getAttribute('data-col'), true);
+            });
+        });
+
+        var boshlangich = " . (int) $bugunci . ";
+
+        // BAHO RANGI: katak qiymatiga qarab yashil/ko'k/sariq/qizil. Raqam
+        // baho (9-10=a'lo, 7-8=yaxshi, 5-6=o'rta, past=qizil); «k» kelmadi
+        // (qizil), «s» sababli (neytral), «kech» kechikdi (sariq).
+        var rangla = function(inp) {
+            var v = (inp.value || '').trim().toLowerCase();
+            inp.classList.remove('tz-g5', 'tz-g4', 'tz-g3', 'tz-gN');
+            if (v === '') { return; }
+            var n = parseInt(v, 10);
+            if (!isNaN(n) && String(n) === v) {
+                if (n >= 9) { inp.classList.add('tz-g5'); }
+                else if (n >= 7) { inp.classList.add('tz-g4'); }
+                else if (n >= 5) { inp.classList.add('tz-g3'); }
+                else { inp.classList.add('tz-gN'); }
+            } else if (v === 'k') {
+                inp.classList.add('tz-gN');
+            } else if (v.indexOf('kech') === 0) {
+                inp.classList.add('tz-g3');
+            }
+        };
+
+        var ishga = function() {
+            if (boshlangich >= 0) { tanla(boshlangich, true); }
+            document.querySelectorAll('.tz-jgrid .tz-cell').forEach(function(inp) {
+                rangla(inp);
+                inp.addEventListener('input', function() { rangla(inp); });
+            });
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ishga);
+        } else {
+            ishga();
+        }
+    });
+");
 
 echo html_writer::div(
     html_writer::empty_tag('input', ['type' => 'submit', 'value' => get_string('savechanges'),
@@ -526,7 +634,7 @@ echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', '
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'term', 'value' => $termidx]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'yukla', 'value' => 1]);
 echo html_writer::empty_tag('input', ['type' => 'file', 'name' => 'planfile',
-    'accept' => '.xlsx,.xls,.csv', 'class' => 'form-control-file mb-2']);
+    'accept' => '.xlsx,.xls,.csv', 'class' => 'form-control mb-2']);
 echo html_writer::div(
     html_writer::checkbox('overwrite', 1, false,
         get_string('jr_overwrite', 'local_targetzenit')),
@@ -538,4 +646,131 @@ echo html_writer::end_tag('form');
 echo html_writer::end_div();
 echo html_writer::end_div();
 
-echo $OUTPUT->footer();
+echo html_writer::end_div();   // tz-jur-s (baholar setkasi ko'rinishi)
+
+// ============ «BARCHA MAVZULAR VA UV» KO'RINISHI (maket, faqat-o'qish) ============
+// Chorakning har bir darsi uchun bitta qator: #, sana, mavzu (fakt yoki
+// reja), uy vazifa, holat (o'tildi/bugun/kelgusi/imtihon), jurnal to'ldirilishi
+// (nechta baho). Tahrir setka ko'rinishida — bu yer umumiy ko'rinish.
+echo html_writer::start_div('tzp-card', ['id' => 'tz-jur-t', 'hidden' => 'hidden']);
+echo html_writer::tag('h5',
+    get_string('jr_view_topics', 'local_targetzenit')
+    . html_writer::tag('span', (string) count($darslar), ['class' => 'tzp-cnt ms-2']));
+
+echo html_writer::start_div('', ['style' => 'overflow-x:auto']);
+echo html_writer::start_tag('table', ['class' => 'tz-mavjad']);
+echo html_writer::tag('thead', html_writer::tag('tr',
+    html_writer::tag('th', '#')
+    . html_writer::tag('th', get_string('jr_date', 'local_targetzenit'))
+    . html_writer::tag('th', get_string('topic', 'local_targetzenit'))
+    . html_writer::tag('th', get_string('homework', 'local_targetzenit'))
+    . html_writer::tag('th', get_string('jr_m_status', 'local_targetzenit'))
+    . html_writer::tag('th', get_string('jr_m_filled', 'local_targetzenit'))));
+echo html_writer::start_tag('tbody');
+
+$bugunsana = date('Y-m-d');
+$tn = 0;
+foreach ($ustunlar as $ustun) {
+    if (isset($ustun['imtihon'])) {
+        $e = $ustun['imtihon'];
+        echo html_writer::tag('tr',
+            html_writer::tag('td', '')
+            . html_writer::tag('td', userdate(strtotime($e->sana), '%d.%m')
+                . ($e->vaqt ? '<br>' . s($e->vaqt) : ''))
+            . html_writer::tag('td',
+                html_writer::tag('b', s($e->turi) . ': ' . format_string($e->name)),
+                ['colspan' => 2])
+            . html_writer::tag('td',
+                html_writer::tag('span', get_string('jr_m_exam', 'local_targetzenit'),
+                    ['class' => 'tz-mst tz-mst-exam']))
+            . html_writer::tag('td',
+                $e->maxscore ? get_string('jr_exammeta', 'local_targetzenit',
+                    (object) ['max' => $e->maxscore, 'shakli' => $e->shakli]) : ''),
+            ['class' => 'tz-m-exam-row']);
+        continue;
+    }
+    $l = $ustun['dars'];
+    $tn++;
+    $dars = $darsyozuv[$l['key']] ?? null;
+    $faktmavzu = $dars && trim((string) $dars->topic) !== ''
+        ? format_string($dars->topic) : '';
+    $reja = $rejamavzu[$l['key']] ?? '';
+    $mavzumatn = $faktmavzu !== ''
+        ? $faktmavzu
+        : ($reja !== ''
+            ? html_writer::tag('span', format_string($reja),
+                ['class' => 'tz-m-reja',
+                 'title' => get_string('jr_rejatitle', 'local_targetzenit', $reja)])
+            : html_writer::tag('span', '—', ['class' => 'text-muted']));
+    $uv = $dars && trim((string) $dars->homework) !== ''
+        ? format_string($dars->homework)
+        : html_writer::tag('span', '—', ['class' => 'text-muted']);
+
+    // Holat: o'tildi (fakt bor) / bugun / kelgusi
+    if ($l['date'] < $bugunsana || ($faktmavzu !== '')) {
+        $holat = html_writer::tag('span', get_string('jr_m_done', 'local_targetzenit'),
+            ['class' => 'tz-mst tz-mst-done']);
+    } else if ($l['date'] === $bugunsana) {
+        $holat = html_writer::tag('span', get_string('jr_m_today', 'local_targetzenit'),
+            ['class' => 'tz-mst tz-mst-today']);
+    } else {
+        $holat = html_writer::tag('span', get_string('jr_m_future', 'local_targetzenit'),
+            ['class' => 'tz-mst tz-mst-future']);
+    }
+
+    // Jurnal to'ldirilishi: shu darsда nechta baho qo'yilgan
+    $baho = 0;
+    if ($dars && isset($kataklar)) {
+        foreach ($students as $s) {
+            $rec = $kataklar[$s->id][$dars->id] ?? null;
+            if ($rec && $rec->grade !== null) {
+                $baho++;
+            }
+        }
+    }
+    $filled = $baho > 0
+        ? get_string('jr_m_grades', 'local_targetzenit', $baho)
+        : html_writer::tag('span', '—', ['class' => 'text-muted']);
+
+    $bu = ($l['key'] === $bugungi_kalit);
+    echo html_writer::tag('tr',
+        html_writer::tag('td', (string) $tn, ['class' => 'tz-m-num'])
+        . html_writer::tag('td', userdate(strtotime($l['date']), '%d.%m') . '<br>'
+            . html_writer::tag('small',
+                get_string('jr_lessonshort', 'local_targetzenit', $l['lessonno']),
+                ['class' => 'text-muted']))
+        . html_writer::tag('td', $mavzumatn)
+        . html_writer::tag('td', $uv)
+        . html_writer::tag('td', $holat)
+        . html_writer::tag('td', $filled),
+        $bu ? ['class' => 'tz-m-today-row'] : []);
+}
+echo html_writer::end_tag('tbody');
+echo html_writer::end_tag('table');
+echo html_writer::end_div();
+echo html_writer::end_div();   // tz-jur-t
+
+// Ko'rinish almashtirgich JS.
+$PAGE->requires->js_amd_inline("
+    require([], function() {
+        var s = document.getElementById('tz-jur-s');
+        var t = document.getElementById('tz-jur-t');
+        var lg = document.getElementById('tz-jv-legend');
+        var bs = document.getElementById('tz-jv-s');
+        var bt = document.getElementById('tz-jv-t');
+        if (!s || !t) { return; }
+        var ko = function(v) {
+            s.hidden = (v !== 's');
+            t.hidden = (v !== 't');
+            if (lg) { lg.style.display = (v === 's') ? '' : 'none'; }
+            bs.classList.toggle('tz-on', v === 's');
+            bt.classList.toggle('tz-on', v === 't');
+        };
+        bs.addEventListener('click', function() { ko('s'); });
+        bt.addEventListener('click', function() { ko('t'); });
+    });
+");
+
+echo html_writer::end_div();   // tz-ishstoli-wrap (kanvas)
+
+\local_targetzenit\output\maket::tugat();

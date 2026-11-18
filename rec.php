@@ -65,9 +65,9 @@ echo html_writer::tag('div',
     ['class' => 'tz-rec-bosh mb-3']);
 
 // Mikrofon tanlash — tashqi mikrofon ulanganda kerak bo'ladi
-echo html_writer::start_div('form-group hidden mb-3');
+echo html_writer::start_div('mb-3 hidden mb-3');
 echo html_writer::label(get_string('rc_mic', 'local_targetzenit'),
-    'tz-audio-device', true, ['class' => 'small font-weight-bold']);
+    'tz-audio-device', true, ['class' => 'small fw-bold']);
 echo html_writer::tag('select', '',
     ['id' => 'tz-audio-device', 'class' => 'form-control form-control-sm']);
 echo html_writer::end_div();
@@ -93,20 +93,20 @@ if ($qoldiq) {
     echo html_writer::tag('button',
         '▶ ' . get_string('rc_continue', 'local_targetzenit', format_time($qoldiq_sek)),
         ['type' => 'button', 'id' => 'tz-audio-start', 'data-rejim' => 'davom',
-         'class' => 'btn btn-danger btn-lg btn-block']);
+         'class' => 'btn btn-danger btn-lg w-100']);
     echo html_writer::tag('button',
         '🔄 ' . get_string('rc_fresh', 'local_targetzenit'),
         ['type' => 'button', 'id' => 'tz-audio-yangi',
-         'class' => 'btn btn-outline-danger btn-block mt-2']);
+         'class' => 'btn btn-outline-danger w-100 mt-2']);
 } else {
     echo html_writer::tag('button', '🎙 Yozishni boshlash',
         ['type' => 'button', 'id' => 'tz-audio-start', 'data-rejim' => 'davom',
-         'class' => 'btn btn-danger btn-lg btn-block']);
+         'class' => 'btn btn-danger btn-lg w-100']);
 }
 echo html_writer::tag('button', '⏸ Pauza',
-    ['type' => 'button', 'id' => 'tz-audio-pause', 'class' => 'btn btn-warning btn-block hidden mt-2']);
+    ['type' => 'button', 'id' => 'tz-audio-pause', 'class' => 'btn btn-warning w-100 hidden mt-2']);
 echo html_writer::tag('button', get_string('rc_stop', 'local_targetzenit'),
-    ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-dark btn-lg btn-block hidden mt-2']);
+    ['type' => 'button', 'id' => 'tz-audio-stop', 'class' => 'btn btn-dark btn-lg w-100 hidden mt-2']);
 
 echo html_writer::tag('div', '', ['id' => 'tz-audio-holat', 'class' => 'tz-audio-holat my-3']);
 

@@ -17,4 +17,10 @@ $callbacks = [
         'hook' => core_user\hook\extend_user_menu::class,
         'callback' => 'local_targetzenit\hook_callbacks::extend_user_menu',
     ],
+    [
+        // O'qituvchi /my ga tushsa → portal bosh sahifasiga (bosh.php).
+        // Yakuniy model: o'qituvchi faqat maket qobig'ini ko'radi.
+        'hook' => core\hook\output\before_http_headers::class,
+        'callback' => 'local_targetzenit\hook_callbacks::before_http_headers',
+    ],
 ];

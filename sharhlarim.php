@@ -85,7 +85,7 @@ $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
 echo html_writer::div(
     html_writer::link(
         new moodle_url('/local/targetzenit/hisobot.php', $ozim ? [] : ['userid' => $userid]),
-        $t('hr_openreport'), ['class' => 'btn btn-primary mr-2'])
+        $t('hr_openreport'), ['class' => 'btn btn-primary me-2'])
     . html_writer::tag('span', $t('hr_subtitle'), ['class' => 'text-muted small']),
     'mb-3');
 

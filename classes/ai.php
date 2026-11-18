@@ -1744,6 +1744,32 @@ class ai {
             . "score butun son (0-100). Umumiy foizni O'ZING hisoblama — tizim hisoblaydi. "
             . "Transkriptni QAYTARMA — u allaqachon bizda.\n\n"
 
+            // ===== O'QITUVCHINING DARS HAQIDAGI IZOHI (2026-11-18 talabi)
+            //
+            // O'qituvchi kokpitda dars FORMATI haqida kontekst yozadi
+            // ("amaliy dars — men kamroq gapiraman, o'quvchilar daftarda
+            // masala ishlaydi"). Busiz model kam gapirgan o'qituvchini
+            // "tushuntirish yetarli emas" deb NOHAQ past baholardi —
+            // doska materiali qanday dard uchun kiritilgan bo'lsa, bu ham
+            // o'shaning davomi: modelga ko'rinmagan haqiqatni berish.
+            . (trim((string) ($dars->ainote ?? '')) !== ''
+                ? "=== O'QITUVCHINING DARS HAQIDAGI IZOHI ===\n"
+                  . trim((string) $dars->ainote) . "\n\n"
+                  . "BU IZOHNI BAHOLASHDA ALBATTA INOBATGA OL:\n"
+                  . "- izohda dars FORMATI aytilgan bo'lsa (amaliy mashg'ulot, "
+                  . "mustaqil ish, nazorat, takrorlash...), kategoriya "
+                  . "kutilmalarini SHU formatga mosla: masalan amaliy darsda "
+                  . "o'qituvchining kam gapirishi KAMCHILIK EMAS — uning "
+                  . "o'rniga mustaqil ishni tashkil qilish sifati, yakka "
+                  . "yordam va aylanib nazorat qilishni bahola;\n"
+                  . "- izohda aytilgan narsa transkriptda TASDIQLANSA — buni "
+                  . "`evidence` da kontekst sifatida tilga ol;\n"
+                  . "- izoh transkriptga ZID bo'lsa (deyilgan-u, darsda "
+                  . "boshqacha bo'lgan) — yumshoq, ayblamasdan qayd et;\n"
+                  . "- izohni hech qachon o'quvchiga yoki o'qituvchiga QARSHI "
+                  . "dalil qilib ishlatma — bu yordamchi kontekst.\n\n"
+                : '')
+
             // ===== DOSKADAGI MATERIAL
             //
             // Material transkriptdan OLDIN turadi: model kategoriyalarni

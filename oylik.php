@@ -254,7 +254,7 @@ if ($kunlar) {
         if ($koef === null) {
             $koefqator[] = html_writer::span('—', 'tz-dir-sub');
         } else if ((float) $koef > 0) {
-            $koefqator[] = html_writer::span((float) $koef, 'text-success font-weight-bold');
+            $koefqator[] = html_writer::span((float) $koef, 'text-success fw-bold');
         } else {
             $koefqator[] = html_writer::span('0', 'text-danger');
         }

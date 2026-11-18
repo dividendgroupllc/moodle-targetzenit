@@ -24,9 +24,11 @@ require_capability('local/targetzenit:teach', $context);
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/dars.php',
     ['courseid' => $courseid, 'date' => $date, 'lessonno' => $lessonno]));
-$PAGE->set_pagelayout('incourse');
+// TO'LIQ MAKET QOBIG'I: embedded layout — Moodle navbar/drawer/footer yo'q,
+// top-bar va tablarni output\maket chizadi (2026-11-18 yakuniy qarori).
+$PAGE->set_pagelayout('embedded');
 $PAGE->set_title(format_string($course->fullname));
-$PAGE->set_heading(format_string($course->fullname));
+$PAGE->requires->css('/local/targetzenit/styles.css');
 
 // Dars raqami berilmagan bo'lsa (jadvaldan emas, to'g'ridan-to'g'ri kirilgan)
 // uni JADVALDAN aniqlaymiz. Aks holda hamma narsa "1-dars" ostiga yozilib,
@@ -60,6 +62,15 @@ if (optional_param('materialoch', 0, PARAM_INT) && confirm_sesskey()) {
         \core\output\notification::NOTIFY_SUCCESS);
 }
 
+// Dars haqidagi izoh (AI tahlil inobatga oladi) — doska materiali kartidan.
+if (optional_param('darsizoh', 0, PARAM_INT) && confirm_sesskey()) {
+    $DB->set_field('local_targetzenit_lesson', 'ainote',
+        \core_text::substr(trim(optional_param('ainote', '', PARAM_TEXT)), 0, 2000),
+        ['id' => (int) $dars->id]);
+    redirect($PAGE->url, get_string('ck_ainote_saved', 'local_targetzenit'), null,
+        \core\output\notification::NOTIFY_SUCCESS);
+}
+
 // ------------------------------------------ DARS RESURSLARI (o'quvchiga)
 if (optional_param('resfayl', 0, PARAM_INT) && confirm_sesskey()) {
     $xato = \local_targetzenit\lessonres::add_file((int) $dars->id, $context,
@@ -84,18 +95,26 @@ if ($resoch = optional_param('resoch', 0, PARAM_INT)) {
 }
 
 if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
-    $topic = optional_param('topic', '', PARAM_TEXT);
-    $homework = optional_param('homework', '', PARAM_TEXT);
-    lesson::save_lesson((int) $dars->id, $topic, $homework, (int) $USER->id);
+    // Sahifada IKKITA saqlash formasi bor (mavzu/UV alohida, o'quvchilar
+    // alohida — orasida material kartalari turadi, forma ichiga forma
+    // kiritib bo'lmaydi). Shuning uchun har qism FAQAT o'zi yuborilganda
+    // saqlanadi: mavzu formasi davomatni "hamma keldi"ga yozib yubormasin,
+    // davomat formasi mavzuni o'chirmasin.
+    $topic = optional_param('topic', null, PARAM_TEXT);
+    if ($topic !== null) {
+        lesson::save_lesson((int) $dars->id, $topic,
+            optional_param('homework', '', PARAM_TEXT), (int) $USER->id);
+    }
 
     $att = optional_param_array('att', [], PARAM_ALPHA);
     $grades = optional_param_array('grade', [], PARAM_RAW_TRIMMED);
     $comments = optional_param_array('comment', [], PARAM_TEXT);
     $hw = optional_param_array('hw', [], PARAM_ALPHA);
     $hwgrades = optional_param_array('hwgrade', [], PARAM_RAW_TRIMMED);
-    $latemins = optional_param_array('latemin', [], PARAM_RAW_TRIMMED);
 
-    foreach ($students as $s) {
+    $royxat_keldi = ($att || $grades || $comments || $hw || $hwgrades)
+        ? $students : [];
+    foreach ($royxat_keldi as $s) {
         lesson::save_record(
             (int) $dars->id,
             (int) $s->id,
@@ -103,8 +122,7 @@ if (optional_param('saqla', 0, PARAM_INT) && confirm_sesskey()) {
             $grades[$s->id] ?? null,
             $comments[$s->id] ?? '',
             $hw[$s->id] ?? null,
-            $hwgrades[$s->id] ?? null,
-            $latemins[$s->id] ?? null
+            $hwgrades[$s->id] ?? null
         );
     }
     // Gradebook'da ko'rinishi uchun kurs yakuniy baholarini qayta hisoblash.
@@ -132,110 +150,143 @@ if (\local_targetzenit\output\fidbek::handle()) {
 
 $yozuvlar = lesson::records((int) $dars->id);
 
-echo $OUTPUT->header();
+// Sarlavha uchun jadval qatori (vaqt · xona) va yozuv tugmasi holati —
+// maketda ikkisi ham yuqori chiziqda turadi.
+$jqator = $DB->get_record('local_targetzenit_timetable', [
+    'courseidnumber' => $course->idnumber,
+    'dayno' => (int) date('N', strtotime($date)),
+    'lessonno' => $lessonno,
+], 'id, starttime, endtime, room', IGNORE_MULTIPLE);
+$audioyoq = !get_config('local_targetzenit', 'audioenabled');
+$yozuv = $audioyoq ? null : \local_targetzenit\audio::get((int) $dars->id);
+$fayl_bor = $yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true);
+$recurl = new moodle_url('/local/targetzenit/rec.php', ['lessonid' => $dars->id]);
+
+// AI tahlil xulosasi va foizi — o'ng karta (qisqa) va pastki to'liq blok uchun.
+$tahlilbor = $yozuv && !empty($yozuv->analysis);
+$tahlilxulosa = '';
+$tahlilfoiz = null;
+if ($tahlilbor) {
+    $j = json_decode((string) $yozuv->analysis, true);
+    if (is_array($j)) {
+        $tahlilxulosa = trim((string) ($j['summary'] ?? ''));
+    }
+    $f = $DB->get_record('local_targetzenit_fact',
+        ['lessonid' => (int) $dars->id], 'id, overallscore');
+    if ($f && $f->overallscore !== null) {
+        $tahlilfoiz = (int) round((float) $f->overallscore);
+    }
+}
+
+\local_targetzenit\output\maket::boshla('jadval');
+
+// Maket kanvasi (qobiq ichida fon shaffof — sahifa foni allaqachon kulrang).
+echo html_writer::start_div('tz-ishstoli-wrap tz-kokpit');
 
 // ------------------------------------------------------------------ SARLAVHA
+// Maket (pagebar): chapda sana · dars raqami, o'ngda uchta yo'nalish.
+// Har tugma BOSHQA savolga javob beradi: Jadval — butun hafta; Bugungi
+// darslar — shu kun (yozuv tugmalari bilan); Jurnal — butun chorak setkasi.
+// «Mening darslarim» ATAYLAB YO'Q: u yuqori menyuda har sahifada turadi.
 $sana_matni = userdate(strtotime($date), '%A, %d-%B %Y');
-echo html_writer::div(
-    html_writer::tag('span', $sana_matni, ['class' => 'tz-dars-sana']) . ' · ' .
-    html_writer::tag('span',
-        get_string('ck_lessonno', 'local_targetzenit', $lessonno),
-        ['class' => 'tz-dars-raqam']),
-    'tz-dars-bosh mb-2'
-);
-
-// Uchta aniq yo'nalish, har biri BOSHQA savolga javob beradi:
-//   Timetable  — butun hafta, qaysi kuni nima bor
-//   Lessons    — SHU KUNNING darslari (yozib olish tugmalari bilan)
-//   Full journal — butun chorak: hamma o'quvchi, hamma dars, baholar setkasi
-//
-// Nomlar QOTIB YOZILGAN emas, til satridan: interfeys ingliz tilida
-// bo'lganda «Chorak jurnali» yagona o'zbekcha tugma bo'lib qolgan edi.
-//
-// «Mening darslarim» ATAYLAB YO'Q: u yuqori menyuda har sahifada turadi
-// (`hook_callbacks::primary_extend`), bu yerda takrorlanishi ortiqcha.
-echo html_writer::div(
-    html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'week']),
-        '← ' . get_string('timetable', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-secondary mr-2']) .
-    html_writer::link(new moodle_url('/local/targetzenit/index.php',
-        ['view' => 'today', 'date' => $date]),
-        get_string('lessons_link', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-secondary mr-2']) .
-    html_writer::link(new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
-        get_string('jurnal_link', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-primary']),
-    'mb-3'
-);
-
-// ------------------------------------------------------- DARS AUDIO YOZUVI
-// Yozuv ALOHIDA OYNADA ochiladi: shu sahifada baho saqlanganda yoki jurnalga
-// o'tilganda sahifa qayta yuklanadi va yozuv uzilib qolardi.
-if (get_config('local_targetzenit', 'audioenabled')) {
-    $yozuv = \local_targetzenit\audio::get((int) $dars->id);
-    $kun = (int) (get_config('local_targetzenit', 'audioretentiondays') ?: 15);
-    $recurl = new moodle_url('/local/targetzenit/rec.php', ['lessonid' => $dars->id]);
-
-    echo html_writer::start_div('card mb-3 tz-audio-card');
-    echo html_writer::start_div('card-body');
-
-    if ($yozuv && $yozuv->status === 'recording') {
-        echo html_writer::tag('div', get_string('au_open', 'local_targetzenit'),
-            ['class' => 'text-danger font-weight-bold mb-2']);
-    } else if ($yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true)) {
-        $url = \local_targetzenit\audio::file_url((int) $dars->id, $context);
-        echo html_writer::tag('div',
-            '🎙 ' . get_string('audio_ready', 'local_targetzenit') . ' — ' .
-            gmdate('H:i:s', (int) $yozuv->duration) . ', ' .
-            number_format($yozuv->filesize / 1048576, 1) . ' MB',
-            ['class' => 'font-weight-bold mb-2']);
-        if ($url) {
-            echo html_writer::tag('audio', '', ['src' => $url->out(false), 'controls' => 'controls',
-                'preload' => 'none', 'class' => 'w-100 mb-2']);
-        }
-        // Yig'ishda nuqson sezilgan bo'lsa JIM qolmaymiz: o'qituvchi
-        // darsni qayta yozishi kerakmi yoki yo'qligini bilishi shart.
-        if (!empty($yozuv->warning)) {
-            echo html_writer::tag('div',
-                get_string('au_warning', 'local_targetzenit', s($yozuv->warning)),
-                ['class' => 'alert alert-warning py-1 px-2 small mb-2']);
-        }
-        if ($yozuv->status === 'transcribed') {
-            $qoldi = max(0, $kun - (int) floor((time() - $yozuv->timecreated) / DAYSECS));
-            echo html_writer::tag('div',
-                get_string('au_analysed', 'local_targetzenit', $qoldi),
-                ['class' => 'text-muted small mb-2']);
-        }
-    } else if ($yozuv && $yozuv->status === 'deleted') {
-        echo html_writer::tag('div', get_string('au_deleted', 'local_targetzenit'),
-            ['class' => 'text-muted mb-2']);
-    }
-
-    $fayl_bor = $yozuv && in_array($yozuv->status, \local_targetzenit\audio::FAYLLI, true);
-    echo html_writer::tag('button',
-        get_string($fayl_bor ? 'au_rerecord' : 'au_record', 'local_targetzenit'),
-        ['type' => 'button', 'id' => 'tz-rec-open',
-         'class' => $fayl_bor ? 'btn btn-outline-secondary' : 'btn btn-danger btn-lg',
-         'data-url' => $recurl->out(false)]);
-
-    echo html_writer::tag('div',
-        get_string('au_windowhint', 'local_targetzenit', $kun),
-        ['class' => 'text-muted small mt-2']);
-
-    echo html_writer::end_div();
-    echo html_writer::end_div();
-
-    $PAGE->requires->js_amd_inline("
-        require([], function() {
-            var b = document.getElementById('tz-rec-open');
-            if (!b) { return; }
-            b.addEventListener('click', function() {
-                window.open(b.getAttribute('data-url'), 'tzrec',
-                    'width=420,height=460,menubar=no,toolbar=no,location=no');
-            });
-        });
-    ");
+$vaqt_matni = '';
+if ($jqator && $jqator->starttime) {
+    $vaqt_matni = ' · ' . s($jqator->starttime)
+        . ($jqator->endtime ? '–' . s($jqator->endtime) : '')
+        . ($jqator->room ? ' · ' . s($jqator->room) : '');
 }
+// GURUH TANLAGICH (2026-11-18 talabi): sarlavhadagi guruh nomi — tanlanadigan
+// ro'yxat, o'qituvchi o'zi dars o'tadigan istalgan sinfga shu yerdan o'tadi.
+// `lessonno=0` ATAYLAB: yangi guruh/sanada para jadvaldan qayta aniqlanadi
+// (dars.php tepasidagi avto-aniqlash), aks holda eski para yopishib qolardi.
+$kurslar = \local_targetzenit\journal::my_courses((int) $USER->id,
+    timetable::current_year());
+if (count($kurslar) > 1) {
+    // Oddiy ochiladigan ro'yxat (2026-11-18: qidiruv varianti olib tashlandi —
+    // joylashuvi noqulay chiqdi; kichik shriftli dropdown'ning o'zi yetarli).
+    $kurstanlov = html_writer::start_tag('form', ['method' => 'get',
+        'action' => new moodle_url('/local/targetzenit/dars.php'),
+        'class' => 'd-inline m-0']);
+    $kurstanlov .= html_writer::empty_tag('input',
+        ['type' => 'hidden', 'name' => 'date', 'value' => $date]);
+    $kurstanlov .= html_writer::empty_tag('input',
+        ['type' => 'hidden', 'name' => 'lessonno', 'value' => 0]);
+    $kurstanlov .= html_writer::start_tag('select', ['name' => 'courseid',
+        'class' => 'tz-kurs-sel', 'onchange' => 'this.form.submit()',
+        'title' => get_string('ck_pickcourse', 'local_targetzenit')]);
+    foreach ($kurslar as $cid => $nom) {
+        $kurstanlov .= html_writer::tag('option', s($nom),
+            ['value' => $cid] + ((int) $cid === (int) $courseid
+                ? ['selected' => 'selected'] : []));
+    }
+    $kurstanlov .= html_writer::end_tag('select');
+    $kurstanlov .= html_writer::end_tag('form');
+} else {
+    $kurstanlov = html_writer::tag('div', format_string($course->fullname),
+        ['class' => 'tzp-h1']);
+}
+
+// SANA BOSHQARUVI: ‹ › va kalendar — o'tgan kunlarning kokpitini ham ochish
+// mumkin (to'ldirish/ko'rish). Paralar har safar qayta aniqlanadi.
+$sanaoldin = date('Y-m-d', strtotime($date . ' -1 day'));
+$sanakeyin = date('Y-m-d', strtotime($date . ' +1 day'));
+$sananav = html_writer::link(
+        new moodle_url('/local/targetzenit/dars.php',
+            ['courseid' => $courseid, 'date' => $sanaoldin, 'lessonno' => 0]),
+        '‹', ['class' => 'tzp-btn tz-sana-btn'])
+    . html_writer::start_tag('form', ['method' => 'get',
+        'action' => new moodle_url('/local/targetzenit/dars.php'),
+        'class' => 'd-inline m-0'])
+    . html_writer::empty_tag('input',
+        ['type' => 'hidden', 'name' => 'courseid', 'value' => $courseid])
+    . html_writer::empty_tag('input',
+        ['type' => 'hidden', 'name' => 'lessonno', 'value' => 0])
+    . html_writer::empty_tag('input', ['type' => 'date', 'name' => 'date',
+        'value' => $date, 'class' => 'tz-sana-input',
+        'onchange' => 'this.form.submit()'])
+    . html_writer::end_tag('form')
+    . html_writer::link(
+        new moodle_url('/local/targetzenit/dars.php',
+            ['courseid' => $courseid, 'date' => $sanakeyin, 'lessonno' => 0]),
+        '›', ['class' => 'tzp-btn tz-sana-btn']);
+
+echo html_writer::div(
+    html_writer::div(
+        $kurstanlov
+        . html_writer::div(
+            $sananav
+            . html_writer::tag('span',
+                ' ' . $sana_matni . ' · '
+                . get_string('ck_lessonno', 'local_targetzenit', $lessonno)
+                . $vaqt_matni, ['class' => 'tz-sana-meta']),
+            'tzp-sub mb-0 tz-sana-nav'),
+        'tz-dars-bosh') .
+    html_writer::div(
+        html_writer::link(new moodle_url('/local/targetzenit/index.php', ['view' => 'week']),
+            '← ' . get_string('timetable', 'local_targetzenit'),
+            ['class' => 'btn btn-sm btn-outline-secondary me-2']) .
+        ($audioyoq ? '' : html_writer::tag('button',
+            ($fayl_bor ? '✓ ' : '● ')
+            . get_string($fayl_bor ? 'au_rerecord' : 'au_record', 'local_targetzenit'),
+            ['type' => 'button', 'id' => 'tz-rec-open',
+             'class' => 'btn btn-sm me-2 '
+                . ($fayl_bor ? 'btn-outline-secondary' : 'btn-danger'),
+             'data-url' => $recurl->out(false)])) .
+        html_writer::link(new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
+            get_string('jurnal_link', 'local_targetzenit') . ' →',
+            ['class' => 'btn btn-sm btn-primary'])),
+    'tzp-pagebar'
+);
+
+// Maket tartibi: chapda mavzu/UV + o'quvchilar, o'ngda yozuv/AI/fidbek/jurnal.
+echo html_writer::start_div('tzp-cols tz-kokpit-cols');
+echo html_writer::start_div('tz-kokpit-chap');
+
+// MAKET TARTIBI: quyidagi bloklar yozilgan joyida QOLADI, lekin chiqishi
+// puferga olinib, formadan KEYIN joylanadi (chapda: materiallar; o'ngda:
+// AI tahlil va fidbek). Kod ko'chirilsa diff o'qib bo'lmas edi — pufer
+// bilan mantiq joyida, faqat tartib maketdagidek.
+ob_start();
 
 // --------------------------------------------- DOSKADAGI MATERIAL
 // NEGA BU KERAK: AI tahlili faqat audioni ESHITADI, doskani KO'RMAYDI —
@@ -295,11 +346,11 @@ echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey',
     'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'material',
     'value' => 1]);
-echo html_writer::start_div('form-group mb-2');
+echo html_writer::start_div('mb-2');
 echo html_writer::empty_tag('input', [
     'type' => 'file',
     'name' => 'materialfayl',
-    'class' => 'form-control-file',
+    'class' => 'form-control',
     'accept' => 'image/png,image/jpeg,image/webp,image/gif,application/pdf,'
         . '.pdf,.png,.jpg,.jpeg,.webp,.gif,.pptx,.ppt,.docx,.doc',
     'required' => 'required',
@@ -314,8 +365,31 @@ echo html_writer::tag('div', get_string('mt_hint', 'local_targetzenit',
     round(\local_targetzenit\material::MAX_BYTES / 1048576)),
     ['class' => 'text-muted small mt-2']);
 
+// --- Dars haqida izoh: AI tahlil FORMATNI shu izohga moslaydi.
+// Masalan "amaliy dars — men kamroq gapiraman, o'quvchilar daftarda masala
+// ishlaydi" deyilsa, kam gapirish KAMCHILIK sifatida baholanmaydi.
+echo html_writer::start_tag('form', ['method' => 'post',
+    'action' => $PAGE->url->out(false), 'class' => 'mt-3']);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey',
+    'value' => sesskey()]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'darsizoh',
+    'value' => 1]);
+echo html_writer::tag('label', get_string('ck_ainote', 'local_targetzenit'),
+    ['for' => 'tz-ainote', 'class' => 'fw-bold d-block mb-1']);
+echo html_writer::tag('textarea',
+    s(trim((string) ($dars->ainote ?? ''))),
+    ['id' => 'tz-ainote', 'name' => 'ainote', 'rows' => 2, 'maxlength' => 2000,
+     'class' => 'form-control mb-2',
+     'placeholder' => get_string('ck_ainote_ph', 'local_targetzenit')]);
+echo html_writer::tag('button', get_string('ck_ainote_btn', 'local_targetzenit'),
+    ['type' => 'submit', 'class' => 'btn btn-sm btn-outline-primary']);
+echo html_writer::end_tag('form');
+
 echo html_writer::end_div();
 echo html_writer::end_div();
+
+$chap_doska = ob_get_clean();   // doska materiali + AI izohi — UVdan keyin
+ob_start();
 
 // --------------------------------------------- DARS RESURSLARI
 // Doska materialidan FARQI: u AI uchun bitta dalil-fayl, bu esa O'QUVCHIGA
@@ -337,12 +411,12 @@ if ($resurslar) {
         $ochirurl = new moodle_url($PAGE->url,
             ['resoch' => (int) $res->id, 'sesskey' => sesskey()]);
         echo html_writer::tag('li',
-            html_writer::tag('span', s($belgi), ['class' => 'badge badge-secondary tz-res-badge mr-2'])
+            html_writer::tag('span', s($belgi), ['class' => 'badge text-bg-secondary tz-res-badge me-2'])
             . ($rurl
                 ? html_writer::link($rurl, s($nom), ['target' => '_blank', 'rel' => 'noopener'])
                 : s($nom))
             . ' ' . html_writer::link($ochirurl, '✕',
-                ['class' => 'text-danger small ml-2',
+                ['class' => 'text-danger small ms-2',
                  'title' => get_string('res_delete', 'local_targetzenit'),
                  'onclick' => 'return confirm('
                     . json_encode(get_string('res_delete_q', 'local_targetzenit')) . ')']),
@@ -357,14 +431,14 @@ if ($resurslar) {
 // Fayl qo'shish (alohida forma — multipart)
 echo html_writer::start_tag('form', ['method' => 'post',
     'action' => $PAGE->url->out(false), 'enctype' => 'multipart/form-data',
-    'class' => 'form-inline mb-2']);
+    'class' => 'd-flex flex-wrap align-items-center gap-2 mb-2']);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'resfayl', 'value' => 1]);
 echo html_writer::empty_tag('input', ['type' => 'file', 'name' => 'resursfayl',
-    'class' => 'form-control-file mr-2', 'required' => 'required',
+    'class' => 'form-control me-2', 'required' => 'required',
     'accept' => '.pdf,.pptx,.ppt,.docx,.doc,.png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,.mp3,.m4a']);
 echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'restitle',
-    'class' => 'form-control form-control-sm mr-2', 'maxlength' => 255,
+    'class' => 'form-control form-control-sm me-2', 'maxlength' => 255,
     'placeholder' => get_string('res_titleph', 'local_targetzenit')]);
 echo html_writer::tag('button', get_string('res_add', 'local_targetzenit'),
     ['type' => 'submit', 'class' => 'btn btn-sm btn-primary']);
@@ -372,14 +446,14 @@ echo html_writer::end_tag('form');
 
 // Havola qo'shish
 echo html_writer::start_tag('form', ['method' => 'post',
-    'action' => $PAGE->url->out(false), 'class' => 'form-inline']);
+    'action' => $PAGE->url->out(false), 'class' => 'd-flex flex-wrap align-items-center gap-2']);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'reshavola', 'value' => 1]);
 echo html_writer::empty_tag('input', ['type' => 'url', 'name' => 'resurl',
-    'class' => 'form-control form-control-sm mr-2 tz-res-url', 'required' => 'required',
+    'class' => 'form-control form-control-sm me-2 tz-res-url', 'required' => 'required',
     'placeholder' => get_string('res_urlph', 'local_targetzenit')]);
 echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'restitle',
-    'class' => 'form-control form-control-sm mr-2', 'maxlength' => 255,
+    'class' => 'form-control form-control-sm me-2', 'maxlength' => 255,
     'placeholder' => get_string('res_titleph', 'local_targetzenit')]);
 echo html_writer::tag('button', get_string('res_addlink', 'local_targetzenit'),
     ['type' => 'submit', 'class' => 'btn btn-sm btn-outline-primary']);
@@ -393,11 +467,17 @@ echo html_writer::tag('div', get_string('res_hint', 'local_targetzenit', (object
 echo html_writer::end_div();
 echo html_writer::end_div();
 
+$chap_res = ob_get_clean();   // dars resurslari (o'quvchiga) — UVdan keyin
+ob_start();
+
 // ---------------------------------------------------------- AI DARS TAHLILI
 // Chizish `classes/output/tahlil.php` da — XUDDI SHU karta direktorning
 // faqat-o'qish sahifasida (dars_tahlil.php) ham ko'rinadi. Kod nusxalansa,
 // tahlil ramkasi o'zgarganda ikki sahifa boshqa-boshqa narsa ko'rsatardi.
 echo \local_targetzenit\output\tahlil::render($dars);
+
+$ong_tahlil = ob_get_clean();   // AI tahlil — o'ng ustunga
+ob_start();
 
 // Direktor fidbegi — o'qituvchi O'Z darsida ko'radi va JAVOB yozadi
 // (suhbat bir tomonlama bo'lmasligi kerak). Ohang va "maxfiy" belgisi unga
@@ -407,6 +487,9 @@ echo \local_targetzenit\output\tahlil::render($dars);
 echo \local_targetzenit\output\fidbek::render((int) $dars->id,
     (int) ($dars->teacherid ?: $USER->id), $PAGE->url->out(false));
 
+$ong_fidbek = ob_get_clean();   // direktor fidbegi — o'ng ustunning PASTIDA
+                                // (2026-11-18 talabi: fidbek jurnal ostida tursin)
+
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'saqla', 'value' => 1]);
@@ -415,22 +498,94 @@ echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'saqla', 'va
 echo html_writer::start_div('card mb-3');
 echo html_writer::start_div('card-body');
 
-echo html_writer::label(get_string('topic', 'local_targetzenit'), 'tz-topic', true, ['class' => 'font-weight-bold']);
+echo html_writer::label(get_string('topic', 'local_targetzenit'), 'tz-topic', true, ['class' => 'fw-bold']);
 echo html_writer::empty_tag('input', [
     'type' => 'text', 'id' => 'tz-topic', 'name' => 'topic',
     'value' => $dars->topic, 'class' => 'form-control mb-3',
     'placeholder' => get_string('ck_topicph', 'local_targetzenit'),
 ]);
 
-echo html_writer::label(get_string('homework', 'local_targetzenit'), 'tz-hw', true, ['class' => 'font-weight-bold']);
+echo html_writer::label(get_string('homework', 'local_targetzenit'), 'tz-hw', true, ['class' => 'fw-bold']);
 echo html_writer::empty_tag('input', [
     'type' => 'text', 'id' => 'tz-hw', 'name' => 'homework',
     'value' => $dars->homework, 'class' => 'form-control',
     'placeholder' => get_string('ck_homeworkph', 'local_targetzenit'),
 ]);
 
+echo html_writer::div(
+    html_writer::empty_tag('input', ['type' => 'submit',
+        'value' => get_string('ck_save', 'local_targetzenit'),
+        'class' => 'btn btn-sm btn-primary']),
+    'mt-1');
 echo html_writer::end_div();
 echo html_writer::end_div();
+echo html_writer::end_tag('form');   // mavzu/UV formasi shu yerda tugaydi
+
+// 2026-11-18: ikkala material bo'limi KARTA emas, TUGMA — joy tejash uchun.
+// Tugma bosilganda kichik MODAL oynada o'sha bo'limning to'liq tarkibi
+// (yuklash/o'chirish/ro'yxat) ochiladi. Fayllar avvalgidek Moodle fayl
+// omborida (kurs kontekstida) saqlanadi va shu yerdan/darsim'dan qayta
+// yuklab olinadi; kurs sahifasining resurs bo'limiga modul qilib chiqarish —
+// mavzu-section bosqichi bilan birga keladi.
+echo html_writer::div(
+    html_writer::tag('button',
+        '📎 ' . get_string('ck_btn_res', 'local_targetzenit')
+        . html_writer::tag('span', (string) count($resurslar),
+            ['class' => 'tzp-cnt ms-2']),
+        ['type' => 'button', 'class' => 'btn btn-outline-primary me-2',
+         'data-modal' => 'tz-modal-res'])
+    . html_writer::tag('button',
+        '🧠 ' . get_string('ck_btn_doska', 'local_targetzenit')
+        . html_writer::tag('span', $material ? '1' : '0',
+            ['class' => 'tzp-cnt ms-2']),
+        ['type' => 'button', 'class' => 'btn btn-outline-primary',
+         'data-modal' => 'tz-modal-doska']),
+    'tz-material-btnlar mb-3');
+
+$modal = static function (string $id, string $ich): string {
+    return html_writer::div(
+        html_writer::div(
+            html_writer::tag('button', '✕',
+                ['type' => 'button', 'class' => 'tz-modal-yop',
+                 'title' => get_string('ck_yopish', 'local_targetzenit')])
+            . $ich,
+            'tz-modal-quti'),
+        'tz-modal', ['id' => $id, 'hidden' => 'hidden']);
+};
+echo $modal('tz-modal-res', $chap_res);
+echo $modal('tz-modal-doska', $chap_doska);
+
+$PAGE->requires->js_amd_inline("
+    require([], function() {
+        document.querySelectorAll('[data-modal]').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var m = document.getElementById(b.getAttribute('data-modal'));
+                if (m) { m.hidden = false; }
+            });
+        });
+        document.querySelectorAll('.tz-modal').forEach(function(m) {
+            m.addEventListener('click', function(e) {
+                if (e.target === m) { m.hidden = true; }   // fon bosilsa yopiladi
+            });
+            var yop = m.querySelector('.tz-modal-yop');
+            if (yop) {
+                yop.addEventListener('click', function() { m.hidden = true; });
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.tz-modal').forEach(function(m) {
+                    m.hidden = true;
+                });
+            }
+        });
+    });
+");
+
+// O'quvchilar formasi (davomat/baho/UV tekshiruvi) — alohida forma.
+echo html_writer::start_tag('form', ['method' => 'post', 'action' => $PAGE->url->out(false)]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'saqla', 'value' => 1]);
 
 // ------------------------------------------------- O'QUVCHILAR: YO'QLAMA+BAHO
 // UV TEKSHIRUVI O'TGAN DARS HAQIDA: bugun tekshiriladigan uy vazifa OLDINGI
@@ -474,14 +629,13 @@ if (!$students) {
     $t = new html_table();
     $t->head = ['#', get_string('student', 'local_targetzenit'),
         get_string('attendance', 'local_targetzenit'),
-        get_string('ck_latemin', 'local_targetzenit'),
         get_string('grade', 'local_targetzenit') . ' (1–' . lesson::MAX_GRADE . ')',
         get_string('ck_hwcol', 'local_targetzenit'),
         get_string('ck_hwgrade', 'local_targetzenit'),
         get_string('ck_hwfile', 'local_targetzenit'),
         get_string('comment', 'local_targetzenit')];
     $t->attributes['class'] = 'generaltable tz-dars';
-    $t->colclasses = ['tz-n', 'tz-ism', 'tz-att', 'tz-late', 'tz-baho',
+    $t->colclasses = ['tz-n', 'tz-ism', 'tz-att', 'tz-baho',
         'tz-hw', 'tz-hwbaho', 'tz-hwfayl', 'tz-izoh'];
 
     $n = 0;
@@ -533,15 +687,12 @@ if (!$students) {
         $t->data[] = [
             $n,
             $OUTPUT->user_picture($s, ['size' => 28, 'link' => false])
-                . ' ' . fullname($s),
+                . ' ' . html_writer::link(
+                    new moodle_url('/local/targetzenit/oquvchi360.php', ['userid' => $s->id]),
+                    fullname($s),
+                    ['class' => 'tz-stud-link',
+                     'title' => get_string('s360_open', 'local_targetzenit', fullname($s))]),
             html_writer::div($tugmalar, 'tz-att-group'),
-            html_writer::empty_tag('input', [
-                'type' => 'number', 'name' => "latemin[{$s->id}]",
-                'value' => ($y && $y->latemin !== null) ? $y->latemin : '',
-                'min' => 1, 'max' => lesson::MAX_LATEMIN, 'step' => 1,
-                'class' => 'form-control tz-late-input',
-                'title' => get_string('ck_latemin_hint', 'local_targetzenit'),
-            ]),
             html_writer::empty_tag('input', [
                 'type' => 'number', 'name' => "grade[{$s->id}]",
                 'value' => ($y && $y->grade !== null) ? $y->grade : '',
@@ -584,10 +735,139 @@ echo html_writer::div(
 );
 echo html_writer::end_tag('form');
 
-// ------------------------------------------------------------------ JURNAL
-$jurnal = lesson::journal($courseid, 12);
+// ===================================== TO'LIQ AI TAHLIL (chapning eng pasti)
+// Yopiq holatda — umumiy xulosa + foiz; ochilganda — to'liq tahlil kartasi
+// (kuchli tomonlar / rivojlantirish — tahlil kartasining o'z tuzilmasi) va
+// oxirida dars transkripti. O'ngdagi «Dars yozuvi» kartidagi xulosa havolasi
+// shu blokka olib keladi (#tz-tahlil-toliq).
+if ($tahlilbor) {
+    echo html_writer::start_tag('details',
+        ['class' => 'tz-tahlil-toliq', 'id' => 'tz-tahlil-toliq']);
+    echo html_writer::tag('summary',
+        html_writer::tag('span',
+            ($tahlilfoiz !== null ? $tahlilfoiz . '%' : '—'),
+            ['class' => 'tz-tahlil-foiz'])
+        . html_writer::tag('b', get_string('ck_ai_full', 'local_targetzenit'))
+        . ($tahlilxulosa !== ''
+            ? html_writer::tag('span', s($tahlilxulosa), ['class' => 'tz-tahlil-qisqa'])
+            : '')
+        . html_writer::tag('span', get_string('ck_ai_open', 'local_targetzenit'),
+            ['class' => 'tz-tahlil-och']));
+    echo html_writer::start_div('tz-tahlil-ich');
+    echo $ong_tahlil;
+    if (!empty($yozuv->transcript)) {
+        echo html_writer::start_tag('details', ['class' => 'tz-transkript']);
+        echo html_writer::tag('summary',
+            get_string('ck_transcript', 'local_targetzenit'));
+        echo html_writer::tag('pre', s($yozuv->transcript),
+            ['class' => 'tz-transkript-matn']);
+        echo html_writer::end_tag('details');
+    }
+    echo html_writer::end_div();
+    echo html_writer::end_tag('details');
+}
+
+echo html_writer::end_div();   // tz-kokpit-chap
+
+// ============================================== O'NG USTUN (maket)
+echo html_writer::start_div('tz-kokpit-ong');
+
+// --- Dars yozuvi holati (tugma yuqorida, pagebar'da).
+if (!$audioyoq) {
+    $kunret = (int) (get_config('local_targetzenit', 'audioretentiondays') ?: 15);
+    echo html_writer::start_div('card mb-3 tz-audio-card');
+    echo html_writer::start_div('card-body');
+    echo html_writer::tag('h5', get_string('au_card', 'local_targetzenit'),
+        ['class' => 'card-title h6']);
+    if ($yozuv && $yozuv->status === 'recording') {
+        echo html_writer::tag('div', get_string('au_open', 'local_targetzenit'),
+            ['class' => 'text-danger fw-bold mb-2']);
+    } else if ($fayl_bor) {
+        $url = \local_targetzenit\audio::file_url((int) $dars->id, $context);
+        echo html_writer::tag('div',
+            '🎙 ' . get_string('audio_ready', 'local_targetzenit') . ' — ' .
+            gmdate('H:i:s', (int) $yozuv->duration) . ', ' .
+            number_format($yozuv->filesize / 1048576, 1) . ' MB',
+            ['class' => 'fw-bold mb-2']);
+        if ($url) {
+            echo html_writer::tag('audio', '', ['src' => $url->out(false),
+                'controls' => 'controls', 'preload' => 'none', 'class' => 'w-100 mb-2']);
+        }
+        if (!empty($yozuv->warning)) {
+            echo html_writer::tag('div',
+                get_string('au_warning', 'local_targetzenit', s($yozuv->warning)),
+                ['class' => 'alert alert-warning py-1 px-2 small mb-2']);
+        }
+        if ($yozuv->status === 'transcribed') {
+            $qoldi = max(0, $kunret - (int) floor((time() - $yozuv->timecreated) / DAYSECS));
+            echo html_writer::tag('div',
+                get_string('au_analysed', 'local_targetzenit', $qoldi),
+                ['class' => 'text-muted small mb-2']);
+        }
+    } else if ($yozuv && $yozuv->status === 'deleted') {
+        echo html_writer::tag('div', get_string('au_deleted', 'local_targetzenit'),
+            ['class' => 'text-muted mb-2']);
+    } else {
+        echo html_writer::tag('div', get_string('au_none', 'local_targetzenit'),
+            ['class' => 'text-muted mb-2']);
+    }
+    // AI xulosa + foiz — bosilsa pastdagi to'liq tahlil ochilib, o'sha
+    // joyga suriladi (havola #tz-tahlil-toliq, JS details'ni ochadi).
+    if ($tahlilbor) {
+        echo html_writer::link('#tz-tahlil-toliq',
+            html_writer::tag('span',
+                ($tahlilfoiz !== null ? $tahlilfoiz . '%' : '—'),
+                ['class' => 'tz-tahlil-foiz'])
+            . html_writer::tag('span',
+                $tahlilxulosa !== ''
+                    ? s(\core_text::substr($tahlilxulosa, 0, 160))
+                      . (\core_text::strlen($tahlilxulosa) > 160 ? '…' : '')
+                    : get_string('ck_ai_open', 'local_targetzenit'),
+                ['class' => 'tz-ai-mini-matn']),
+            ['class' => 'tz-ai-mini', 'id' => 'tz-ai-mini']);
+    }
+    echo html_writer::tag('div',
+        get_string('au_windowhint', 'local_targetzenit', $kunret),
+        ['class' => 'text-muted small']);
+    echo html_writer::end_div();
+    echo html_writer::end_div();
+
+    $PAGE->requires->js_amd_inline("
+        require([], function() {
+            var b = document.getElementById('tz-rec-open');
+            if (b) {
+                b.addEventListener('click', function() {
+                    window.open(b.getAttribute('data-url'), 'tzrec',
+                        'width=420,height=460,menubar=no,toolbar=no,location=no');
+                });
+            }
+            // Qisqa xulosa bosilganda pastdagi to'liq tahlil OCHIQ holda ochilsin
+            var m = document.getElementById('tz-ai-mini');
+            if (m) {
+                m.addEventListener('click', function() {
+                    var d = document.getElementById('tz-tahlil-toliq');
+                    if (d) { d.open = true; }
+                });
+            }
+        });
+    ");
+}
+
+// AI tahlilning to'lig'i endi CHAP ustunning pastida (tz-tahlil-toliq);
+// bu yerda faqat «Dars yozuvi» kartasidagi qisqa xulosa havolasi qoldi.
+
+// ------------------------------------------------- MINI JURNAL (o'ng karta)
+$jurnal = lesson::journal($courseid, 8);
 if ($jurnal['lessons'] && $students) {
-    echo html_writer::tag('h4', get_string('journal', 'local_targetzenit'), ['class' => 'mt-4']);
+    echo html_writer::start_div('card mb-3');
+    echo html_writer::start_div('card-body');
+    // Sarlavha JURNAL bilan tenglashtirilgan: xuddi shu nom + to'liq
+    // jurnalga havola (bu karta — o'sha sahifaning qisqa ko'rinishi).
+    echo html_writer::tag('h5',
+        html_writer::link(
+            new moodle_url('/local/targetzenit/jurnal.php', ['courseid' => $courseid]),
+            get_string('jurnal_link', 'local_targetzenit') . ' →'),
+        ['class' => 'card-title h6']);
 
     $t = new html_table();
     $head = [get_string('student', 'local_targetzenit')];
@@ -621,6 +901,15 @@ if ($jurnal['lessons'] && $students) {
         $t->data[] = $qator;
     }
     echo html_writer::div(html_writer::table($t), 'tz-scroll');
+    echo html_writer::end_div();
+    echo html_writer::end_div();
 }
 
-echo $OUTPUT->footer();
+// --- Direktor fidbegi — o'ng ustunning eng pastida.
+echo $ong_fidbek;
+
+echo html_writer::end_div();   // tz-kokpit-ong
+echo html_writer::end_div();   // tzp-cols
+echo html_writer::end_div();   // tz-ishstoli-wrap (kanvas)
+
+\local_targetzenit\output\maket::tugat();

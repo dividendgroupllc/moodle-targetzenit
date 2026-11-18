@@ -103,7 +103,7 @@ if ($resurslar) {
         }
         echo html_writer::tag('li',
             html_writer::tag('span', s(lessonres::tur_belgisi($res, $context)),
-                ['class' => 'badge badge-secondary tz-res-badge mr-2'])
+                ['class' => 'badge text-bg-secondary tz-res-badge me-2'])
             . html_writer::link($rurl, s(lessonres::nom($res, $context)),
                 ['target' => '_blank', 'rel' => 'noopener']),
             ['class' => 'mb-1']);
@@ -129,10 +129,6 @@ if ($oquvchimi) {
     if ($y) {
         $qatorlar = [];
         $davomat = lesson::attend_label((string) $y->attendance);
-        if ($y->attendance === 'late' && $y->latemin !== null) {
-            $davomat .= ' (' . get_string('ds_latemin', 'local_targetzenit',
-                (int) $y->latemin) . ')';
-        }
         $qatorlar[] = [get_string('attendance', 'local_targetzenit'), $davomat];
         if ($y->grade !== null) {
             $qatorlar[] = [get_string('grade', 'local_targetzenit'), (string) $y->grade];

@@ -90,7 +90,7 @@ echo html_writer::div(
         new moodle_url('/local/targetzenit/hisobot.php',
             ($userid == $USER->id) ? [] : ['userid' => $userid]),
         get_string('hr_openreport', 'local_targetzenit'),
-        ['class' => 'btn btn-primary mr-2'])
+        ['class' => 'btn btn-primary me-2'])
     . html_writer::tag('span', get_string('hr_subtitle', 'local_targetzenit'),
         ['class' => 'text-muted small']),
     'mb-3');
@@ -101,7 +101,7 @@ echo html_writer::div(
     html_writer::link(
         new moodle_url('/grade/report/overview/index.php', ['userid' => $userid]),
         get_string('mg_gradebooklink', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-primary mr-2']) .
+        ['class' => 'btn btn-sm btn-outline-primary me-2']) .
     html_writer::tag('span',
         get_string('mg_gradebookhint', 'local_targetzenit'),
         ['class' => 'text-muted small']),
@@ -123,7 +123,7 @@ if (\local_targetzenit\sharh::has_any((int) $userid)) {
             get_string('sh_mine', 'local_targetzenit')
             . ($shokilmagan ? ' (' . $shokilmagan . ')' : ''),
             ['class' => 'btn btn-sm '
-                . ($shokilmagan ? 'btn-primary' : 'btn-outline-primary') . ' mr-2'])
+                . ($shokilmagan ? 'btn-primary' : 'btn-outline-primary') . ' me-2'])
         . html_writer::tag('span', get_string('sh_minehint', 'local_targetzenit'),
             ['class' => 'text-muted small']),
         'mb-3');

@@ -50,17 +50,17 @@ class tahlil {
             // uni "qizil" deb ko'rsatish noto'g'ri bo'lardi.
             $rang = $um >= $norma + 10 ? 'success' : ($um >= $norma - 10 ? 'warning' : 'danger');
             $sarlavha .= ' ' . \html_writer::tag('span', $um . '%',
-                ['class' => 'badge badge-' . $rang . ' tz-ai-umumiy']);
+                ['class' => 'badge text-bg-' . $rang . ' tz-ai-umumiy']);
         }
         if ($tur !== '') {
             $sarlavha .= ' ' . \html_writer::tag('span',
                 s(\local_targetzenit\ai::tur_nomi($tur)),
-                ['class' => 'badge badge-light tz-ai-tur',
+                ['class' => 'badge text-bg-light tz-ai-tur',
                  'title' => get_string('ai_dars_turi', 'local_targetzenit')]);
         }
         if ($oila !== '' && $oila !== 'umumiy') {
             $sarlavha .= ' ' . \html_writer::tag('span', s($oila),
-                ['class' => 'badge badge-light tz-ai-tur',
+                ['class' => 'badge text-bg-light tz-ai-tur',
                  'title' => get_string('ai_fan_oila', 'local_targetzenit')]);
         }
         $h .= \html_writer::tag('h5', $sarlavha);
@@ -115,7 +115,7 @@ class tahlil {
                 array_map('trim', array_map('strval', (array) $d['learned'])),
                 fn($x) => $x !== ''));
             $ichi = $org
-                ? \html_writer::alist(array_map('s', $org), ['class' => 'mb-0 pl-3'])
+                ? \html_writer::alist(array_map('s', $org), ['class' => 'mb-0 ps-3'])
                 : \html_writer::tag('span',
                     "Transkriptda o'quvchi nimani egallaganiga aniq dalil topilmadi.",
                     ['class' => 'text-muted']);
@@ -132,9 +132,9 @@ class tahlil {
             $ok = !empty($tm['covered']);
             $h .= \html_writer::div(
                 \html_writer::tag('span', $ok ? "✔ Mavzu o'tildi" : "✖ Mavzu o'tilmadi",
-                    ['class' => 'badge ' . ($ok ? 'badge-success' : 'badge-danger')]) . ' ' .
+                    ['class' => 'badge ' . ($ok ? 'text-bg-success' : 'text-bg-danger')]) . ' ' .
                 (!empty($tm['actual_topic'])
-                    ? \html_writer::tag('span', 'Darsda: ' . s($tm['actual_topic']), ['class' => 'ml-2'])
+                    ? \html_writer::tag('span', 'Darsda: ' . s($tm['actual_topic']), ['class' => 'ms-2'])
                     : '') .
                 (!empty($tm['note']) ? \html_writer::div(s($tm['note']), 'text-muted small mt-1') : ''),
                 'mb-3'
@@ -354,7 +354,7 @@ class tahlil {
                 && has_capability('moodle/site:config', \context_system::instance())) {
             $h .= \html_writer::tag('button', '🔄 Qayta tahlil qilish',
                 ['type' => 'button', 'id' => 'tz-ai-again', 'class' => 'btn btn-sm btn-outline-primary mt-2']);
-            $h .= \html_writer::tag('span', '', ['id' => 'tz-ai-again-holat', 'class' => 'ml-2 small']);
+            $h .= \html_writer::tag('span', '', ['id' => 'tz-ai-again-holat', 'class' => 'ms-2 small']);
 
             $PAGE->requires->js_amd_inline("
                 require([], function() {
@@ -431,7 +431,7 @@ class tahlil {
 
             $h .= \html_writer::tag('button', '🤖 Hozir tahlil qilish',
                 ['type' => 'button', 'id' => 'tz-ai-now', 'class' => 'btn btn-primary']);
-            $h .= \html_writer::tag('span', '', ['id' => 'tz-ai-holat', 'class' => 'ml-3 font-weight-bold']);
+            $h .= \html_writer::tag('span', '', ['id' => 'tz-ai-holat', 'class' => 'ms-3 fw-bold']);
             $h .= \html_writer::end_div();
             $h .= \html_writer::end_div();
 

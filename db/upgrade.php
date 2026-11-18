@@ -1156,6 +1156,49 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111710, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111840) {
+        // (bo'sh qadam) Bu yerda Dashboard bandini yashirish bor edi —
+        // qaror BEKOR qilindi (2026-11-18, foydalanuvchi): alohida «Ish
+        // stoli» sahifasi o'chirildi, yagona dashboard — Moodle'niki.
+        // Qadam raqami tarix uchun qoladi (raqamlar orqaga qaytmaydi).
+        upgrade_plugin_savepoint(true, 2026111840, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026111850) {
+
+        // ============== DASHBOARD'NI MENYUGA QAYTARISH
+        //
+        // 2026111840 qadami lokalda allaqachon bajarilgan bo'lishi mumkin
+        // (myhome yashirilgan) — bu qadam uni ORQAGA qaytaradi: «Ish stoli»
+        // sahifasi o'chirildi, Moodle'ning o'z Dashboard'i yagona bosh ekran.
+        $bor = (string) get_config('core', 'hiddenprimarynavigationitems');
+        $royxat = array_filter(array_map('trim', explode(',', $bor)));
+        $yangi = array_values(array_filter($royxat,
+            static fn($x) => $x !== 'myhome'));
+        if ($yangi !== $royxat) {
+            set_config('hiddenprimarynavigationitems', implode(',', $yangi));
+        }
+
+        upgrade_plugin_savepoint(true, 2026111850, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026111910) {
+
+        // ============== O'QITUVCHI IZOHI AI TAHLILGA (2026-11-18 talabi)
+        // O'qituvchi dars haqida kontekst yozadi ("amaliy dars — men kamroq
+        // gapiraman, o'quvchilar daftarda masala ishlaydi") va AI tahlil shu
+        // formatga moslashadi — aks holda kam gapirgan o'qituvchi "tushuntirish
+        // yo'q" deb NOHAQ past baho olardi (doska materiali bilan bir xil dard).
+        $table = new xmldb_table('local_targetzenit_lesson');
+        $field = new xmldb_field('ainote', XMLDB_TYPE_TEXT, null, null, null, null,
+            null, 'homework');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111910, 'local', 'targetzenit');
+    }
+
     return true;
 }
 
