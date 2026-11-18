@@ -12,6 +12,8 @@
 // Aks holda panel o'rtacha ishlayotgan o'qituvchini muvaffaqiyatsiz deb
 // ko'rsatardi va ishonchni birinchi kuni yo'qotardi.
 
+
+
 require(__DIR__ . '/../../config.php');
 
 use local_targetzenit\ai;
