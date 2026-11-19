@@ -230,6 +230,36 @@ class topshiriq {
 				$out[] = (int) $c->id;
 			}
 		}
+
+		// JADVAL YO'LI — `enrol_get_users_courses($userid, TRUE, ...)` faqat
+		// FAOL yozilishni qaytaradi, Frappe kurs sinxroni esa jadvalda
+		// topilmagan (guruh x fan) uchun o'qituvchi yozilishini `suspend`
+		// qiladi (bir yurishda 42 ta bo'lgan). Natijada o'qituvchi o'z
+		// guruhining topshiriqlarini KO'RMAY qoladi — sharh modulida aynan
+		// shu muammo bo'lgan va `jadval_kurslarim()` bilan hal qilingan.
+		//
+		// QOIDA (o'sha saboqdan): «men qaysi guruhga dars beraman» degan
+		// savolga jadval ham javob beradi; Moodle yozilishi yagona manba
+		// bo'lib qolmasligi kerak.
+		$yil = timetable::current_year();
+		if ($yil !== '') {
+			foreach (sharh::jadval_kurslarim($userid, $yil) as $c) {
+				$cid = (int) $c->id;
+				if (in_array($cid, $out, true)) {
+					continue;
+				}
+				// Ruxsat baribir tekshiriladi: `has_capability()` ROL
+				// biriktirilishiga qaraydi, yozilish holatiga emas — ya'ni
+				// yozilish suspend qilingan bo'lsa ham rol joyida bo'lsa
+				// o'qituvchi haqiqatan baholay oladi. Rol ham olib
+				// tashlangan bo'lsa — ko'rsatmaymiz, aks holda «Baholash»
+				// bosilganda Moodle rad etardi.
+				if (has_capability('mod/assign:grade',
+						\context_course::instance($cid), $userid)) {
+					$out[] = $cid;
+				}
+			}
+		}
 		return $out;
 	}
 
