@@ -15,11 +15,36 @@ use local_targetzenit\sharh;
 use local_targetzenit\student_view;
 use local_targetzenit\timetable;
 
-$userid = required_param('userid', PARAM_INT);
+$userid = optional_param('userid', 0, PARAM_INT);
+$courseid = optional_param('courseid', 0, PARAM_INT);
 $termidx = optional_param('term', -1, PARAM_INT);
 
 require_login();
 $context = context_system::instance();
+$year = timetable::current_year();
+
+// GURUH + O'QUVCHI FILTRI (2026-11-19): o'qituvchi o'z guruhlaridan birini,
+// undagi o'quvchini tanlab 360 kartasini ko'radi.
+$mening = \local_targetzenit\journal::my_courses((int) $USER->id, $year);
+
+$grstudents = [];
+if ($courseid && isset($mening[$courseid])) {
+    $cctx = context_course::instance($courseid);
+    foreach (\local_targetzenit\lesson::students($cctx) as $st) {
+        $grstudents[(int) $st->id] = fullname($st);
+    }
+    if (!$userid || !isset($grstudents[$userid])) {
+        $userid = $grstudents ? (int) array_key_first($grstudents) : 0;
+    }
+}
+if (!$userid) {
+    if ($mening) {
+        redirect(new moodle_url('/local/targetzenit/oquvchi360.php',
+            ['courseid' => array_key_first($mening)]));
+    }
+    throw new moodle_exception('nopermissions', 'error', '',
+        get_string('s360_title', 'local_targetzenit'));
+}
 
 $ruxsat = has_capability('local/targetzenit:viewteachers', $context);
 if (!$ruxsat) {
@@ -43,7 +68,6 @@ $PAGE->set_pagelayout('embedded');
 $PAGE->set_title(fullname($oquvchi));
 $PAGE->requires->css('/local/targetzenit/styles.css');
 
-$year = timetable::current_year();
 $terms = array_values(timetable::terms($year));
 if ($termidx < 0 || !isset($terms[$termidx])) {
     $termidx = 0;
@@ -96,8 +120,30 @@ $pill = static function ($baho): string {
     return 'tz-pill tz-pill-' . $r;
 };
 
+// Imtihon holati va sharh kategoriyasi — DB'da o'zbekcha kalit, LEKIN
+// o'qituvchining tilida ko'rsatiladi (bh_holat_*, sh_kat_* satrlari).
+$holatmatn = static function (string $kalit): string {
+    $kalit = trim($kalit);
+    if ($kalit === '') {
+        return '—';
+    }
+    $sm = get_string_manager();
+    return $sm->string_exists('bh_holat_' . $kalit, 'local_targetzenit')
+        ? get_string('bh_holat_' . $kalit, 'local_targetzenit')
+        : s($kalit);
+};
+$katmatn = static function (string $kalit): string {
+    $kalit = trim($kalit);
+    $sm = get_string_manager();
+    return $sm->string_exists('sh_kat_' . $kalit, 'local_targetzenit')
+        ? get_string('sh_kat_' . $kalit, 'local_targetzenit')
+        : s($kalit);
+};
+
 maket::boshla('s360');
 echo html_writer::start_div('tz-ishstoli-wrap');
+
+try {
 
 // ----------------------------------------------------------------- SARLAVHA
 echo html_writer::start_div('tz-s360-head');
@@ -111,12 +157,52 @@ echo html_writer::div(
         ['class' => 'tzp-sub mb-0']),
     'tz-s360-inf');
 echo html_writer::tag('span', '', ['style' => 'flex:1']);
+
+// --- GURUH FILTRI (o'qituvchining kurslari)
+if ($mening) {
+    echo html_writer::start_tag('form', ['method' => 'get',
+        'action' => new moodle_url('/local/targetzenit/oquvchi360.php'),
+        'class' => 'd-inline m-0 me-2']);
+    echo html_writer::start_tag('select', ['name' => 'courseid',
+        'class' => 'tz-kurs-sel', 'onchange' => 'this.form.submit()',
+        'title' => get_string('group', 'local_targetzenit')]);
+    echo html_writer::tag('option', '— ' . get_string('group', 'local_targetzenit'),
+        ['value' => '0']);
+    foreach ($mening as $cid => $nom) {
+        echo html_writer::tag('option', format_string((string) $nom),
+            ['value' => $cid] + ((int) $cid === (int) $courseid ? ['selected' => 'selected'] : []));
+    }
+    echo html_writer::end_tag('select');
+    echo html_writer::end_tag('form');
+}
+
+// --- O'QUVCHI FILTRI (tanlangan guruhdagi o'quvchilar)
+if ($grstudents) {
+    echo html_writer::start_tag('form', ['method' => 'get',
+        'action' => new moodle_url('/local/targetzenit/oquvchi360.php'),
+        'class' => 'd-inline m-0 me-2']);
+    echo html_writer::empty_tag('input',
+        ['type' => 'hidden', 'name' => 'courseid', 'value' => $courseid]);
+    echo html_writer::start_tag('select', ['name' => 'userid',
+        'class' => 'tz-kurs-sel', 'onchange' => 'this.form.submit()',
+        'title' => get_string('student', 'local_targetzenit')]);
+    foreach ($grstudents as $sid => $nom) {
+        echo html_writer::tag('option', s((string) $nom),
+            ['value' => $sid] + ((int) $sid === (int) $userid ? ['selected' => 'selected'] : []));
+    }
+    echo html_writer::end_tag('select');
+    echo html_writer::end_tag('form');
+}
+
+// --- CHORAK FILTRI
 if (count($terms) > 1) {
     echo html_writer::start_tag('form', ['method' => 'get',
         'action' => new moodle_url('/local/targetzenit/oquvchi360.php'),
         'class' => 'd-inline m-0']);
     echo html_writer::empty_tag('input',
         ['type' => 'hidden', 'name' => 'userid', 'value' => $userid]);
+    echo html_writer::empty_tag('input',
+        ['type' => 'hidden', 'name' => 'courseid', 'value' => $courseid]);
     echo html_writer::start_tag('select', ['name' => 'term',
         'class' => 'tz-kurs-sel', 'onchange' => 'this.form.submit()']);
     foreach ($terms as $i => $t) {
@@ -135,8 +221,7 @@ echo html_writer::start_div('tzp-card');
 echo html_writer::tag('h5', get_string('s360_subjects', 'local_targetzenit')
     . ($term ? ' · ' . format_string((string) $term->name) : ''));
 if (!$fanlar) {
-    echo html_writer::div(get_string('s360_nodata', 'local_targetzenit'),
-        ['class' => 'text-muted']);
+    echo html_writer::div(get_string('s360_nodata', 'local_targetzenit'), 'text-muted');
 } else {
     echo html_writer::start_div('', ['style' => 'overflow-x:auto']);
     echo html_writer::start_tag('table', ['class' => 'tz-mini']);
@@ -148,23 +233,51 @@ if (!$fanlar) {
         . html_writer::tag('th', get_string('s360_total', 'local_targetzenit'))
         . html_writer::tag('th', get_string('grade', 'local_targetzenit'))));
     echo html_writer::start_tag('tbody');
+    $fmt = static fn($x) => (!is_scalar($x) || $x === null) ? '—'
+        : (($x == (int) $x) ? (int) $x : round((float) $x, 1));
+    $kuchli = [];
+    $zaif = [];
     foreach ($fanlar as $cid => $v) {
         $ts = exam::term_score((int) $userid, (int) $cid, $year, $term->name);
-        $fmt = static fn($x) => $x === null ? '—'
-            : (($x == (int) $x) ? (int) $x : round($x, 1));
+        $ort = (isset($v['ortacha']) && is_scalar($v['ortacha'])) ? $v['ortacha'] : '—';
+        $bahoval = (isset($ts->baho) && is_scalar($ts->baho)) ? (int) $ts->baho : 0;
+        $totalval = (isset($ts->total) && is_scalar($ts->total)) ? (int) $ts->total : null;
+        $fannomi = format_string((string) ($v['course']->fullname ?? ''));
+        // Avto-izoh uchun: kuchli (o'rtacha>=8) va e'tibor talab (<6) fanlar
+        if (isset($v['ortacha']) && is_scalar($v['ortacha'])) {
+            if ((float) $v['ortacha'] >= 8) {
+                $kuchli[] = $fannomi;
+            } else if ((float) $v['ortacha'] < 6) {
+                $zaif[] = $fannomi;
+            }
+        }
         echo html_writer::tag('tr',
-            html_writer::tag('td', format_string((string) ($v['course']->fullname ?? '')))
-            . html_writer::tag('td', $v['ortacha'] !== null ? $v['ortacha'] : '—')
-            . html_writer::tag('td', $fmt($ts->bsb))
-            . html_writer::tag('td', $fmt($ts->chsb))
-            . html_writer::tag('td', $ts->total !== null ? (int) $ts->total : '—')
-            . html_writer::tag('td', $ts->baho
-                ? html_writer::tag('span', $ts->baho, ['class' => $pill($ts->baho)])
+            html_writer::tag('td', $fannomi)
+            . html_writer::tag('td', (string) $ort)
+            . html_writer::tag('td', (string) $fmt($ts->bsb ?? null))
+            . html_writer::tag('td', (string) $fmt($ts->chsb ?? null))
+            . html_writer::tag('td', $totalval !== null ? (string) $totalval : '—')
+            . html_writer::tag('td', $bahoval
+                ? html_writer::tag('span', (string) $bahoval, ['class' => $pill($bahoval)])
                 : '—'));
     }
     echo html_writer::end_tag('tbody');
     echo html_writer::end_tag('table');
     echo html_writer::end_div();
+
+    // Avto-izoh (maket: «Kuchli: ... · E'tibor talab: ...»)
+    if ($kuchli || $zaif) {
+        $qism = [];
+        if ($kuchli) {
+            $qism[] = html_writer::tag('b', get_string('s360_strong', 'local_targetzenit'))
+                . ' ' . implode(', ', $kuchli);
+        }
+        if ($zaif) {
+            $qism[] = html_writer::tag('b', get_string('s360_weak', 'local_targetzenit'))
+                . ' ' . implode(', ', $zaif);
+        }
+        echo html_writer::div(implode(' · ', $qism), 'tz-s360-izoh');
+    }
 }
 echo html_writer::end_div();
 
@@ -177,8 +290,10 @@ $kv = static function (string $nom, string $qiymat, string $pillcls = '', string
 };
 // Davomat + UV intizomi — bitta ustunda (maket: o'ng tomonda ikkisi tik).
 echo html_writer::start_div('');   // ustun o'ramchi
+try {
 echo html_writer::start_div('tzp-card');
-echo html_writer::tag('h5', get_string('s360_attendance', 'local_targetzenit'));
+echo html_writer::tag('h5', get_string('s360_attendance', 'local_targetzenit')
+    . ' · ' . userdate(time(), '%B'));
 echo $kv(get_string('s360_att_inlessons', 'local_targetzenit'),
     ($kelgan + (int) $dav['late']) . ' / ' . (int) $dav['jami']
     . ' (' . $davfoiz . '%)');
@@ -198,13 +313,18 @@ if ($uvjami > 0) {
     echo $kv(get_string('s360_hw_count', 'local_targetzenit'),
         $uvbajardi . ' / ' . $uvjami);
 } else {
-    echo html_writer::div(get_string('s360_hw_none', 'local_targetzenit'),
-        ['class' => 'text-muted']);
+    echo html_writer::div(get_string('s360_hw_none', 'local_targetzenit'), 'text-muted');
 }
 echo html_writer::end_div();   // UV karti
+} catch (\Throwable $e) {
+    $ln = $e->getLine();
+    foreach ($e->getTrace() as $tr) { if (!empty($tr['file']) && strpos($tr['file'], 'oquvchi360') !== false) { $ln = $tr['line']; break; } }
+    echo html_writer::div('⚠ ' . s($e->getMessage()) . ' @ ' . $ln, 'text-danger small');
+}
 echo html_writer::end_div();   // davomat+UV ustuni
 
 // ============================================= IMTIHONLAR
+try {
 echo html_writer::start_div('tzp-card');
 echo html_writer::tag('h5', get_string('s360_exams', 'local_targetzenit'));
 $bor = false;
@@ -215,8 +335,7 @@ foreach ($imtihonlar as $im) {
     }
 }
 if (!$bor) {
-    echo html_writer::div(get_string('s360_noexams', 'local_targetzenit'),
-        ['class' => 'text-muted']);
+    echo html_writer::div(get_string('s360_noexams', 'local_targetzenit'), 'text-muted');
 } else {
     echo html_writer::start_div('', ['style' => 'overflow-x:auto']);
     echo html_writer::start_tag('table', ['class' => 'tz-mini']);
@@ -242,15 +361,21 @@ if (!$bor) {
             . html_writer::tag('td', format_string((string) ($im->coursename ?? '')))
             . html_writer::tag('td', $sana !== '' ? userdate(strtotime($sana), '%d.%m') : '—')
             . html_writer::tag('td', $ball)
-            . html_writer::tag('td', s((string) ($im->holat ?? '—'))));
+            . html_writer::tag('td', $holatmatn((string) ($im->holat ?? ''))));
     }
     echo html_writer::end_tag('tbody');
     echo html_writer::end_tag('table');
     echo html_writer::end_div();
 }
 echo html_writer::end_div();
+} catch (\Throwable $e) {
+    $ln = $e->getLine();
+    foreach ($e->getTrace() as $tr) { if (!empty($tr['file']) && strpos($tr['file'], 'oquvchi360') !== false) { $ln = $tr['line']; break; } }
+    echo html_writer::div('⚠ ' . s($e->getMessage()) . ' @ ' . $ln, 'text-danger small');
+}
 
 // ============================================= SHARHLAR (ochiq)
+try {
 echo html_writer::start_div('tzp-card');
 echo html_writer::tag('h5', get_string('s360_reviews', 'local_targetzenit'));
 $shbor = false;
@@ -261,8 +386,7 @@ foreach ($sharhlar as $sh) {
     }
 }
 if (!$shbor) {
-    echo html_writer::div(get_string('s360_noreviews', 'local_targetzenit'),
-        ['class' => 'text-muted']);
+    echo html_writer::div(get_string('s360_noreviews', 'local_targetzenit'), 'text-muted');
 } else {
     foreach ($sharhlar as $sh) {
         $matn = trim((string) ($sh->content ?? ''));
@@ -272,7 +396,7 @@ if (!$shbor) {
         $muallif = trim((string) ($sh->afirstname ?? '') . ' ' . (string) ($sh->alastname ?? ''));
         echo html_writer::div(
             ($sh->kategoriya
-                ? html_writer::tag('b', s((string) $sh->kategoriya) . ': ') : '')
+                ? html_writer::tag('b', $katmatn((string) $sh->kategoriya) . ': ') : '')
             . s((string) $matn)
             . html_writer::tag('small',
                 ($muallif !== '' ? ' — ' . s((string) $muallif) : '')
@@ -284,7 +408,26 @@ if (!$shbor) {
     }
 }
 echo html_writer::end_div();
+} catch (\Throwable $e) {
+    $ln = $e->getLine();
+    foreach ($e->getTrace() as $tr) { if (!empty($tr['file']) && strpos($tr['file'], 'oquvchi360') !== false) { $ln = $tr['line']; break; } }
+    echo html_writer::div('⚠ ' . s($e->getMessage()) . ' @ ' . $ln, 'text-danger small');
+}
 
 echo html_writer::end_div();   // tz-s360-grid
+
+} catch (\Throwable $e) {
+    // VAQTINCHA TASHXIS: oquvchi360.php dagi ANIQ qatorni trace'dan topadi.
+    $joy = basename($e->getFile()) . ':' . (int) $e->getLine();
+    foreach ($e->getTrace() as $tr) {
+        if (!empty($tr['file']) && strpos($tr['file'], 'oquvchi360') !== false) {
+            $joy = basename($tr['file']) . ':' . ($tr['line'] ?? '?');
+            break;
+        }
+    }
+    echo html_writer::div('⚠ ' . s($e->getMessage()) . ' @ ' . s($joy),
+        'alert alert-warning');
+}
+
 echo html_writer::end_div();   // tz-ishstoli-wrap
 maket::tugat();

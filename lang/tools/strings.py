@@ -3002,6 +3002,12 @@ S = {
         "Настройки курса -> Appearance -> Show gradebook to students = Yes.",
     ),
 
+    "set_bhheading": ("Assessment (CHSB/BSB)", "Baholash (CHSB/BSB)",
+        "Оценивание (CHSB/BSB)"),
+    "set_oynasoat": ("Grade editing window (hours)",
+        "Baho tahrirlash oynasi (soat)", "Окно редактирования оценки (часы)"),
+    "tp_newlabel": ("New activity:", "Yangi topshiriq:", "Новый элемент:"),
+    "tp_newbtn": ("Create", "Yaratish", "Создать"),
     "tp_kind": ("Type", "Turi", "Тип"),
     "tp_kind_assign": ("Assignment", "Topshiriq", "Задание"),
     "tp_kind_quiz": ("Quiz", "Test", "Тест"),

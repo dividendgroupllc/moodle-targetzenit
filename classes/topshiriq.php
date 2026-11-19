@@ -298,6 +298,41 @@ class topshiriq {
 		return (object) ['jami' => $assign, 'kurslar' => $kurslar, 'quiz' => $quiz];
 	}
 
+	/**
+	 * Foydalanuvchi YANGI topshiriq qo'sha oladigan kurslar.
+	 *
+	 * `mening_kurslarim()` dan farqi: u `mod/assign:grade` (baholash)
+	 * bo'yicha, bu esa `moodle/course:manageactivities` (faoliyat qo'shish)
+	 * bo'yicha. Ikkalasi bir xil emas — nizom bo'yicha fan o'qituvchisi
+	 * baholaydi, lekin kursga faoliyat qo'shish huquqi alohida beriladi.
+	 *
+	 * @return array [courseid => kurs nomi]
+	 */
+	public static function yaratish_kurslari(int $userid): array {
+		$out = [];
+		foreach (enrol_get_users_courses($userid, true, 'id, fullname, idnumber') as $c) {
+			if (!has_capability('moodle/course:manageactivities',
+					\context_course::instance($c->id), $userid)) {
+				continue;
+			}
+			list($guruh, $fan) = self::guruh_fan((string) ($c->idnumber ?? ''),
+				(string) $c->fullname);
+			$out[(int) $c->id] = $fan !== '' ? $guruh . ' — ' . $fan : $guruh;
+		}
+		asort($out);
+		return $out;
+	}
+
+	/** Yangi faoliyat qo'shish sahifasi (Moodle yadrosi). */
+	public static function yaratish_url(int $courseid, string $modul): \moodle_url {
+		return new \moodle_url('/course/modedit.php', [
+			'add' => $modul,
+			'course' => $courseid,
+			'section' => 0,
+			'return' => 0,
+		]);
+	}
+
 	/** Faoliyatning o'z sahifasi — «ochish». */
 	public static function ochish_url(\stdClass $r): \moodle_url {
 		return new \moodle_url('/mod/' . $r->turi . '/view.php', ['id' => $r->cmid]);

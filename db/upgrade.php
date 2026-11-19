@@ -1199,6 +1199,119 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026111910, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026111950) {
+
+        // ============== E'LONLAR MODULI (portal 5-bosqichi, 2026-11-19)
+        // O'qituvchi o'z guruhiga, rahbariyat butun maktabga e'lon yozadi;
+        // o'quvchi (ota-ona) ko'radi, o'qilganlik kuzatiladi, push ketadi.
+        $table = new xmldb_table('local_targetzenit_elon');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('muallifuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('scope', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'guruh');
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'oddiy');
+            $table->add_field('sarlavha', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('matn', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('sana', XMLDB_TYPE_CHAR, '10', null, null, null, null);
+            $table->add_field('vaqt', XMLDB_TYPE_CHAR, '5', null, null, null, null);
+            $table->add_field('xona', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('holat', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'chiqdi');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('muallifuserid', XMLDB_KEY_FOREIGN, ['muallifuserid'], 'user', ['id']);
+            $table->add_index('scope_course', XMLDB_INDEX_NOTUNIQUE, ['scope', 'courseid']);
+            $table->add_index('timecreated', XMLDB_INDEX_NOTUNIQUE, ['timecreated']);
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_targetzenit_elon_seen');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('elonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('seenat', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('elonid', XMLDB_KEY_FOREIGN, ['elonid'],
+                'local_targetzenit_elon', ['id']);
+            $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $table->add_index('elon_user', XMLDB_INDEX_UNIQUE, ['elonid', 'userid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111950, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026111960) {
+
+        // ============== MULOQOT (chat) MODULI (portal 5-bosqichi, 2026-11-19)
+        // Guruh chat siyosati — Moodle message conversations ustida. Xabarlar
+        // YADRODA; bu jadval faqat boshqaruv (egasi, biriktirilgan guruh,
+        // yozish siyosati, ko'rinish).
+        $table = new xmldb_table('local_targetzenit_chat');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('conversationid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('egauserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '12', null, XMLDB_NOTNULL, null, 'erkin');
+            $table->add_field('yozish', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'hamma');
+            $table->add_field('korinish', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'azolar');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('egauserid', XMLDB_KEY_FOREIGN, ['egauserid'], 'user', ['id']);
+            $table->add_index('conversationid', XMLDB_INDEX_UNIQUE, ['conversationid']);
+            $table->add_index('courseid', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111960, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026111964) {
+
+        // ============== O'QITUVCHILARGA XABAR YUBORISH HUQUQI (2026-11-19)
+        // Muloqotda shaxsiy (1:1) xabar yuborish Moodle maxfiylik sozlamasiga
+        // taqaladi: qabul qiluvchi «faqat kontaktlar» bo'lsa yoki umumiy kursda
+        // bo'lmasa, yadro «cannot send a message» xatosini tashlaydi. Yadroning
+        // o'zi buning uchun `moodle/site:messageanyuser` ruxsatini nazarda
+        // tutgan (can_contact_user izohi: «teachers message students regardless
+        // of message settings»). Shu ruxsatni portal o'qituvchi rollariga
+        // (local/targetzenit:teach bor rollarga) tizim kontekstida beramiz.
+        $syscontext = context_system::instance();
+        $roleids = $DB->get_fieldset_select('role_capabilities', 'DISTINCT roleid',
+            'capability = :cap AND permission = :perm',
+            ['cap' => 'local/targetzenit:teach', 'perm' => CAP_ALLOW]);
+        foreach ($roleids as $rid) {
+            assign_capability('moodle/site:messageanyuser', CAP_ALLOW, (int) $rid,
+                $syscontext->id, true);
+        }
+        $syscontext->mark_dirty();
+
+        upgrade_plugin_savepoint(true, 2026111964, 'local', 'targetzenit');
+    }
+
+    if ($oldversion < 2026111970) {
+
+        // ============== UCHRASHUV (meeting) — chat ipiga bog'langan (2026-11-19)
+        $table = new xmldb_table('local_targetzenit_uchrashuv');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('conversationid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('taklifuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('sana', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('joy', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('izoh', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('holat', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'kutilmoqda');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('conversationid', XMLDB_INDEX_NOTUNIQUE, ['conversationid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111970, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

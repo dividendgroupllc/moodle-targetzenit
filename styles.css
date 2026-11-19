@@ -409,6 +409,8 @@ body.tz-shell .tz-mavjad tr.tz-m-today-row td { background: #f5f9fd; }
 .tz-mst-future { background: #eef1f0; color: var(--tzp-muted); }
 .tz-mst-exam { background: #6b3fa0; color: #fff; }
 
+.tz-s360-izoh { font-size: 12px; color: var(--tzp-muted); margin-top: 8px; }
+
 /* Butun maktab panjarasi QOBIQ ichida — doim yorug' va nafis (OS dark
    rejimi bu yerga tegmaydi: qobiq foni oq). Week kartochkalari uslubiga mos. */
 body.tz-shell .tz-grid { border: 1px solid var(--tzp-line); border-radius: 12px; overflow: hidden; background: #fff; }
@@ -430,6 +432,90 @@ body.tz-shell .tz-grid .tz-g-fan { font-weight: 700; font-size: 12.5px; color: h
 body.tz-shell .tz-grid .tz-g-oqit { font-size: 10.5px; color: var(--tzp-muted) !important; line-height: 1.3; }
 body.tz-shell .tz-grid .tz-bk { font-size: 10.5px; font-weight: 700; opacity: .85; }
 body.tz-shell .tz-grid .tz-lesson.tz-mine { outline: 2px solid var(--tzp-brand); outline-offset: -2px; }
+
+/* E'lonlar — maket «elon» kartalari (3 ko'rinish: MAJLIS/guruh/MAKTAB) */
+.tz-elon-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.tz-elon-row select { flex: 1; min-width: 160px; }
+#tz-elon-majlis { display: flex; gap: 8px; flex-wrap: wrap; }
+#tz-elon-majlis input { flex: 1; min-width: 120px; }
+.tz-elon-item { border: 1.5px solid var(--tzp-line); border-radius: 9px; padding: 11px 14px; margin: 10px 0; background: #fff; }
+.tz-elon-majlis-card { border-color: var(--tzp-exam); background: #faf7fd; }
+.tz-elon-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tz-elon-head b { font-size: 14.5px; }
+/* Teglar */
+.tz-elon-teg { font-size: 10.5px; font-weight: 800; letter-spacing: .04em; border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
+.tz-elon-tmajlis { background: var(--tzp-exam); color: #fff; }
+.tz-elon-tmaktab { background: var(--tzp-info-bg); color: var(--tzp-info); }
+.tz-elon-tguruh { background: var(--tzp-brand-bg); color: var(--tzp-brand); }
+.tz-elon-tmuhim { background: var(--tzp-warn-bg); color: var(--tzp-warn); }
+.tz-elon-majlis-info { font-size: 13px; color: var(--tzp-exam); font-weight: 600; margin: 4px 0; }
+/* O'qilganlik + progress bar */
+.tz-elon-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.tz-elon-seen { font-size: 12.5px; color: var(--tzp-muted); }
+.tz-elon-seen b { color: var(--tzp-brand); }
+.tz-elon-bar { display: inline-block; width: 140px; height: 6px; border-radius: 4px; background: #e5eae8; overflow: hidden; vertical-align: middle; }
+.tz-elon-bar i { display: block; height: 100%; background: var(--tzp-brand); }
+.tz-elon-item-student p { margin-bottom: 0; }
+
+/* MULOQOT (chat) — maket 2-panel: ro'yxat + oyna */
+.tz-chatwrap { display: grid; grid-template-columns: 310px 1fr; border: 1.5px solid var(--tzp-line); border-radius: 12px; background: #fff; overflow: hidden; min-height: 560px; }
+@media (max-width: 860px) { .tz-chatwrap { grid-template-columns: 1fr; } .tz-clist { border-right: 0; border-bottom: 1.5px solid var(--tzp-line); max-height: 300px; } }
+.tz-clist { border-right: 1.5px solid var(--tzp-line); display: flex; flex-direction: column; overflow-y: auto; }
+.tz-cnew { display: flex; gap: 6px; padding: 10px; border-bottom: 1px solid var(--tzp-line); flex-wrap: wrap; }
+.tz-cnew select { flex: 1; min-width: 0; }
+.tz-cnew-dm { position: relative; padding: 10px; border-bottom: 1px solid var(--tzp-line); }
+.tz-cnew-dm input[type=search] { width: 100%; }
+.tz-dm-results { position: absolute; left: 10px; right: 10px; top: 46px; z-index: 20; background: #fff; border: 1.5px solid var(--tzp-line); border-radius: 8px; max-height: 260px; overflow-y: auto; box-shadow: 0 6px 20px rgba(20,30,45,.12); }
+.tz-dm-opt { display: block; width: 100%; text-align: left; border: 0; background: #fff; padding: 7px 11px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f3f1; }
+.tz-dm-opt:last-child { border-bottom: 0; }
+.tz-dm-opt:hover { background: var(--tzp-brand-bg); }
+.tz-citem { display: flex; gap: 9px; padding: 9px 12px; align-items: center; border-left: 3px solid transparent; text-decoration: none; color: inherit; }
+.tz-citem:hover { background: #f6f8f7; text-decoration: none; color: inherit; }
+.tz-citem.tz-on { background: var(--tzp-brand-bg); border-left-color: var(--tzp-brand); }
+.tz-cava { width: 38px; height: 38px; border-radius: 50%; background: var(--tzp-brand-bg); color: var(--tzp-brand); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex: none; text-transform: uppercase; }
+.tz-cmeta { flex: 1; min-width: 0; }
+.tz-cmeta b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tz-cmeta small { color: var(--tzp-muted); font-size: 11.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tz-cunread { background: var(--tzp-brand); color: #fff; border-radius: 10px; padding: 0 6px; font-size: 10.5px; font-weight: 800; flex: none; }
+.tz-cwin { display: flex; flex-direction: column; min-width: 0; }
+.tz-chead { padding: 11px 14px; border-bottom: 1.5px solid var(--tzp-line); }
+.tz-chead b { font-size: 14.5px; }
+.tz-cmsgs { flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 8px; background: #f8faf9; overflow-y: auto; max-height: 440px; }
+.tz-bub { max-width: 72%; border-radius: 11px; padding: 7px 11px; font-size: 13.5px; background: #fff; border: 1.5px solid var(--tzp-line); align-self: flex-start; }
+.tz-bub-me { background: var(--tzp-brand-bg); border-color: #bcd8d0; align-self: flex-end; }
+.tz-bub-snd { display: block; font-size: 11px; font-weight: 800; color: var(--tzp-brand); }
+.tz-bub-tm { display: block; color: var(--tzp-muted); font-size: 10.5px; text-align: right; margin-top: 2px; }
+.tz-cinput { display: flex; gap: 8px; padding: 10px 12px; border-top: 1.5px solid var(--tzp-line); }
+.tz-cinput input[type=text] { flex: 1; }
+.tz-cinput-note { padding: 12px 14px; border-top: 1.5px solid var(--tzp-line); color: var(--tzp-muted); font-size: 12.5px; font-style: italic; }
+
+/* ---- A'zolar va sozlamalar paneli (guruh chat) */
+.tz-memb { border-top: 1.5px solid var(--tzp-line); background: #fcfdfc; }
+.tz-memb > summary { cursor: pointer; padding: 9px 14px; font-weight: 700; font-size: 13px; color: var(--tzp-brand); list-style: none; }
+.tz-memb > summary::-webkit-details-marker { display: none; }
+.tz-memb[open] > summary { border-bottom: 1px solid var(--tzp-line); }
+.tz-mbody { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; padding: 12px 14px; }
+@media (max-width: 720px) { .tz-mbody { grid-template-columns: 1fr; } }
+.tz-mcol h5 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--tzp-muted); margin: 0 0 6px; }
+.tz-mrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #f0f3f1; font-size: 12.5px; }
+.tz-mrow > span:first-child { color: var(--tzp-ink); }
+.tz-mrow b { font-size: 12.5px; }
+.tz-mrow .form-control-sm { max-width: 170px; }
+.tz-mrow-add { border-bottom: 0; }
+.tz-addmemb { display: flex; gap: 5px; }
+.tz-chiq { border: 0; background: none; color: var(--tzp-red); font-size: 12px; cursor: pointer; padding: 0; }
+.tz-chiq:hover { text-decoration: underline; }
+
+/* ---- Uchrashuv kartasi + forma */
+.tz-meetcard { align-self: stretch; background: #fff6ec; border: 1.5px solid #f3d6ac; border-radius: 11px; padding: 9px 12px; font-size: 13px; }
+.tz-meetcard > b { color: #9a5b00; }
+.tz-meet-holat { margin-top: 3px; font-size: 11.5px; font-weight: 700; }
+.tz-meet-kutilmoqda { color: #9a5b00; }
+.tz-meet-tasdiq { color: #0a7d33; }
+.tz-meet-bekor { color: var(--tzp-muted); text-decoration: line-through; }
+.tz-meet-act { display: flex; gap: 6px; margin-top: 6px; }
+.tz-meetform { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-top: 1.5px solid var(--tzp-line); background: #fff6ec; }
+.tz-meetform input[type=text] { flex: 1; min-width: 120px; }
 
 /* Material tugmalari + kichik MODAL oynalar (kokpit) */
 .tz-modal {
@@ -2267,3 +2353,8 @@ body.tz-maket #page-header { display: none; }
     /* Sarlavha o'z bo'limidan ajralib, bet oxirida yolg'iz qolmasin */
     .tz-hr-h2 { break-after: avoid; page-break-after: avoid; }
 }
+.tz-tp-new { display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 14px; padding: 10px 12px; background: var(--tz-card);
+    border: 1px solid var(--tz-line); border-radius: 10px; }
+.tz-tp-newlab { font-size: .82rem; font-weight: 600; color: var(--tz-ink-2); }
+.tz-tp-newsel { max-width: 320px; }

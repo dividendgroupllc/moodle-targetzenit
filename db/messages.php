@@ -39,4 +39,13 @@ $messageproviders = [
             'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
         ],
     ],
+    // E'LON — guruh/maktab e'loni o'quvchining akkauntiga (ota-ona farzand
+    // logini bilan kiradi). `capability` ATAYLAB YO'Q (sharh/murojaat bilan
+    // bir xil sabab: o'quvchida maxsus ruxsat yo'q).
+    'elon' => [
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
 ];

@@ -159,6 +159,19 @@ class hook_callbacks {
             );
         }
 
+        // "E'LONLARIM" — o'quvchi/ota-ona uchun (dars o'tmaydiganda, e'loni
+        // bor bo'lsa). O'qituvchi e'lonni top-bar'dagi «E'lonlar» tabidan yozadi.
+        if (!teacher::has_any((int) $USER->id)
+                && \local_targetzenit\elon::for_student((int) $USER->id)) {
+            $nav->add(
+                get_string('elonim_nav', 'local_targetzenit'),
+                '/local/targetzenit/elonlarim.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzelonlarim'
+            );
+        }
+
         // "MUROJAATIM" — ota-ona (o'quvchi akkaunti) javobni shu yerdan
         // ko'radi. Faqat murojaati BOR odamga: xodimda ham, murojaat
         // qilmagan oilada ham bunday qator bo'lmaydi.

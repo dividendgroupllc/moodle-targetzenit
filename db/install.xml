@@ -115,6 +115,84 @@
         <INDEX NAME="lesson_tartib" UNIQUE="false" FIELDS="lessonid, tartib"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_elon" COMMENT="E'lon: o'qituvchi o'z guruhiga yoki rahbariyat butun maktabga. O'quvchi (ota-ona) ko'radi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="muallifuserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="kim yozdi"/>
+        <FIELD NAME="scope" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="guruh" SEQUENCE="false" COMMENT="maktab|guruh"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="guruh scope uchun kurs id; maktab uchun 0"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="oddiy" SEQUENCE="false" COMMENT="oddiy|muhim|majlis"/>
+        <FIELD NAME="sarlavha" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="matn" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="sana" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="majlis: YYYY-MM-DD"/>
+        <FIELD NAME="vaqt" TYPE="char" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="majlis: HH:MM"/>
+        <FIELD NAME="xona" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="majlis joyi"/>
+        <FIELD NAME="holat" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="chiqdi" SEQUENCE="false" COMMENT="chiqdi|bekor"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="muallifuserid" TYPE="foreign" FIELDS="muallifuserid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="scope_course" UNIQUE="false" FIELDS="scope, courseid"/>
+        <INDEX NAME="timecreated" UNIQUE="false" FIELDS="timecreated"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_elon_seen" COMMENT="E'lonni kim o'qiganligi — muallif statistikasi uchun.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="elonid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="seenat" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="elonid" TYPE="foreign" FIELDS="elonid" REFTABLE="local_targetzenit_elon" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="elon_user" UNIQUE="true" FIELDS="elonid, userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_chat" COMMENT="Guruh chat siyosati — Moodle message conversations ustida. Xabarlar YADRODA, bu jadval faqat boshqaruv.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="conversationid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="mdl_message_conversations.id"/>
+        <FIELD NAME="egauserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="chatni ochgan o'qituvchi (boshqaruvchi)"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="biriktirilgan sinf/guruh kursi (avto-taklif); 0 = erkin"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="12" NOTNULL="true" DEFAULT="erkin" SEQUENCE="false" COMMENT="sinf_otaona|kafedra|erkin"/>
+        <FIELD NAME="yozish" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="hamma" SEQUENCE="false" COMMENT="hamma|faqat_ega"/>
+        <FIELD NAME="korinish" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="azolar" SEQUENCE="false" COMMENT="azolar|azolar_rahbariyat"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="egauserid" TYPE="foreign" FIELDS="egauserid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="conversationid" UNIQUE="true" FIELDS="conversationid"/>
+        <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_uchrashuv" COMMENT="Uchrashuv taklifi — chat ipiga bog'langan. Moodle message conversation ustida karta ko'rinishida yashaydi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="conversationid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="mdl_message_conversations.id — qaysi suhbatga bog'langan"/>
+        <FIELD NAME="taklifuserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="taklif qilgan foydalanuvchi (o'qituvchi)"/>
+        <FIELD NAME="sana" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="uchrashuv vaqti (unix)"/>
+        <FIELD NAME="joy" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="xona/manzil"/>
+        <FIELD NAME="izoh" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="holat" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="kutilmoqda" SEQUENCE="false" COMMENT="kutilmoqda|tasdiq|bekor"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="conversationid" UNIQUE="false" FIELDS="conversationid"/>
+      </INDEXES>
+    </TABLE>
     <TABLE NAME="local_targetzenit_audio" COMMENT="Dars audio yozuvi. Audio VAQTINCHALIK — transkriptdan keyin yoki muddat o'tgach o'chadi, matn qoladi.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>

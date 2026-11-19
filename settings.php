@@ -97,4 +97,22 @@ if ($hassiteconfig) {
         new moodle_url('/local/targetzenit/yozuvlar.php'),
         'local/targetzenit:viewanalysis'
     ));
+
+    // --- Baholash: tahrirlash oynasi
+    //
+    // 0 = CHEKLOV YO'Q (standart). Nizom (e-kundalik) 72 soatni talab
+    // qiladi, lekin o'tgan davr ballarini kiritayotganda bu ishni to'sib
+    // qo'yadi. Shuning uchun qiymat maktab qo'lida: direktor yoki o'quv
+    // koordinatori xohlagan vaqtida 72 qo'yib tahrirni yopadi.
+    //
+    // Oyna yopilgandan keyin ballni faqat `manageexams` ruxsati bor odam
+    // (koordinator) o'zgartira oladi va SABAB yozishi shart; har o'zgarish
+    // `_grade_log` ga tushadi.
+    $settings->add(new admin_setting_heading('local_targetzenit/bhheading',
+        get_string('set_bhheading', 'local_targetzenit'), ''));
+
+    $settings->add(new admin_setting_configtext('local_targetzenit/bh_oyna_soat',
+        get_string('set_oynasoat', 'local_targetzenit'),
+        get_string('set_oynasoat_desc', 'local_targetzenit'),
+        '0', PARAM_INT));
 }

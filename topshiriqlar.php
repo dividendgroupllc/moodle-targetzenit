@@ -71,6 +71,35 @@ shell::start_menu('topshiriq', $t('tp_nav'), $t('tp_hint'), '', $menu);
 
 echo html_writer::start_div('tz-dir-wrap tz-tp');
 
+// ===================================================== YANGI TOPSHIRIQ
+//
+// NEGA SHU YERDA: o'qituvchi topshiriq qo'shish uchun kurs sahifasini
+// topib, «Tahrirlashni yoqish» -> «Faoliyat qo'shish» zanjirini bosib
+// o'tishi kerak edi. Bu zanjir Moodle 4.3+ da o'zgargan va odamlar uni
+// topolmayapti (shu sabab bu panel umuman paydo bo'lgan).
+//
+// Forma Moodle'ning O'Z yaratish sahifasiga yuboradi — biz hech narsa
+// yaratmaymiz. Ya'ni validatsiya, sozlamalar va ruxsat yadroda qoladi.
+$yaratish = topshiriq::yaratish_kurslari($USER->id);
+if ($yaratish) {
+	echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'tz-tp-new',
+		'action' => (new moodle_url('/course/modedit.php'))->out(false)]);
+	echo html_writer::empty_tag('input',
+		['type' => 'hidden', 'name' => 'section', 'value' => 0]);
+	echo html_writer::empty_tag('input',
+		['type' => 'hidden', 'name' => 'return', 'value' => 0]);
+
+	echo html_writer::tag('span', $t('tp_newlabel'), ['class' => 'tz-tp-newlab']);
+	echo html_writer::select($yaratish, 'course', '', false,
+		['class' => 'tz-tp-newsel']);
+	echo html_writer::select(
+		['assign' => $t('tp_kind_assign'), 'quiz' => $t('tp_kind_quiz')],
+		'add', 'assign', false, ['class' => 'tz-tp-newsel']);
+	echo html_writer::empty_tag('input',
+		['type' => 'submit', 'value' => $t('tp_newbtn'), 'class' => 'tz-tp-btn']);
+	echo html_writer::end_tag('form');
+}
+
 if (!$rows) {
 	// Bo'sh ekran ikki xil ma'noni yashiradi: haqiqatan topshiriq yo'q,
 	// yoki bor-u qamrovimizdan tashqarida. Raqamlarni ko'rsatamiz.

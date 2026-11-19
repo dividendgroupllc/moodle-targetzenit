@@ -31,6 +31,9 @@ class maket {
             'bosh' => ['bosh_nav', '/local/targetzenit/bosh.php'],
             'jadval' => ['timetable', '/local/targetzenit/index.php'],
             'jurnal' => ['jurnal_link', '/local/targetzenit/jurnal.php'],
+            's360' => ['s360_title', '/local/targetzenit/oquvchi360.php'],
+            'elon' => ['elon_nav', '/local/targetzenit/elon.php'],
+            'muloqot' => ['chat_nav', '/local/targetzenit/muloqot.php'],
             'darslarim' => ['oq_mypanel', '/local/targetzenit/oqituvchi.php'],
             'topshiriqlar' => ['tp_nav', '/local/targetzenit/topshiriqlar.php'],
         ];

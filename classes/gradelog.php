@@ -21,6 +21,14 @@ defined('MOODLE_INTERNAL') || die();
 class gradelog {
 
     /** Tuzatish erkin bo'lgan oyna — e-kundalik qoidasi. */
+    /**
+     * Tahrirlash oynasining ZAXIRA qiymati (soat).
+     *
+     * Haqiqiy qiymat `oyna_soat()` dan olinadi — sozlamada 0 bo'lsa oyna
+     * umuman qo'llanmaydi. Nizom 72 soatni talab qiladi, lekin maktab
+     * o'tgan davrni kiritayotganda bu cheklov ishni to'sib qo'yadi,
+     * shuning uchun yoqish/o'chirish MAKTAB qo'lida.
+     */
     const OYNA_SOAT = 72;
 
     /** Baho turi. */
@@ -86,11 +94,32 @@ class gradelog {
      *
      * @param int $firstentry birinchi kiritilgan vaqt (0 = hali kiritilmagan)
      */
+    /**
+     * Amaldagi oyna (soat). 0 — cheklov YO'Q.
+     *
+     * Sozlama: Site administration -> Plugins -> Local -> Target Zenit ->
+     * «Baho tahrirlash oynasi». Standart 0 (ochiq): maktab o'tgan chorak
+     * ballarini kiritayotganda 72 soat ishni to'sib qo'yardi. Direktor
+     * yoki o'quv koordinatori xohlagan vaqtida 72 (yoki boshqa son)
+     * qo'yib, tahrirni yopadi.
+     */
+    public static function oyna_soat(): int {
+        $v = get_config('local_targetzenit', 'bh_oyna_soat');
+        if ($v === false || $v === null || $v === '') {
+            return 0;                // o'rnatilmagan — ochiq
+        }
+        return max(0, (int) $v);
+    }
+
     public static function oyna_otdimi(int $firstentry): bool {
+        $oyna = self::oyna_soat();
+        if ($oyna <= 0) {
+            return false;            // cheklov o'chirilgan
+        }
         if ($firstentry <= 0) {
             return false;            // birinchi kiritish — oyna boshlanmagan
         }
-        return (time() - $firstentry) > self::OYNA_SOAT * 3600;
+        return (time() - $firstentry) > $oyna * 3600;
     }
 
     /**
@@ -113,7 +142,7 @@ class gradelog {
             'mumkin' => $bor,
             'tasdiqkerak' => true,
             'sabab' => get_string('bh_windowclosed', 'local_targetzenit',
-                self::OYNA_SOAT),
+                self::oyna_soat()),
         ];
     }
 
@@ -157,7 +186,7 @@ class gradelog {
         global $DB;
 
         $shart = ['g.latehours > :oyna'];
-        $params = ['oyna' => self::OYNA_SOAT];
+        $params = ['oyna' => self::oyna_soat()];
         if ($from !== '') {
             $shart[] = 'g.timecreated >= :from';
             $params['from'] = strtotime($from . ' 00:00:00');

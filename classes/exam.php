@@ -1219,8 +1219,21 @@ class exam {
             'timemodified' => time(),
         ];
 
+        // --- BAHOLASH YOPILGANMI
+        //
+        // Global oyna (`bh_oyna_soat`) admin sozlamasi, koordinatorda
+        // `site:config` YO'Q — ya'ni u bilan tahrirni yopa olmaydi.
+        // Shuning uchun ikkinchi, KOORDINATOR QO'LIDAGI tutqich:
+        // baholash holatini «yopildi» qilish. Shundan keyin ballga faqat
+        // koordinatorning o'zi tegadi, fan o'qituvchisi tegolmaydi.
+        if (($exam->status ?? '') === 'yopildi'
+                && !has_capability('local/targetzenit:manageexams',
+                    \context_system::instance())) {
+            throw new \moodle_exception('bh_examclosed', 'local_targetzenit');
+        }
+
         if ($bor) {
-            // --- 72 SOATLIK OYNA (e-kundalik qoidasi)
+            // --- TAHRIRLASH OYNASI (e-kundalik qoidasi, sozlanadi)
             $tekshiruv = gradelog::tekshir((int) $bor->timemodified);
             if (!$tekshiruv['mumkin']) {
                 throw new \moodle_exception('nopermissions', 'error', '',
@@ -1228,7 +1241,7 @@ class exam {
             }
             if ($tekshiruv['tasdiqkerak'] && trim($reason) === '') {
                 throw new \moodle_exception('bh_reasonrequired', 'local_targetzenit',
-                    '', gradelog::OYNA_SOAT);
+                    '', gradelog::oyna_soat());
             }
 
             $yozuv->id = (int) $bor->id;

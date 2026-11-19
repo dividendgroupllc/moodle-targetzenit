@@ -309,8 +309,8 @@ class ballsetka {
                 'name' => 'sabab', 'size' => 60, 'maxlength' => 255,
                 'placeholder' => $t('bh_reasonph')]);
             $h .= \html_writer::div($kechbor
-                ? $t('bh_reasonneeded', gradelog::OYNA_SOAT)
-                : $t('bh_reasonopt', gradelog::OYNA_SOAT), 'tz-dir-sub');
+                ? $t('bh_reasonneeded', gradelog::oyna_soat())
+                : $t('bh_reasonopt', gradelog::oyna_soat()), 'tz-dir-sub');
             $h .= \html_writer::end_div();
 
             $h .= \html_writer::div(
