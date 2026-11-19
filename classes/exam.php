@@ -820,6 +820,30 @@ class exam {
                 $out[] = (int) $c->id;
             }
         }
+
+        // JADVAL YO'LI — `enrol_get_users_courses(..., TRUE, ...)` faqat
+        // FAOL yozilishni beradi, Frappe kurs sinxroni esa jadvalda
+        // topilmagan (guruh x fan) uchun o'qituvchi yozilishini `suspend`
+        // qiladi. Natijada fan o'qituvchisi O'Z GURUHINING ball setkasini
+        // ko'rmay qoladi («4 A(full) ko'rinmayapti», 2026-11-19).
+        //
+        // Bu `sharh` va `topshiriq` modullarida uchragan AYNI tuzoq;
+        // yechim ham o'sha: jadvaldan `teacherkey = user.idnumber`.
+        // Ruxsat baribir tekshiriladi — `has_capability()` ROL
+        // biriktirilishiga qaraydi, yozilish holatiga emas.
+        $yil = timetable::current_year();
+        if ($yil !== '') {
+            foreach (sharh::jadval_kurslarim($userid, $yil) as $c) {
+                $cid = (int) $c->id;
+                if (in_array($cid, $out, true)) {
+                    continue;
+                }
+                if (has_capability('local/targetzenit:gradeexam',
+                        \context_course::instance($cid), $userid)) {
+                    $out[] = $cid;
+                }
+            }
+        }
         return $out;
     }
 
