@@ -1333,6 +1333,71 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026112050, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026112110) {
+
+        // ============== PSIXOLOG MODULI (2026-11-21) — PSIXOLOG_ARXITEKTURA.md
+        // Suhbat/case MATNLARI shu jadvallarda — faqat `psixolog` ruxsati
+        // o'qiydi (maxfiylik qarori). Ta'riflar INLINE (install.xml upgrade'da
+        // YUKLANMAYDI — 5-tuzoq).
+
+        // O'quvchi/xodim muammosi (ish varaqasi).
+        $table = new xmldb_table('local_targetzenit_psix_case');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('persontype', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'student');
+            $table->add_field('psixologid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('sarlavha', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('tavsif', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('manba', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'kuzatuv');
+            $table->add_field('muhimlik', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'orta');
+            $table->add_field('holat', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'ochiq');
+            $table->add_field('xulosa', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('yopilganvaqti', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $table->add_index('holat', XMLDB_INDEX_NOTUNIQUE, ['holat']);
+            $table->add_index('psixologid', XMLDB_INDEX_NOTUNIQUE, ['psixologid']);
+            $dbman->create_table($table);
+        }
+
+        // Individual suhbat qaydi (case'ga bog'lanishi ixtiyoriy, caseid=0 erkin).
+        $table = new xmldb_table('local_targetzenit_psix_suhbat');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('persontype', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'student');
+            $table->add_field('caseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('psixologid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('sana', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('turi', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'individual');
+            $table->add_field('matn', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $table->add_field('tavsiya', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $table->add_index('caseid', XMLDB_INDEX_NOTUNIQUE, ['caseid']);
+            $table->add_index('sana', XMLDB_INDEX_NOTUNIQUE, ['sana']);
+            $dbman->create_table($table);
+        }
+
+        // `servis::YADRO` ga psixologiya sinxoni funksiyalari qo'shildi
+        // (core_group_*, core_course_get_courses_by_field) — biriktirish
+        // FAQAT shunday blokda ishlaydi (2026111260 izohiga qarang).
+        // TRY/CATCH SHART: qulaylik majburiy ishni (jadval) to'smasin.
+        try {
+            \local_targetzenit\servis::sinxronla();
+        } catch (\Throwable $e) {
+            mtrace('  OGOHLANTIRISH: web-servis sinxroni o\'tmadi — '
+                . $e->getMessage());
+        }
+
+        upgrade_plugin_savepoint(true, 2026112110, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

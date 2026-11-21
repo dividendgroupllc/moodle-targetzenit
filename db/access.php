@@ -142,4 +142,19 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => ['manager' => CAP_ALLOW],
     ],
+
+    // ======================================================== PSIXOLOG
+    // PSIXOLOG_ARXITEKTURA.md 4-bo'lim.
+    //
+    // Panel + suhbat/case yozuvlari. `archetypes` ATAYLAB BO'SH va `manager`
+    // ham YO'Q: suhbat matnlari FAQAT psixologga (foydalanuvchi qarori,
+    // 2026-11-21) — manager arxetipiga bog'lasak direktor ularni o'qiy olardi.
+    // Rol `cli/psixolog_rol.php` bilan yaratiladi. Rahbariyat statistikani
+    // `viewteachers` bilan ko'radi (matnsiz), bu ruxsat unga kerak emas.
+    'local/targetzenit:psixolog' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'riskbitmask' => RISK_PERSONAL,
+        'archetypes' => [],
+    ],
 ];

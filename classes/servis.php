@@ -49,6 +49,14 @@ class servis {
 	const YADRO = [
 		'core_course_delete_courses',
 		'core_enrol_get_enrolled_users',
+		// PSIXOLOGIYA sinxoni (moodle_psixologiya.py): markaziy kursni
+		// idnumber bo'yicha topish + sinf guruhlarini yuritish.
+		'core_course_get_courses_by_field',
+		'core_group_get_course_groups',
+		'core_group_create_groups',
+		'core_group_get_group_members',
+		'core_group_add_group_members',
+		'core_group_delete_group_members',
 	];
 
 	/**

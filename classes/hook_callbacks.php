@@ -105,6 +105,22 @@ class hook_callbacks {
             );
         }
 
+        // PSIXOLOG PANELI — psixologning kundalik kirish nuqtasi.
+        //
+        // NEGA YUQORI MENYU: boshqa panellar bilan bir xil sabab — Boost chap
+        // menyuni Dashboard'da ko'rsatmaydi. Faqat `psixolog` ruxsati borga:
+        // rahbariyatga alohida band chizilmaydi, statistika direktor paneli
+        // ichidan ochiladi (psixolog.php?view=stat).
+        if (has_capability('local/targetzenit:psixolog', \context_system::instance())) {
+            $nav->add(
+                get_string('psix_panel', 'local_targetzenit'),
+                '/local/targetzenit/psixolog.php',
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'tzpsixolog'
+            );
+        }
+
         // "MENING DARSLARIM" — o'qituvchining kundalik kirish nuqtasi.
         //
         // NEGA YUQORIDA: `lib.php` dagi `extend_navigation` nusxasi CHAP

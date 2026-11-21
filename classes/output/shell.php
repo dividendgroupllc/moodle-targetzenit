@@ -114,6 +114,9 @@ class shell {
         $boshqaruv = [
             ['tutorlar', $t('dir_tutors'), $u('tutorlar.php')],
             ['jadval', $t('timetable'), $u('index.php')],
+            // Psixologiya statistikasi — FAQAT SONLAR (suhbat matni emas,
+            // u faqat psixologga — PSIXOLOG_ARXITEKTURA.md 4).
+            ['psixstat', $t('psix_nav_stat'), $u('psixolog.php', ['view' => 'stat'])],
         ];
         if (has_capability('moodle/site:config', $ctx)) {
             $boshqaruv[] = ['sozlama', $t('dir_navsettings'),
@@ -249,6 +252,52 @@ class shell {
 
         return [
             ['lab' => $t('bh_nav'), 'items' => $asosiy],
+            ['lab' => $t('oq_navschool'), 'items' => $boshqa],
+        ];
+    }
+
+    /**
+     * PSIXOLOG menyusi.
+     *
+     * Direktor menyusidan ALOHIDA (koordinator bilan bir xil sabab): psixologda
+     * `viewteachers` yo'q. Rahbariyatga esa (psixolog ruxsatisiz) faqat
+     * STATISTIKA bandi chiziladi — suhbat/case sahifalari unga ochilmaydi
+     * (maxfiylik qarori) va havola boshi berk yo'l bo'lardi.
+     */
+    public static function psix_menu(): array {
+        $ctx = \context_system::instance();
+        $t = fn(string $k) => get_string($k, 'local_targetzenit');
+        $u = fn(array $p = []) =>
+            new \moodle_url('/local/targetzenit/psixolog.php', $p);
+
+        if (!has_capability('local/targetzenit:psixolog', $ctx)) {
+            // Rahbariyat: faqat statistika.
+            $menu = [[
+                'lab' => $t('psix_nav'),
+                'items' => [['stat', $t('psix_nav_stat'), $u(['view' => 'stat'])]],
+            ]];
+            if (has_capability('local/targetzenit:viewteachers', $ctx)) {
+                $menu[] = ['lab' => $t('oq_navschool'), 'items' => [
+                    ['darslar', $t('dir_navlessons'),
+                        new \moodle_url('/local/targetzenit/direktor.php', ['view' => 'darslar'])],
+                ]];
+            }
+            return $menu;
+        }
+
+        $asosiy = [
+            ['oquvchilar', $t('psix_nav_people'), $u(['view' => 'oquvchilar'])],
+            ['suhbatlar', $t('psix_nav_talks'), $u(['view' => 'suhbatlar'])],
+            ['caselar', $t('psix_nav_cases'), $u(['view' => 'caselar'])],
+            ['testlar', $t('psix_nav_tests'), $u(['view' => 'testlar'])],
+            ['stat', $t('psix_nav_stat'), $u(['view' => 'stat'])],
+        ];
+        $boshqa = [
+            ['jadval', $t('timetable'),
+                new \moodle_url('/local/targetzenit/index.php')],
+        ];
+        return [
+            ['lab' => $t('psix_nav'), 'items' => $asosiy],
             ['lab' => $t('oq_navschool'), 'items' => $boshqa],
         ];
     }

@@ -3354,4 +3354,142 @@ S = {
     "month_10": ("October", "Oktabr", "Октябрь"),
     "month_11": ("November", "Noyabr", "Ноябрь"),
     "month_12": ("December", "Dekabr", "Декабрь"),
+
+    # ------------------------------------------- psixolog (PSIXOLOG_ARXITEKTURA.md)
+    "targetzenit:psixolog": (
+        "School psychologist: counselling notes, cases, tests",
+        "Maktab psixologi: suhbat qaydlari, muammolar (case), testlar",
+        "Школьный психолог: записи бесед, кейсы, тесты",
+    ),
+    "psix_panel": ("Psychologist panel", "Psixolog paneli", "Панель психолога"),
+    "psix_nav": ("Psychology", "Psixologiya", "Психология"),
+    "psix_noaccess": (
+        "This page is for the school psychologist and administration only.",
+        "Bu sahifa faqat maktab psixologi va rahbariyat uchun.",
+        "Эта страница только для школьного психолога и руководства.",
+    ),
+    "psix_nav_people": ("Students & staff", "O'quvchilar va xodimlar", "Ученики и сотрудники"),
+    "psix_nav_talks": ("Counselling notes", "Suhbat qaydlari", "Записи бесед"),
+    "psix_nav_cases": ("Cases", "Muammolar (case)", "Кейсы"),
+    "psix_nav_tests": ("Tests & surveys", "Test va so'rovnomalar", "Тесты и опросы"),
+    "psix_nav_stat": ("Psychology statistics", "Psixologiya statistikasi", "Статистика психолога"),
+    "psix_nokurs": (
+        "Central course PSIXOLOGIYA::<year> not found. Enable the Psychology "
+        "sync in Frappe (Moodle Settings) and run it — it creates the course, "
+        "class groups and enrolments.",
+        "Markaziy kurs (PSIXOLOGIYA::<yil>) topilmadi. Frappe'da (Moodle "
+        "Settings) psixologiya sinxronini yoqing va yurgizing — u kurs, sinf "
+        "guruhlari va yozilishlarni yaratadi.",
+        "Центральный курс PSIXOLOGIYA::<год> не найден. Включите синхронизацию "
+        "психологии во Frappe (Moodle Settings) и запустите её — она создаст "
+        "курс, группы классов и записи.",
+    ),
+    "psix_nokurs_short": (
+        "Central course not synced yet",
+        "Markaziy kurs hali sinxron qilinmagan",
+        "Центральный курс ещё не синхронизирован",
+    ),
+    "psix_allgroups": ("All classes", "Barcha sinflar", "Все классы"),
+    "psix_search": ("Search by name…", "Ism bo'yicha qidirish…", "Поиск по имени…"),
+    "psix_pickgroup": (
+        "Pick a class or type a name to see the list.",
+        "Ro'yxat uchun sinfni tanlang yoki ism yozing.",
+        "Выберите класс или введите имя, чтобы увидеть список.",
+    ),
+    "psix_none": ("Nothing found", "Hech narsa topilmadi", "Ничего не найдено"),
+    "psix_person": ("Person", "Kim", "Кто"),
+    "psix_group": ("Class / group", "Sinf / guruh", "Класс / группа"),
+    "psix_lasttalk": ("Last note", "Oxirgi suhbat", "Последняя беседа"),
+    "psix_opencases": ("Open cases", "Ochiq caselar", "Открытые кейсы"),
+    "psix_talk_add": ("New note", "Suhbat qaydi", "Запись беседы"),
+    "psix_talk_hint": (
+        "To add a note, pick the person from the list first:",
+        "Qayd qo'shish uchun avval odamni ro'yxatdan tanlang:",
+        "Чтобы добавить запись, сначала выберите человека из списка:",
+    ),
+    "psix_talk_type": ("Type", "Turi", "Тип"),
+    "psix_talk_text": (
+        "What was discussed, observations…",
+        "Nima muhokama qilindi, kuzatuvlar…",
+        "Что обсуждалось, наблюдения…",
+    ),
+    "psix_talk_advice": ("Recommendation", "Tavsiya", "Рекомендация"),
+    "psix_t_individual": ("Individual session", "Individual suhbat", "Индивидуальная беседа"),
+    "psix_t_guruhiy": ("Group session", "Guruhiy suhbat", "Групповая беседа"),
+    "psix_t_otaona": ("Talk with parents", "Ota-ona bilan suhbat", "Беседа с родителями"),
+    "psix_t_kuzatuv": ("Observation", "Kuzatuv", "Наблюдение"),
+    "psix_confidential": (
+        "Confidential: visible to the psychologist only. Administration sees "
+        "numbers only, without texts.",
+        "Maxfiy: faqat psixolog ko'radi. Rahbariyat matnsiz, faqat sonlarni ko'radi.",
+        "Конфиденциально: видит только психолог. Руководство видит только "
+        "цифры, без текстов.",
+    ),
+    "psix_save": ("Save", "Saqlash", "Сохранить"),
+    "psix_delete": ("Delete", "O'chirish", "Удалить"),
+    "psix_all": ("All", "Hammasi", "Все"),
+    "psix_more": ("Show more", "Yana ko'rsatish", "Показать ещё"),
+    "psix_card360": ("Student 360", "O'quvchi 360", "Ученик 360"),
+    "psix_case_add": ("Open a case", "Case ochish", "Открыть кейс"),
+    "psix_case_title": ("Issue title", "Muammo sarlavhasi", "Название проблемы"),
+    "psix_case_desc": (
+        "Description: what is happening, since when…",
+        "Tavsif: nima bo'layapti, qachondan beri…",
+        "Описание: что происходит, с какого времени…",
+    ),
+    "psix_src_kuzatuv": ("Own observation", "O'z kuzatuvim", "Собственное наблюдение"),
+    "psix_src_oqituvchi": ("Teacher referral", "O'qituvchi yo'llanmasi", "Направление учителя"),
+    "psix_src_otaona": ("Parent request", "Ota-ona murojaati", "Обращение родителей"),
+    "psix_src_murojaat": ("Complaint module", "Murojaat moduli", "Модуль обращений"),
+    "psix_src_test": ("Test result", "Test natijasi", "Результат теста"),
+    "psix_imp_past": ("Low", "Past", "Низкий"),
+    "psix_imp_orta": ("Medium", "O'rta", "Средний"),
+    "psix_imp_yuqori": ("High", "Yuqori", "Высокий"),
+    "psix_st_ochiq": ("Open", "Ochiq", "Открыт"),
+    "psix_st_kuzatuvda": ("Monitoring", "Kuzatuvda", "На наблюдении"),
+    "psix_st_yopildi": ("Closed", "Yopildi", "Закрыт"),
+    "psix_talks_n": ("{$a} note(s)", "{$a} ta qayd", "{$a} записей"),
+    "psix_case_concl": ("Conclusion", "Xulosa", "Заключение"),
+    "psix_case_close": ("Close with conclusion", "Xulosa bilan yopish", "Закрыть с заключением"),
+    "psix_case_talks": ("Notes in this case", "Case qaydlari", "Записи кейса"),
+    "psix_tests_new_quiz": ("New test (quiz)", "Yangi test (quiz)", "Новый тест (quiz)"),
+    "psix_tests_new_fb": (
+        "New survey (feedback)", "Yangi so'rovnoma (feedback)", "Новый опрос (feedback)",
+    ),
+    "psix_tests_course": ("Open the course", "Kursni ochish", "Открыть курс"),
+    "psix_tests_hint": (
+        "Scope: the whole school by default; to limit to a class, add a group "
+        "restriction (Restrict access → Group) in the activity settings. "
+        "Anonymous mode is a feedback setting.",
+        "Qamrov: standartda butun maktab; bitta sinfga cheklash uchun faoliyat "
+        "sozlamalarida guruh cheklovini qo'ying (Restrict access → Group). "
+        "Anonimlik — feedback'ning o'z sozlamasi.",
+        "Охват: по умолчанию вся школа; чтобы ограничить классом, добавьте "
+        "ограничение по группе (Restrict access → Group) в настройках. "
+        "Анонимность — настройка feedback.",
+    ),
+    "psix_tests_none": (
+        "No tests or surveys yet", "Hali test/so'rovnoma yo'q", "Тестов и опросов пока нет",
+    ),
+    "psix_tests_name": ("Name", "Nomi", "Название"),
+    "psix_tests_open": ("Opens", "Ochilishi", "Открытие"),
+    "psix_tests_close": ("Closes", "Yopilishi", "Закрытие"),
+    "psix_tests_done": ("Responses", "Javoblar", "Ответы"),
+    "psix_tests_results": ("Results", "Natijalar", "Результаты"),
+    "psix_tests_edit": ("Settings", "Sozlash", "Настройки"),
+    "psix_hidden": ("Hidden", "Yashirin", "Скрыт"),
+    "psix_kind_quiz": ("Test", "Test", "Тест"),
+    "psix_kind_fb": ("Survey", "So'rovnoma", "Опрос"),
+    "psix_stat_talks": ("Notes (year)", "Suhbatlar (yil)", "Беседы (год)"),
+    "psix_stat_month": ("Notes by month", "Suhbatlar oy kesimida", "Беседы по месяцам"),
+    "psix_stat_bygroup": ("Notes by class", "Suhbatlar sinf kesimida", "Беседы по классам"),
+    "psix_stat_bytype": ("Notes by type", "Suhbatlar tur kesimida", "Беседы по типам"),
+    "psix_stat_note": (
+        "Statistics show numbers only. Note and case texts are visible to the "
+        "psychologist only.",
+        "Statistika faqat sonlarni ko'rsatadi. Suhbat va case matnlari faqat "
+        "psixologga ko'rinadi.",
+        "Статистика показывает только цифры. Тексты бесед и кейсов видит "
+        "только психолог.",
+    ),
 }

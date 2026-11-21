@@ -46,7 +46,11 @@ if (!$userid) {
         get_string('s360_title', 'local_targetzenit'));
 }
 
-$ruxsat = has_capability('local/targetzenit:viewteachers', $context);
+$ruxsat = has_capability('local/targetzenit:viewteachers', $context)
+    // Psixolog butun maktab bilan ishlaydi (PSIXOLOG_ARXITEKTURA.md) —
+    // markaziy kursdagi editingteacher yozilishi orqali ham o'tar edi, lekin
+    // sinxron hali o'tmagan bo'lsa ham karta ochilsin.
+    || has_capability('local/targetzenit:psixolog', $context);
 if (!$ruxsat) {
     foreach (enrol_get_users_courses($userid, true, 'id') as $c) {
         if (has_capability('local/targetzenit:teach', context_course::instance($c->id))) {

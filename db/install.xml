@@ -740,5 +740,53 @@
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_psix_case" COMMENT="Psixologning o'quvchi/xodim muammosi (ish varaqasi). MAXFIY: faqat local/targetzenit:psixolog o'qiydi — PSIXOLOG_ARXITEKTURA.md 4.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="persontype" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="student" SEQUENCE="false" COMMENT="student | staff"/>
+        <FIELD NAME="psixologid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="sarlavha" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="tavsif" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="manba" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="kuzatuv" SEQUENCE="false" COMMENT="kuzatuv | oqituvchi | otaona | murojaat | test"/>
+        <FIELD NAME="muhimlik" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="orta" SEQUENCE="false" COMMENT="past | orta | yuqori"/>
+        <FIELD NAME="holat" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="ochiq" SEQUENCE="false" COMMENT="ochiq | kuzatuvda | yopildi"/>
+        <FIELD NAME="xulosa" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="yopilganvaqti" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="holat" UNIQUE="false" FIELDS="holat"/>
+        <INDEX NAME="psixologid" UNIQUE="false" FIELDS="psixologid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_psix_suhbat" COMMENT="Psixologning individual suhbat qaydi (caseid=0 — erkin/profilaktik). MAXFIY: faqat local/targetzenit:psixolog o'qiydi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="persontype" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="student" SEQUENCE="false" COMMENT="student | staff"/>
+        <FIELD NAME="caseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="psixologid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="sana" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="suhbat sanasi (timestamp)"/>
+        <FIELD NAME="turi" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="individual" SEQUENCE="false" COMMENT="individual | guruhiy | otaona | kuzatuv"/>
+        <FIELD NAME="matn" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="tavsiya" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="caseid" UNIQUE="false" FIELDS="caseid"/>
+        <INDEX NAME="sana" UNIQUE="false" FIELDS="sana"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>
