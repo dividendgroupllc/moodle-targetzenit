@@ -175,6 +175,24 @@
         <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_imtihon" COMMENT="Portal imtihoni (quiz/assign) ↔ nizom _exam bog'lanishi. Yozma/test bahosi chorak balliga shu orqali import qilinadi.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="course_modules.id (quiz yoki assign)"/>
+        <FIELD NAME="moduli" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="quiz | assign"/>
+        <FIELD NAME="examid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="local_targetzenit_exam.id"/>
+        <FIELD NAME="sittingid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="local_targetzenit_exam_sitting.id (shu kurs)"/>
+        <FIELD NAME="egauserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="cmid" UNIQUE="true" FIELDS="cmid"/>
+        <INDEX NAME="examid" UNIQUE="false" FIELDS="examid"/>
+      </INDEXES>
+    </TABLE>
     <TABLE NAME="local_targetzenit_uchrashuv" COMMENT="Uchrashuv taklifi — chat ipiga bog'langan. Moodle message conversation ustida karta ko'rinishida yashaydi.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>

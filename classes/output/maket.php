@@ -34,14 +34,55 @@ class maket {
             's360' => ['s360_title', '/local/targetzenit/oquvchi360.php'],
             'elon' => ['elon_nav', '/local/targetzenit/elon.php'],
             'muloqot' => ['chat_nav', '/local/targetzenit/muloqot.php'],
+            // "Darslarim" — bitta umbrella tab; ichida sub-tablar (ichtablar()):
+            // Darslar (oqituvchi.php) · Topshiriqlar · Baholash.
             'darslarim' => ['oq_mypanel', '/local/targetzenit/oqituvchi.php'],
-            'topshiriqlar' => ['tp_nav', '/local/targetzenit/topshiriqlar.php'],
+            // Imtihonlar — Test (quiz) + Yozma ish (assign), IMTIHON_ARXITEKTURA.md.
+            'imtihon' => ['im_nav', '/local/targetzenit/imtihonlar.php'],
+        ];
+        return $t;
+    }
+
+    /**
+     * "Darslarim" ichidagi sub-navigatsiya: Darslar · Topshiriqlar · Baholash.
+     * Uchala sahifa ham shu panel bilan ochiladi — o'qituvchi uchun bitta joy.
+     *
+     * @param string $faol sub-tab kaliti: darslar|topshiriqlar|baholash
+     */
+    public static function ichtablar(string $faol): void {
+        global $USER;
+        // Topshiriqlar (mod_assign) endi «Imtihonlar» bo'limida (Yozma ish) —
+        // bu yerdan OLIB TASHLANDI (foydalanuvchi qarori, 2026-11-20).
+        $subs = [
+            'darslar' => ['sub_darslar', '/local/targetzenit/oqituvchi.php'],
         ];
         if (has_capability('local/targetzenit:manageexams', \context_system::instance())
                 || \local_targetzenit\exam::mening_kurslarim((int) $USER->id)) {
-            $t['baholash'] = ['bh_nav', '/local/targetzenit/baholash.php'];
+            $subs['baholash'] = ['bh_nav', '/local/targetzenit/baholash.php'];
         }
-        return $t;
+        // Bitta sub-tab qolsa, sub-navigatsiya ortiqcha — chizmaymiz.
+        if (count($subs) < 2) {
+            return;
+        }
+        echo html_writer::start_div('tz-subnav');
+        foreach ($subs as $kalit => [$satr, $url]) {
+            echo html_writer::link(new moodle_url($url),
+                get_string($satr, 'local_targetzenit'),
+                ['class' => 'tz-subtab' . ($kalit === $faol ? ' tz-on' : '')]);
+        }
+        echo html_writer::end_div();
+    }
+
+    /**
+     * Joriy foydalanuvchi ODDIY O'QITUVCHImi (portal qobig'i) yoki
+     * direktor/koordinator/adminmi (Edulytics qobig'i)? Darslar/Topshiriqlar/
+     * Baholash sahifalari shu asosda qaysi qobiqda chizilishini tanlaydi.
+     */
+    public static function portalmi(): bool {
+        $ctx = \context_system::instance();
+        return !has_capability('local/targetzenit:viewteachers', $ctx)
+            && !has_capability('local/targetzenit:manageexams', $ctx)
+            && !has_capability('moodle/site:config', $ctx);
     }
 
     /**

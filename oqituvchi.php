@@ -16,6 +16,7 @@ require(__DIR__ . '/../../config.php');
 use local_targetzenit\ai;
 use local_targetzenit\dashboard;
 use local_targetzenit\output\fidbek;
+use local_targetzenit\output\maket;
 use local_targetzenit\output\shell;
 use local_targetzenit\output\ui;
 use local_targetzenit\teacher;
@@ -71,6 +72,20 @@ shell::setup($PAGE, $ozim
     ? get_string('oq_mypanel', 'local_targetzenit')
     : get_string('oq_card', 'local_targetzenit'));
 
+// Oddiy o'qituvchi o'zini ko'rsa — portal qobig'i (maket); direktor/zavuch
+// boshqa o'qituvchini ochsa — Edulytics qobig'i (eski shell).
+$portal = maket::portalmi();
+$PAGE->requires->css('/local/targetzenit/styles.css');
+$tugat = function() use ($portal) {
+    global $OUTPUT;
+    if ($portal) {
+        maket::tugat();
+    } else {
+        shell::end();
+        echo $OUTPUT->footer();
+    }
+};
+
 $year = timetable::current_year();
 
 /** Joriy sahifaning havolasi — tanlovlar saqlanadi. */
@@ -106,11 +121,16 @@ if (fidbek::handle()) {
         \core\output\notification::NOTIFY_SUCCESS);
 }
 
-echo $OUTPUT->header();
+if ($portal) {
+    maket::boshla('darslarim');
+    maket::ichtablar('darslar');
+} else {
+    echo $OUTPUT->header();
+}
 
 if (!$year) {
     echo $OUTPUT->notification(get_string('timetable_empty', 'local_targetzenit'), 'info');
-    echo $OUTPUT->footer();
+    $tugat();
     exit;
 }
 
@@ -148,55 +168,61 @@ if ($view === 'hisob') {
     $vositalar .= html_writer::end_div();
 }
 
-shell::start_menu($view, ui::av($ism) . s($ism), s(implode(' · ', $meta)),
-    $vositalar, shell::oq_menu($userid, $ozim));
-
-echo html_writer::start_div('tz-oq');
-
-// ====================================================== KO'RINISH TANLASH
-// Yon panelda ham bor, lekin sahifaning o'zida HAM turadi: 860px dan
-// pastda yon panel gorizontal menyuga aylanib yuqoriga chiqadi va unda
-// faol band ko'zga unchalik tashlanmaydi.
-echo html_writer::start_div('tz-oq-switch');
-foreach (['hisob' => 'oq_tab_sum', 'yozuvlar' => 'recordings'] as $k => $str) {
-    echo html_writer::link($url(['view' => $k, 'page' => 0]),
-        get_string($str, 'local_targetzenit'),
-        ['class' => 'tz-oq-sw' . ($view === $k ? ' tz-on' : '')]);
-}
-echo html_writer::end_div();
-
-if ($view === 'hisob') {
-echo html_writer::div(get_string('oq_periodis', 'local_targetzenit', (object) [
-    'nom' => $davr['nom'],
-    'from' => userdate(strtotime($davr['from']), '%d.%m.%Y'),
-    'to' => userdate(strtotime($davr['to']), '%d.%m.%Y'),
-]), 'tz-dir-sub mb-2');
-}
-
-// Kuzatuv boshlanishi — nega sentabrdagi darslar yo'q ekanini tushuntiradi
-if ($view === 'hisob' && $davrkod === 'hammasi') {
-    echo html_writer::div(
-        get_string('oq_watchfrom', 'local_targetzenit',
-            userdate(strtotime(dashboard::kuzatuv_boshi()), '%d.%m.%Y')),
-        'tz-dir-sub mb-2');
-}
-
-// Direktor boshqa odamni ko'rayotganda qaytish yo'li
-if (!$ozim) {
-    echo html_writer::div(html_writer::link(
-        new moodle_url('/local/targetzenit/direktor.php', ['view' => 'reyting']),
-        '← ' . get_string('dir_navranks', 'local_targetzenit'),
-        ['class' => 'btn btn-sm btn-outline-secondary']), 'mb-2');
-}
-
-// Ko'rinishlar alohida fayllarda — har biri `MOODLE_INTERNAL` bilan
-// himoyalangan, ya'ni to'g'ridan-to'g'ri so'rov bilan ochilmaydi.
-if ($view === 'yozuvlar') {
-    require(__DIR__ . '/views/oq_yozuvlar.php');
+if ($portal) {
+    // ============ O'QITUVCHI PORTALI — maketdagi «Mening darslarim»
+    // Butun sarlavha, davr/guruh filtri, plitalar va ikki ustun oq_portal.php
+    // ichida chiziladi (maketga 1:1 mos). «Dars tahlillari» = yozuvlar lentasi.
+    echo html_writer::start_div('tz-oq');
+    if ($view === 'yozuvlar') {
+        echo html_writer::div(html_writer::link($url(['view' => 'hisob', 'page' => 0]),
+            '← ' . get_string('oq_mypanel', 'local_targetzenit'),
+            ['class' => 'btn btn-sm btn-outline-secondary']), 'mb-3');
+        require(__DIR__ . '/views/oq_tahlil.php');   // maket «Dars tahlillari»
+    } else {
+        require(__DIR__ . '/views/oq_portal.php');
+    }
+    echo html_writer::end_div();   // .tz-oq
 } else {
-    require(__DIR__ . '/views/oq_hisob.php');
-}
+    // ============ DIREKTOR/ZAVUCH — Edulytics qobig'i (eski, o'zgarmaydi)
+    shell::start_menu($view, ui::av($ism) . s($ism), s(implode(' · ', $meta)),
+        $vositalar, shell::oq_menu($userid, $ozim));
 
-echo html_writer::end_div();   // .tz-oq
-shell::end();
-echo $OUTPUT->footer();
+    echo html_writer::start_div('tz-oq');
+
+    echo html_writer::start_div('tz-oq-switch');
+    foreach (['hisob' => 'oq_tab_sum', 'yozuvlar' => 'recordings'] as $k => $str) {
+        echo html_writer::link($url(['view' => $k, 'page' => 0]),
+            get_string($str, 'local_targetzenit'),
+            ['class' => 'tz-oq-sw' . ($view === $k ? ' tz-on' : '')]);
+    }
+    echo html_writer::end_div();
+
+    if ($view === 'hisob') {
+        echo html_writer::div(get_string('oq_periodis', 'local_targetzenit', (object) [
+            'nom' => $davr['nom'],
+            'from' => userdate(strtotime($davr['from']), '%d.%m.%Y'),
+            'to' => userdate(strtotime($davr['to']), '%d.%m.%Y'),
+        ]), 'tz-dir-sub mb-2');
+    }
+    if ($view === 'hisob' && $davrkod === 'hammasi') {
+        echo html_writer::div(
+            get_string('oq_watchfrom', 'local_targetzenit',
+                userdate(strtotime(dashboard::kuzatuv_boshi()), '%d.%m.%Y')),
+            'tz-dir-sub mb-2');
+    }
+    if (!$ozim) {
+        echo html_writer::div(html_writer::link(
+            new moodle_url('/local/targetzenit/direktor.php', ['view' => 'reyting']),
+            '← ' . get_string('dir_navranks', 'local_targetzenit'),
+            ['class' => 'btn btn-sm btn-outline-secondary']), 'mb-2');
+    }
+
+    if ($view === 'yozuvlar') {
+        require(__DIR__ . '/views/oq_yozuvlar.php');
+    } else {
+        require(__DIR__ . '/views/oq_hisob.php');
+    }
+
+    echo html_writer::end_div();   // .tz-oq
+}
+$tugat();

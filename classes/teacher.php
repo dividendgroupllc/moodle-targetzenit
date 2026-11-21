@@ -156,6 +156,10 @@ class teacher {
                 return "f.analysestatus = 'ok' AND f.overallscore IS NOT NULL";
             case 'kelgusi':
                 return "NOT $otgan";
+            // To'liq bajarilgan: majburiy uchlik (mavzu + yo'qlama + yozuv) bor.
+            case 'toliq':
+                return "$otgan AND f.hastopic = 1 AND f.attendancecount > 0"
+                    . " AND f.audiostatus IN ($yoz)";
             default:
                 return '';
         }
@@ -175,7 +179,9 @@ class teacher {
                    SUM(CASE WHEN $otgan AND f.audiostatus NOT IN ($yoz) THEN 1 ELSE 0 END) AS yozuvsiz,
                    SUM(CASE WHEN f.analysestatus = 'ok' AND f.overallscore IS NOT NULL
                             THEN 1 ELSE 0 END) AS tahlilli,
-                   SUM(CASE WHEN NOT ($otgan) THEN 1 ELSE 0 END) AS kelgusi
+                   SUM(CASE WHEN NOT ($otgan) THEN 1 ELSE 0 END) AS kelgusi,
+                   SUM(CASE WHEN $otgan AND f.hastopic = 1 AND f.attendancecount > 0
+                            AND f.audiostatus IN ($yoz) THEN 1 ELSE 0 END) AS toliq
               FROM {local_targetzenit_slot} s
               JOIN {local_targetzenit_fact} f ON f.slotid = s.id
              WHERE f.attributeduserid = :uid
@@ -188,6 +194,7 @@ class teacher {
             'yozuvsiz' => (int) ($r->yozuvsiz ?? 0),
             'tahlilli' => (int) ($r->tahlilli ?? 0),
             'kelgusi' => (int) ($r->kelgusi ?? 0),
+            'toliq' => (int) ($r->toliq ?? 0),
         ];
     }
 

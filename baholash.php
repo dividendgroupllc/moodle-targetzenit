@@ -18,6 +18,7 @@ require(__DIR__ . '/../../config.php');
 use local_targetzenit\exam;
 use local_targetzenit\exam_import;
 use local_targetzenit\output\ballsetka;
+use local_targetzenit\output\maket;
 use local_targetzenit\output\shell;
 use local_targetzenit\output\ui;
 use local_targetzenit\timetable;
@@ -63,6 +64,19 @@ if ($view === 'yangi' && !$boshqarish) {
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/baholash.php', ['view' => $view]));
 shell::setup($PAGE, get_string('bh_nav', 'local_targetzenit'));
+
+// Oddiy o'qituvchi — portal qobig'i (maket); koordinator/direktor — Edulytics.
+$portal = maket::portalmi();
+$PAGE->requires->css('/local/targetzenit/styles.css');
+$tugat = function() use ($portal) {
+    global $OUTPUT;
+    if ($portal) {
+        maket::tugat();
+    } else {
+        shell::end();
+        echo $OUTPUT->footer();
+    }
+};
 
 $year = timetable::current_year();
 $t = fn(string $k, $a = null) => get_string($k, 'local_targetzenit', $a);
@@ -359,17 +373,22 @@ if ($amal !== '' && confirm_sesskey()) {
     }
 }
 
-echo $OUTPUT->header();
-
-shell::start_menu($view, $t('bh_nav'), $t('bh_hint'), '', shell::bh_menu());
+if ($portal) {
+    maket::boshla('darslarim');
+    maket::ichtablar('baholash');
+    echo html_writer::div($t('bh_nav'), 'tzp-h1');
+    echo html_writer::div($t('bh_hint'), 'tzp-sub');
+} else {
+    echo $OUTPUT->header();
+    shell::start_menu($view, $t('bh_nav'), $t('bh_hint'), '', shell::bh_menu());
+}
 
 echo html_writer::start_div('tz-dir-wrap tz-bh');
 
 if ($year === '') {
     echo $OUTPUT->notification($t('timetable_empty'), 'info');
     echo html_writer::end_div();
-    shell::end();
-    echo $OUTPUT->footer();
+    $tugat();
     exit;
 }
 
@@ -492,8 +511,7 @@ if ($view === 'sitochir') {
     if (!$sit) {
         echo $OUTPUT->notification($t('bh_noexam'), 'warn');
         echo html_writer::end_div();
-        shell::end();
-        echo $OUTPUT->footer();
+        $tugat();
         exit;
     }
     $nn = exam::sitting_natija_soni($sid);
@@ -518,8 +536,7 @@ if ($view === 'sitochir') {
         'mt-3');
 
     echo html_writer::end_div();
-    shell::end();
-    echo $OUTPUT->footer();
+    $tugat();
     exit;
 }
 
@@ -529,8 +546,7 @@ if ($view === 'ochir') {
     if (!$e) {
         echo $OUTPUT->notification($t('bh_noexam'), 'warn');
         echo html_writer::end_div();
-        shell::end();
-        echo $OUTPUT->footer();
+        $tugat();
         exit;
     }
 
@@ -561,8 +577,7 @@ if ($view === 'ochir') {
         'mt-3');
 
     echo html_writer::end_div();
-    shell::end();
-    echo $OUTPUT->footer();
+    $tugat();
     exit;
 }
 
@@ -666,8 +681,7 @@ if ($view === 'jadval') {
     if (!$e) {
         echo $OUTPUT->notification($t('bh_noexam'), 'warn');
         echo html_writer::end_div();
-        shell::end();
-        echo $OUTPUT->footer();
+        $tugat();
         exit;
     }
 
@@ -869,8 +883,7 @@ if ($view === 'ball') {
     if (!$sit) {
         echo $OUTPUT->notification($t('bh_noexam'), 'warn');
         echo html_writer::end_div();
-        shell::end();
-        echo $OUTPUT->footer();
+        $tugat();
         exit;
     }
 
@@ -931,5 +944,4 @@ if ($view === 'ball') {
 }
 
 echo html_writer::end_div();   // .tz-bh
-shell::end();
-echo $OUTPUT->footer();
+$tugat();

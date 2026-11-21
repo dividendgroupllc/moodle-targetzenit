@@ -18,6 +18,7 @@
 
 require(__DIR__ . '/../../config.php');
 
+use local_targetzenit\output\maket;
 use local_targetzenit\output\shell;
 use local_targetzenit\output\ui;
 use local_targetzenit\topshiriq;
@@ -48,6 +49,26 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/targetzenit/topshiriqlar.php'));
 shell::setup($PAGE, $t('tp_nav'));
 
+// Oddiy o'qituvchi — portal qobig'i (maket); direktor/koordinator — Edulytics.
+$portal = maket::portalmi();
+
+// BIRLASHTIRILDI (2026-11-20): portal o'qituvchisi uchun topshiriqlar «Imtihonlar»
+// bo'limiga ko'chdi (mod_assign = Yozma ish). Eski havola/bookmark ochilsa —
+// yangi joyga yo'naltiramiz. Direktor/koordinator (Edulytics) shu sahifada qoladi.
+if ($portal) {
+    redirect(new moodle_url('/local/targetzenit/imtihonlar.php'));
+}
+$PAGE->requires->css('/local/targetzenit/styles.css');
+$tugat = function() use ($portal) {
+    global $OUTPUT;
+    if ($portal) {
+        maket::tugat();
+    } else {
+        shell::end();
+        echo $OUTPUT->footer();
+    }
+};
+
 $rows = topshiriq::royxat(null, $courseids);
 
 // Menyu: koordinatorga baholash menyusi, direktorga direktor menyusi,
@@ -65,9 +86,15 @@ if (has_capability('local/targetzenit:manageexams', $context)) {
 //   shell::end() -> footer()
 // `header()` BO'LMASA Moodle <head> ni umuman chiqarmaydi va sahifa
 // CSS'siz, tekis HTML bo'lib qoladi.
-echo $OUTPUT->header();
-
-shell::start_menu('topshiriq', $t('tp_nav'), $t('tp_hint'), '', $menu);
+if ($portal) {
+	maket::boshla('darslarim');
+	maket::ichtablar('topshiriqlar');
+	echo html_writer::div($t('tp_nav'), 'tzp-h1');
+	echo html_writer::div($t('tp_hint'), 'tzp-sub');
+} else {
+	echo $OUTPUT->header();
+	shell::start_menu('topshiriq', $t('tp_nav'), $t('tp_hint'), '', $menu);
+}
 
 echo html_writer::start_div('tz-dir-wrap tz-tp');
 
@@ -113,8 +140,7 @@ if (!$rows) {
 		html_writer::div($t('tp_empty')) . html_writer::div($izoh, 'tz-dir-sub'),
 		'tz-dir-empty');
 	echo html_writer::end_div();
-	shell::end();
-	echo $OUTPUT->footer();
+	$tugat();
 	exit;
 }
 
@@ -238,5 +264,4 @@ echo html_writer::end_tag('tbody');
 echo html_writer::end_tag('table');
 echo html_writer::end_div();
 echo html_writer::end_div();   // .tz-tp
-shell::end();
-echo $OUTPUT->footer();
+$tugat();
