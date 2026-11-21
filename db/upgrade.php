@@ -1398,6 +1398,50 @@ function xmldb_local_targetzenit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026112110, 'local', 'targetzenit');
     }
 
+    if ($oldversion < 2026112120) {
+
+        // ============== TASHQI (QOG'OZ) TEST NATIJALARI (2026-11-21)
+        // Psixolog testni Moodle'dan TASHQARIDA (qog'ozda) o'tkazgan bo'lsa,
+        // natijani panelda o'quvchima-o'quvchi kiritadi. Moodle quiz/feedback
+        // natijalari esa yadroda — bu jadvallar FAQAT tashqi testlar uchun.
+        // Maxfiylik suhbat/case bilan bir xil: faqat `psixolog` ruxsati.
+
+        // Testning o'zi (metodika, sana).
+        $table = new xmldb_table('local_targetzenit_psix_test');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('nomi', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('sana', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('izoh', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('psixologid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('sana', XMLDB_INDEX_NOTUNIQUE, ['sana']);
+            $dbman->create_table($table);
+        }
+
+        // Har o'quvchining natijasi: ball/daraja erkin matn (psixologik
+        // metodikalarda «yuqori xavotir» kabi daraja ham bo'ladi) + izoh.
+        $table = new xmldb_table('local_targetzenit_psix_natija');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('testid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('ball', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('izoh', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('psixologid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('test_user', XMLDB_INDEX_UNIQUE, ['testid', 'userid']);
+            $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026112120, 'local', 'targetzenit');
+    }
+
     return true;
 }
 

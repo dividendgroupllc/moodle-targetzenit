@@ -91,6 +91,41 @@ if ($amal !== '' && $psixologmi && confirm_sesskey()) {
             psixolog::case_yop($id, required_param('xulosa', PARAM_TEXT));
             $qayt->params(['view' => 'caselar', 'ochiq' => $id]);
             break;
+
+        // ------------------------- tashqi (qog'oz) test natijalari
+        case 'testadd':
+            $sana = strtotime(optional_param('sana', '', PARAM_TEXT)) ?: time();
+            $id = psixolog::test_qosh(required_param('nomi', PARAM_TEXT), $sana,
+                optional_param('izoh', '', PARAM_TEXT));
+            // Yaratilgach to'g'ri natija kiritishga o'tiladi — psixologning
+            // navbatdagi ishi aynan shu.
+            $qayt->params(['view' => 'natija', 'test' => $id]);
+            break;
+
+        case 'testochir':
+            psixolog::test_ochir(required_param('id', PARAM_INT));
+            $qayt->params(['view' => 'testlar']);
+            break;
+
+        case 'natijasaqla':
+            $testid = required_param('test', PARAM_INT);
+            if (!psixolog::test_get($testid)) {
+                throw new moodle_exception('invalidrecord', 'error');
+            }
+            // Setkadagi qatorlar `ids` da keladi; maydon nomlari ball_<id> /
+            // izoh_<id> — Moodle formasida massiv kalit qoidasi ([a-z0-9_-])
+            // buzilmasin (jurnal saboqlari, 0.9.4).
+            $ids = array_filter(array_map('intval',
+                explode(',', optional_param('ids', '', PARAM_SEQUENCE))));
+            foreach ($ids as $uid) {
+                psixolog::natija_saqla($testid, $uid,
+                    optional_param('ball_' . $uid, '', PARAM_TEXT),
+                    optional_param('izoh_' . $uid, '', PARAM_TEXT));
+            }
+            $qayt->params(['view' => 'natija', 'test' => $testid,
+                'guruh' => optional_param('guruh', 0, PARAM_INT),
+                'saqlandi' => 1]);
+            break;
     }
     redirect($qayt);
 }
@@ -159,7 +194,9 @@ shell::setup($PAGE, $t('psix_panel'));
 echo $OUTPUT->header();
 
 $sub = $kurs ? format_string($kurs->fullname) : $t('psix_nokurs_short');
-shell::start_menu($view, $t('psix_panel'), $sub, '', shell::psix_menu());
+// Natija kiritish — «Testlar» bo'limining ichki sahifasi, menyuda o'sha band yonadi.
+shell::start_menu($view === 'natija' ? 'testlar' : $view,
+    $t('psix_panel'), $sub, '', shell::psix_menu());
 
 echo html_writer::start_div('tz-mur');
 
@@ -496,6 +533,63 @@ case 'testlar':
         'tz-mur-filtr');
     echo html_writer::div($t('psix_tests_hint'), 'tz-mur-ogoh');
 
+    // ------- TASHQI (QOG'OZ) TESTLAR — natijasi qo'lda kiritiladi.
+    $tf = html_writer::start_tag('form', ['method' => 'post', 'class' => 'tz-fb-form']);
+    $tf .= tz_psix_hidden('testadd', ['qayt' => 'testlar']);
+    $tf .= html_writer::empty_tag('input', ['type' => 'text', 'name' => 'nomi',
+        'required' => 'required', 'placeholder' => $t('psix_ext_name'),
+        'class' => 'tz-fb-ctext']);
+    $tf .= html_writer::start_div('tz-mur-filtr');
+    $tf .= html_writer::empty_tag('input', ['type' => 'date', 'name' => 'sana',
+        'value' => date('Y-m-d')]);
+    $tf .= html_writer::end_div();
+    $tf .= html_writer::tag('textarea', '', ['name' => 'izoh', 'rows' => 2,
+        'class' => 'tz-fb-ctext', 'placeholder' => $t('psix_ext_note')]);
+    $tf .= html_writer::tag('button', $t('psix_save'),
+        ['type' => 'submit', 'class' => 'tz-fb-csend']);
+    $tf .= html_writer::end_tag('form');
+
+    echo html_writer::tag('details',
+        html_writer::tag('summary',
+            html_writer::div($t('psix_ext_title'), 'tz-mur-ism')
+            . html_writer::div($t('psix_ext_hint'), 'tz-mur-qisqa'),
+            ['class' => 'tz-mur-sum'])
+        . html_writer::div('+ ' . $t('psix_ext_new'), 'tz-mur-lab') . $tf,
+        ['class' => 'tz-mur-blok']);
+
+    $tashqi = psixolog::testlar_tashqi();
+    if ($tashqi) {
+        $trows = '';
+        foreach ($tashqi as $ts) {
+            $of = html_writer::start_tag('form', ['method' => 'post',
+                'style' => 'display:inline',
+                'onsubmit' => "return confirm(" . json_encode($t('psix_delete') . '?') . ")"]);
+            $of .= tz_psix_hidden('testochir', ['id' => $ts->id, 'qayt' => 'testlar']);
+            $of .= html_writer::tag('button', $t('psix_delete'),
+                ['type' => 'submit', 'class' => 'tz-dir-chip']);
+            $of .= html_writer::end_tag('form');
+            $trows .= html_writer::tag('tr',
+                html_writer::tag('td', s($ts->nomi))
+                . html_writer::tag('td', userdate((int) $ts->sana,
+                    get_string('strftimedateshort')))
+                . html_writer::tag('td', (string) $ts->natijalar)
+                . html_writer::tag('td',
+                    html_writer::link($selfurl(['view' => 'natija', 'test' => $ts->id]),
+                        $t('psix_ext_enter'), ['class' => 'tz-dir-chip'])
+                    . ' ' . ((int) $ts->psixologid === (int) $USER->id ? $of : '')));
+        }
+        echo html_writer::div(html_writer::tag('table',
+            html_writer::tag('thead', html_writer::tag('tr',
+                html_writer::tag('th', $t('psix_tests_name'))
+                . html_writer::tag('th', $t('psix_ext_date'))
+                . html_writer::tag('th', $t('psix_tests_done'))
+                . html_writer::tag('th', '')))
+            . html_writer::tag('tbody', $trows),
+            ['class' => 'tz-dir-table']), 'tz-dir-tablewrap');
+    }
+
+    // ------- MOODLE'DAGI (onlayn) testlar.
+    echo html_writer::div($t('psix_online_title'), 'tz-mur-lab');
     $testlar = psixolog::testlar($kurs);
     if (!$testlar) {
         echo html_writer::div($t('psix_tests_none'), 'tz-dir-none');
@@ -535,6 +629,94 @@ case 'testlar':
             . html_writer::tag('th', '')))
         . html_writer::tag('tbody', $rows),
         ['class' => 'tz-dir-table']), 'tz-dir-tablewrap');
+    break;
+
+// ================================================= TASHQI TEST NATIJALARI
+case 'natija':
+    $testid = required_param('test', PARAM_INT);
+    $test = psixolog::test_get($testid);
+    if (!$test) {
+        throw new moodle_exception('invalidrecord', 'error');
+    }
+    if (!$kurs) {
+        echo $OUTPUT->notification($t('psix_nokurs'), 'warning');
+        break;
+    }
+
+    if (optional_param('saqlandi', 0, PARAM_INT)) {
+        echo $OUTPUT->notification($t('psix_res_saved'), 'success');
+    }
+
+    // Test sarlavhasi.
+    echo html_writer::div(
+        html_writer::div(s($test->nomi) . ' · '
+            . userdate((int) $test->sana, get_string('strftimedateshort')), 'tz-mur-ism')
+        . (trim((string) $test->izoh) !== ''
+            ? html_writer::div(s($test->izoh), 'tz-mur-qisqa') : '')
+        . html_writer::div(
+            html_writer::link($selfurl(['view' => 'testlar']), '← ' . $t('psix_nav_tests'),
+                ['class' => 'tz-dir-chip']),
+            'tz-mur-pills'),
+        'tz-mur-blok');
+
+    // Sinf tanlash (GET) — setka sinf-sinf to'ldiriladi (jurnal naqshi).
+    $guruhid = optional_param('guruh', 0, PARAM_INT);
+    $guruhlar = psixolog::guruhlar((int) $kurs->id);
+    echo html_writer::start_tag('form', ['method' => 'get', 'class' => 'tz-mur-filtr']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'view',
+        'value' => 'natija']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'test',
+        'value' => $testid]);
+    echo tz_psix_select('guruh', $guruhlar, (string) $guruhid, $t('psix_allgroups'));
+    echo html_writer::tag('button', $t('mur_apply'),
+        ['type' => 'submit', 'class' => 'tz-mur-btn']);
+    echo html_writer::end_tag('form');
+
+    if (!$guruhid) {
+        echo html_writer::div($t('psix_res_pick'), 'tz-dir-none');
+        break;
+    }
+
+    $odamlar = psixolog::odamlar((int) $kurs->id, $guruhid, '', 500);
+    if (!$odamlar) {
+        echo html_writer::div($t('psix_none'), 'tz-dir-none');
+        break;
+    }
+    $natijalar = psixolog::natijalar($testid);
+
+    // Setka: har qatorda ball/daraja + izoh. IKKALASI bo'sh = natija o'chadi.
+    echo html_writer::start_tag('form', ['method' => 'post']);
+    echo tz_psix_hidden('natijasaqla', ['test' => $testid, 'guruh' => $guruhid,
+        'qayt' => 'natija', 'ids' => implode(',', array_keys($odamlar))]);
+
+    $rows = '';
+    foreach ($odamlar as $o) {
+        $n = $natijalar[(int) $o->id] ?? null;
+        $rows .= html_writer::tag('tr',
+            html_writer::tag('td', s(fullname($o)))
+            . html_writer::tag('td', html_writer::empty_tag('input', [
+                'type' => 'text', 'name' => 'ball_' . $o->id,
+                'value' => $n ? (string) $n->ball : '',
+                'placeholder' => $t('psix_res_ball'),
+                'style' => 'width:9em']))
+            . html_writer::tag('td', html_writer::empty_tag('input', [
+                'type' => 'text', 'name' => 'izoh_' . $o->id,
+                'value' => $n ? (string) $n->izoh : '',
+                'placeholder' => $t('psix_res_izoh'),
+                'style' => 'width:100%;min-width:16em'])));
+    }
+    echo html_writer::div(html_writer::tag('table',
+        html_writer::tag('thead', html_writer::tag('tr',
+            html_writer::tag('th', $t('psix_person'))
+            . html_writer::tag('th', $t('psix_res_ball'))
+            . html_writer::tag('th', $t('psix_res_izoh'))))
+        . html_writer::tag('tbody', $rows),
+        ['class' => 'tz-dir-table']), 'tz-dir-tablewrap');
+
+    echo html_writer::div($t('psix_res_hint'), 'tz-mur-ogoh');
+    echo html_writer::tag('button', $t('psix_save'),
+        ['type' => 'submit', 'class' => 'tz-fb-csend']);
+    echo html_writer::end_tag('form');
     break;
 
 // ============================================================ STATISTIKA

@@ -788,5 +788,41 @@
         <INDEX NAME="sana" UNIQUE="false" FIELDS="sana"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_targetzenit_psix_test" COMMENT="Psixologning TASHQI (qog'oz) testi — Moodle'dan tashqarida o'tkazilgan, natijasi qo'lda kiritiladi. MAXFIY: faqat local/targetzenit:psixolog.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="nomi" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sana" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="izoh" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="metodika, qamrov haqida eslatma"/>
+        <FIELD NAME="psixologid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="sana" UNIQUE="false" FIELDS="sana"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_targetzenit_psix_natija" COMMENT="Tashqi test natijasi: ball/daraja erkin matn (masalan «yuqori xavotir») + izoh. MAXFIY: faqat local/targetzenit:psixolog.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="testid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="ball" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="izoh" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="psixologid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="test_user" UNIQUE="true" FIELDS="testid, userid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

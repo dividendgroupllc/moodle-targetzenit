@@ -465,6 +465,122 @@ class psixolog {
         return $out;
     }
 
+    // ------------------------------------------- tashqi (qog'oz) testlar
+
+    /**
+     * Tashqi test = Moodle'dan TASHQARIDA o'tkazilgan (qog'oz metodika);
+     * natijasi panelda qo'lda kiritiladi. Moodle quiz/feedback'ka teginmaydi.
+     */
+    public static function test_qosh(string $nomi, int $sana, string $izoh): int {
+        global $DB, $USER;
+
+        self::require_psixolog();
+        $nomi = trim($nomi);
+        if ($nomi === '') {
+            throw new \moodle_exception('invaliddata', 'error');
+        }
+        return (int) $DB->insert_record('local_targetzenit_psix_test', (object) [
+            'nomi' => $nomi,
+            'sana' => $sana ?: time(),
+            'izoh' => trim($izoh),
+            'psixologid' => (int) $USER->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+    }
+
+    public static function test_get(int $id): ?\stdClass {
+        global $DB;
+
+        self::require_psixolog();
+        return $DB->get_record('local_targetzenit_psix_test', ['id' => $id]) ?: null;
+    }
+
+    /** Faqat O'Z testini o'chiradi — natijalari bilan birga. */
+    public static function test_ochir(int $id): void {
+        global $DB, $USER;
+
+        self::require_psixolog();
+        if (!$DB->record_exists('local_targetzenit_psix_test',
+                ['id' => $id, 'psixologid' => (int) $USER->id])) {
+            return;
+        }
+        $DB->delete_records('local_targetzenit_psix_natija', ['testid' => $id]);
+        $DB->delete_records('local_targetzenit_psix_test', ['id' => $id]);
+    }
+
+    /** Tashqi testlar ro'yxati, kiritilgan natija soni bilan (N+1 siz). */
+    public static function testlar_tashqi(): array {
+        global $DB;
+
+        self::require_psixolog();
+        $rows = $DB->get_records('local_targetzenit_psix_test', null,
+            'sana DESC, id DESC', '*', 0, 100);
+        if (!$rows) {
+            return [];
+        }
+        [$in, $p] = $DB->get_in_or_equal(array_keys($rows), SQL_PARAMS_NAMED);
+        $sonlar = $DB->get_records_sql(
+            "SELECT testid, COUNT(1) AS soni
+               FROM {local_targetzenit_psix_natija}
+              WHERE testid $in GROUP BY testid", $p);
+        foreach ($rows as $r) {
+            $r->natijalar = isset($sonlar[$r->id]) ? (int) $sonlar[$r->id]->soni : 0;
+        }
+        return $rows;
+    }
+
+    /** Shu testning natijalari: {userid: yozuv}. */
+    public static function natijalar(int $testid): array {
+        global $DB;
+
+        self::require_psixolog();
+        $out = [];
+        foreach ($DB->get_records('local_targetzenit_psix_natija',
+                ['testid' => $testid]) as $r) {
+            $out[(int) $r->userid] = $r;
+        }
+        return $out;
+    }
+
+    /**
+     * Bitta o'quvchining natijasini saqlaydi: IKKI maydon ham bo'sh bo'lsa
+     * yozuv O'CHIRILADI (setkada katakni tozalash = natijani olib tashlash).
+     */
+    public static function natija_saqla(int $testid, int $userid,
+                                         string $ball, string $izoh): void {
+        global $DB, $USER;
+
+        self::require_psixolog();
+        $ball = trim($ball);
+        $izoh = trim($izoh);
+        $bor = $DB->get_record('local_targetzenit_psix_natija',
+            ['testid' => $testid, 'userid' => $userid]);
+
+        if ($ball === '' && $izoh === '') {
+            if ($bor) {
+                $DB->delete_records('local_targetzenit_psix_natija', ['id' => $bor->id]);
+            }
+            return;
+        }
+        if ($bor) {
+            if ((string) $bor->ball === $ball && (string) $bor->izoh === $izoh) {
+                return;                         // o'zgarmagan — DB'ga tegmaymiz.
+            }
+            $DB->update_record('local_targetzenit_psix_natija', (object) [
+                'id' => $bor->id, 'ball' => $ball, 'izoh' => $izoh,
+                'psixologid' => (int) $USER->id, 'timemodified' => time(),
+            ]);
+            return;
+        }
+        $DB->insert_record('local_targetzenit_psix_natija', (object) [
+            'testid' => $testid, 'userid' => $userid,
+            'ball' => $ball, 'izoh' => $izoh,
+            'psixologid' => (int) $USER->id,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+    }
+
     // ---------------------------------------------------------- statistika
 
     /**

@@ -3492,4 +3492,53 @@ S = {
         "Статистика показывает только цифры. Тексты бесед и кейсов видит "
         "только психолог.",
     ),
+
+    # --- tashqi (qog'oz) test natijalari
+    "psix_ext_title": (
+        "Paper / external tests",
+        "Tashqi (qog'oz) testlar",
+        "Бумажные / внешние тесты",
+    ),
+    "psix_ext_hint": (
+        "A test taken outside Moodle (on paper): record it here and enter the "
+        "results class by class.",
+        "Moodle'dan tashqarida (qog'ozda) olingan test: shu yerda ro'yxatga "
+        "oling va natijalarini sinf-sinf kiriting.",
+        "Тест, проведённый вне Moodle (на бумаге): зарегистрируйте его здесь "
+        "и внесите результаты по классам.",
+    ),
+    "psix_ext_new": ("Register a test", "Test ro'yxatga olish", "Зарегистрировать тест"),
+    "psix_ext_name": (
+        "Test name (methodology)",
+        "Test nomi (metodika)",
+        "Название теста (методика)",
+    ),
+    "psix_ext_date": ("Taken on", "O'tkazilgan sana", "Дата проведения"),
+    "psix_ext_note": (
+        "Note: scope, scale, what the score means…",
+        "Izoh: qamrov, shkala, ball nimani bildiradi…",
+        "Примечание: охват, шкала, что означает балл…",
+    ),
+    "psix_ext_enter": ("Enter results", "Natija kiritish", "Внести результаты"),
+    "psix_online_title": (
+        "Online (Moodle) tests & surveys",
+        "Onlayn (Moodle) test va so'rovnomalar",
+        "Онлайн (Moodle) тесты и опросы",
+    ),
+    "psix_res_saved": ("Results saved.", "Natijalar saqlandi.", "Результаты сохранены."),
+    "psix_res_pick": (
+        "Pick a class — the grid is filled class by class.",
+        "Sinfni tanlang — setka sinf-sinf to'ldiriladi.",
+        "Выберите класс — таблица заполняется по классам.",
+    ),
+    "psix_res_ball": ("Score / level", "Ball / daraja", "Балл / уровень"),
+    "psix_res_izoh": ("Comment", "Izoh", "Комментарий"),
+    "psix_res_hint": (
+        "Leaving both fields empty removes that student's result. "
+        "Confidential: visible to the psychologist only.",
+        "Ikkala maydon ham bo'sh qoldirilsa o'sha o'quvchining natijasi "
+        "o'chiriladi. Maxfiy: faqat psixolog ko'radi.",
+        "Если оба поля пустые, результат ученика удаляется. "
+        "Конфиденциально: видит только психолог.",
+    ),
 }
